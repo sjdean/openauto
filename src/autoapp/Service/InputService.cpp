@@ -132,7 +132,7 @@ void InputService::onBindingRequest(const aasdk::proto::messages::BindingRequest
 
 void InputService::onChannelError(const aasdk::error::Error& e)
 {
-    OPENAUTO_LOG(error) << "[SensorService] channel error: " << e.what();
+    OPENAUTO_LOG(error) << "[InputService] channel error: " << e.what();
 }
 
 void InputService::onButtonEvent(const projection::ButtonEvent& event)
