@@ -166,6 +166,8 @@ void InputService::onButtonEvent(const projection::ButtonEvent& event)
 
 void InputService::onTouchEvent(const projection::TouchEvent& event)
 {
+    OPENAUTO_LOG(info) << "[InputService] onTouchEvent "
+
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
 
     strand_.dispatch([this, self = this->shared_from_this(), event = std::move(event), timestamp = std::move(timestamp)]() {

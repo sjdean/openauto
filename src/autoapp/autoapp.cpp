@@ -37,6 +37,7 @@
 
 namespace aasdk = f1x::aasdk;
 namespace autoapp = f1x::openauto::autoapp;
+namespace cubeone = flx::openauto::autoapp::cubeone;
 using ThreadPool = std::vector<std::thread>;
 
 void startUSBWorkers(boost::asio::io_service& ioService, libusb_context* usbContext, ThreadPool& threadPool)
@@ -77,19 +78,27 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    carconnect::CarConnect carConnect;
     boost::asio::io_service ioService;
     boost::asio::io_service::work work(ioService);
     std::vector<std::thread> threadPool;
     startUSBWorkers(ioService, usbContext, threadPool);
     startIOServiceWorkers(ioService, threadPool);
 
+    carConnect->monitorCarConnect();
+
     QApplication qApplication(argc, argv);
     autoapp::ui::MainWindow mainWindow;
     mainWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
 
     auto configuration = std::make_shared<autoapp::configuration::Configuration>();
-    autoapp::ui::SettingsWindow settingsWindow(configuration);
+    auto carConnect = std::make_shared<cubeone::CarConnect>();
+
+    autoapp::ui::SettingsWindow settingsWindow(configuration, carConnect);
     settingsWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
+
+    autoapp::ui::MonitorWindow monitorWindow(configuration, carConnect);
+    monitorWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
 
     autoapp::configuration::RecentAddressesList recentAddressesList(7);
     recentAddressesList.read();
@@ -113,7 +122,8 @@ int main(int argc, char* argv[])
     aasdk::usb::USBWrapper usbWrapper(usbContext);
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
     aasdk::usb::AccessoryModeQueryChainFactory queryChainFactory(usbWrapper, ioService, queryFactory);
-    autoapp::service::ServiceFactory serviceFactory(ioService, configuration);
+
+    autoapp::service::ServiceFactory serviceFactory(ioService, configuration, carConnect);
     autoapp::service::AndroidAutoEntityFactory androidAutoEntityFactory(ioService, configuration, serviceFactory);
 
     auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, ioService, queryChainFactory));

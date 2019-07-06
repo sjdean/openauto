@@ -65,6 +65,18 @@ const std::string Configuration::cInputScrollWheelButtonKey = "Input.ScrollWheel
 const std::string Configuration::cInputBackButtonKey = "Input.BackButton";
 const std::string Configuration::cInputEnterButtonKey = "Input.EnterButton";
 
+// CubeOne Customisations
+const std::string Configuration::cRegistrationStatus = "CarConnect.RegistrationStatus";
+const std::string Configuration::cDayBrightness = "CarConnect.DayBrightness";
+const std::string Configuration::cNightBrighenss = "CarConnect.NightBrightness";
+const std::string Configuration::cCarKey = "CarConnect.Key";
+const std::string Configuration::cAuthCode = "CarConnect.AuthCode";
+const std::string Configuration::cFuelType = "CarConnect.FuelType";
+const std::string Configuration::cCarMake = "CarConnect.Make";
+const std::string Configuration::cCarModel = "CarConnect.Model";
+const std::string Configuration::cCarRegistrationNumber = "CarConnect.RegistrationNumber";
+
+
 Configuration::Configuration()
 {
     this->load();

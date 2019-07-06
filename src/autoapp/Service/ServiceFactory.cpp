@@ -49,9 +49,10 @@ namespace autoapp
 namespace service
 {
 
-ServiceFactory::ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration)
+ServiceFactory::ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration, cubeone::ICarConnect::Pointer carconnect)
     : ioService_(ioService)
-    , configuration_(std::move(configuration))
+    , configuration_(std::move(configuration)
+    , carconnect_(std::move(carconnect))
 {
 
 }
@@ -63,7 +64,7 @@ ServiceList ServiceFactory::create(aasdk::messenger::IMessenger::Pointer messeng
     projection::IAudioInput::Pointer audioInput(new projection::QtAudioInput(1, 16, 16000), std::bind(&QObject::deleteLater, std::placeholders::_1));
     serviceList.emplace_back(std::make_shared<AudioInputService>(ioService_, messenger, std::move(audioInput)));
     this->createAudioServices(serviceList, messenger);
-    serviceList.emplace_back(std::make_shared<SensorService>(ioService_, messenger));
+    serviceList.emplace_back(std::make_shared<SensorService>(ioService_, messenger, carconnect_));
     serviceList.emplace_back(this->createVideoService(messenger));
     serviceList.emplace_back(this->createBluetoothService(messenger));
     serviceList.emplace_back(this->createInputService(messenger));

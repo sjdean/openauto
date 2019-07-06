@@ -29,9 +29,10 @@ namespace autoapp
 namespace service
 {
 
-SensorService::SensorService(boost::asio::io_service& ioService, aasdk::messenger::IMessenger::Pointer messenger)
+SensorService::SensorService(boost::asio::io_service& ioService, aasdk::messenger::IMessenger::Pointer messenger, cubeone::ICarConnect::Pointer carconnect)
     : strand_(ioService)
-    , channel_(std::make_shared<aasdk::channel::sensor::SensorServiceChannel>(strand_, std::move(messenger)))
+    , channel_(std::make_shared<aasdk::channel::sensor::SensorServiceChannel>(strand_, std::move(messenger))
+    , carconnect_(std::move(carconnect)))
 {
 
 }
@@ -120,6 +121,8 @@ void SensorService::sendDrivingStatusUnrestricted()
 
 void SensorService::sendNightData()
 {
+    SharedItem* sharedItem = carconnect_->getSnapshot();
+    sharedItem->TelemetryItem->lights;
     aasdk::proto::messages::SensorEventIndication indication;
     indication.add_night_mode()->set_is_night(false);
 
