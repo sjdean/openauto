@@ -54,3 +54,16 @@ Copyrights (c) 2018 f1x.studio (Michal Szwaj)
 
 ### Remarks
 **This software is not certified by Google Inc. It is created for R&D purposes and may not work as expected by the original authors. Do not use while driving. You use this software at your own risk.**
+
+### CANBUS Extensions
+This Branch is a Work In Progress.
+
+A separate module to be provided shortly collects data over Ethernet UDP Broadcast and using a JSON file, will map the CANBUS data to car features - ie accelerator position, parking brake, steering wheel position, speed, rpm etc.
+
+These updates will allow be able to take a snapshot of the data for feeding information back to Android Auto and OpenAuto will be updated to allow registration of a car for reporting data into Firebase.
+
+Currently reporting of telemetry information into Firebase will be over a WiFi connection (ie HotSpot), but we should see if we can send the data to the phone and allow the phone to store and send the data itself as well as provide registration functions.
+
+Next steps for this project is to ensure that this compiles and OpenAuto can see the data. There are some issues with includes and not being ablt to get to the underlying properties, this could be my development environment or may be issues with the structure.
+
+Any help gloriously accepted.
