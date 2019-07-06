@@ -20,7 +20,7 @@ namespace f1x
                     void monitorCarConnect();
                     void stopCarConnect();
                     bool getStatus();
-                    SharedItem* getSnapshot();
+                    TelemetryItem getSnapshot();
 
                 private:
                     SharedItem* sharedItem;

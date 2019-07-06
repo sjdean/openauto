@@ -41,12 +41,12 @@ namespace f1x
                     delete journey_queue_update;
                 }
 
-                bool getStatus() {
+                bool CarConnect::getStatus() {
                     return isMonitoring;
                 }
 
-                SharedItem* getSnapshot() {
-                    return sharedItem;
+                TelemetryItem CarConnect::getSnapshot() {
+                    return sharedItem->snapshot;
                 }
 
                 void CarConnect::monitorCarConnect() {

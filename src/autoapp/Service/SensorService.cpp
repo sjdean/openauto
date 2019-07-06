@@ -121,10 +121,11 @@ void SensorService::sendDrivingStatusUnrestricted()
 
 void SensorService::sendNightData()
 {
-    SharedItem* sharedItem = carconnect_->getSnapshot();
-    sharedItem->TelemetryItem->lights;
+    TelemetryItem telemetry = carconnect_->getSnapshot();
+    bool lights = (telemetry->lights > 0);
+
     aasdk::proto::messages::SensorEventIndication indication;
-    indication.add_night_mode()->set_is_night(false);
+    indication.add_night_mode()->set_is_night(lights);
 
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {}, std::bind(&SensorService::onChannelError, this->shared_from_this(), std::placeholders::_1));
