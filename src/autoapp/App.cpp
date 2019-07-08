@@ -30,7 +30,7 @@ namespace autoapp
 {
 
 App::App(boost::asio::io_service& ioService, aasdk::usb::USBWrapper& usbWrapper, aasdk::tcp::ITCPWrapper& tcpWrapper, service::IAndroidAutoEntityFactory& androidAutoEntityFactory,
-         aasdk::usb::IUSBHub::Pointer usbHub, aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator, carconnect:carconnect& carConnect)
+         aasdk::usb::IUSBHub::Pointer usbHub, aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator, service::ICarConnect& carConnect)
     : ioService_(ioService)
     , usbWrapper_(usbWrapper)
     , tcpWrapper_(tcpWrapper)

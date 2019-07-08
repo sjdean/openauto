@@ -58,6 +58,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${RTAUDIO_INCLUDE_DIRS}
                     ${AASDK_PROTO_INCLUDE_DIRS}
                     ${AASDK_INCLUDE_DIRS}
+                    ${CUBEONE_CANBUS_INCLUDE_DIRS}
                     ${BCM_HOST_INCLUDE_DIRS}
                     ${ILCLIENT_INCLUDE_DIRS}
                     ${include_directory})
@@ -84,7 +85,8 @@ target_link_libraries(autoapp
                         ${WINSOCK2_LIBRARIES}
                         ${RTAUDIO_LIBRARIES}
                         ${AASDK_PROTO_LIBRARIES}
-                        ${AASDK_LIBRARIES})
+                        ${AASDK_LIBRARIES}
+                        ${CUBEONE_CANBUS_LIBRARIES})
 
 set(btservice_sources_directory ${sources_directory}/btservice)
 set(btservice_include_directory ${include_directory}/f1x/openauto/btservice)
@@ -97,4 +99,5 @@ target_link_libraries(btservice
                         ${Qt5Bluetooth_LIBRARIES}
                         ${Qt5MultimediaWidgets_LIBRARIES}
                         ${PROTOBUF_LIBRARIES}
-                        ${AASDK_PROTO_LIBRARIES})
+                        ${AASDK_PROTO_LIBRARIES}
+                        ${CUBEONE_CANBUS_LIBRARIES})

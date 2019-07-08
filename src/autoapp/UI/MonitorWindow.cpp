@@ -29,11 +29,11 @@ namespace f1x
             namespace ui
             {
 
-                MonitorWindow::MonitorWindow(configuration::IConfiguration::Pointer configuration, cubeone::ICarConnect::Pointer carconnect, QWidget *parent)
+                MonitorWindow::MonitorWindow(configuration::IConfiguration::Pointer configuration, service::ICarConnect::Pointer carconnect, QWidget *parent)
                         : QWidget(parent)
                         , ui_(new Ui::MonitorWindow)
                         , configuration_(std::move(configuration)
-                                , carconnect_(std::move(carconnect))
+                        , carconnect_(std::move(carconnect))
                 {
                     ui_->setupUi(this);
                 }

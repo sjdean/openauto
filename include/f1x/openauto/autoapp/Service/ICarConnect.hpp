@@ -1,7 +1,4 @@
-
 #pragma once
-
-#include <f1x/aasdk/IO/Promise.hpp>
 
 namespace f1x
 {
@@ -9,9 +6,8 @@ namespace f1x
     {
         namespace autoapp
         {
-            namespace cubeone
+            namespace service
             {
-
                 class ICarConnect
                 {
                 public:

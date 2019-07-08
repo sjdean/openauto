@@ -37,7 +37,6 @@
 
 namespace aasdk = f1x::aasdk;
 namespace autoapp = f1x::openauto::autoapp;
-namespace cubeone = flx::openauto::autoapp::cubeone;
 using ThreadPool = std::vector<std::thread>;
 
 void startUSBWorkers(boost::asio::io_service& ioService, libusb_context* usbContext, ThreadPool& threadPool)
@@ -78,7 +77,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    carconnect::CarConnect carConnect;
+    autoapp::service::CarConnect carConnect;
     boost::asio::io_service ioService;
     boost::asio::io_service::work work(ioService);
     std::vector<std::thread> threadPool;
@@ -92,7 +91,7 @@ int main(int argc, char* argv[])
     mainWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
 
     auto configuration = std::make_shared<autoapp::configuration::Configuration>();
-    auto carConnect = std::make_shared<cubeone::CarConnect>();
+    auto carConnect = std::make_shared<carconnect::CarConnect>();
 
     autoapp::ui::SettingsWindow settingsWindow(configuration, carConnect);
     settingsWindow.setWindowFlags(Qt::WindowStaysOnTopHint);

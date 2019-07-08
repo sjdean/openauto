@@ -29,11 +29,11 @@ namespace f1x
             namespace ui
             {
 
-                SettingsWindow::SettingsWindow(configuration::IConfiguration::Pointer configuration, cubeone::ICarConnect::Pointer carconnect, QWidget *parent)
+                SettingsWindow::SettingsWindow(configuration::IConfiguration::Pointer configuration, service::ICarConnect::Pointer carconnect, QWidget *parent)
                         : QWidget(parent)
                         , ui_(new Ui::SettingsWindow)
                         , configuration_(std::move(configuration)
-                                , carconnect_(std::move(carconnect))
+                        , carconnect_(std::move(carconnect))
                 {
                     ui_->setupUi(this);
                     connect(ui_->pushButtonCancel, &QPushButton::clicked, this, &SettingsWindow::close);

@@ -1,5 +1,5 @@
 #pragma once
-#include "SharedItem.hpp"
+#include <cubeone-canbus-receiver/include/canbus-diagnostics-receiver.h>
 
 namespace f1x
 {
@@ -7,7 +7,7 @@ namespace f1x
     {
         namespace autoapp
         {
-            namespace cubeone
+            namespace service
             {
 
                 class CarConnect:
