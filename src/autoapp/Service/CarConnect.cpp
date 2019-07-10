@@ -20,17 +20,33 @@ namespace f1x
 
                     {
                         //TODO: Add Remaining Parameters Here
-                        dayBrightness = configuration_->getDayBrightness();
-                        nightBrightness = configuration_->getNightBrightness();
+                        char *carId;
+                        int iDay;
+                        int iNight
+                        readOptions(&carId, &dayBrightness, &nightBrightness);
+
+                        this->dayBrightness = iDay;
+                        this->nightBrightness = iNight;
                         sharedItem = initialiseSharedItem();
                         isMonitoring = false;
-                        this->getCarConnectRegistrationStatus();
+                        this->getCarConnectRegistrationStatus(carId);
                     }
 
-                    void CarConnect::getCarConnectRegistrationStatus() {
-                        //TODO: Pass in Car Id
-                        if (checkRegistered()) {
-                            CarConnect::monitorCarConnect();
+                    void CarConnect::CheckCarRegistered(char *carId) {
+                        int status = checkRegistered(carId);
+                        switch (status) {
+                            case REGISTER_NOT_ADOPTED:
+                                this->isRegistered = true;
+                                this->isAdopted = false;
+                                break;
+                            case REGISTED_OK:
+                                this->isRegistered = true;
+                                this->isAdopted = true;
+                                break;
+                            default:
+                                this->isRegistered = false;
+                                this->isAdopted = false;
+                                break;
                         }
                     }
 

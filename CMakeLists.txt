@@ -99,5 +99,4 @@ target_link_libraries(btservice
                         ${Qt5Bluetooth_LIBRARIES}
                         ${Qt5MultimediaWidgets_LIBRARIES}
                         ${PROTOBUF_LIBRARIES}
-                        ${AASDK_PROTO_LIBRARIES}
-                        ${CUBEONE_CANBUS_LIBRARIES})
+                        ${AASDK_PROTO_LIBRARIES})

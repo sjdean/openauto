@@ -16,7 +16,7 @@ namespace f1x
                 {
                 public:
                     CarConnect(configuration::IConfiguration::Pointer configuration);
-                    void getCarConnectRegistrationStatus();
+                    void CheckCarRegistered(char *carId);
                     void monitorCarConnect();
                     void stopCarConnect();
                     bool getStatus();
@@ -27,6 +27,8 @@ namespace f1x
                     int32_t dayBrightness;
                     int32_t nightBrightness;
                     bool isMonitoring;
+                    bool isRegistered;
+                    bool isAdopted;
                     configuration::IConfiguration::Pointer configuration_;
 
                     std::thread gps_listen;
