@@ -2,14 +2,6 @@
 <ui version="4.0">
  <class>SettingsWindow</class>
  <widget class="QWidget" name="SettingsWindow">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>800</width>
-    <height>480</height>
-   </rect>
-  </property>
   <property name="minimumSize">
    <size>
     <width>800</width>
