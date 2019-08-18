@@ -128,6 +128,17 @@ private:
     static const std::string cInputScrollWheelButtonKey;
     static const std::string cInputBackButtonKey;
     static const std::string cInputEnterButtonKey;
+
+    // CubeOne Customisations
+    static const std::string cRegistrationStatus;
+    static const std::string cDayBrightness;
+    static const std::string cNightBrighenss;
+    static const std::string cCarKey;
+    static const std::string cAuthCode;
+    static const std::string cFuelType;
+    static const std::string cCarMake ;
+    static const std::string cCarModel;
+    static const std::string cCarRegistrationNumber
 };
 
 }
