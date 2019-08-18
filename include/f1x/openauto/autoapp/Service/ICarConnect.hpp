@@ -12,6 +12,7 @@ namespace f1x
                 {
                 public:
                     typedef std::shared_ptr<ICarConnect> Pointer;
+                    virtual ~ICarConnect() = default;
                 };
 
             }

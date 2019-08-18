@@ -16,6 +16,7 @@ namespace f1x
                 {
                 public:
                     CarConnect(configuration::IConfiguration::Pointer configuration);
+                    ~CarConnect() override;
                     void CheckCarRegistered(char *carId);
                     void monitorCarConnect();
                     void stopCarConnect();
