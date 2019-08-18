@@ -11,8 +11,7 @@ namespace f1x
             {
 
                 class CarConnect:
-                        public ICarConnect,
-                        public std::enable_shared_from_this<CarConnect>
+                        public ICarConnect, public std::enable_shared_from_this<CarConnect>
                 {
                 public:
                     CarConnect(configuration::IConfiguration::Pointer configuration);
@@ -24,6 +23,7 @@ namespace f1x
                     TelemetryItem getSnapshot();
 
                 private:
+			using std::enable_shared_from_this<CarConnect>::shared_from_this;
                     SharedItem* sharedItem;
                     int32_t dayBrightness;
                     int32_t nightBrightness;
