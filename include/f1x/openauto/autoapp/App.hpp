@@ -62,6 +62,7 @@ private:
     aasdk::usb::IUSBHub::Pointer usbHub_;
     aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator_;
     service::IAndroidAutoEntity::Pointer androidAutoEntity_;
+    service::ICarConnect::Pointer carConnect_;
     bool isStopped_;
 };
 
