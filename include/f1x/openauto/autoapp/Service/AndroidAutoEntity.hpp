@@ -37,7 +37,10 @@ namespace autoapp
 namespace service
 {
 
-class AndroidAutoEntity: public IAndroidAutoEntity, public aasdk::channel::control::IControlServiceChannelEventHandler, public std::enable_shared_from_this<AndroidAutoEntity>
+class AndroidAutoEntity:
+        public IAndroidAutoEntity,
+        public aasdk::channel::control::IControlServiceChannelEventHandler,
+        public std::enable_shared_from_this<AndroidAutoEntity>
 {
 public:
     AndroidAutoEntity(boost::asio::io_service& ioService,

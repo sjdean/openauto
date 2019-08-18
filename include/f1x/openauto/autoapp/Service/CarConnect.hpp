@@ -11,8 +11,8 @@ namespace f1x
             {
 
                 class CarConnect:
-                        public IPinger,
-                        public std::enable_shared_from_this<Pinger>
+                        public ICarConnect,
+                        public std::enable_shared_from_this<CarConnect>
                 {
                 public:
                     CarConnect(configuration::IConfiguration::Pointer configuration);
