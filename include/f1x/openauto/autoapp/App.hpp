@@ -25,6 +25,7 @@
 #include <f1x/aasdk/TCP/ITCPEndpoint.hpp>
 #include <f1x/openauto/autoapp/Service/IAndroidAutoEntityEventHandler.hpp>
 #include <f1x/openauto/autoapp/Service/IAndroidAutoEntityFactory.hpp>
+#include <f1x/openauto/autoapp/Service/ICarConnect.hpp>
 
 namespace f1x
 {

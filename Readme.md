@@ -52,9 +52,6 @@ Copyrights (c) 2018 f1x.studio (Michal Szwaj)
  - Broadcom ilclient from RaspberryPI 3 firmware
  - OpenMAX IL API
 
-### Remarks
-**This software is not certified by Google Inc. It is created for R&D purposes and may not work as expected by the original authors. Do not use while driving. You use this software at your own risk.**
-
 ### CANBUS Extensions
 This Branch is a Work In Progress.
 
@@ -67,3 +64,7 @@ Currently reporting of telemetry information into Firebase will be over a WiFi c
 Next steps for this project is to ensure that this compiles and OpenAuto can see the data. There are some issues with includes and not being ablt to get to the underlying properties, this could be my development environment or may be issues with the structure.
 
 Any help gloriously accepted.
+
+### Remarks
+**This software is not certified by Google Inc. It is created for R&D purposes and may not work as expected by the original authors. Do not use while driving. You use this software at your own risk.**
+
