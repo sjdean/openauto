@@ -1,5 +1,7 @@
 #pragma once
-#include <cubeone-canbus-receiver/include/canbus-diagnostics-receiver.h>
+#include <../cubeone.canbus.receiver/include/main.h>
+#include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
+#include <f1x/openauto/autoapp/Service/ICarConnect.hpp>
 
 namespace f1x
 {
@@ -10,8 +12,7 @@ namespace f1x
             namespace service
             {
 
-                class CarConnect:
-                        public ICarConnect, public std::enable_shared_from_this<CarConnect>
+                class CarConnect: public ICarConnect, public std::enable_shared_from_this<CarConnect>
                 {
                 public:
                     CarConnect(configuration::IConfiguration::Pointer configuration);

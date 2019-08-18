@@ -138,7 +138,7 @@ private:
     static const std::string cFuelType;
     static const std::string cCarMake ;
     static const std::string cCarModel;
-    static const std::string cCarRegistrationNumber
+    static const std::string cCarRegistrationNumber;
 };
 
 }
