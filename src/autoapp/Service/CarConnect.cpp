@@ -1,11 +1,8 @@
 
 #include <thread>
 #include <f1x/openauto/autoapp/Service/CarConnect.hpp>
-#include <../cubeone.canbus.receiver/include/main.h>
 
 //TODO: Include our C stuff here
-namespace f1x
-{
     namespace f1x
     {
         namespace openauto
@@ -21,31 +18,31 @@ namespace f1x
                     {
                         //TODO: Add Remaining Parameters Here
                         char *carId;
-                        int iDay;
-                        int iNight
+                        int iDay = 0;
+                        int iNight = 0;
                         readOptions(&carId, &dayBrightness, &nightBrightness);
 
-                        this->dayBrightness = iDay;
-                        this->nightBrightness = iNight;
+                        dayBrightness = iDay;
+                        nightBrightness = iNight;
                         sharedItem = initialiseSharedItem();
                         isMonitoring = false;
-                        this->getCarConnectRegistrationStatus(carId);
+                        getCarConnectRegistrationStatus(carId);
                     }
 
                     void CarConnect::CheckCarRegistered(char *carId) {
                         int status = checkRegistered(carId);
                         switch (status) {
                             case REGISTER_NOT_ADOPTED:
-                                this->isRegistered = true;
-                                this->isAdopted = false;
+                                isRegistered = true;
+                                isAdopted = false;
                                 break;
                             case REGISTED_OK:
-                                this->isRegistered = true;
-                                this->isAdopted = true;
+                                isRegistered = true;
+                                isAdopted = true;
                                 break;
                             default:
-                                this->isRegistered = false;
-                                this->isAdopted = false;
+                                isRegistered = false;
+                                isAdopted = false;
                                 break;
                         }
                     }
@@ -74,15 +71,14 @@ namespace f1x
 
                         isMonitoring = true;
 
-                        gps_listen = new thread(gpsListener, (void *) sharedItem&));
-                        udp_listen = new thread(udpListener, (void *) sharedItem&, 8888));
-                        gps_log = new thread(gpsLogger, (void *) sharedItem&));
-                        journey_monitor = new thread(journeyMonitor, (void *) sharedItem&);
-                        journey_queue = new thread(journeyQueue, (void *) sharedItem&));
-                        journey_queue_update = new thread(journeyQueueUpdate, (void *) sharedItem&));
+                        gps_listen = new std::thread(gpsListener, (void *) sharedItem&));
+                        udp_listen = new std::thread(udpListener, (void *) sharedItem&, 8888));
+                        gps_log = new std::thread(gpsLogger, (void *) sharedItem&));
+                        journey_monitor = new std::thread(journeyMonitor, (void *) sharedItem&);
+                        journey_queue = new std::thread(journeyQueue, (void *) sharedItem&));
+                        journey_queue_update = new std::thread(journeyQueueUpdate, (void *) sharedItem&));
                     }
                 }
             }
         }
     }
-}
