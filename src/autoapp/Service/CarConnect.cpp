@@ -24,9 +24,9 @@
 
                         dayBrightness = iDay;
                         nightBrightness = iNight;
-                        sharedItem = initialiseSharedItem();
+			sharedItem = initialiseSharedItem(carId, dayBrightness, nightBrightness);
                         isMonitoring = false;
-                        getCarConnectRegistrationStatus(carId);
+                        CheckCarRegistered(carId);
                     }
 
                     void CarConnect::CheckCarRegistered(char *carId) {
@@ -36,7 +36,7 @@
                                 isRegistered = true;
                                 isAdopted = false;
                                 break;
-                            case REGISTED_OK:
+                            case REGISTER_OK:
                                 isRegistered = true;
                                 isAdopted = true;
                                 break;
@@ -49,12 +49,12 @@
 
                     void CarConnect::stopCarConnect() {
                         isMonitoring = false;
-                        delete gps_listen;
-                        delete udp_listen;
-                        delete gps_log;
-                        delete journey_monitor;
-                        delete journey_queue;
-                        delete journey_queue_update;
+                        gps_listen.detach();
+                        udp_listen.detach();
+                        gps_log.detach();
+                        journey_monitor.detach();
+                        journey_queue.detach();
+                        journey_queue_update.detach();
                     }
 
                     bool CarConnect::getStatus() {
@@ -62,7 +62,7 @@
                     }
 
                     TelemetryItem CarConnect::getSnapshot() {
-                        return sharedItem->snapshot;
+                        return sharedItem.snapshot;
                     }
 
                     void CarConnect::monitorCarConnect() {
@@ -70,13 +70,13 @@
                         // We will take a nominal peek at data (eg speed, fuel, lights, day or night and report back)
 
                         isMonitoring = true;
+                        std::thread gps_listen(gpsListener, std::cref(sharedItem));
+ //                       std::thread udp_listen(udpListener, std::ref(sharedItem), 8888);
+  //                      std::thread gps_log(gpsLogger, sharedItem);
+   //                     std::thread journey_monitor(journeyMonitor, sharedItem);
+    //                    std::thread journey_queue(journeyQueue, sharedItem);
+     //                   std::thread journey_queue_update(journeyQueueUpdate, sharedItem);
 
-                        gps_listen = new std::thread(gpsListener, (void *) sharedItem&));
-                        udp_listen = new std::thread(udpListener, (void *) sharedItem&, 8888));
-                        gps_log = new std::thread(gpsLogger, (void *) sharedItem&));
-                        journey_monitor = new std::thread(journeyMonitor, (void *) sharedItem&);
-                        journey_queue = new std::thread(journeyQueue, (void *) sharedItem&));
-                        journey_queue_update = new std::thread(journeyQueueUpdate, (void *) sharedItem&));
                     }
                 }
             }

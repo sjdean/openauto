@@ -46,6 +46,9 @@ if(RPI3_BUILD)
     set(ILCLIENT_LIBRARIES "/opt/vc/src/hello_pi/libs/ilclient/libilclient.a;/opt/vc/lib/libvcos.so;/opt/vc/lib/libvcilcs.a;/opt/vc/lib/libvchiq_arm.so")
 endif(RPI3_BUILD)
 
+set(INCLUDE_DBUS "/usr/include/dbus-1.0")
+set(INCLUDE_DBUS_GNU "/usr/lib/x86_64-linux-gnu/dbus-1.0/include")
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${Qt5Multimedia_INCLUDE_DIRS}
                     ${Qt5MultimediaWidgets_INCLUDE_DIRS}
@@ -58,6 +61,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${RTAUDIO_INCLUDE_DIRS}
                     ${AASDK_PROTO_INCLUDE_DIRS}
                     ${AASDK_INCLUDE_DIRS}
+                    ${INCLUDE_DBUS}
+                    ${INCLUDE_DBUS_GNU}
                     ${CUBEONE_CANBUS_INCLUDE_DIRS}
                     ${BCM_HOST_INCLUDE_DIRS}
                     ${ILCLIENT_INCLUDE_DIRS}

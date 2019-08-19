@@ -26,7 +26,7 @@ namespace f1x
 
                 private:
 			using std::enable_shared_from_this<CarConnect>::shared_from_this;
-                    SharedItem* sharedItem;
+                    SharedItem sharedItem;
                     int32_t dayBrightness;
                     int32_t nightBrightness;
                     bool isMonitoring;
