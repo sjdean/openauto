@@ -121,7 +121,7 @@ void SensorService::sendDrivingStatusUnrestricted()
 
 void SensorService::sendNightData()
 {
-    TelemetryItem telemetry = carconnect_.getSnapshot();
+    TelemetryItem telemetry = carconnect_->getSnapshot();
     bool lights = (telemetry.lights > 0);
 
     aasdk::proto::messages::SensorEventIndication indication;
