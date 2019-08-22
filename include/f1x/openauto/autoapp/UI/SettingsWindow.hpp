@@ -21,6 +21,7 @@
 #include <memory>
 #include <QWidget>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
+#include <f1x/openauto/autoapp/Service/ICarConnect.hpp>
 
 class QCheckBox;
 
@@ -42,7 +43,7 @@ class SettingsWindow : public QWidget
 {
     Q_OBJECT
 public:
-    explicit SettingsWindow(configuration::IConfiguration::Pointer configuration, QWidget *parent = nullptr);
+    explicit SettingsWindow(configuration::IConfiguration::Pointer configuration, service::ICarConnect::Pointer carconnect, QWidget *parent = nullptr);
     ~SettingsWindow() override;
 
 private slots:
@@ -50,6 +51,8 @@ private slots:
     void onResetToDefaults();
     void onUpdateScreenDPI(int value);
     void onShowBindings();
+    void CarConnectSave();
+    void CarConnectRegister();
 
 private:
     void showEvent(QShowEvent* event);
@@ -61,6 +64,7 @@ private:
 
     Ui::SettingsWindow* ui_;
     configuration::IConfiguration::Pointer configuration_;
+    service::ICarConnect::Pointer carconnect_;
 };
 
 }

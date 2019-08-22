@@ -18,6 +18,7 @@
 
 #include <QMessageBox>
 #include <f1x/openauto/autoapp/UI/SettingsWindow.hpp>
+#include <f1x/openauto/autoapp/Service/ICarConnect.hpp>
 #include "ui_settingswindow.h"
 
 namespace f1x
@@ -32,7 +33,7 @@ namespace f1x
                 SettingsWindow::SettingsWindow(configuration::IConfiguration::Pointer configuration, service::ICarConnect::Pointer carconnect, QWidget *parent)
                         : QWidget(parent)
                         , ui_(new Ui::SettingsWindow)
-                        , configuration_(std::move(configuration)
+                        , configuration_(std::move(configuration))
                         , carconnect_(std::move(carconnect))
                 {
                     ui_->setupUi(this);
@@ -44,7 +45,7 @@ namespace f1x
                     connect(ui_->radioButtonUseLocalBluetoothAdapter, &QRadioButton::clicked, [&]() { ui_->lineEditExternalBluetoothAdapterAddress->setEnabled(false); });
                     connect(ui_->pushButtonClearSelection, &QPushButton::clicked, std::bind(&SettingsWindow::setButtonCheckBoxes, this, false));
                     connect(ui_->pushButtonSelectAll, &QPushButton::clicked, std::bind(&SettingsWindow::setButtonCheckBoxes, this, true));
-                    connect(ui_->pushButtonResetToDefaults, &QPushButton::clicked, this, &SettingsWindow::onResetToDefaults);
+                    connect(ui_->pushButtonRe3setToDefaults, &QPushButton::clicked, this, &SettingsWindow::onResetToDefaults);
                     connect(ui_->pushButtonShowBindings, &QPushButton::clicked, this, &SettingsWindow::onShowBindings);
                     connect(ui_->pushButtonCarConnectRegister, &QPushButton::clicked, this, &SettingsWindow::CarConnectRegister);
                     connect(ui_->pushButtonCarConnectSave, &QPushButton::clicked, this, &SettingsWindow::CarConnectSave);
@@ -271,7 +272,6 @@ namespace f1x
                     confirmationMessage.setWindowFlags(Qt::WindowStaysOnTopHint);
                     confirmationMessage.exec();
                 }
-
             }
         }
     }

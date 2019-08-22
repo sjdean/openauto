@@ -16,10 +16,19 @@
 *  along with openauto. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <QMessageBox>
-#include <f1x/openauto/autoapp/UI/MonitorWindow.hpp>
+#pragma once
+
+#include <memory>
+#include <QWidget>
+#include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 #include <f1x/openauto/autoapp/Service/ICarConnect.hpp>
-#include "ui_monitorwindow.h"
+
+class QCheckBox;
+
+namespace Ui
+{
+    class MonitorWindow
+}
 
 namespace f1x
 {
@@ -29,25 +38,23 @@ namespace f1x
         {
             namespace ui
             {
-
-                MonitorWindow::MonitorWindow(configuration::IConfiguration::Pointer configuration, service::ICarConnect::Pointer carconnect, QWidget *parent)
-                        : QWidget(parent)
-                        , ui_(new Ui::MonitorWindow)
-                        , configuration_(std::move(configuration)
-                        , carconnect_(std::move(carconnect))
+                class MonitorWindow : public QWidget
                 {
-                    ui_->setupUi(this);
-                }
+                Q_OBJECT
+                public:
+                    explicit MonitorWindow(configuration::IConfiguration::Pointer configuration, service::ICarConnect::Pointer carconnect, QWidget *parent = nullptr);
+                    ~MonitorWindow() override;
 
-                MonitorWindow::~MonitorWindow()
-                {
-                    delete ui_;
-                }
+                private slots:
+                    void onRefresh();
 
-                void MonitorWindow::onRefresh()
-                {
+                private:
 
-                }
+
+                    Ui::MonitorWindow* ui_;
+                    configuration::IConfiguration::Pointer configuration_;
+                    service::ICarConnect::Pointer carconnect_;
+                };
             }
         }
     }
