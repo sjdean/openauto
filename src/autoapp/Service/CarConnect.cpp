@@ -1,3 +1,4 @@
+
 #include <thread>
 #include <f1x/openauto/autoapp/Service/CarConnect.hpp>
 
@@ -69,8 +70,9 @@
                         // We will take a nominal peek at data (eg speed, fuel, lights, day or night and report back)
 
                         isMonitoring = true;
+
                         pthread_t glit;
-                        pthread_create(&glit, NULL, gpsListener, (void *) &shared);
+                        pthread_create(&glit, NULL, gpsListener, (void *) &sharedItem);
 
  //                       std::thread udp_listen(udpListener, std::ref(sharedItem), 8888);
   //                      std::thread gps_log(gpsLogger, sharedItem);
