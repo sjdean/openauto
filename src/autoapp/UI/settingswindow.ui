@@ -954,7 +954,7 @@ color: rgb(238, 238, 236);</string>
     <attribute name="title">
      <string>CarConnect</string>
     </attribute>
-    <widget class="QPushButton" name="pushButtonCarConnectRegister">
+    <widget class="QPushButton" name="pushButtonCarConnectSave">
      <property name="geometry">
       <rect>
        <x>10</x>

@@ -45,9 +45,9 @@ namespace f1x
                     connect(ui_->radioButtonUseLocalBluetoothAdapter, &QRadioButton::clicked, [&]() { ui_->lineEditExternalBluetoothAdapterAddress->setEnabled(false); });
                     connect(ui_->pushButtonClearSelection, &QPushButton::clicked, std::bind(&SettingsWindow::setButtonCheckBoxes, this, false));
                     connect(ui_->pushButtonSelectAll, &QPushButton::clicked, std::bind(&SettingsWindow::setButtonCheckBoxes, this, true));
-                    connect(ui_->pushButtonRe3setToDefaults, &QPushButton::clicked, this, &SettingsWindow::onResetToDefaults);
+                    connect(ui_->pushButtonResetToDefaults, &QPushButton::clicked, this, &SettingsWindow::onResetToDefaults);
                     connect(ui_->pushButtonShowBindings, &QPushButton::clicked, this, &SettingsWindow::onShowBindings);
-                    connect(ui_->pushButtonCarConnectRegister, &QPushButton::clicked, this, &SettingsWindow::CarConnectRegister);
+//                    connect(ui_->pushButtonCarConnectRegister, &QPushButton::clicked, this, &SettingsWindow::CarConnectRegister);
                     connect(ui_->pushButtonCarConnectSave, &QPushButton::clicked, this, &SettingsWindow::CarConnectSave);
                 }
 

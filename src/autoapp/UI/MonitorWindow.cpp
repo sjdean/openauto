@@ -36,7 +36,7 @@ namespace f1x
                         , configuration_(std::move(configuration))
                         , carconnect_(std::move(carconnect))
                 {
-                    ui_->setupUi(this);
+                    //ui_->setupUi(this);
                 }
 
                 MonitorWindow::~MonitorWindow()

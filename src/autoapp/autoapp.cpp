@@ -29,9 +29,11 @@
 #include <f1x/openauto/autoapp/Configuration/RecentAddressesList.hpp>
 #include <f1x/openauto/autoapp/Service/AndroidAutoEntityFactory.hpp>
 #include <f1x/openauto/autoapp/Service/ServiceFactory.hpp>
+#include <f1x/openauto/autoapp/Service/CarConnect.hpp>
 #include <f1x/openauto/autoapp/Configuration/Configuration.hpp>
 #include <f1x/openauto/autoapp/UI/MainWindow.hpp>
 #include <f1x/openauto/autoapp/UI/SettingsWindow.hpp>
+#include <f1x/openauto/autoapp/UI/MonitorWindow.hpp>
 #include <f1x/openauto/autoapp/UI/ConnectDialog.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
@@ -77,21 +79,19 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    autoapp::service::CarConnect carConnect;
     boost::asio::io_service ioService;
     boost::asio::io_service::work work(ioService);
     std::vector<std::thread> threadPool;
     startUSBWorkers(ioService, usbContext, threadPool);
     startIOServiceWorkers(ioService, threadPool);
 
-    carConnect->monitorCarConnect();
-
     QApplication qApplication(argc, argv);
     autoapp::ui::MainWindow mainWindow;
     mainWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
 
     auto configuration = std::make_shared<autoapp::configuration::Configuration>();
-    auto carConnect = std::make_shared<carconnect::CarConnect>();
+    auto carConnect = std::make_shared<autoapp::service::CarConnect>(configuration);
+	carConnect->monitorCarConnect();
 
     autoapp::ui::SettingsWindow settingsWindow(configuration, carConnect);
     settingsWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
 
     auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, ioService, queryChainFactory));
     auto connectedAccessoriesEnumerator(std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));
-    auto app = std::make_shared<autoapp::App>(ioService, usbWrapper, tcpWrapper, androidAutoEntityFactory, std::move(usbHub), std::move(connectedAccessoriesEnumerator));
+    auto app = std::make_shared<autoapp::App>(ioService, usbWrapper, tcpWrapper, androidAutoEntityFactory, std::move(usbHub), std::move(connectedAccessoriesEnumerator), std::move(carConnect));
 
     QObject::connect(&connectDialog, &autoapp::ui::ConnectDialog::connectionSucceed, [&app](auto socket) {
         app->start(std::move(socket));
