@@ -70,7 +70,10 @@
                         // We will take a nominal peek at data (eg speed, fuel, lights, day or night and report back)
 
                         isMonitoring = true;
-                        std::thread gps_listen(gpsListener, std::cref(sharedItem));
+
+                        pthread_t glit;
+                        pthread_create(&glit, NULL, gpsListener, (void *) &sharedItem);
+
  //                       std::thread udp_listen(udpListener, std::ref(sharedItem), 8888);
   //                      std::thread gps_log(gpsLogger, sharedItem);
    //                     std::thread journey_monitor(journeyMonitor, sharedItem);
