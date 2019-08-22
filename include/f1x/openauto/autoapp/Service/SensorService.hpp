@@ -20,7 +20,7 @@
 
 #include <f1x/aasdk/Channel/Sensor/SensorServiceChannel.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
-#include <f1x/openauto/autoapp/cubeone/icarconnect.hpp>
+#include <f1x/openauto/autoapp/Service/ICarConnect.hpp>
 
 namespace f1x
 {
@@ -34,7 +34,7 @@ namespace service
 class SensorService: public aasdk::channel::sensor::ISensorServiceChannelEventHandler, public IService, public std::enable_shared_from_this<SensorService>
 {
 public:
-    SensorService(boost::asio::io_service& ioService, aasdk::messenger::IMessenger::Pointer messenger, cubeone::ICarConnect::Pointer carconnect);
+    SensorService(boost::asio::io_service& ioService, aasdk::messenger::IMessenger::Pointer messenger, ICarConnect::Pointer carconnect);
 
     void start() override;
     void stop() override;
@@ -50,6 +50,7 @@ private:
 
     boost::asio::io_service::strand strand_;
     aasdk::channel::sensor::SensorServiceChannel::Pointer channel_;
+	ICarConnect::Pointer carconnect_;
 };
 
 }

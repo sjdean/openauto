@@ -24,7 +24,7 @@
 
                         dayBrightness = iDay;
                         nightBrightness = iNight;
-                        sharedItem = initialiseSharedItem(carId, dayBrightness, nightBrightness);
+			sharedItem = initialiseSharedItem(carId, dayBrightness, nightBrightness);
                         isMonitoring = false;
                         CheckCarRegistered(carId);
                     }
@@ -36,7 +36,7 @@
                                 isRegistered = true;
                                 isAdopted = false;
                                 break;
-                            case REGISTERED_OK:
+                            case REGISTER_OK:
                                 isRegistered = true;
                                 isAdopted = true;
                                 break;
@@ -70,12 +70,13 @@
                         // We will take a nominal peek at data (eg speed, fuel, lights, day or night and report back)
 
                         isMonitoring = true;
-                        std::thread gps_listen(gpsListener, std::ref(sharedItem));
-                        std::thread udp_listen(udpListener, std::ref(sharedItem), 8888);
-                        std::thread gps_log(gpsLogger, std::ref(sharedItem));
-                        std::thread journey_monitor(journeyMonitor, std::ref(sharedItem));
-                        std::thread journey_queue(journeyQueue, std::ref(sharedItem));
-                        std::thread journey_queue_update(journeyQueueUpdate, std::ref(sharedItem));
+                        std::thread gps_listen(gpsListener, std::cref(sharedItem));
+ //                       std::thread udp_listen(udpListener, std::ref(sharedItem), 8888);
+  //                      std::thread gps_log(gpsLogger, sharedItem);
+   //                     std::thread journey_monitor(journeyMonitor, sharedItem);
+    //                    std::thread journey_queue(journeyQueue, sharedItem);
+     //                   std::thread journey_queue_update(journeyQueueUpdate, sharedItem);
+
                     }
                 }
             }
