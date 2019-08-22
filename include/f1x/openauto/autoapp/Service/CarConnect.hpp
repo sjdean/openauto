@@ -13,20 +13,18 @@ namespace f1x
         {
             namespace service
             {
-
                 class CarConnect: public ICarConnect, public std::enable_shared_from_this<CarConnect>
                 {
                 public:
                     CarConnect(configuration::IConfiguration::Pointer configuration);
-                    ~CarConnect() override;
-                    void CheckCarRegistered(char *carId);
-                    void monitorCarConnect();
-                    void stopCarConnect();
-                    bool getStatus();
-                    TelemetryItem getSnapshot();
+                    void CheckCarRegistered(char *carId) override;
+                    void monitorCarConnect() override;
+                    void stopCarConnect() override;
+                    bool getStatus() override;
+                    TelemetryItem getSnapshot() override;
 
                 private:
-			using std::enable_shared_from_this<CarConnect>::shared_from_this;
+                    using std::enable_shared_from_this<CarConnect>::shared_from_this;
                     SharedItem sharedItem;
                     int32_t dayBrightness;
                     int32_t nightBrightness;

@@ -34,7 +34,7 @@ namespace service
 class SensorService: public aasdk::channel::sensor::ISensorServiceChannelEventHandler, public IService, public std::enable_shared_from_this<SensorService>
 {
 public:
-    SensorService(boost::asio::io_service& ioService, aasdk::messenger::IMessenger::Pointer messenger, ICarConnect::Pointer carconnect);
+    SensorService(boost::asio::io_service& ioService, aasdk::messenger::IMessenger::Pointer messenger, service::ICarConnect::Pointer carconnect);
 
     void start() override;
     void stop() override;
