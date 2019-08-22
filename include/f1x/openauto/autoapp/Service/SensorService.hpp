@@ -17,7 +17,7 @@
 */
 
 #pragma once
-
+#include<memory>
 #include <f1x/aasdk/Channel/Sensor/SensorServiceChannel.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
 #include <f1x/openauto/autoapp/Service/ICarConnect.hpp>

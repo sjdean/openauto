@@ -1,4 +1,5 @@
 #pragma once
+#include<memory>
 #include <../cubeone.canbus.receiver/include/main.h>
 #include <../cubeone.canbus.receiver/include/receiver/receiver.h>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
