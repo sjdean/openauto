@@ -27,7 +27,7 @@ class QCheckBox;
 
 namespace Ui
 {
-    class MonitorWindow
+    class MonitorWindow;
 }
 
 namespace f1x

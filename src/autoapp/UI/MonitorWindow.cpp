@@ -33,7 +33,7 @@ namespace f1x
                 MonitorWindow::MonitorWindow(configuration::IConfiguration::Pointer configuration, service::ICarConnect::Pointer carconnect, QWidget *parent)
                         : QWidget(parent)
                         , ui_(new Ui::MonitorWindow)
-                        , configuration_(std::move(configuration)
+                        , configuration_(std::move(configuration))
                         , carconnect_(std::move(carconnect))
                 {
                     ui_->setupUi(this);
