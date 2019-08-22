@@ -51,7 +51,7 @@ namespace service
 
 ServiceFactory::ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration, service::ICarConnect::Pointer carconnect)
     : ioService_(ioService)
-    , configuration_(std::move(configuration)
+    , configuration_(std::move(configuration))
     , carconnect_(std::move(carconnect))
 {
 
