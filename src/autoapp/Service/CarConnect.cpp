@@ -2,8 +2,8 @@
 #include <thread>
 #include <f1x/openauto/autoapp/Service/CarConnect.hpp>
 #include <../cubeone.canbus.receiver/include/receiver/receiver.h>
+#include <uk/co/cubeone/service/Car/Car.h>
 
-//TODO: Include our C stuff here
     namespace f1x
     {
         namespace openauto
