@@ -51,8 +51,6 @@ private slots:
     void onResetToDefaults();
     void onUpdateScreenDPI(int value);
     void onShowBindings();
-    void CarConnectSave();
-    void CarConnectRegister();
 
 private:
     void showEvent(QShowEvent* event);
@@ -61,6 +59,8 @@ private:
     void saveButtonCheckBoxes();
     void saveButtonCheckBox(const QCheckBox* checkBox, configuration::IConfiguration::ButtonCodes& buttonCodes, aasdk::proto::enums::ButtonCode::Enum buttonCode);
     void setButtonCheckBoxes(bool value);
+    void CarConnectSave();
+    void CarConnectRegister();
 
     Ui::SettingsWindow* ui_;
     configuration::IConfiguration::Pointer configuration_;

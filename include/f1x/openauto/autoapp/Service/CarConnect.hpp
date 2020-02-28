@@ -1,9 +1,8 @@
 #pragma once
 #include<memory>
-#include <../cubeone.canbus.receiver/include/main.h>
-#include <../cubeone.canbus.receiver/include/receiver/receiver.h>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 #include <f1x/openauto/autoapp/Service/ICarConnect.hpp>
+#include <uk/co/cubeone/canbus-receiver/definitions/Definitions.h>
 
 namespace f1x
 {
@@ -17,20 +16,10 @@ namespace f1x
                 {
                 public:
                     CarConnect(configuration::IConfiguration::Pointer configuration);
-                    void CheckCarRegistered(char *carId) override;
-                    void monitorCarConnect() override;
-                    void stopCarConnect() override;
-                    bool getStatus() override;
-                    TelemetryItem getSnapshot() override;
+                    uk::co::cubeone::definitions::TelemetryItem getSnapshot() override;
 
                 private:
                     using std::enable_shared_from_this<CarConnect>::shared_from_this;
-                    SharedItem sharedItem;
-                    int32_t dayBrightness;
-                    int32_t nightBrightness;
-                    bool isMonitoring;
-                    bool isRegistered;
-                    bool isAdopted;
                     configuration::IConfiguration::Pointer configuration_;
 
                     std::thread gps_listen;

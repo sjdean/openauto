@@ -80,6 +80,25 @@ public:
     virtual void setSpeechAudioChannelEnabled(bool value) = 0;
     virtual AudioOutputBackendType getAudioOutputBackendType() const = 0;
     virtual void setAudioOutputBackendType(AudioOutputBackendType value) = 0;
+
+    // CubeOne Extensions
+    virtual void setCarRegistrationStatus(int32_t value) = 0;
+    virtual int32_t getCarRegistrationStatus() const = 0;
+    virtual void setCarRegistrationNumber(std::string value) = 0;
+    virtual std::string getCarRegistrationNumber() const = 0;
+    virtual void setCarModel(std::string value) = 0;
+    virtual std::string getCarModel() const = 0;
+    virtual void setCarMake(std::string value) = 0;
+    virtual std::string getCarMake() const = 0;
+    virtual void setCarKey(std::string value) = 0;
+    virtual std::string getCarKey() const = 0;
+    virtual void setAuthCode(std::string value) = 0;
+    virtual std::string getCarAuthCode() const = 0;
+    virtual void setDayBrightness(int32_t value) = 0;
+    virtual int32_t getDayBrightness() const = 0;
+    virtual void setNightBrightness(int32_t value) = 0;
+    virtual int32_t getNightBrightness() const = 0;
+
 };
 
 }

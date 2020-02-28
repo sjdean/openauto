@@ -19,6 +19,7 @@
 #include <aasdk_proto/DrivingStatusEnum.pb.h>
 #include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/SensorService.hpp>
+#include <uk/co/cubeone/canbus-receiver/definitions/Definitions.h>
 
 namespace f1x
 {
@@ -121,7 +122,7 @@ void SensorService::sendDrivingStatusUnrestricted()
 
 void SensorService::sendNightData()
 {
-    TelemetryItem telemetry = carconnect_->getSnapshot();
+    uk::co::cubeone::definitions::TelemetryItem telemetry = carconnect_->getSnapshot();
     bool lights = (telemetry.lights > 0);
 
     aasdk::proto::messages::SensorEventIndication indication;

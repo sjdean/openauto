@@ -61,9 +61,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${RTAUDIO_INCLUDE_DIRS}
                     ${AASDK_PROTO_INCLUDE_DIRS}
                     ${AASDK_INCLUDE_DIRS}
+                    ${CUBEONE_CANBUS_INCLUDE_DIRS}
                     ${INCLUDE_DBUS}
                     ${INCLUDE_DBUS_GNU}
-                    ${CUBEONE_CANBUS_INCLUDE_DIRS}
                     ${BCM_HOST_INCLUDE_DIRS}
                     ${ILCLIENT_INCLUDE_DIRS}
                     ${include_directory})

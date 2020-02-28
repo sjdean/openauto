@@ -115,6 +115,18 @@ void Configuration::load()
         musicAudioChannelEnabled_ = iniConfig.get<bool>(cAudioMusicAudioChannelEnabled, true);
         speechAudiochannelEnabled_ = iniConfig.get<bool>(cAudioSpeechAudioChannelEnabled, true);
         audioOutputBackendType_ = static_cast<AudioOutputBackendType>(iniConfig.get<uint32_t>(cAudioOutputBackendType, static_cast<uint32_t>(AudioOutputBackendType::RTAUDIO)));
+
+        // CubeOne Extensions
+        carDayBrightness_ = iniConfig.get<int32_t>(cDayBrightness, 100);
+        carNightBrightness_ = iniConfig.get<int32_t>(cNightBrighenss, 200);
+        carKey_ = iniConfig.get<std::string>(cCarKey, "");
+        carAuthCode_ = iniConfig.get<std::string>(cAuthCode, "");
+        carRegistrationStatus_ = iniConfig.get<int32_t>(cRegistrationStatus, 0);
+        carFuelType_ = iniConfig.get<std::string>(cFuelType, "");
+        carRegistrationNumber_ = iniConfig.get<std::string>(cCarRegistrationNumber, "");
+        carMake_ = iniConfig.get<std::string>(cCarMake, "");
+        carModel_ = iniConfig.get<std::string>(cCarModel, "");
+
     }
     catch(const boost::property_tree::ini_parser_error& e)
     {
@@ -141,6 +153,17 @@ void Configuration::reset()
     musicAudioChannelEnabled_ = true;
     speechAudiochannelEnabled_ = true;
     audioOutputBackendType_ = AudioOutputBackendType::RTAUDIO;
+
+    //CubeOne Extensions
+    carNightBrightness_ = 100;
+    carDayBrightness_ = 200;
+    carKey_ = "";
+    carAuthCode_ = "";
+    carRegistrationStatus_ = 0;
+    carRegistrationNumber_ = "";
+    carFuelType_ = "";
+    carModel_ = "";
+    carMake_ = "";
 }
 
 void Configuration::save()
@@ -166,6 +189,16 @@ void Configuration::save()
     iniConfig.put<bool>(cAudioSpeechAudioChannelEnabled, speechAudiochannelEnabled_);
     iniConfig.put<uint32_t>(cAudioOutputBackendType, static_cast<uint32_t>(audioOutputBackendType_));
     boost::property_tree::ini_parser::write_ini(cConfigFileName, iniConfig);
+
+    // CubeOne Extensions
+    iniConfig.put<uint32_t>(cDayBrightness, carDayBrightness_);
+    iniConfig.put<uint32_t>(cNightBrighenss, carNightBrightness_);
+    iniConfig.put<std::string>(cCarKey, carKey_);
+    iniConfig.put<std::string>(cAuthCode, carAuthCode_);
+    iniConfig.put<std::string>(cCarMake, carMake_);
+    iniConfig.put<std::string>(cCarModel, carModel_);
+    iniConfig.put<std::string>(cCarRegistrationNumber, carRegistrationNumber_);
+    iniConfig.put<std::string>(cFuelType, carFuelType_);
 }
 
 void Configuration::setHandednessOfTrafficType(HandednessOfTrafficType value)
@@ -307,6 +340,89 @@ void Configuration::setAudioOutputBackendType(AudioOutputBackendType value)
 {
     audioOutputBackendType_ = value;
 }
+
+// CubeOne Extensions
+void Configuration::setCarRegistrationStatus(int32_t value) {
+    carRegistrationStatus_ = value;
+}
+
+int32_t Configuration::getCarRegistrationStatus() const {
+    return carRegistrationStatus_;
+}
+
+void Configuration::setCarRegistrationNumber(std::string value)
+{
+    carRegistrationNumber_ = value;
+}
+
+std::string Configuration::getCarRegistrationNumber() const
+{
+    return carRegistrationNumber_;
+}
+
+
+void Configuration::setCarModel(std::string value)
+{
+    carModel_ = value;
+}
+
+std::string Configuration::getCarModel() const
+{
+    return carModel_;
+}
+
+
+void Configuration::setCarMake(std::string value)
+{
+    carMake_ = value;
+}
+
+std::string Configuration::getCarMake() const
+{
+    return carMake_;
+}
+
+
+void Configuration::setCarKey(std::string value)
+{
+    carKey_ = value;
+}
+
+std::string Configuration::getCarKey() const
+{
+    return carKey_;
+}
+
+void Configuration::setAuthCode(std::string value)
+{
+    carAuthCode_ = value;
+}
+
+std::string Configuration::getCarAuthCode() const
+{
+    return carAuthCode_;
+}
+
+int32_t Configuration::getDayBrightness() const
+{
+    return carDayBrightness_;
+}
+
+void Configuration::setDayBrightness(int32_t value)
+{
+    carDayBrightness_ = value;
+}
+
+void Configuration::setNightBrightness(int32_t value)
+{
+    carNightBrightness_ = value;
+}
+
+int32_t Configuration::getNightBrightness() const
+{
+    return carNightBrightness_;
+}
+
 
 void Configuration::readButtonCodes(boost::property_tree::ptree& iniConfig)
 {

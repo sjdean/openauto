@@ -20,6 +20,7 @@
 
 #include <f1x/aasdk/Messenger/IMessenger.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
+#include <f1x/openauto/autoapp/Service/ICarConnect.hpp>
 
 namespace f1x
 {
@@ -35,7 +36,7 @@ class IServiceFactory
 public:
     virtual ~IServiceFactory() = default;
 
-    virtual ServiceList create(aasdk::messenger::IMessenger::Pointer messenger) = 0;
+    virtual ServiceList create(aasdk::messenger::IMessenger::Pointer messenger, service::ICarConnect::Pointer carconnect) = 0;
 };
 
 }

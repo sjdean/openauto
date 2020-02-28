@@ -37,6 +37,7 @@
 #include <f1x/openauto/autoapp/UI/ConnectDialog.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
+namespace cocarconnect = uk::co::cubeone;
 namespace aasdk = f1x::aasdk;
 namespace autoapp = f1x::openauto::autoapp;
 using ThreadPool = std::vector<std::thread>;
@@ -91,7 +92,6 @@ int main(int argc, char* argv[])
 
     auto configuration = std::make_shared<autoapp::configuration::Configuration>();
     auto carConnect = std::make_shared<autoapp::service::CarConnect>(configuration);
-	carConnect->monitorCarConnect();
 
     autoapp::ui::SettingsWindow settingsWindow(configuration, carConnect);
     settingsWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
@@ -122,8 +122,8 @@ int main(int argc, char* argv[])
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
     aasdk::usb::AccessoryModeQueryChainFactory queryChainFactory(usbWrapper, ioService, queryFactory);
 
-    autoapp::service::ServiceFactory serviceFactory(ioService, configuration, carConnect);
-    autoapp::service::AndroidAutoEntityFactory androidAutoEntityFactory(ioService, configuration, serviceFactory);
+    autoapp::service::ServiceFactory serviceFactory(ioService, configuration);
+    autoapp::service::AndroidAutoEntityFactory androidAutoEntityFactory(ioService, configuration, carConnect, serviceFactory);
 
     auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, ioService, queryChainFactory));
     auto connectedAccessoriesEnumerator(std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));

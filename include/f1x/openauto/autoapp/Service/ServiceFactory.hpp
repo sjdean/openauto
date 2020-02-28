@@ -34,8 +34,8 @@ namespace service
 class ServiceFactory: public IServiceFactory
 {
 public:
-    ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration, service::ICarConnect::Pointer carconnect);
-    ServiceList create(aasdk::messenger::IMessenger::Pointer messenger) override;
+    ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration);
+    ServiceList create(aasdk::messenger::IMessenger::Pointer messenger, service::ICarConnect::Pointer carconnect) override;
 
 private:
     IService::Pointer createVideoService(aasdk::messenger::IMessenger::Pointer messenger);

@@ -72,6 +72,24 @@ public:
     AudioOutputBackendType getAudioOutputBackendType() const override;
     void setAudioOutputBackendType(AudioOutputBackendType value) override;
 
+    // CubeOne Extensions
+    void setCarRegistrationStatus(int32_t value) override;
+    int32_t getCarRegistrationStatus() const override;
+    void setCarRegistrationNumber(std::string value) override;
+    std::string getCarRegistrationNumber() const override;
+    void setCarModel(std::string value) override;
+    std::string getCarModel() const override;
+    void setCarMake(std::string value) override;
+    std::string getCarMake() const override;
+    void setCarKey(std::string value) override;
+    std::string getCarKey() const override;
+    void setAuthCode(std::string value) override;
+    std::string getCarAuthCode() const override;
+    void setDayBrightness(int32_t value) override;
+    int32_t getDayBrightness() const override;
+    void setNightBrightness(int32_t value) override;
+    int32_t getNightBrightness() const override;
+
 private:
     void readButtonCodes(boost::property_tree::ptree& iniConfig);
     void insertButtonCode(boost::property_tree::ptree& iniConfig, const std::string& buttonCodeKey, aasdk::proto::enums::ButtonCode::Enum buttonCode);
@@ -130,6 +148,16 @@ private:
     static const std::string cInputEnterButtonKey;
 
     // CubeOne Customisations
+    std::string carAuthCode_;
+    std::string carKey_;
+    int32_t carDayBrightness_;
+    int32_t carNightBrightness_;
+    int32_t carRegistrationStatus_;
+    std::string carFuelType_;
+    std::string carMake_;
+    std::string carModel_;
+    std::string carRegistrationNumber_;
+
     static const std::string cRegistrationStatus;
     static const std::string cDayBrightness;
     static const std::string cNightBrighenss;
@@ -139,6 +167,7 @@ private:
     static const std::string cCarMake ;
     static const std::string cCarModel;
     static const std::string cCarRegistrationNumber;
+
 };
 
 }
