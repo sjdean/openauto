@@ -117,8 +117,8 @@ void Configuration::load()
         audioOutputBackendType_ = static_cast<AudioOutputBackendType>(iniConfig.get<uint32_t>(cAudioOutputBackendType, static_cast<uint32_t>(AudioOutputBackendType::RTAUDIO)));
 
         // CubeOne Extensions
-        carDayBrightness_ = iniConfig.get<int32_t>(cDayBrightness, 100);
-        carNightBrightness_ = iniConfig.get<int32_t>(cNightBrighenss, 200);
+        carDayBrightness_ = iniConfig.get<int32_t>(cDayBrightness, 200);
+        carNightBrightness_ = iniConfig.get<int32_t>(cNightBrighenss, 100);
         carKey_ = iniConfig.get<std::string>(cCarKey, "");
         carAuthCode_ = iniConfig.get<std::string>(cAuthCode, "");
         carRegistrationStatus_ = iniConfig.get<int32_t>(cRegistrationStatus, 0);

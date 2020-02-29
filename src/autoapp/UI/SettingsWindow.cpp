@@ -47,17 +47,12 @@ namespace f1x
                     connect(ui_->pushButtonSelectAll, &QPushButton::clicked, std::bind(&SettingsWindow::setButtonCheckBoxes, this, true));
                     connect(ui_->pushButtonResetToDefaults, &QPushButton::clicked, this, &SettingsWindow::onResetToDefaults);
                     connect(ui_->pushButtonShowBindings, &QPushButton::clicked, this, &SettingsWindow::onShowBindings);
-                    //connect(ui_->pushButtonCarConnectRegister, &QPushButton::clicked, this, &SettingsWindow::CarConnectRegister);
-                    //connect(ui_->pushButtonCarConnectSave, &QPushButton::clicked, this, &SettingsWindow::CarConnectSave);
+                    connect(ui_->pushButtonCarConnectRegister, &QPushButton::clicked, this, &SettingsWindow::CarConnectRegister);
                 }
 
                 SettingsWindow::~SettingsWindow()
                 {
                     delete ui_;
-                }
-
-                void SettingsWindow::CarConnectSave() {
-                    //TODO: Save Settings to Cloud...
                 }
 
                 void SettingsWindow::CarConnectRegister() {
@@ -112,6 +107,12 @@ namespace f1x
                     configuration_->setAudioOutputBackendType(ui_->radioButtonRtAudio->isChecked() ? configuration::AudioOutputBackendType::RTAUDIO : configuration::AudioOutputBackendType::QT);
 
                     //TODO: Set all the configuration for our car connect stuff... brightness etc...
+
+                    configuration_->setCarMake(ui_->lineEditCarMake->text().toStdString());
+                    configuration_->setCarModel(ui_->lineEditCarModel->text().toStdString());
+                    configuration_->setCarRegistrationNumber(ui_->lineEditCarRegistrationNumber->text().toStdString());
+                    configuration_->setDayBrightness(static_cast<size_t>(ui_->horizontalSliderDayBrightness->value()));
+                    configuration_->setNightBrightness(static_cast<size_t>(ui_->horizontalSliderNightBrightness->value()));
 
                     configuration_->save();
                     this->close();
@@ -168,6 +169,12 @@ namespace f1x
                     const auto& audioOutputBackendType = configuration_->getAudioOutputBackendType();
                     ui_->radioButtonRtAudio->setChecked(audioOutputBackendType == configuration::AudioOutputBackendType::RTAUDIO);
                     ui_->radioButtonQtAudio->setChecked(audioOutputBackendType == configuration::AudioOutputBackendType::QT);
+
+                    ui_->lineEditCarMake->setText(QString::fromStdString(configuration_->getCarMake()));
+                    ui_->lineEditCarModel->setText(QString::fromStdString(configuration_->getCarModel()));
+                    ui_->lineEditCarRegistrationNumber->setText(QString::fromStdString(configuration_->getCarRegistrationNumber()));
+                    ui_->horizontalSliderDayBrightness->setValue(static_cast<int>(configuration_->getDayBrightness()));
+                    ui_->horizontalSliderNightBrightness->setValue(static_cast<int>(configuration_->getNightBrightness()));
 
                     //TODO: LOad the Car Connect Stuff
                 }

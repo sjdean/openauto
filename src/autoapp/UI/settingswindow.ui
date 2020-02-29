@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>SettingsWindow</class>
  <widget class="QWidget" name="SettingsWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>480</height>
+   </rect>
+  </property>
   <property name="minimumSize">
    <size>
     <width>800</width>
@@ -954,11 +962,11 @@ color: rgb(238, 238, 236);</string>
     <attribute name="title">
      <string>CarConnect</string>
     </attribute>
-    <widget class="QPushButton" name="pushButtonCarConnectSave">
+    <widget class="QPushButton" name="pushButtonCarConnectRegister">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>10</y>
+       <y>320</y>
        <width>161</width>
        <height>41</height>
       </rect>
@@ -976,8 +984,8 @@ color: rgb(238, 238, 236);</string>
     <widget class="QLabel" name="labelBluetoothAddressFormatInfo_3">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>60</y>
+       <x>190</x>
+       <y>330</y>
        <width>161</width>
        <height>31</height>
       </rect>
@@ -989,8 +997,8 @@ color: rgb(238, 238, 236);</string>
     <widget class="QLabel" name="labelBluetoothAddressFormatInfo_4">
      <property name="geometry">
       <rect>
-       <x>190</x>
-       <y>60</y>
+       <x>360</x>
+       <y>330</y>
        <width>101</width>
        <height>31</height>
       </rect>
@@ -1003,7 +1011,7 @@ color: rgb(238, 238, 236);</string>
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>100</y>
+       <y>370</y>
        <width>591</width>
        <height>71</height>
       </rect>
@@ -1013,6 +1021,146 @@ color: rgb(238, 238, 236);</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelCarMake">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>10</y>
+       <width>161</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; color:#babdb6;&quot;&gt;Make&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelCarModel">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>50</y>
+       <width>161</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; color:#babdb6;&quot;&gt;Model&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelCarRegistration">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>90</y>
+       <width>161</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; color:#babdb6;&quot;&gt;Registration Number&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEditCarMake">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>10</y>
+       <width>231</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEditCarModel">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>50</y>
+       <width>231</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEditCarRegistrationNumber">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>90</y>
+       <width>231</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QSlider" name="horizontalSliderDayBrightness">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>180</y>
+       <width>501</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="maximum">
+      <number>255</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="QSlider" name="horizontalSliderNightBrightness">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>230</y>
+       <width>501</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="maximum">
+      <number>255</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelScreenBrightness">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>140</y>
+       <width>161</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; color:#babdb6;&quot;&gt;Screen Brightness&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelScreenBrightness_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>180</y>
+       <width>61</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; color:#babdb6;&quot;&gt;Day&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelScreenBrightness_3">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>230</y>
+       <width>61</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-style:italic; color:#babdb6;&quot;&gt;Night&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </widget>
