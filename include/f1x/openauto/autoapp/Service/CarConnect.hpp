@@ -15,7 +15,7 @@ namespace f1x
                 class CarConnect: public ICarConnect, public std::enable_shared_from_this<CarConnect>
                 {
                 public:
-                    CarConnect(configuration::IConfiguration::Pointer configuration);
+                    explicit CarConnect(configuration::IConfiguration::Pointer configuration);
                     uk::co::cubeone::definitions::TelemetryItem getSnapshot() override;
 
                 private:
