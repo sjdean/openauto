@@ -69,12 +69,12 @@ IAndroidAutoEntity::Pointer AndroidAutoEntityFactory::create(aasdk::transport::I
 
     auto videoMessenger(std::make_shared<aasdk::messenger::Messenger>(ioService_,
                                                                  std::make_shared<aasdk::messenger::MessageInStream>(ioService_, transport, cryptor, true),
-                                                                 std::make_shared<aasdk::messenger::MessageOutStream>(ioService_, transport, cryptor, true),
-                                                                 true));
+                                                                 std::make_shared<aasdk::messenger::MessageOutStream>(ioService_, transport, cryptor, true)),
+                                                                 true);
     auto messenger(std::make_shared<aasdk::messenger::Messenger>(ioService_,
                                                                  std::make_shared<aasdk::messenger::MessageInStream>(ioService_, transport, cryptor, false),
-                                                                 std::make_shared<aasdk::messenger::MessageOutStream>(ioService_, transport, cryptor, false),
-                                                                 false));
+                                                                 std::make_shared<aasdk::messenger::MessageOutStream>(ioService_, transport, cryptor, false)),
+                                                                 false);
 
     auto serviceList = serviceFactory_.create(messenger, videoMessenger, carconnect_);
     auto pinger(std::make_shared<Pinger>(ioService_, 5000));
