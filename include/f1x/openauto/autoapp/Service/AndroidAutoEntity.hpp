@@ -47,7 +47,6 @@ public:
                       aasdk::messenger::ICryptor::Pointer cryptor,
                       aasdk::transport::ITransport::Pointer transport,
                       aasdk::messenger::IMessenger::Pointer messenger,
-                      aasdk::messenger::IMessenger::Pointer videoMessenger,
                       configuration::IConfiguration::Pointer configuration,
                       ServiceList serviceList,
                       IPinger::Pointer pinger);
@@ -75,7 +74,6 @@ private:
     aasdk::messenger::ICryptor::Pointer cryptor_;
     aasdk::transport::ITransport::Pointer transport_;
     aasdk::messenger::IMessenger::Pointer messenger_;
-    aasdk::messenger::IMessenger::Pointer videoMessenger_;
     aasdk::channel::control::IControlServiceChannel::Pointer controlServiceChannel_;
     configuration::IConfiguration::Pointer configuration_;
     ServiceList serviceList_;
