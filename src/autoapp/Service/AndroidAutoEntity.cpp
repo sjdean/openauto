@@ -157,13 +157,13 @@ void AndroidAutoEntity::onServiceDiscoveryRequest(const aasdk::proto::messages::
 
     aasdk::proto::messages::ServiceDiscoveryResponse serviceDiscoveryResponse;
     serviceDiscoveryResponse.mutable_channels()->Reserve(256);
-    serviceDiscoveryResponse.set_head_unit_name("OpenAuto");
+    serviceDiscoveryResponse.set_head_unit_name("CarConnect");
     serviceDiscoveryResponse.set_car_model("Universal");
-    serviceDiscoveryResponse.set_car_year("2018");
-    serviceDiscoveryResponse.set_car_serial("20180301");
+    serviceDiscoveryResponse.set_car_year("2020");
+    serviceDiscoveryResponse.set_car_serial("20200101");
     serviceDiscoveryResponse.set_left_hand_drive_vehicle(configuration_->getHandednessOfTrafficType() == configuration::HandednessOfTrafficType::LEFT_HAND_DRIVE);
-    serviceDiscoveryResponse.set_headunit_manufacturer("f1x");
-    serviceDiscoveryResponse.set_headunit_model("OpenAuto Autoapp");
+    serviceDiscoveryResponse.set_headunit_manufacturer("CubeOne");
+    serviceDiscoveryResponse.set_headunit_model("CarConnect");
     serviceDiscoveryResponse.set_sw_build("1");
     serviceDiscoveryResponse.set_sw_version("1.0");
     serviceDiscoveryResponse.set_can_play_native_media_during_vr(false);
