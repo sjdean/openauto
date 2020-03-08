@@ -36,7 +36,7 @@ class IServiceFactory
 public:
     virtual ~IServiceFactory() = default;
 
-    virtual ServiceList create(aasdk::messenger::IMessenger::Pointer messenger, aasdk::messenger::IMessenger::Pointer videoMessenger, service::ICarConnect::Pointer carconnect) = 0;
+    virtual ServiceList create(aasdk::messenger::IMessenger::Pointer messenger, service::ICarConnect::Pointer carconnect) = 0;
 };
 
 }

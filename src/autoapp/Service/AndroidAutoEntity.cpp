@@ -33,7 +33,6 @@ AndroidAutoEntity::AndroidAutoEntity(boost::asio::io_service& ioService,
                                      aasdk::messenger::ICryptor::Pointer cryptor,
                                      aasdk::transport::ITransport::Pointer transport,
                                      aasdk::messenger::IMessenger::Pointer messenger,
-                                     aasdk::messenger::IMessenger::Pointer videoMessenger,
                                      configuration::IConfiguration::Pointer configuration,
                                      ServiceList serviceList,
                                      IPinger::Pointer pinger)
@@ -41,7 +40,6 @@ AndroidAutoEntity::AndroidAutoEntity(boost::asio::io_service& ioService,
     , cryptor_(std::move(cryptor))
     , transport_(std::move(transport))
     , messenger_(std::move(messenger))
-    , videoMessenger_(std::move(videoMessenger))
     , controlServiceChannel_(std::make_shared<aasdk::channel::control::ControlServiceChannel>(strand_, messenger_))
     , configuration_(std::move(configuration))
     , serviceList_(std::move(serviceList))
@@ -80,7 +78,6 @@ void AndroidAutoEntity::stop()
         std::for_each(serviceList_.begin(), serviceList_.end(), std::bind(&IService::stop, std::placeholders::_1));
         pinger_->cancel();
         messenger_->stop();
-        videoMessenger_->stop();
         transport_->stop();
         cryptor_->deinit();
     });

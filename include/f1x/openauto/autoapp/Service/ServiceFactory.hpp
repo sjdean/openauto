@@ -35,7 +35,7 @@ class ServiceFactory: public IServiceFactory
 {
 public:
     ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration);
-    ServiceList create(aasdk::messenger::IMessenger::Pointer messenger, aasdk::messenger::IMessenger::Pointer videoMessenger, service::ICarConnect::Pointer carconnect) override;
+    ServiceList create(aasdk::messenger::IMessenger::Pointer messenger, service::ICarConnect::Pointer carconnect) override;
 
 private:
     IService::Pointer createVideoService(aasdk::messenger::IMessenger::Pointer messenger);
