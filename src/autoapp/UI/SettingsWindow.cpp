@@ -20,6 +20,8 @@
 #include <f1x/openauto/autoapp/UI/SettingsWindow.hpp>
 #include <f1x/openauto/autoapp/Service/ICarConnect.hpp>
 #include "ui_settingswindow.h"
+#include <f1x/openauto/autoapp/Service/CarConnect.hpp>
+#include <uk/co/cubeone/canbus-receiver/service/CarHandler.h>
 
 namespace f1x
 {
@@ -56,7 +58,13 @@ namespace f1x
                 }
 
                 void SettingsWindow::CarConnectRegister() {
-                    //TODO: Register Car Connect and Get Status Back
+                    uk::co::cubeone::service::CarHandler ch = uk::co::cubeone::service::CarHandler(configuration_->getCarKey());
+                    if (ch.registerCar()) {
+                        // TODO: Store Registration Status
+                        // TODO: Show Message
+                    } else {
+                        // TODO: Show Error
+                    }
                 }
 
                 void SettingsWindow::onSave()
