@@ -21,13 +21,6 @@ namespace f1x
                 private:
                     using std::enable_shared_from_this<CarConnect>::shared_from_this;
                     configuration::IConfiguration::Pointer configuration_;
-
-                    std::thread gps_listen;
-                    std::thread udp_listen;
-                    std::thread gps_log;
-                    std::thread journey_monitor;
-                    std::thread journey_queue;
-                    std::thread journey_queue_update;
                 };
             }
         }
