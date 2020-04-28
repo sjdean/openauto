@@ -20,7 +20,7 @@ namespace f1x {
                 }
 
                 void HeadUnit::setUserName(const QString &userName) {
-                    if (userName == m_userNmae)
+                    if (userName == m_userName)
                         return;
 
                     m_userName = userName;
