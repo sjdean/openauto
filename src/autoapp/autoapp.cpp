@@ -34,7 +34,6 @@
 #include <f1x/openauto/autoapp/UI/HeadUnit.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
-namespace cocarconnect = uk::co::cubeone;
 namespace aasdk = f1x::aasdk;
 namespace autoapp = f1x::openauto::autoapp;
 using ThreadPool = std::vector<std::thread>;
