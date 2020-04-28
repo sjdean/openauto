@@ -9,10 +9,9 @@ class SettingsModel : public QAbstractListModel
 
 public:
     enum SettingsRole {
-        FullNameRole = Qt::DisplayRole,
-        AddressRole = Qt::UserRole,
-        CityRole,
-        NumberRole
+        HeadingNameRole = Qt::DisplayRole,
+        OptionTypeRole,
+        OptionRole
     };
     Q_ENUM(SettingsRole)
 
@@ -23,16 +22,21 @@ public:
     QHash<int, QByteArray> roleNames() const;
 
     Q_INVOKABLE QVariantMap get(int row) const;
-    Q_INVOKABLE void append(const QString &fullName, const QString &address, const QString  &city, const QString &number);
-    Q_INVOKABLE void set(int row, const QString &fullName, const QString &address, const QString  &city, const QString &number);
+    Q_INVOKABLE void append(const QString &headingName, const QString &optionType, const QList  &options);
+    Q_INVOKABLE void set(int row, const QString &headingName, const QString &optionType, const QList  &options);
     Q_INVOKABLE void remove(int row);
 
 private:
+    struct Option {
+        QString labelName;
+    };
+
     struct Setting {
         QString headingName;
         QString optionType;
         QList<Option> options;
     };
+
 
     QList<Setting> m_settings;
 };

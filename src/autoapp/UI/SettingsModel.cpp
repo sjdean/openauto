@@ -5,17 +5,17 @@ namespace f1x {
         namespace autoapp {
             namespace ui {
                 SettingsModel::SettingsModel(QObject *parent) : QAbstractListModel(parent) {
-                    OptionModel openModel = new OptionModel();
-                    optionModel.append("Left Handed", true);
-                    optionModel.append("Right Handed", false);
+                    //OptionModel openModel = new OptionModel();
+                    //optionModel.append("Left Handed", true);
+                    //optionModel.append("Right Handed", false);
 
 
-                    m_settings.append({"Handedness of Traffic", "R", });
-                    m_settings.append("Enable Audio Channels");
-                    m_settings.append("Audio Output Type");
-                    m_settings.append("Screen DPI");
-                    m_settings.append("Screen Resolution");
-                    m_settings.append("Video FPS");
+                    m_settings.append({"Handedness of Traffic", "R" });
+                    m_settings.append("Enable Audio Channels", "C");
+                    m_settings.append("Audio Output Type", "R");
+                    m_settings.append("Screen DPI", "R");
+                    m_settings.append("Screen Resolution", "R");
+                    m_settings.append("Video FPS", "R");
                 }
 
                 int SettingsModel::rowCount(const QModelIndex &) const {
@@ -25,7 +25,7 @@ namespace f1x {
                 QVariant SettingsModel::data(const QModelIndex &index, int role) const {
                     if (index.row() < rowCount())
                         switch (role) {
-                            case HeadingName:
+                            case HeadingNameRole:
                                 return m_settings.at(index.row()).headingName;
                             case OptionTypeRole:
                                 return m_settings.at(index.row()).optionType;
@@ -39,7 +39,7 @@ namespace f1x {
 
                 QHash<int, QByteArray> ContactModel::roleNames() const {
                     static const QHash<int, QByteArray> roles{
-                            {HeadingName, "headingName"},
+                            {HeadingNameRole, "headingName"},
                             {OptionTypeRole,  "optionType"},
                             {OptionRole,     "options"}
                     };
