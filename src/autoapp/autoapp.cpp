@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
     const auto cursor = qApplication.overrideCursor()->shape() == Qt::BlankCursor ? Qt::ArrowCursor : Qt::BlankCursor;
     qApplication.setOverrideCursor(cursor);
 
-    mainWindow.showFullScreen();
+    //mainWindow.showFullScreen();
 
     aasdk::usb::USBWrapper usbWrapper(usbContext);
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
@@ -113,15 +113,15 @@ int main(int argc, char* argv[])
 
     auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, ioService, queryChainFactory));
     auto connectedAccessoriesEnumerator(std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));
-    auto app = std::make_shared<autoapp::App>(ioService, usbWrapper, tcpWrapper, androidAutoEntityFactory, std::move(usbHub), std::move(connectedAccessoriesEnumerator), std::move(carConnect));
+    //auto app = std::make_shared<autoapp::App>(ioService, usbWrapper, tcpWrapper, androidAutoEntityFactory, std::move(usbHub), std::move(connectedAccessoriesEnumerator), std::move(carConnect));
 
-    app->start(std::move(socket));
+    //app->start(std::move(socket));
 
-    app->waitForUSBDevice();
+    //app->waitForUSBDevice();
 
     auto result = qApplication.exec();
-    std::for_each(threadPool.begin(), threadPool.end(), std::bind(&std::thread::join, std::placeholders::_1));
+    //std::for_each(threadPool.begin(), threadPool.end(), std::bind(&std::thread::join, std::placeholders::_1));
 
-    libusb_exit(usbContext);
-    return result;
+    //libusb_exit(usbContext);
+    //return result;
 }
