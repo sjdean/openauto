@@ -24,7 +24,7 @@ ListView {
     }
 
     model: SettingModel {
-        id: contactModel
+        id: settingsModel
     }
 
     ScrollBar.vertical: ScrollBar { }

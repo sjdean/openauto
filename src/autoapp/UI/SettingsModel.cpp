@@ -11,11 +11,11 @@ namespace f1x {
 
 
                     m_settings.append({"Handedness of Traffic", "R" });
-                    m_settings.append("Enable Audio Channels", "C");
-                    m_settings.append("Audio Output Type", "R");
-                    m_settings.append("Screen DPI", "R");
-                    m_settings.append("Screen Resolution", "R");
-                    m_settings.append("Video FPS", "R");
+                    m_settings.append({"Enable Audio Channels", "C"});
+                    m_settings.append({"Audio Output Type", "R"});
+                    m_settings.append({"Screen DPI", "R");
+                    m_settings.append({"Screen Resolution", "R"});
+                    m_settings.append({"Video FPS", "R"});
                 }
 
                 int SettingsModel::rowCount(const QModelIndex &) const {
@@ -29,19 +29,16 @@ namespace f1x {
                                 return m_settings.at(index.row()).headingName;
                             case OptionTypeRole:
                                 return m_settings.at(index.row()).optionType;
-                            case OptionRole:
-                                return m_settings.at(index.row()).options;
                             default:
                                 return QVariant();
                         }
                     return QVariant();
                 }
 
-                QHash<int, QByteArray> ContactModel::roleNames() const {
+                QHash<int, QByteArray> SettingsModel::roleNames() const {
                     static const QHash<int, QByteArray> roles{
                             {HeadingNameRole, "headingName"},
-                            {OptionTypeRole,  "optionType"},
-                            {OptionRole,     "options"}
+                            {OptionTypeRole,  "optionType"}
                     };
                     return roles;
                 }
@@ -49,25 +46,24 @@ namespace f1x {
                 QVariantMap SettingsModel::get(int row) const {
                     const Setting setting = m_settings.value(row);
                     return {{"headingName", setting.headingName},
-                            {"optionType",     setting.optionType},
-                            {"options",   setting.options}};
+                            {"optionType",     setting.optionType}};
                 }
 
-                void SettingsModel::append(const QString &headingName, const QString &optionType, const QList<Option> &options) {
+                void SettingsModel::append(const QString &headingName, const QString &optionType) {
                     int row = 0;
                     while (row < m_settings.count() && headingName > m_settings.at(row).fullName)
                         ++row;
                     beginInsertRows(QModelIndex(), row, row);
-                    m_settings.insert(row, {headingName, optionType, options});
+                    m_settings.insert(row, {headingName, optionType});
                     endInsertRows();
                 }
 
-                void SettingsModel::set(int row, const QString &headingName, const QString &optionType, const QList<Option> &options) {
+                void SettingsModel::set(int row, const QString &headingName, const QString &optionType) {
                     if (row < 0 || row >= m_settings.count())
                         return;
 
-                    m_settings.replace(row, {headingName, optionType, options});
-                    dataChanged(index(row, 0), index(row, 0), {HeadingNameRole, OptionTypeRole, OptionsRole});
+                    m_settings.replace(row, {headingName, optionType});
+                    dataChanged(index(row, 0), index(row, 0), {HeadingNameRole, OptionTypeRole});
                 }
 
                 void SettingsModel::remove(int row) {
