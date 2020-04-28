@@ -58,7 +58,7 @@ namespace f1x {
                     while (row < m_settings.count() && headingName > m_settings.at(row).fullName)
                         ++row;
                     beginInsertRows(QModelIndex(), row, row);
-                    m_settings.insert(row, {headingName, optionType, city, options});
+                    m_settings.insert(row, {headingName, optionType, options});
                     endInsertRows();
                 }
 

@@ -3,42 +3,48 @@
 
 #include <QAbstractListModel>
 
-class SettingsModel : public QAbstractListModel
-{
-    Q_OBJECT
+namespace f1x {
+    namespace openauto {
+        namespace autoapp {
+            namespace ui {
+                class SettingsModel : public QAbstractListModel {
+                    Q_OBJECT
 
-public:
-    enum SettingsRole {
-        HeadingNameRole = Qt::DisplayRole,
-        OptionTypeRole,
-        OptionsRole
-    };
-    Q_ENUM(SettingsRole)
+                public:
+                    enum SettingsRole {
+                        HeadingNameRole = Qt::DisplayRole,
+                        OptionTypeRole,
+                        OptionsRole
+                    };
+                    Q_ENUM(SettingsRole)
 
-    SettingsModel(QObject *parent = nullptr);
+                    SettingsModel(QObject *parent = nullptr);
 
-    int rowCount(const QModelIndex & = QModelIndex()) const;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-    QHash<int, QByteArray> roleNames() const;
+                    int rowCount(const QModelIndex & = QModelIndex()) const;
+                    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+                    QHash<int, QByteArray> roleNames() const;
 
-    Q_INVOKABLE QVariantMap get(int row) const;
-    Q_INVOKABLE void append(const QString &headingName, const QString &optionType, const QList  &options);
-    Q_INVOKABLE void set(int row, const QString &headingName, const QString &optionType, const QList  &options);
-    Q_INVOKABLE void remove(int row);
+                    Q_INVOKABLE QVariantMap get(int row) const;
+                    Q_INVOKABLE void append(const QString &headingName, const QString &optionType, const QList &options);
+                    Q_INVOKABLE void set(int row, const QString &headingName, const QString &optionType, const QList &options);
+                    Q_INVOKABLE void remove(int row);
 
-private:
-    struct Option {
-        QString labelName;
-    };
+                private:
+                    struct Option {
+                        QString labelName;
+                    };
 
-    struct Setting {
-        QString headingName;
-        QString optionType;
-        QList<Option> options;
-    };
+                    struct Setting {
+                        QString headingName;
+                        QString optionType;
+                        QList <Option> options;
+                    };
 
 
-    QList<Setting> m_settings;
-};
-
+                    QList <Setting> m_settings;
+                };
+            }
+        }
+    }
+}
 #endif // CONTACTMODEL_H
