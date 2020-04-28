@@ -17,7 +17,7 @@ namespace f1x {
                     Q_OBJECT
                     Q_PROPERTY(QString username READ userName WRITE setUserName NOTIFY userNameChanged);
 
-                public
+                public:
                     explicit HeadUnit(QObject *parent = nullptr);
 
                     QString userName();
