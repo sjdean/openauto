@@ -53,7 +53,7 @@ namespace f1x {
                             {"options",   setting.options}};
                 }
 
-                void SettingsModel::append(const QString &headingName, const QString &optionType, const QList &options) {
+                void SettingsModel::append(const QString &headingName, const QString &optionType, const QList<Option> &options) {
                     int row = 0;
                     while (row < m_settings.count() && headingName > m_settings.at(row).fullName)
                         ++row;
@@ -62,7 +62,7 @@ namespace f1x {
                     endInsertRows();
                 }
 
-                void SettingsModel::set(int row, const QString &headingName, const QString &optionType, const QList &options) {
+                void SettingsModel::set(int row, const QString &headingName, const QString &optionType, const QList<Option> &options) {
                     if (row < 0 || row >= m_settings.count())
                         return;
 
