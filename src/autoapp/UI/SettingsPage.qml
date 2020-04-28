@@ -5,21 +5,14 @@ import QtQuick.Layouts 1.3
 ScrollablePage {
     id: settingsPage
 
-    Column {
-        spacing: 40
-        width: parent.width
+    property int currentSetting: -1
 
-        Label {
-            width: parent.width
-            wrapMode: Label.wrapMode
-            horizontalAlignment: Qt.AlignHCenter
-            text: "some text";
-        }
-
-        PageIndicator {
-            count: 5
-            currentIndex: 2
-            anchors.horizontalCenter: parent.horizontalCenter
+    SettingsList {
+        id: settingsList
+        anchors.fill: parent
+        onPress: {
+            currentSetting = index
+            // navigate to setting dialog / page
         }
     }
 }
