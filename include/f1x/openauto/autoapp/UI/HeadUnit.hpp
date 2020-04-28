@@ -18,7 +18,6 @@ namespace f1x {
                     Q_PROPERTY(QString username READ userName WRITE setUserName NOTIFY userNameChanged);
 
                 public
-
                     explicit HeadUnit(QObject *parent = nullptr);
 
                     QString userName();
@@ -26,9 +25,7 @@ namespace f1x {
                     void setUserName(const QString &userName);
 
                     signals:
-                            void
-
-                    userNameChanged();
+                            void userNameChanged();
 
                 private:
                     QString m_userName;
