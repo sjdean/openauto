@@ -29,9 +29,7 @@ add_definitions(-DBOOST_ALL_DYN_LINK)
 
 find_package(Boost REQUIRED COMPONENTS system log OPTIONAL_COMPONENTS unit_test_framework)
 find_package(libusb-1.0 REQUIRED)
-find_package(Qt5 COMPONENTS Multimedia MultimediaWidgets Bluetooth)
-find_package(Qt5Quick REQUIRED)
-find_package(Qt5Qml REQUIRED)
+find_package(Qt5 COMPONENTS Core Quick Qml Gui Multimedia MultimediaWidgets Bluetooth )
 find_package(Protobuf REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(rtaudio REQUIRED)
@@ -52,6 +50,10 @@ set(INCLUDE_DBUS "/usr/include/dbus-1.0")
 set(INCLUDE_DBUS_GNU "/usr/lib/x86_64-linux-gnu/dbus-1.0/include")
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
+                    ${Qt5Core_INCLUDE_DIRS}
+                    ${QtQuick_INCLUDE_DIRS}
+                    ${Qt5Gui_INCLUDE_DIRS}
+                    ${Qt5Qml_INCLUDE_DIRS}
                     ${Qt5Multimedia_INCLUDE_DIRS}
                     ${Qt5MultimediaWidgets_INCLUDE_DIRS}
                     ${Qt5Widgets_INCLUDE_DIRS}
@@ -85,7 +87,9 @@ add_executable(autoapp ${autoapp_source_files} include/f1x/openauto/autoapp/UI/H
 target_link_libraries(autoapp
                         ${Boost_LIBRARIES}
                         ${Qt5Multimedia_LIBRARIES}
-                        ${Qt5Quick_LIBRARIES}
+                        ${Qt5Core_LIBRARIES}
+                        ${QtQuick_LIBRARIES}
+                        ${Qt5Gui_LIBRARIES}
                         ${Qt5Qml_LIBRARIES}
                         ${Qt5MultimediaWidgets_LIBRARIES}
                         ${Qt5Bluetooth_LIBRARIES}
