@@ -13,7 +13,7 @@ namespace f1x {
                     m_settings.append({"Handedness of Traffic", "R" });
                     m_settings.append({"Enable Audio Channels", "C"});
                     m_settings.append({"Audio Output Type", "R"});
-                    m_settings.append({"Screen DPI", "R");
+                    m_settings.append({"Screen DPI", "R"});
                     m_settings.append({"Screen Resolution", "R"});
                     m_settings.append({"Video FPS", "R"});
                 }
@@ -51,7 +51,7 @@ namespace f1x {
 
                 void SettingsModel::append(const QString &headingName, const QString &optionType) {
                     int row = 0;
-                    while (row < m_settings.count() && headingName > m_settings.at(row).fullName)
+                    while (row < m_settings.count() && headingName > m_settings.at(row).headingName)
                         ++row;
                     beginInsertRows(QModelIndex(), row, row);
                     m_settings.insert(row, {headingName, optionType});
