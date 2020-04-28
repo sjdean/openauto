@@ -67,7 +67,7 @@ namespace f1x {
                         return;
 
                     m_settings.replace(row, {headingName, optionType, options});
-                    dataChanged(index(row, 0), index(row, 0), {HeadingNameRole, OptionTypeRole, OptiosnRole});
+                    dataChanged(index(row, 0), index(row, 0), {HeadingNameRole, OptionTypeRole, OptionsRole});
                 }
 
                 void SettingsModel::remove(int row) {
