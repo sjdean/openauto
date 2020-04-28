@@ -31,10 +31,7 @@
 #include <f1x/openauto/autoapp/Service/ServiceFactory.hpp>
 #include <f1x/openauto/autoapp/Service/CarConnect.hpp>
 #include <f1x/openauto/autoapp/Configuration/Configuration.hpp>
-#include <f1x/openauto/autoapp/UI/MainWindow.hpp>
-#include <f1x/openauto/autoapp/UI/SettingsWindow.hpp>
-#include <f1x/openauto/autoapp/UI/MonitorWindow.hpp>
-#include <f1x/openauto/autoapp/UI/ConnectDialog.hpp>
+#include <f1x/openauto/autoapp/UI/HeadUnit.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
 namespace cocarconnect = uk::co::cubeone;
@@ -87,34 +84,24 @@ int main(int argc, char* argv[])
     startIOServiceWorkers(ioService, threadPool);
 
     QApplication qApplication(argc, argv);
-    autoapp::ui::MainWindow mainWindow;
-    mainWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
+    // We don't want to register a HeadUnit Type - this is really for if we want to get data from the QML, because then
+    // We can import this type in our QML.
+    //qmlRegisterType<HeadUnit>("flx.openauto.autoapp.ui", 1, 0, "HeadUnit");
+
+    QQmlApplicationEngine engine;
+    engine.load(QUrl(QStringLiteral("qrc:/HeadUnit.qml")));
 
     auto configuration = std::make_shared<autoapp::configuration::Configuration>();
     auto carConnect = std::make_shared<autoapp::service::CarConnect>(configuration);
-
-    autoapp::ui::SettingsWindow settingsWindow(configuration, carConnect);
-    settingsWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
-
-    autoapp::ui::MonitorWindow monitorWindow(configuration, carConnect);
-    monitorWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
 
     autoapp::configuration::RecentAddressesList recentAddressesList(7);
     recentAddressesList.read();
 
     aasdk::tcp::TCPWrapper tcpWrapper;
-    autoapp::ui::ConnectDialog connectDialog(ioService, tcpWrapper, recentAddressesList);
-    connectDialog.setWindowFlags(Qt::WindowStaysOnTopHint);
-
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::exit, []() { std::exit(0); });
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openSettings, &settingsWindow, &autoapp::ui::SettingsWindow::showFullScreen);
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openConnectDialog, &connectDialog, &autoapp::ui::ConnectDialog::exec);
 
     qApplication.setOverrideCursor(Qt::BlankCursor);
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::toggleCursor, [&qApplication]() {
-        const auto cursor = qApplication.overrideCursor()->shape() == Qt::BlankCursor ? Qt::ArrowCursor : Qt::BlankCursor;
-        qApplication.setOverrideCursor(cursor);
-    });
+    const auto cursor = qApplication.overrideCursor()->shape() == Qt::BlankCursor ? Qt::ArrowCursor : Qt::BlankCursor;
+    qApplication.setOverrideCursor(cursor);
 
     mainWindow.showFullScreen();
 
@@ -129,9 +116,7 @@ int main(int argc, char* argv[])
     auto connectedAccessoriesEnumerator(std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));
     auto app = std::make_shared<autoapp::App>(ioService, usbWrapper, tcpWrapper, androidAutoEntityFactory, std::move(usbHub), std::move(connectedAccessoriesEnumerator), std::move(carConnect));
 
-    QObject::connect(&connectDialog, &autoapp::ui::ConnectDialog::connectionSucceed, [&app](auto socket) {
-        app->start(std::move(socket));
-    });
+    app->start(std::move(socket));
 
     app->waitForUSBDevice();
 
