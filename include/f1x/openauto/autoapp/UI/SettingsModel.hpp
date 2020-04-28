@@ -11,7 +11,7 @@ public:
     enum SettingsRole {
         HeadingNameRole = Qt::DisplayRole,
         OptionTypeRole,
-        OptionRole
+        OptionsRole
     };
     Q_ENUM(SettingsRole)
 
