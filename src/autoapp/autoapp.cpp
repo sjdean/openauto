@@ -18,6 +18,7 @@
 
 #include <thread>
 #include <QApplication>
+#include <QQmlApplicationEngine>
 #include <f1x/aasdk/USB/USBHub.hpp>
 #include <f1x/aasdk/USB/ConnectedAccessoriesEnumerator.hpp>
 #include <f1x/aasdk/USB/AccessoryModeQueryChain.hpp>
@@ -123,5 +124,5 @@ int main(int argc, char* argv[])
     //std::for_each(threadPool.begin(), threadPool.end(), std::bind(&std::thread::join, std::placeholders::_1));
 
     //libusb_exit(usbContext);
-    //return result;
+    return result;
 }
