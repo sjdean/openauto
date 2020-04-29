@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(openauto CXX)
+
+set(PROJECT "openauto")
+
+project(${PROJECT} CXX)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
+
 set(base_directory ${CMAKE_CURRENT_SOURCE_DIR})
 set(resources_directory ${base_directory}/assets)
 set(sources_directory ${base_directory}/src)
@@ -19,20 +23,22 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 
+find_package(Boost REQUIRED COMPONENTS system log OPTIONAL_COMPONENTS unit_test_framework)
+find_package(libusb-1.0 REQUIRED)
+find_package(Qt5 COMPONENTS Core Quick Qml Gui Widgets Multimedia MultimediaWidgets Bluetooth )
+find_package(Protobuf REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(rtaudio REQUIRED)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/")
 SET(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_INIT} -Wall -pedantic -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_INIT} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS} -Wall -pedantic -fPIC")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-g -O3")
 
 add_definitions(-DBOOST_ALL_DYN_LINK)
 
-find_package(Boost REQUIRED COMPONENTS system log OPTIONAL_COMPONENTS unit_test_framework)
-find_package(libusb-1.0 REQUIRED)
-find_package(Qt5 COMPONENTS Core Quick Qml Gui Multimedia MultimediaWidgets Bluetooth )
-find_package(Protobuf REQUIRED)
-find_package(OpenSSL REQUIRED)
-find_package(rtaudio REQUIRED)
+qt5_add_resources(QML_QRC src/autoapp/UI/qml.qrc)
 
 if(WIN32)
     set(WINSOCK2_LIBRARIES "ws2_32")
@@ -49,30 +55,31 @@ endif(RPI3_BUILD)
 set(INCLUDE_DBUS "/usr/include/dbus-1.0")
 set(INCLUDE_DBUS_GNU "/usr/lib/x86_64-linux-gnu/dbus-1.0/include")
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}
-                    ${Qt5Core_INCLUDE_DIRS}
-                    ${QtQuick_INCLUDE_DIRS}
-                    ${Qt5Gui_INCLUDE_DIRS}
-                    ${Qt5Qml_INCLUDE_DIRS}
-                    ${Qt5Multimedia_INCLUDE_DIRS}
-                    ${Qt5MultimediaWidgets_INCLUDE_DIRS}
-                    ${Qt5Widgets_INCLUDE_DIRS}
-                    ${Qt5Bluetooth_INCLUDE_DIRS}
-                    ${Qt5Quick_LIBRARIES}
-                    ${Qt5Qml_LIBRARIES}
-                    ${Boost_INCLUDE_DIRS}
-                    ${LIBUSB_1_INCLUDE_DIRS}
-                    ${PROTOBUF_INCLUDE_DIR}
-                    ${OPENSSL_INCLUDE_DIR}
-                    ${RTAUDIO_INCLUDE_DIRS}
-                    ${AASDK_PROTO_INCLUDE_DIRS}
-                    ${AASDK_INCLUDE_DIRS}
-                    ${CUBEONE_CANBUS_INCLUDE_DIRS}
-                    ${INCLUDE_DBUS}
-                    ${INCLUDE_DBUS_GNU}
-                    ${BCM_HOST_INCLUDE_DIRS}
-                    ${ILCLIENT_INCLUDE_DIRS}
-                    ${include_directory})
+include_directories(
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${Qt5Core_INCLUDE_DIRS}
+    ${QtQuick_INCLUDE_DIRS}
+    ${Qt5Gui_INCLUDE_DIRS}
+    ${Qt5Qml_INCLUDE_DIRS}
+    ${Qt5Multimedia_INCLUDE_DIRS}
+    ${Qt5MultimediaWidgets_INCLUDE_DIRS}
+    ${Qt5Widgets_INCLUDE_DIRS}
+    ${Qt5Bluetooth_INCLUDE_DIRS}
+    ${Qt5Quick_LIBRARIES}
+    ${Qt5Qml_LIBRARIES}
+    ${Boost_INCLUDE_DIRS}
+    ${LIBUSB_1_INCLUDE_DIRS}
+    ${PROTOBUF_INCLUDE_DIR}
+    ${OPENSSL_INCLUDE_DIR}
+    ${RTAUDIO_INCLUDE_DIRS}
+    ${AASDK_PROTO_INCLUDE_DIRS}
+    ${AASDK_INCLUDE_DIRS}
+    ${CUBEONE_CANBUS_INCLUDE_DIRS}
+    ${INCLUDE_DBUS}
+    ${INCLUDE_DBUS_GNU}
+    ${BCM_HOST_INCLUDE_DIRS}
+    ${ILCLIENT_INCLUDE_DIRS}
+    ${include_directory})
 								
 link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
@@ -80,28 +87,34 @@ set(common_include_directory ${include_directory}/f1x/openauto/Common)
 
 set(autoapp_sources_directory ${sources_directory}/autoapp)
 set(autoapp_include_directory ${include_directory}/f1x/openauto/autoapp)
-file(GLOB_RECURSE autoapp_source_files ${autoapp_sources_directory}/*.ui ${autoapp_sources_directory}/*.cpp ${autoapp_include_directory}/*.hpp ${common_include_directory}/*.hpp ${resources_directory}/*.qrc)
+file(GLOB_RECURSE autoapp_source_files
+        ${autoapp_sources_directory}/*.ui
+        ${autoapp_sources_directory}/*.cpp
+        ${autoapp_include_directory}/*.hpp
+        ${common_include_directory}/*.hpp
+        ${resources_directory}/*.qrc)
 
-add_executable(autoapp ${autoapp_source_files} include/f1x/openauto/autoapp/UI/HeadUnit.hpp src/autoapp/UI/HeadUnit.cpp)
+add_executable(autoapp ${autoapp_source_files} ${QML_QRC})
 
 target_link_libraries(autoapp
-                        ${Boost_LIBRARIES}
-                        ${Qt5Multimedia_LIBRARIES}
-                        ${Qt5Core_LIBRARIES}
-                        ${QtQuick_LIBRARIES}
-                        ${Qt5Gui_LIBRARIES}
-                        ${Qt5Qml_LIBRARIES}
-                        ${Qt5MultimediaWidgets_LIBRARIES}
-                        ${Qt5Bluetooth_LIBRARIES}
-                        ${LIBUSB_1_LIBRARIES}
-                        ${PROTOBUF_LIBRARIES}
-                        ${BCM_HOST_LIBRARIES}
-                        ${ILCLIENT_LIBRARIES}
-                        ${WINSOCK2_LIBRARIES}
-                        ${RTAUDIO_LIBRARIES}
-                        ${AASDK_PROTO_LIBRARIES}
-                        ${AASDK_LIBRARIES}
-                        ${CUBEONE_CANBUS_LIBRARIES})
+    ${Boost_LIBRARIES}
+    ${Qt5Multimedia_LIBRARIES}
+    ${Qt5Core_LIBRARIES}
+    ${QtQuick_LIBRARIES}
+    ${Qt5Gui_LIBRARIES}
+    ${Qt5Qml_LIBRARIES}
+    ${Qt5Widgets_LIBRARIES}
+    ${Qt5MultimediaWidgets_LIBRARIES}
+    ${Qt5Bluetooth_LIBRARIES}
+    ${LIBUSB_1_LIBRARIES}
+    ${PROTOBUF_LIBRARIES}
+    ${BCM_HOST_LIBRARIES}
+    ${ILCLIENT_LIBRARIES}
+    ${WINSOCK2_LIBRARIES}
+    ${RTAUDIO_LIBRARIES}
+    ${AASDK_PROTO_LIBRARIES}
+    ${AASDK_LIBRARIES}
+    ${CUBEONE_CANBUS_LIBRARIES})
 
 set(btservice_sources_directory ${sources_directory}/btservice)
 set(btservice_include_directory ${include_directory}/f1x/openauto/btservice)
