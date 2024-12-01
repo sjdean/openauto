@@ -180,12 +180,9 @@ private:
     QString bversion;
     QString bdate;
 
-    char nightModeFile[32] = "/tmp/night_mode_enabled";
-    char devModeFile[32] = "/tmp/dev_mode_enabled";
     char wifiButtonFile[32] = "/etc/button_wifi_visible";
     char cameraButtonFile[32] = "/etc/button_camera_visible";
     char brightnessButtonFile[32] = "/etc/button_brightness_visible";
-    char debugModeFile[32] = "/tmp/usb_debug_mode";
     char lsFile[32] = "/etc/cs_lightsensor";
 
     char custom_button_file_c1[26] = "/boot/crankshaft/button_1";
@@ -222,15 +219,6 @@ private:
     bool cameraButtonForce = false;
     bool brightnessButtonForce = false;
 
-    bool nightModeEnabled = false;
-    bool DayNightModeState = false;
-
-    bool devModeEnabled = false;
-
-    bool wallpaperDayFileExists = false;
-    bool wallpaperNightFileExists = false;
-    bool wallpaperClassicDayFileExists = false;
-    bool wallpaperClassicNightFileExists = false;
     bool wallpaperEQFileExists = false;
 
     bool exitMenuVisible = false;
@@ -239,12 +227,11 @@ private:
     bool rearCamVisible = false;
 
     bool dashCamRecording = false;
-    bool systemDebugmode = false;
+
 
     bool bluetoothEnabled = false;
 
     bool toggleMute = false;
-    bool oldGUIStyle = false;
     bool UseBigClock = false;
     bool NoClock = false;
 

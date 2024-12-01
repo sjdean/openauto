@@ -64,12 +64,9 @@ MainWindow::MainWindow(configuration::IConfiguration::Pointer configuration, QWi
     this->configuration_ = configuration;
 
     // trigger files
-    this->nightModeEnabled = check_file_exist(this->nightModeFile);
-    this->devModeEnabled = check_file_exist(this->devModeFile);
     this->wifiButtonForce = check_file_exist(this->wifiButtonFile);
     this->cameraButtonForce = check_file_exist(this->cameraButtonFile);
     this->brightnessButtonForce = check_file_exist(this->brightnessButtonFile);
-    this->systemDebugmode = check_file_exist(this->debugModeFile);
     this->lightsensor = check_file_exist(this->lsFile);
     this->c1ButtonForce = check_file_exist(this->custom_button_file_c1);
     this->c2ButtonForce = check_file_exist(this->custom_button_file_c2);
@@ -79,10 +76,6 @@ MainWindow::MainWindow(configuration::IConfiguration::Pointer configuration, QWi
     this->c6ButtonForce = check_file_exist(this->custom_button_file_c6);
 
     // wallpaper stuff
-    this->wallpaperDayFileExists = check_file_exist("wallpaper.png");
-    this->wallpaperNightFileExists = check_file_exist("wallpaper-night.png");
-    this->wallpaperClassicDayFileExists = check_file_exist("wallpaper-classic.png");
-    this->wallpaperClassicNightFileExists = check_file_exist("wallpaper-classic-night.png");
     this->wallpaperEQFileExists = check_file_exist("wallpaper-eq.png");
 
     ui_->setupUi(this);
@@ -154,10 +147,8 @@ MainWindow::MainWindow(configuration::IConfiguration::Pointer configuration, QWi
         ui_->networkInfo->hide();
     }
 
-    if (!this->devModeEnabled) {
-        ui_->labelLock->hide();
-        ui_->labelLockDummy->hide();
-    }
+    ui_->labelLock->hide();
+    ui_->labelLockDummy->hide();
 
     if (std::ifstream("/etc/crankshaft.branch")) {
         QString branch = configuration_->readFileContent("/etc/crankshaft.branch");
@@ -197,10 +188,8 @@ MainWindow::MainWindow(configuration::IConfiguration::Pointer configuration, QWi
     }
 
     // show debug button if enabled
-    if (!this->systemDebugmode) {
-        ui_->pushButtonDebug->hide();
-        ui_->pushButtonDebug2->hide();
-    }
+    ui_->pushButtonDebug->hide();
+    ui_->pushButtonDebug2->hide();
 
     ui_->pushButtonLock->hide();
     ui_->pushButtonLock2->hide();
@@ -394,10 +383,8 @@ MainWindow::MainWindow(configuration::IConfiguration::Pointer configuration, QWi
     }
 
     // show dev labels if dev mode activated
-    if (!this->devModeEnabled) {
-        ui_->devlabel_left->hide();
-        ui_->devlabel_right->hide();
-    }
+    ui_->devlabel_left->hide();
+    ui_->devlabel_right->hide();
 
     // set brightness slider attribs from cs config
     ui_->horizontalSliderBrightness->setMinimum(configuration->getCSValue("BR_MIN").toInt());
@@ -422,30 +409,17 @@ MainWindow::MainWindow(configuration::IConfiguration::Pointer configuration, QWi
         ui_->horizontalSliderVolume->setValue(vol.toInt());
     }
 
-    // switch to old menu if set in settings
-    if (!configuration->oldGUI()) {
-        this->oldGUIStyle = false;
-        ui_->menuWidget->show();
-        ui_->oldmenuWidget->hide();
-    } else {
-        this->oldGUIStyle = true;
-        ui_->oldmenuWidget->show();
-        ui_->menuWidget->hide();
-    }
+
+    ui_->menuWidget->show();
+    ui_->oldmenuWidget->hide();
 
     // set bg's on startup
     MainWindow::updateBG();
-    if (!this->nightModeEnabled) {
-        ui_->pushButtonDay->hide();
-        ui_->pushButtonDay2->hide();
-        ui_->pushButtonNight->show();
-        ui_->pushButtonNight2->show();
-    } else {
-        ui_->pushButtonNight->hide();
-        ui_->pushButtonNight2->hide();
-        ui_->pushButtonDay->show();
-        ui_->pushButtonDay2->show();
-    }
+
+  ui_->pushButtonDay->hide();
+  ui_->pushButtonDay2->hide();
+  ui_->pushButtonNight->show();
+  ui_->pushButtonNight2->show();
 
     // use big clock in classic gui?
     if (configuration->showBigClock()) {
@@ -464,9 +438,6 @@ MainWindow::MainWindow(configuration::IConfiguration::Pointer configuration, QWi
         if (this->UseBigClock) {
             ui_->oldmenuDummy->hide();
             ui_->bigClock->show();
-            if (oldGUIStyle) {
-                ui_->Digital_clock->hide();
-            }
         } else {
             ui_->oldmenuDummy->show();
             ui_->Digital_clock->show();
@@ -864,10 +835,7 @@ void f1x::openauto::autoapp::ui::MainWindow::cameraControlHide()
 {
     if (this->cameraButtonForce) {
         ui_->cameraWidget->hide();
-        if (!this->oldGUIStyle) {
-            ui_->menuWidget->show();
-        } else {
-            ui_->oldmenuWidget->show();
+        ui_->menuWidget->show();
         }
     }
 }
@@ -875,11 +843,8 @@ void f1x::openauto::autoapp::ui::MainWindow::cameraControlHide()
 void f1x::openauto::autoapp::ui::MainWindow::cameraControlShow()
 {
     if (this->cameraButtonForce) {
-        if (!this->oldGUIStyle) {
-            ui_->menuWidget->hide();
-        } else {
-            ui_->oldmenuWidget->hide();
-        }
+
+        ui_->menuWidget->hide();
         ui_->cameraWidget->show();
 
         // check if dashcam is recording
@@ -905,11 +870,8 @@ void f1x::openauto::autoapp::ui::MainWindow::playerShow()
         this->setStyleSheet("QMainWindow { background: url(:/black.png); background-repeat: no-repeat; background-position: center; }");
     }
 
-    if (!this->oldGUIStyle) {
-        ui_->menuWidget->hide();
-    } else {
-        ui_->oldmenuWidget->hide();
-    }
+    ui_->menuWidget->hide();
+
     ui_->mediaWidget->show();
     ui_->VolumeSliderControlPlayer->show();
     ui_->VolumeSliderControl->hide();
@@ -934,11 +896,7 @@ void f1x::openauto::autoapp::ui::MainWindow::playerShow()
 
 void f1x::openauto::autoapp::ui::MainWindow::playerHide()
 {
-    if (!this->oldGUIStyle) {
-        ui_->menuWidget->show();
-    } else {
-        ui_->oldmenuWidget->show();
-    }
+    ui_->menuWidget->show();
     ui_->mediaWidget->hide();
     ui_->VolumeSliderControl->show();
     ui_->VolumeSliderControlPlayer->hide();
@@ -967,47 +925,6 @@ void f1x::openauto::autoapp::ui::MainWindow::toggleExit()
     }
 }
 
-void f1x::openauto::autoapp::ui::MainWindow::toggleMuteButton()
-{
-    if (!this->toggleMute) {
-        ui_->pushButtonMute->hide();
-        ui_->pushButtonUnMute->show();
-        this->toggleMute = true;
-    } else {
-        ui_->pushButtonUnMute->hide();
-        ui_->pushButtonMute->show();
-        this->toggleMute = false;
-    }
-}
-
-void f1x::openauto::autoapp::ui::MainWindow::toggleGUI()
-{
-    if (!this->oldGUIStyle) {
-        ui_->oldmenuWidget->show();
-        ui_->menuWidget->hide();
-        this->oldGUIStyle = true;
-        if (!this->NoClock) {
-            if (UseBigClock) {
-                ui_->Digital_clock->hide();
-                ui_->bigClock->show();
-            } else {
-                ui_->Digital_clock->show();
-                ui_->bigClock->hide();
-            }
-        }
-        MainWindow::on_pushButtonVolume_clicked();
-    } else {
-        ui_->menuWidget->show();
-        ui_->oldmenuWidget->hide();
-        this->oldGUIStyle = false;
-        if (!this->NoClock) {
-            ui_->Digital_clock->show();
-        }
-    }
-    f1x::openauto::autoapp::ui::MainWindow::updateBG();
-    f1x::openauto::autoapp::ui::MainWindow::tmpChanged();
-}
-
 void f1x::openauto::autoapp::ui::MainWindow::updateBG()
 {
     if (this->date_text == "12/24") {
@@ -1018,50 +935,15 @@ void f1x::openauto::autoapp::ui::MainWindow::updateBG()
         this->setStyleSheet("QMainWindow { background: url(:/wallpaper-firework.png); background-repeat: no-repeat; background-position: center; }");
         this->holidaybg = true;
     }
-    if (!this->nightModeEnabled) {
-        if (ui_->mediaWidget->isVisible() == true) {
-            if (this->wallpaperEQFileExists) {
-                this->setStyleSheet("QMainWindow { background: url(wallpaper-eq.png); background-repeat: no-repeat; background-position: center; }");
-            } else {
-                this->setStyleSheet("QMainWindow { background: url(:/black.png); background-repeat: repeat; background-position: center; }");
-            }
+
+    if (ui_->mediaWidget->isVisible() == true) {
+        if (this->wallpaperEQFileExists) {
+            this->setStyleSheet("QMainWindow { background: url(wallpaper-eq.png); background-repeat: no-repeat; background-position: center; }");
         } else {
-            if (this->oldGUIStyle) {
-                if (this->wallpaperClassicDayFileExists) {
-                    this->setStyleSheet("QMainWindow { background: url(wallpaper-classic.png); background-repeat: no-repeat; background-position: center; }");
-                } else {
-                    this->setStyleSheet("QMainWindow { background: url(:/black.png); background-repeat: repeat; background-position: center; }");
-                }
-            } else {
-                if (this->wallpaperDayFileExists) {
-                    this->setStyleSheet("QMainWindow { background: url(wallpaper.png); background-repeat: no-repeat; background-position: center; }");
-                } else {
-                    this->setStyleSheet("QMainWindow { background: url(:/black.png); background-repeat: repeat; background-position: center; }");
-                }
-            }
+            this->setStyleSheet("QMainWindow { background: url(:/black.png); background-repeat: repeat; background-position: center; }");
         }
     } else {
-        if (ui_->mediaWidget->isVisible() == true) {
-            if (this->wallpaperEQFileExists) {
-                this->setStyleSheet("QMainWindow { background: url(wallpaper-eq.png); background-repeat: no-repeat; background-position: center; }");
-            } else {
-                this->setStyleSheet("QMainWindow { background: url(:/black.png); background-repeat: repeat; background-position: center; }");
-            }
-        } else {
-            if (this->oldGUIStyle) {
-                if (this->wallpaperClassicNightFileExists) {
-                    this->setStyleSheet( "QMainWindow { background: url(wallpaper-classic-night.png); background-repeat: no-repeat; background-position: center; }");
-                } else {
-                    this->setStyleSheet("QMainWindow { background: url(:/black.png); background-repeat: repeat; background-position: center; }");
-                }
-            } else {
-                if (this->wallpaperNightFileExists) {
-                    this->setStyleSheet("QMainWindow { background: url(wallpaper-night.png) stretch stretch; background-repeat: no-repeat; background-position: center; }");
-                } else {
-                    this->setStyleSheet("QMainWindow { background: url(:/black.png); background-repeat: repeat; background-position: center; }");
-                }
-            }
-        }
+        this->setStyleSheet("QMainWindow { background: url(:/black.png); background-repeat: repeat; background-position: center; }");
     }
 }
 
@@ -1703,8 +1585,6 @@ void f1x::openauto::autoapp::ui::MainWindow::keyPressEvent(QKeyEvent *event)
     {
         if (ui_->mediaWidget->isVisible() == true) {
             playerHide();
-        } else if (this->oldGUIStyle == true) {
-            toggleGUI();            
         } else {
             toggleExit();
         }
@@ -1911,25 +1791,7 @@ void f1x::openauto::autoapp::ui::MainWindow::tmpChanged()
             ui_->pushButtonSettings2->show();
             ui_->pushButtonLock->hide();
             ui_->pushButtonLock2->hide();
-            if (this->systemDebugmode) {
-                ui_->pushButtonDebug->show();
-                ui_->pushButtonDebug2->show();
-            }
-        }
-    }
 
-    // update day/night state
-    this->nightModeEnabled = check_file_exist("/tmp/night_mode_enabled");
-
-    if (this->nightModeEnabled) {
-        if (!this->DayNightModeState) {
-            this->DayNightModeState = true;
-            f1x::openauto::autoapp::ui::MainWindow::switchGuiToNight();
-        }
-    } else {
-        if (this->DayNightModeState) {
-            this->DayNightModeState = false;
-            f1x::openauto::autoapp::ui::MainWindow::switchGuiToDay();
         }
     }
 
@@ -2062,9 +1924,6 @@ void f1x::openauto::autoapp::ui::MainWindow::tmpChanged()
         if (this->UseBigClock && ui_->oldmenuWidget->isVisible() == true) {
             ui_->oldmenuDummy->hide();
             ui_->bigClock->show();
-            if (oldGUIStyle) {
-                ui_->Digital_clock->hide();
-            }
         } else {
             ui_->oldmenuDummy->show();
             ui_->Digital_clock->show();
@@ -2159,9 +2018,7 @@ void f1x::openauto::autoapp::ui::MainWindow::tmpChanged()
             ui_->label_left->hide();
             ui_->label_right->hide();
             ui_->label_dummy_right->hide();
-            if (this->devModeEnabled) {
-                ui_->devlabel_right->show();
-            }
+
         }
    // }
 

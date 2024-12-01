@@ -51,7 +51,7 @@ color: rgb(255, 255, 255);</string>
       </size>
      </property>
      <property name="title">
-      <string>Crankshaft NG Update Menu</string>
+      <string>JourneyOS Update Menu</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -82,7 +82,7 @@ color: rgb(255, 255, 255);</string>
       <item row="0" column="1">
        <widget class="QLabel" name="labelCsmt">
         <property name="text">
-         <string>Update Crankshaft Management Tool</string>
+         <string>Update JourneyOS Management Tool</string>
         </property>
        </widget>
       </item>
