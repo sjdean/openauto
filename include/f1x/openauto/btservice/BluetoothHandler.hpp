@@ -3,9 +3,7 @@
 //
 
 #ifndef OPENAUTO_BLUETOOTHHANDLER_HPP
-#define OPENAUTO_BLUETOOTHHANDLER_HPP
-
-#include <f1x/openauto/btservice/IBluetoothHandler.hpp>
+#define OPENAUTO_BLUETOOTHHANDLER_HPP#include <f1x/openauto/btservice/IBluetoothHandler.hpp>
 #include <f1x/openauto/btservice/IAndroidBluetoothServer.hpp>
 #include <f1x/openauto/btservice/IAndroidBluetoothService.hpp>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>

@@ -1,8 +1,6 @@
 //
 // Created by Simon Dean on 26/11/2024.
-//
-
-#include <f1x/openauto/btservice/BluetoothHandler.hpp>
+//#include <f1x/openauto/btservice/BluetoothHandler.hpp>
 #include <f1x/openauto/btservice/AndroidBluetoothService.hpp>
 #include <f1x/openauto/btservice/AndroidBluetoothServer.hpp>
 #include <f1x/openauto/Common/Log.hpp>
@@ -26,11 +24,16 @@ namespace f1x::openauto::btservice {
       OPENAUTO_LOG(info) << "[BluetoothHandler] Bluetooth adapter is valid.";
     }
 
-    QObject::connect(localDevice_.get(), &QBluetoothLocalDevice::pairingDisplayPinCode, this, &BluetoothHandler::onPairingDisplayPinCode);
-    QObject::connect(localDevice_.get(), &QBluetoothLocalDevice::pairingDisplayConfirmation, this, &BluetoothHandler::onPairingDisplayConfirmation);
+    #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // TODO: Move to QDBus for monitoring BlueZ.
+    #else
+      QObject::connect(localDevice_.get(), &QBluetoothLocalDevice::pairingDisplayPinCode, this, &BluetoothHandler::onPairingDisplayPinCode);
+      QObject::connect(localDevice_.get(), &QBluetoothLocalDevice::pairingDisplayConfirmation, this, &BluetoothHandler::onPairingDisplayConfirmation);
+      QObject::connect(localDevice_.get(), &QBluetoothLocalDevice::error, this, &BluetoothHandler::onError);
+    #endif
+
     QObject::connect(localDevice_.get(), &QBluetoothLocalDevice::pairingFinished, this, &BluetoothHandler::onPairingFinished);
     QObject::connect(localDevice_.get(), &QBluetoothLocalDevice::hostModeStateChanged, this, &BluetoothHandler::onHostModeStateChanged);
-    QObject::connect(localDevice_.get(), &QBluetoothLocalDevice::error, this, &BluetoothHandler::onError);
 
     // Turn Bluetooth on
     localDevice_->powerOn();
@@ -71,7 +74,11 @@ namespace f1x::openauto::btservice {
     OPENAUTO_LOG(debug) << "[BluetoothHandler::onPairingDisplayConfirmation] Pairing display confirmation: " << pin.toStdString();
 
     // Here you can implement logic to show this PIN to the user or automatically accept if you trust all devices
-    localDevice_->pairingConfirmation(true); // Confirm pairing (for security, you might want to verify the PIN)
+    #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        // TODO: Move to QDBus for monitoring BlueZ.
+    #else
+      localDevice_->pairingConfirmation(true); // Confirm pairing (for security, you might want to verify the PIN)
+    #endif
   }
 
   void BluetoothHandler::onPairingFinished(const QBluetoothAddress &address, QBluetoothLocalDevice::Pairing pairing) {

@@ -1,21 +1,3 @@
-/*
-*  This file is part of openauto project.
-*  Copyright (C) 2018 f1x.studio (Michal Szwaj)
-*
-*  openauto is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation; either version 3 of the License, or
-*  (at your option) any later version.
-
-*  openauto is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  along with openauto. If not, see <http://www.gnu.org/licenses/>.
-*/
-
 #include <f1x/openauto/btservice/AndroidBluetoothService.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
@@ -26,7 +8,12 @@ namespace f1x::openauto::btservice {
     const QBluetoothUuid serviceUuid(QLatin1String("4de17a00-52cb-11e6-bdf4-0800200c9a66"));
 
     QBluetoothServiceInfo::Sequence classId;
+    #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    classId << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::ServiceClassUuid::SerialPort));
+    #else
     classId << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::SerialPort));
+    #endif
+
     serviceInfo_.setAttribute(QBluetoothServiceInfo::BluetoothProfileDescriptorList, classId);
     classId.prepend(QVariant::fromValue(serviceUuid));
     serviceInfo_.setAttribute(QBluetoothServiceInfo::ServiceClassIds, classId);
@@ -36,7 +23,12 @@ namespace f1x::openauto::btservice {
     serviceInfo_.setServiceUuid(serviceUuid);
 
     QBluetoothServiceInfo::Sequence publicBrowse;
-    publicBrowse << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::PublicBrowseGroup));
+
+    #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    publicBrowse << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::ServiceClassUuid::PublicBrowseGroup));
+    #else
+    protocol << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::ProtocolUuid::Rfcomm))
+    #endif
     serviceInfo_.setAttribute(QBluetoothServiceInfo::BrowseGroupList, publicBrowse);
   }
 
@@ -45,10 +37,21 @@ namespace f1x::openauto::btservice {
 
     QBluetoothServiceInfo::Sequence protocolDescriptorList;
     QBluetoothServiceInfo::Sequence protocol;
+    #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    protocol << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::ProtocolUuid::L2cap));
+    #else
     protocol << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::L2cap));
+    #endif
+
     protocolDescriptorList.append(QVariant::fromValue(protocol));
     protocol.clear();
-    protocol << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::Rfcomm))
+
+    #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        protocol << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::ProtocolUuid::Rfcomm));
+    #else
+        protocol << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::Rfcomm))
+    #endif
+    protocol << QVariant::fromValue(QBluetoothUuid(QBluetoothUuid::ProtocolUuid::Rfcomm))
              << QVariant::fromValue(quint16(portNumber));
     protocolDescriptorList.append(QVariant::fromValue(protocol));
     serviceInfo_.setAttribute(QBluetoothServiceInfo::ProtocolDescriptorList, protocolDescriptorList);

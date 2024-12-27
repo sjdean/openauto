@@ -34,7 +34,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Paths
-set(resources_directory ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 set(sources_directory ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(include_directory ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -90,19 +89,23 @@ find_package(aap_protobuf REQUIRED)
 find_package(aasdk REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system log OPTIONAL_COMPONENTS unit_test_framework)
 find_package(libusb-1.0 REQUIRED)
-find_package(Qt5 COMPONENTS DBus Multimedia MultimediaWidgets Bluetooth Network)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Bluetooth DBus Network Multimedia MultimediaWidgets)
 find_package(OpenSSL REQUIRED)
 find_package(rtaudio REQUIRED)
 find_package(taglib REQUIRED)
 find_package(blkid REQUIRED)
 find_package(gps REQUIRED)
 
+
+set(UI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/autoapp/UI/JourneyOS")
+add_subdirectory(src/autoapp/UI/JourneyOS)
+set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
+set(QML_IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
+        CACHE STRING "Import paths for Qt Creator's code model"
+        FORCE
+)
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
-        ${Qt5Multimedia_INCLUDE_DIRS}
-        ${Qt5MultimediaWidgets_INCLUDE_DIRS}
-        ${Qt5Widgets_INCLUDE_DIRS}
-        ${Qt5Bluetooth_INCLUDE_DIRS}
-        ${Qt5Network_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
         ${OPENSSL_INCLUDE_DIR}
         ${RTAUDIO_INCLUDE_DIRS}
@@ -122,30 +125,37 @@ set(common_include_directory ${include_directory}/f1x/openauto/Common)
 set(autoapp_sources_directory ${sources_directory}/autoapp)
 set(autoapp_include_directory ${include_directory}/f1x/openauto/autoapp)
 
-file(GLOB_RECURSE autoapp_source_files ${autoapp_sources_directory}/*.ui ${autoapp_sources_directory}/*.cpp ${autoapp_include_directory}/*.hpp ${autoapp_include_directory}/*.h ${common_include_directory}/*.hpp ${resources_directory}/*.qrc)
+
+file(GLOB_RECURSE autoapp_source_files ${autoapp_sources_directory}/*.ui ${autoapp_sources_directory}/*.cpp ${autoapp_include_directory}/*.hpp ${autoapp_include_directory}/*.h ${common_include_directory}/*.hpp)
 
 add_executable(autoapp ${autoapp_source_files})
 
 target_include_directories(autoapp PUBLIC ${AAP_PROTOBUF_INCLUDE_DIR} ${AASDK_INCLUDE_DIR})
 
 target_link_libraries(autoapp PUBLIC
-        libusb
-        ${Boost_LIBRARIES}
-        ${Qt5DBus_LIBRARIES}
-        ${Qt5Multimedia_LIBRARIES}
-        ${Qt5MultimediaWidgets_LIBRARIES}
-        ${Qt5Bluetooth_LIBRARIES}
-        ${Qt5Network_LIBRARIES}
-        ${BCM_HOST_LIBRARIES}
-        ${ILCLIENT_LIBRARIES}
-        ${WINSOCK2_LIBRARIES}
-        ${RTAUDIO_LIBRARIES}
-        ${TAGLIB_LIBRARIES}
-        ${BLKID_LIBRARIES}
-        ${GPS_LIBRARIES}
-        ${PROTOBUF_LIBRARIES}
-        ${AAP_PROTOBUF_LIB_DIR}
-        ${AASDK_LIB_DIR})
+    libusb
+    JourneyOSplugin
+    JourneyOSContentplugin
+    ${Boost_LIBRARIES}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Quick
+    Qt${QT_VERSION_MAJOR}::Qml
+    Qt${QT_VERSION_MAJOR}::DBus
+    Qt${QT_VERSION_MAJOR}::Bluetooth
+    Qt${QT_VERSION_MAJOR}::Multimedia
+    Qt${QT_VERSION_MAJOR}::MultimediaWidgets
+    Qt${QT_VERSION_MAJOR}::Network
+    ${BCM_HOST_LIBRARIES}
+    ${ILCLIENT_LIBRARIES}
+    ${WINSOCK2_LIBRARIES}
+    ${RTAUDIO_LIBRARIES}
+    ${TAGLIB_LIBRARIES}
+    ${BLKID_LIBRARIES}
+    ${GPS_LIBRARIES}
+    ${PROTOBUF_LIBRARIES}
+    ${AAP_PROTOBUF_LIB_DIR}
+    ${AASDK_LIB_DIR})
 
 set(PROGRAM_VERSION_STRING "${OPENAUTO_BUILD_MAJOR_RELEASE}.${OPENAUTO_BUILD_MINOR_RELEASE}.${OPENAUTO_BUILD_INCREMENTAL}+${OPENAUTO_BUILD_DATE}")
 
@@ -161,9 +171,12 @@ add_executable(btservice ${btservice_source_files}
 
 target_link_libraries(btservice PUBLIC
         ${Boost_LIBRARIES}
-        ${Qt5Bluetooth_LIBRARIES}
-        ${Qt5Network_LIBRARIES}
-        ${Qt5MultimediaWidgets_LIBRARIES}
+        Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Gui
+        Qt${QT_VERSION_MAJOR}::Bluetooth
+        Qt${QT_VERSION_MAJOR}::Network
+        Qt${QT_VERSION_MAJOR}::Multimedia
+        Qt${QT_VERSION_MAJOR}::MultimediaWidgets
         ${PROTOBUF_LIBRARIES}
         ${AAP_PROTOBUF_LIB_DIR})
 

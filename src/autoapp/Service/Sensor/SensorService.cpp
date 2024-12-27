@@ -1,21 +1,3 @@
-/*
-*  This file is part of openauto project.
-*  Copyright (C) 2018 f1x.studio (Michal Szwaj)
-*
-*  openauto is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation; either version 3 of the License, or
-*  (at your option) any later version.
-
-*  openauto is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  along with openauto. If not, see <http://www.gnu.org/licenses/>.
-*/
-
 
 #include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/Sensor/SensorService.hpp>
@@ -217,8 +199,12 @@ namespace f1x::openauto::autoapp::service::sensor {
 
         if ((this->gpsEnabled_) &&
             (gps_waiting(&this->gpsData_, 0)) &&
+#if GPSD_API_MAJOR_VERSION >= 11
+            (gps_read(&this->gpsData_, NULL, 0) > 0) &&
+#else
             (gps_read(&this->gpsData_) > 0) &&
             (this->gpsData_.status != STATUS_NO_FIX) &&
+#endif
             (this->gpsData_.fix.mode == MODE_2D || this->gpsData_.fix.mode == MODE_3D) &&
             (this->gpsData_.set & TIME_SET) &&
             (this->gpsData_.set & LATLON_SET)) {

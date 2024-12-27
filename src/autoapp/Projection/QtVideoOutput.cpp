@@ -1,38 +1,16 @@
-/*
-*  This file is part of openauto project.
-*  Copyright (C) 2018 f1x.studio (Michal Szwaj)
-*
-*  openauto is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation; either version 3 of the License, or
-*  (at your option) any later version.
-
-*  openauto is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  along with openauto. If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#include <QApplication>
-#include <f1x/openauto/autoapp/Projection/QtVideoOutput.hpp>
 #include <f1x/openauto/Common/Log.hpp>
+#include <f1x/openauto/autoapp/Projection/QtVideoOutput.hpp>
+#include <QGuiApplication>
 
-namespace f1x
-{
-namespace openauto
-{
-namespace autoapp
-{
-namespace projection
+namespace f1x::openauto::autoapp::projection
 {
 
 QtVideoOutput::QtVideoOutput(configuration::IConfiguration::Pointer configuration)
     : VideoOutput(std::move(configuration))
 {
-    this->moveToThread(QApplication::instance()->thread());
+    this->moveToThread(QGuiApplication::instance()->thread());
+    this->moveToThread(QGuiApplication::instance()->thread());
+
     connect(this, &QtVideoOutput::startPlayback, this, &QtVideoOutput::onStartPlayback, Qt::QueuedConnection);
     connect(this, &QtVideoOutput::stopPlayback, this, &QtVideoOutput::onStopPlayback, Qt::QueuedConnection);
     QMetaObject::invokeMethod(this, "createVideoOutput", Qt::BlockingQueuedConnection);
@@ -42,7 +20,10 @@ void QtVideoOutput::createVideoOutput()
 {
     OPENAUTO_LOG(info) << "[QtVideoOutput] createVideoOutput()";
     videoWidget_ = std::make_unique<QVideoWidget>();
-    mediaPlayer_ = std::make_unique<QMediaPlayer>(nullptr, QMediaPlayer::StreamPlayback);
+
+    // In Qt6, StreamPlayback is not used in the constructor but rather you set the source type explicitly
+    mediaPlayer_ = std::make_unique<QMediaPlayer>();
+    mediaPlayer_->setSourceDevice(nullptr); // This sets up for streaming. Remember to set the actual device when you have it.
 }
 
 
@@ -76,7 +57,18 @@ void QtVideoOutput::onStartPlayback()
     videoWidget_->show();
 
     mediaPlayer_->setVideoOutput(videoWidget_.get());
-    mediaPlayer_->setMedia(QMediaContent(), &videoBuffer_);
+
+    // Use setSource instead of setMedia
+    if (&videoBuffer_)
+    {
+      mediaPlayer_->setSourceDevice(&videoBuffer_);
+    }
+    else
+    {
+      // If you have a URL or file, you can use setSource(QUrl)
+      // mediaPlayer_->setSource(QUrl::fromLocalFile("path/to/video.mp4"));
+    }
+
     mediaPlayer_->play();
 
     // TODO: This only outputs a line if there's an error - FIXME - Output a proper status instead
@@ -90,6 +82,6 @@ void QtVideoOutput::onStopPlayback()
 }
 
 }
-}
-}
-}
+
+
+

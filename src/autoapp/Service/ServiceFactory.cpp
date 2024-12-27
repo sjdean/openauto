@@ -1,39 +1,16 @@
-/*
-*  This file is part of openauto project.
-*  Copyright (C) 2018 f1x.studio (Michal Szwaj)
-*
-*  openauto is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation; either version 3 of the License, or
-*  (at your option) any later version.
-
-*  openauto is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  along with openauto. If not, see <http://www.gnu.org/licenses/>.
-*/
-
 #include <QApplication>
 #include <QScreen>
-
 #include <aasdk/Channel/MediaSink/Audio/Channel/MediaAudioChannel.hpp>
 #include <aasdk/Channel/MediaSink/Audio/Channel/SystemAudioChannel.hpp>
 #include <aasdk/Channel/MediaSink/Audio/Channel/GuidanceAudioChannel.hpp>
 #include <aasdk/Channel/MediaSink/Audio/Channel/TelephonyAudioChannel.hpp>
-
 #include <f1x/openauto/autoapp/Service/ServiceFactory.hpp>
-
 #include <f1x/openauto/autoapp/Service/MediaSink/VideoService.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSink/MediaAudioService.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSink/GuidanceAudioService.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSink/SystemAudioService.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSink/TelephonyAudioService.hpp>
-
 #include <f1x/openauto/autoapp/Service/MediaSource/MicrophoneMediaSourceService.hpp>
-
 #include <f1x/openauto/autoapp/Service/Sensor/SensorService.hpp>
 #include <f1x/openauto/autoapp/Service/Bluetooth/BluetoothService.hpp>
 #include <f1x/openauto/autoapp/Service/InputSource/InputSourceService.hpp>

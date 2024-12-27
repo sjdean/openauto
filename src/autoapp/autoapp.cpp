@@ -1,292 +1,234 @@
-/*
-*  This file is part of openauto project.
-*  Copyright (C) 2018 f1x.studio (Michal Szwaj)
-*
-*  openauto is free software: you can redistribute it and/or modify
-*  it under the terms of the GNU General Public License as published by
-*  the Free Software Foundation; either version 3 of the License, or
-*  (at your option) any later version.
-
-*  openauto is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  along with openauto. If not, see <http://www.gnu.org/licenses/>.
-*/
-
 #include <thread>
-#include <QApplication>
 #include <QScreen>
-#include <QDesktopWidget>
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
+#include <QQuickView>
+#include <QtQml/qqmlextensionplugin.h>
+
+#include <pulse/pulseaudio.h>
+
 #include <aasdk/USB/USBHub.hpp>
 #include <aasdk/USB/ConnectedAccessoriesEnumerator.hpp>
 #include <aasdk/USB/AccessoryModeQueryChain.hpp>
 #include <aasdk/USB/AccessoryModeQueryChainFactory.hpp>
 #include <aasdk/USB/AccessoryModeQueryFactory.hpp>
 #include <aasdk/TCP/TCPWrapper.hpp>
+
 #include <f1x/openauto/autoapp/App.hpp>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 #include <f1x/openauto/autoapp/Configuration/RecentAddressesList.hpp>
 #include <f1x/openauto/autoapp/Service/AndroidAutoEntityFactory.hpp>
 #include <f1x/openauto/autoapp/Service/ServiceFactory.hpp>
 #include <f1x/openauto/autoapp/Configuration/Configuration.hpp>
-#include <f1x/openauto/autoapp/UI/MainWindow.hpp>
-#include <f1x/openauto/autoapp/UI/SettingsWindow.hpp>
-#include <f1x/openauto/autoapp/UI/ConnectDialog.hpp>
-#include <f1x/openauto/autoapp/UI/WarningDialog.hpp>
-#include <f1x/openauto/autoapp/UI/UpdateDialog.hpp>
 #include <f1x/openauto/Common/Log.hpp>
+
+#include <f1x/openauto/autoapp/UI/SettingsView.hpp>
+
+#include <f1x/openauto/autoapp/UI/FrameRateModel.hpp>
+#include <f1x/openauto/autoapp/UI/ResolutionModel.hpp>
+
+#include <f1x/openauto/autoapp/UI/DriverPositionModel.hpp>
+#include <f1x/openauto/autoapp/UI/FuelTypeModel.hpp>
+#include <f1x/openauto/autoapp/UI/EvConnectorTypeModel.hpp>
+
+#include <f1x/openauto/autoapp/UI/PulseAudioDeviceModel.hpp>
+#include <f1x/openauto/autoapp/UI/BluetoothAdapterModel.hpp>
+
 
 namespace autoapp = f1x::openauto::autoapp;
 using ThreadPool = std::vector<std::thread>;
 
-void startUSBWorkers(boost::asio::io_service& ioService, libusb_context* usbContext, ThreadPool& threadPool)
-{
-    auto usbWorker = [&ioService, usbContext]() {
-        timeval libusbEventTimeout{180, 0};
+Q_IMPORT_QML_PLUGIN(JourneyOSPlugin)
+Q_IMPORT_QML_PLUGIN(JourneyOSContentPlugin)
 
-        while(!ioService.stopped())
-        {
-            libusb_handle_events_timeout_completed(usbContext, &libusbEventTimeout, nullptr);
-        }
-    };
+const char mainQmlFile[] = "qrc:/qt/qml/JourneyOSContent/Journey.qml";
 
-    threadPool.emplace_back(usbWorker);
-    threadPool.emplace_back(usbWorker);
-    threadPool.emplace_back(usbWorker);
-    threadPool.emplace_back(usbWorker);
+#ifdef BUILD_QDS_COMPONENTS
+Q_IMPORT_QML_PLUGIN(QtQuick_Studio_ComponentsPlugin)
+Q_IMPORT_QML_PLUGIN(QtQuick_Studio_EffectsPlugin)
+Q_IMPORT_QML_PLUGIN(QtQuick_Studio_ApplicationPlugin)
+Q_IMPORT_QML_PLUGIN(FlowViewPlugin)
+Q_IMPORT_QML_PLUGIN(QtQuick_Studio_LogicHelperPlugin)
+Q_IMPORT_QML_PLUGIN(QtQuick_Studio_MultiTextPlugin)
+Q_IMPORT_QML_PLUGIN(QtQuick_Studio_EventSimulatorPlugin)
+Q_IMPORT_QML_PLUGIN(QtQuick_Studio_EventSystemPlugin)
+#endif
+
+inline void set_qt_environment() {
+  qputenv("QML_COMPAT_RESOLVE_URLS_ON_ASSIGNMENT", "1");
+  qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "1");
+  qputenv("QT_ENABLE_HIGHDPI_SCALING", "0");
+  qputenv("QT_LOGGING_RULES", "qt.qml.connections=false");
+  qputenv("QT_QUICK_CONTROLS_CONF", ":/qtquickcontrols2.conf");
 }
 
-void startIOServiceWorkers(boost::asio::io_service& ioService, ThreadPool& threadPool)
-{
-    auto ioServiceWorker = [&ioService]() {
-        ioService.run();
-    };
+void startUSBWorkers(boost::asio::io_service &ioService, libusb_context *usbContext, ThreadPool &threadPool) {
+  auto usbWorker = [&ioService, usbContext]() {
+    timeval libusbEventTimeout{180, 0};
 
-    threadPool.emplace_back(ioServiceWorker);
-    threadPool.emplace_back(ioServiceWorker);
-    threadPool.emplace_back(ioServiceWorker);
-    threadPool.emplace_back(ioServiceWorker);
+    while (!ioService.stopped()) {
+      libusb_handle_events_timeout_completed(usbContext, &libusbEventTimeout, nullptr);
+    }
+  };
+
+  threadPool.emplace_back(usbWorker);
+  threadPool.emplace_back(usbWorker);
+  threadPool.emplace_back(usbWorker);
+  threadPool.emplace_back(usbWorker);
 }
 
-int main(int argc, char* argv[])
-{
-    libusb_context* usbContext;
-    if(libusb_init(&usbContext) != 0)
-    {
-        OPENAUTO_LOG(error) << "[AutoApp] libusb_init failed.";
-        return 1;
-    }
+void startIOServiceWorkers(boost::asio::io_service &ioService, ThreadPool &threadPool) {
+  auto ioServiceWorker = [&ioService]() {
+    ioService.run();
+  };
 
-    boost::asio::io_service ioService;
-    boost::asio::io_service::work work(ioService);
-    std::vector<std::thread> threadPool;
-    startUSBWorkers(ioService, usbContext, threadPool);
-    startIOServiceWorkers(ioService, threadPool);
+  threadPool.emplace_back(ioServiceWorker);
+  threadPool.emplace_back(ioServiceWorker);
+  threadPool.emplace_back(ioServiceWorker);
+  threadPool.emplace_back(ioServiceWorker);
+}
 
-    QApplication qApplication(argc, argv);
-    int width = QApplication::desktop()->width();
-    int height = QApplication::desktop()->height();
+pa_mainloop *m;
+pa_mainloop_api *mainloop_api;
+pa_context *context;
 
-    for (QScreen *screen : qApplication.screens()) {
-      OPENAUTO_LOG(info) << "[AutoApp] Screen name: " << screen->name().toStdString();
-      OPENAUTO_LOG(info) << "[AutoApp] Screen geometry: " << screen->geometry().width(); // This includes position and size
-      OPENAUTO_LOG(info) << "[AutoApp] Screen physical size: " << screen->physicalSize().width(); // Size in millimeters
-    }
+void initPulseAudio() {
+  m = pa_mainloop_new();
+  mainloop_api = pa_mainloop_get_api(m);
 
-    QScreen *primaryScreen = QGuiApplication::primaryScreen();
+  context = pa_context_new(mainloop_api, "Your Application Name");
+  pa_context_set_state_callback(context,
+                                [](pa_context *c, void *userdata) {
+                                  if (pa_context_get_state(c) == PA_CONTEXT_READY) {
+                                    pa_threaded_mainloop_signal((pa_threaded_mainloop *) userdata, 0);
+                                  }
+                                }, m);
 
-    // Check if a primary screen was found
-    if (primaryScreen) {
-      // Get the geometry of the primary screen
-      QRect screenGeometry = primaryScreen->geometry();
-      width = screenGeometry.width();
-      height = screenGeometry.height();
-      OPENAUTO_LOG(info) << "[AutoApp] Using gemoetry from primary screen.";
-    } else {
-      OPENAUTO_LOG(info) << "[AutoApp] Unable to find primary screen, using default values.";
-    }
+  if (pa_context_connect(context, NULL, PA_CONTEXT_NOFLAGS, NULL) < 0) {
+    fprintf(stderr, "Failed to connect to PulseAudio server\n");
+    return;
+  }
 
-    OPENAUTO_LOG(info) << "[AutoApp] Display width: " << width;
-    OPENAUTO_LOG(info) << "[AutoApp] Display height: " << height;
-    
-    auto configuration = std::make_shared<autoapp::configuration::Configuration>();
+  pa_threaded_mainloop *loop = pa_threaded_mainloop_new();
+  pa_threaded_mainloop_start(loop);
 
-    autoapp::ui::MainWindow mainWindow(configuration);
-    //mainWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
+  // Wait for the context to be ready
+  if (pa_context_get_state(context) != PA_CONTEXT_READY) {
+    pa_threaded_mainloop_wait(loop);
+  }
 
-    autoapp::ui::SettingsWindow settingsWindow(configuration);
-    //settingsWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
+  pa_threaded_mainloop_free(loop);
+}
 
-    settingsWindow.setFixedSize(width, height);
-    settingsWindow.adjustSize();
+int main(int argc, char *argv[]) {
+  // Initialize PulseAudio here
+  initPulseAudio();
 
-    autoapp::configuration::RecentAddressesList recentAddressesList(7);
-    recentAddressesList.read();
+  libusb_context *usbContext;
+  if (libusb_init(&usbContext) != 0) {
+    OPENAUTO_LOG(error) << "[AutoApp] libusb_init failed.";
+    return 1;
+  }
 
-    aasdk::tcp::TCPWrapper tcpWrapper;
-    autoapp::ui::ConnectDialog connectdialog(ioService, tcpWrapper, recentAddressesList);
-    //connectdialog.setWindowFlags(Qt::WindowStaysOnTopHint);
-    connectdialog.move((width - 500)/2,(height-300)/2);
+  boost::asio::io_service ioService;
+  boost::asio::io_service::work work(ioService);
+  std::vector<std::thread> threadPool;
+  startUSBWorkers(ioService, usbContext, threadPool);
+  startIOServiceWorkers(ioService, threadPool);
 
-    autoapp::ui::WarningDialog warningdialog;
-    //warningdialog.setWindowFlags(Qt::WindowStaysOnTopHint);
-    warningdialog.move((width - 500)/2,(height-300)/2);
+  set_qt_environment();
+  QGuiApplication qApplication(argc, argv);
+  QQmlApplicationEngine engine;
+  QQuickView oj;
 
-    autoapp::ui::UpdateDialog updatedialog;
-    //updatedialog.setWindowFlags(Qt::WindowStaysOnTopHint);
-    updatedialog.setFixedSize(500, 260);
-    updatedialog.move((width - 500)/2,(height-260)/2);
+  SettingsView cppHandler;
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::exit, []() { system("touch /tmp/shutdown"); std::exit(0); });
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::reboot, []() { system("touch /tmp/reboot"); std::exit(0); });
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openSettings, &settingsWindow, &autoapp::ui::SettingsWindow::showFullScreen);
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openSettings, &settingsWindow, &autoapp::ui::SettingsWindow::show_tab1);
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openSettings, &settingsWindow, &autoapp::ui::SettingsWindow::loadSystemValues);
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openConnectDialog, &connectdialog, &autoapp::ui::ConnectDialog::loadClientList);
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openConnectDialog, &connectdialog, &autoapp::ui::ConnectDialog::exec);
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openUpdateDialog, &updatedialog, &autoapp::ui::UpdateDialog::updateCheck);
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openUpdateDialog, &updatedialog, &autoapp::ui::UpdateDialog::exec);
+  FrameRateModel frameRateModel;
+  ResolutionModel resolutionModel;
 
-    if (configuration->showCursor() == false) {
-        qApplication.setOverrideCursor(Qt::BlankCursor);
-    } else {
-        qApplication.setOverrideCursor(Qt::ArrowCursor);
-    }
+  DriverPositionModel driverPositionModel;
+  FuelTypeModel fuelTypeModel;
+  EvConnectorTypeModel evConnectorTypeModel;
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::cameraHide, [&qApplication]() {
-        system("/opt/crankshaft/cameracontrol.py Background &");
-        OPENAUTO_LOG(debug) << "[AutoApp] Camera Background.";
-    });
+  PulseAudioDeviceModel pulseAudioDeviceModelOutput(context, pa_direction::PA_DIRECTION_OUTPUT);
+  PulseAudioDeviceModel pulseAudioDeviceModelInput(context, pa_direction::PA_DIRECTION_INPUT);
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::cameraShow, [&qApplication]() {
-        system("/opt/crankshaft/cameracontrol.py Foreground &");
-        OPENAUTO_LOG(debug) << "[AutoApp] Camera Foreground.";
-    });
+  BluetoothAdapterModel bluetoothAdapterModel;
+  //AvailableBluetoothDevicesForPairingModel availableBluetoothDevicesForPairingModel;
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::cameraPosYUp, [&qApplication]() {
-        system("/opt/crankshaft/cameracontrol.py PosYUp &");
-        OPENAUTO_LOG(debug) << "[AutoApp] Camera PosY up.";
-    });
+  engine.rootContext()->setContextProperty("cppHandler", &cppHandler);
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::cameraPosYDown, [&qApplication]() {
-        system("/opt/crankshaft/cameracontrol.py PosYDown &");
-        OPENAUTO_LOG(debug) << "[AutoApp] Camera PosY down.";
-    });
+  engine.rootContext()->setContextProperty("bluetoothAdapterModel", &bluetoothAdapterModel);
+  engine.rootContext()->setContextProperty("driverPositionModel", &driverPositionModel);
+  engine.rootContext()->setContextProperty("evConnectorTypeModel", &evConnectorTypeModel);
+  engine.rootContext()->setContextProperty("frameRateModel", &frameRateModel);
+  engine.rootContext()->setContextProperty("fuelTypeModel", &fuelTypeModel);
+  engine.rootContext()->setContextProperty("pulseAudioDeviceModelOutput", &pulseAudioDeviceModelOutput);
+  engine.rootContext()->setContextProperty("pulseAudioDeviceModelInput", &pulseAudioDeviceModelInput);
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::cameraZoomPlus, [&qApplication]() {
-        system("/opt/crankshaft/cameracontrol.py ZoomPlus &");
-        OPENAUTO_LOG(debug) << "[AutoApp] Camera Zoom plus.";
-    });
+  const QUrl url(mainQmlFile);
+  QObject::connect(
+      &engine, &QQmlApplicationEngine::objectCreated, &qApplication,
+      [url](QObject *obj, const QUrl &objUrl) {
+        if (!obj && url == objUrl)
+          QCoreApplication::exit(-1);
+      }, Qt::QueuedConnection);
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::cameraZoomMinus, [&qApplication]() {
-        system("/opt/crankshaft/cameracontrol.py ZoomMinus &");
-        OPENAUTO_LOG(debug) << "[AutoApp] Camera Zoom minus.";
-    });
+  engine.addImportPath(QCoreApplication::applicationDirPath() + "/qml");
+  engine.addImportPath(":/");
+  engine.load(url);
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::cameraRecord, [&qApplication]() {
-        system("/opt/crankshaft/cameracontrol.py Record &");
-        OPENAUTO_LOG(debug) << "[AutoApp] Camera Record.";
-    });
+  int width = 0;
+  int height = 0;
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::cameraStop, [&qApplication]() {
-        system("/opt/crankshaft/cameracontrol.py Stop &");
-        OPENAUTO_LOG(debug) << "[AutoApp] Camera Stop.";
-    });
+  for (QScreen *screen: qApplication.screens()) {
+    OPENAUTO_LOG(info) << "[AutoApp] Screen name: " << screen->name().toStdString();
+    OPENAUTO_LOG(info) << "[AutoApp] Screen geometry: "
+                       << screen->geometry().width(); // This includes position and size
+    OPENAUTO_LOG(info) << "[AutoApp] Screen physical size: " << screen->physicalSize().width(); // Size in millimeters
+  }
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::cameraSave, [&qApplication]() {
-        system("/opt/crankshaft/cameracontrol.py Save &");
-        OPENAUTO_LOG(debug) << "[AutoApp] Camera Save.";
-    });
+  QScreen *primaryScreen = QGuiApplication::primaryScreen();
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::TriggerScriptNight, [&qApplication]() {
-        system("/opt/crankshaft/service_daynight.sh app night");
-        OPENAUTO_LOG(debug) << "[AutoApp] MainWindow Night.";
-    });
+  // Check if a primary screen was found
+  if (primaryScreen) {
+    // Get the geometry of the primary screen
+    QRect screenGeometry = primaryScreen->geometry();
+    width = screenGeometry.width();
+    height = screenGeometry.height();
+    OPENAUTO_LOG(info) << "[AutoApp] Using gemoetry from primary screen.";
+  } else {
+    OPENAUTO_LOG(info) << "[AutoApp] Unable to find primary screen, using default values.";
+  }
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::TriggerScriptDay, [&qApplication]() {
-        system("/opt/crankshaft/service_daynight.sh app day");
-        OPENAUTO_LOG(debug) << "[AutoApp] MainWindow Day.";
-    });
+  OPENAUTO_LOG(info) << "[AutoApp] Display width: " << width;
+  OPENAUTO_LOG(info) << "[AutoApp] Display height: " << height;
 
-    mainWindow.showFullScreen();
-    mainWindow.setFixedSize(width, height);
-    mainWindow.adjustSize();
+  auto configuration = std::make_shared<autoapp::configuration::Configuration>();
 
-    aasdk::usb::USBWrapper usbWrapper(usbContext);
-    aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
-    aasdk::usb::AccessoryModeQueryChainFactory queryChainFactory(usbWrapper, ioService, queryFactory);
-    autoapp::service::ServiceFactory serviceFactory(ioService, configuration);
-    autoapp::service::AndroidAutoEntityFactory androidAutoEntityFactory(ioService, configuration, serviceFactory);
+  autoapp::configuration::RecentAddressesList recentAddressesList(7);
+  recentAddressesList.read();
 
-    auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, ioService, queryChainFactory));
-    auto connectedAccessoriesEnumerator(std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));
-    auto app = std::make_shared<autoapp::App>(ioService, usbWrapper, tcpWrapper, androidAutoEntityFactory, std::move(usbHub), std::move(connectedAccessoriesEnumerator));
+  aasdk::tcp::TCPWrapper tcpWrapper;
 
-    QObject::connect(&connectdialog, &autoapp::ui::ConnectDialog::connectionSucceed, [&app](auto socket) {
-        app->start(std::move(socket));
-    });
+  aasdk::usb::USBWrapper usbWrapper(usbContext);
+  aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
+  aasdk::usb::AccessoryModeQueryChainFactory queryChainFactory(usbWrapper, ioService, queryFactory);
+  autoapp::service::ServiceFactory serviceFactory(ioService, configuration);
+  autoapp::service::AndroidAutoEntityFactory androidAutoEntityFactory(ioService, configuration, serviceFactory);
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::TriggerAppStart, [&app]() {
-        OPENAUTO_LOG(debug) << "[AutoApp] TriggerAppStart: Manual start android auto.";
-        try {
-            app->disableAutostartEntity = false;
-            app->resume();
-            app->waitForUSBDevice();
-        } catch (...) {
-            OPENAUTO_LOG(error) << "[AutoApp] TriggerAppStart: app->waitForUSBDevice();";
-        }
-    });
+  auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, ioService, queryChainFactory));
+  auto connectedAccessoriesEnumerator(
+      std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));
+  auto app = std::make_shared<autoapp::App>(ioService, usbWrapper, tcpWrapper, androidAutoEntityFactory,
+                                            std::move(usbHub), std::move(connectedAccessoriesEnumerator));
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::TriggerAppStop, [&app]() {
-        try {
-            if (std::ifstream("/tmp/android_device")) {
-                OPENAUTO_LOG(debug) << "[AutoApp] TriggerAppStop: Manual stop usb android auto.";
-                app->disableAutostartEntity = true;
-                system("/usr/local/bin/autoapp_helper usbreset");
-                usleep(500000);
-                try {
-                    app->stop();
-                    //app->pause();
-                } catch (...) {
-                    OPENAUTO_LOG(error) << "[AutoApp] TriggerAppStop: stop();";
-                }
+  app->waitForUSBDevice();
 
-            } else {
-                OPENAUTO_LOG(debug) << "[AutoApp] TriggerAppStop: Manual stop wifi android auto.";
-                try {
-                    app->onAndroidAutoQuit();
-                    //app->pause();
-                } catch (...) {
-                    OPENAUTO_LOG(error) << "[Autoapp] TriggerAppStop: stop();";
-                }
+  auto result = qApplication.exec();
 
-            }
-        } catch (...) {
-            OPENAUTO_LOG(error) << "[AutoApp] Exception in manual stop android auto.";
-        }
-    });
+  std::for_each(threadPool.begin(), threadPool.end(), std::bind(&std::thread::join, std::placeholders::_1));
 
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::CloseAllDialogs, [&settingsWindow, &connectdialog, &updatedialog, &warningdialog]() {
-        settingsWindow.close();
-        connectdialog.close();
-        warningdialog.close();
-        updatedialog.close();
-        OPENAUTO_LOG(debug) << "[AutoApp] Close all possible open dialogs.";
-    });
-
-    if (configuration->hideWarning() == false) {
-        warningdialog.show();
-    }
-
-    app->waitForUSBDevice();
-
-    auto result = qApplication.exec();
-
-    std::for_each(threadPool.begin(), threadPool.end(), std::bind(&std::thread::join, std::placeholders::_1));
-
-    libusb_exit(usbContext);
-    return result;
+  libusb_exit(usbContext);
+  return result;
 }
