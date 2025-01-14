@@ -1,6 +1,5 @@
-
-
-#pragma once#include <f1x/openauto/autoapp/Service/MediaSource/MediaSourceService.hpp>
+#pragma once
+#include <f1x/openauto/autoapp/Service/MediaSource/MediaSourceService.hpp>
 #include <aasdk/Channel/MediaSource/Audio/MicrophoneAudioChannel.hpp>
 
 

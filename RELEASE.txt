@@ -1,5 +1,22 @@
 Release Notes
 
+20250101 - 5.0.0 - Journey Rebrand
+* Introduce new GUI
+
+TODO - BrightnessHandler / LightHandler - to switch between day and night
+TODO - Setting Updated
+TODO - Recent Address List of WiFi/Bluetooth Devices
+FIXME - DisplayOnTab Mirror HPP
+TODO - LocalBluetoothDevice, BluetoothHandler check overlap
+TODO - Work out WiFi Projection Service
+TODO - Audio Output Format support
+TODO - Add PIN Display Activity to Bluetooth
+TODO - Add Virtual Keyboards
+TODO - Fix Up Wireless Window
+TODO - Fix Up Bluetooth Window
+TODO - Bluetooth Connectivity - QDBus Monitoring....
+
+
 20241124 - 4.1.0 - Bluetooth Updates
 * Rename BluetootAdapterType to BluetoothAdapterType, and change from NONE, LOCAL, REMOTE to NONE, LOCAL, EXTERNAL to better match available settings
 * getLocalAddress() on Dummy, Local and Remote bluetooth changed to getAdapterAddress()

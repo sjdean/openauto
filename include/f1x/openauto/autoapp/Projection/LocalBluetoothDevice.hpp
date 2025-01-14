@@ -1,9 +1,9 @@
+#pragma once
+
 #include <f1x/openauto/autoapp/Projection/IBluetoothDevice.hpp>
 #include <QBluetoothLocalDevice>
 #include <QBluetoothServiceInfo>
 #include <QtBluetooth/QBluetoothServer>
-
-#pragma once
 
 namespace f1x::openauto::autoapp::projection
 {

@@ -1,15 +1,11 @@
 #include <QApplication>
 #include <QScreen>
 #include <aasdk/Channel/MediaSink/Audio/Channel/MediaAudioChannel.hpp>
-#include <aasdk/Channel/MediaSink/Audio/Channel/SystemAudioChannel.hpp>
-#include <aasdk/Channel/MediaSink/Audio/Channel/GuidanceAudioChannel.hpp>
-#include <aasdk/Channel/MediaSink/Audio/Channel/TelephonyAudioChannel.hpp>
 #include <f1x/openauto/autoapp/Service/ServiceFactory.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSink/VideoService.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSink/MediaAudioService.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSink/GuidanceAudioService.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSink/SystemAudioService.hpp>
-#include <f1x/openauto/autoapp/Service/MediaSink/TelephonyAudioService.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSource/MicrophoneMediaSourceService.hpp>
 #include <f1x/openauto/autoapp/Service/Sensor/SensorService.hpp>
 #include <f1x/openauto/autoapp/Service/Bluetooth/BluetoothService.hpp>
@@ -41,6 +37,12 @@ namespace f1x::openauto::autoapp::service {
     serviceList.emplace_back(this->createSensorService(messenger));
     serviceList.emplace_back(this->createBluetoothService(messenger));
     serviceList.emplace_back(this->createInputService(messenger));
+
+    /*
+     * WiFi Projection Service does not seem to work despite being populated in the service.
+     * However WiFi connectivity does seem to be working through the Bluetooth Service
+     * and Bluetooth Handler
+     */
     // TODO: What is WiFi Projection Service?
     //serviceList.emplace_back(this->createWifiProjectionService(messenger));
 
@@ -50,7 +52,7 @@ namespace f1x::openauto::autoapp::service {
   IService::Pointer ServiceFactory::createBluetoothService(aasdk::messenger::IMessenger::Pointer messenger) {
     OPENAUTO_LOG(info) << "[ServiceFactory] createBluetoothService()";
     projection::IBluetoothDevice::Pointer bluetoothDevice;
-    if (configuration_->getBluetoothAdapterAddress() == "") {
+    if (configuration_->getSettingByName<QString>("Bluetooth", "BluetoothAdapterAddress") == "") {
       OPENAUTO_LOG(debug) << "[ServiceFactory] Using Dummy Bluetooth";
       bluetoothDevice = std::make_shared<projection::DummyBluetoothDevice>();
     } else {
@@ -66,7 +68,7 @@ namespace f1x::openauto::autoapp::service {
   IService::Pointer ServiceFactory::createInputService(aasdk::messenger::IMessenger::Pointer messenger) {
     OPENAUTO_LOG(info) << "[ServiceFactory] createInputService()";
     QRect videoGeometry;
-    switch (configuration_->getVideoResolution()) {
+    switch (configuration_->getSettingByName<int>("AndroidAuto", "Resolution")) {
       case aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_1280x720:
         OPENAUTO_LOG(info) << "[ServiceFactory] Resolution 1280x720";
         videoGeometry = QRect(0, 0, 1280, 720);
@@ -93,10 +95,10 @@ namespace f1x::openauto::autoapp::service {
   void ServiceFactory::createMediaSinkServices(ServiceList &serviceList,
                                                aasdk::messenger::IMessenger::Pointer messenger) {
     OPENAUTO_LOG(info) << "[ServiceFactory] createMediaSinkServices()";
-    if (configuration_->musicAudioChannelEnabled()) {
+    if (configuration_->getSettingByName<bool>("AndroidAuto", "Media")) {
       OPENAUTO_LOG(info) << "[ServiceFactory] Media Audio Channel enabled";
       auto mediaAudioOutput =
-          configuration_->getAudioOutputBackendType() == configuration::AudioOutputBackendType::RTAUDIO ?
+          static_cast<configuration::AudioOutputBackendType>(configuration_->getSettingByName<int>("Audio", "Type")) == configuration::AudioOutputBackendType::RTAUDIO ?
           std::make_shared<projection::RtAudioOutput>(2, 16, 48000) :
           projection::IAudioOutput::Pointer(new projection::QtAudioOutput(2, 16, 48000),
                                             std::bind(&QObject::deleteLater, std::placeholders::_1));
@@ -105,10 +107,10 @@ namespace f1x::openauto::autoapp::service {
           std::make_shared<mediasink::MediaAudioService>(ioService_, messenger, std::move(mediaAudioOutput)));
     }
 
-    if (configuration_->guidanceAudioChannelEnabled()) {
+    if (configuration_->getSettingByName<bool>("AndroidAuto", "Guidance")) {
       OPENAUTO_LOG(info) << "[ServiceFactory] Guidance Audio Channel enabled";
       auto guidanceAudioOutput =
-          configuration_->getAudioOutputBackendType() == configuration::AudioOutputBackendType::RTAUDIO ?
+          static_cast<configuration::AudioOutputBackendType>(configuration_->getSettingByName<int>("Audio", "Type")) == configuration::AudioOutputBackendType::RTAUDIO ?
           std::make_shared<projection::RtAudioOutput>(1, 16, 16000) :
           projection::IAudioOutput::Pointer(new projection::QtAudioOutput(1, 16, 16000),
                                             std::bind(&QObject::deleteLater, std::placeholders::_1));
@@ -119,7 +121,7 @@ namespace f1x::openauto::autoapp::service {
     }
 
     /*
-    if (configuration_->telephonyAudioChannelEnabled()) {
+    if (configuration_->getChannelTelephony()) {
       OPENAUTO_LOG(info) << "[ServiceFactory] Telephony Audio Channel enabled";
       auto telephonyAudioOutput =
           configuration_->getAudioOutputBackendType() == configuration::AudioOutputBackendType::RTAUDIO ?
@@ -138,7 +140,7 @@ namespace f1x::openauto::autoapp::service {
 
     OPENAUTO_LOG(info) << "[ServiceFactory] System Audio Channel enabled";
     auto systemAudioOutput =
-        configuration_->getAudioOutputBackendType() == configuration::AudioOutputBackendType::RTAUDIO ?
+        static_cast<configuration::AudioOutputBackendType>(configuration_->getSettingByName<int>("Audio", "Type")) == configuration::AudioOutputBackendType::RTAUDIO ?
         std::make_shared<projection::RtAudioOutput>(1, 16, 16000) :
         projection::IAudioOutput::Pointer(new projection::QtAudioOutput(1, 16, 16000),
                                           std::bind(&QObject::deleteLater, std::placeholders::_1));
@@ -174,7 +176,7 @@ namespace f1x::openauto::autoapp::service {
 
   IService::Pointer ServiceFactory::createWifiProjectionService(aasdk::messenger::IMessenger::Pointer messenger) {
     OPENAUTO_LOG(info) << "[ServiceFactory] createWifiProjectionService()";
-    return std::make_shared<wifiprojection::WifiProjectionService>(ioService_, messenger);
+    return std::make_shared<wifiprojection::WifiProjectionService>(ioService_, messenger, configuration_);
   }
 
 }

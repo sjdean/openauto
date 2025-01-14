@@ -1,19 +1,34 @@
-#ifndef OPENAUTO_FRAMERATEMODEL_H
-#define OPENAUTO_FRAMERATEMODEL_H
+#ifndef OPENAUTO_FRAMERATEMODEL_HPP
+#define OPENAUTO_FRAMERATEMODEL_HPP
 
 #include <QList>
 #include <QQmlListProperty>
 #include <QtCore/QObject>
-#include "ComboBoxModel.hpp"
-#include <aap_protobuf/service/media/sink/message/VideoFrameRateType.pb.h>
+#include <f1x/openauto/autoapp/UI/FrameRateModelItem.hpp>
 
-class FrameRateModel : public ComboBoxModel {
+namespace f1x::openauto::autoapp::UI {
+  class FrameRateModel : public QObject {
   Q_OBJECT
+    Q_PROPERTY(QList<QObject *> comboBoxItems READ getComboBoxItems NOTIFY comboBoxItemsChanged)
+    Q_PROPERTY(FrameRateModelItem* currentComboBoxItem READ getCurrentComboBoxItem WRITE setCurrentComboBoxItem NOTIFY currentComboBoxItemChanged)
 
-public:
-  explicit FrameRateModel(QObject *parent = nullptr);
-protected:
-  void populateComboBoxItems() override;
+  public:
+    explicit FrameRateModel(QObject *parent = nullptr);
 
+  signals:
+    void comboBoxItemsChanged();
+    void currentComboBoxItemChanged();
 
-#endif //OPENAUTO_FRAMERATEMODEL_H
+  protected:
+    QList<QObject *> getComboBoxItems() const;
+    FrameRateModelItem* getCurrentComboBoxItem() const;
+    void setCurrentComboBoxItem(FrameRateModelItem* value);
+
+    void populateComboBoxItems();
+    void addComboBoxItem(const QString &display, aap_protobuf::service::media::sink::message::VideoFrameRateType value);
+  private:
+    QList<FrameRateModelItem *> m_comboBoxItems;
+    FrameRateModelItem* m_currentComboBoxItem;
+  };
+}
+#endif //OPENAUTO_FRAMERATEMODEL_HPP

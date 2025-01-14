@@ -2,15 +2,9 @@
 #include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Configuration/RecentAddressesList.hpp>
 
-namespace f1x
+namespace f1x::openauto::autoapp::configuration
 {
-namespace openauto
-{
-namespace autoapp
-{
-namespace configuration
-{
-
+// TODO: Re-write
 const std::string RecentAddressesList::cConfigFileName = "openauto_wifi_recent.ini";
 const std::string RecentAddressesList::cRecentEntiresCount = "Recent.EntiresCount";
 const std::string RecentAddressesList::cRecentEntryPrefix = "Recent.Entry_";
@@ -92,7 +86,4 @@ void RecentAddressesList::save()
     boost::property_tree::ini_parser::write_ini(cConfigFileName, iniConfig);
 }
 
-}
-}
-}
 }

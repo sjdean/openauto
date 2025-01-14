@@ -1,10 +1,9 @@
-
-
-#include <f1x/openauto/Common/Log.hpp>
-#include <f1x/openauto/autoapp/Projection/LocalBluetoothDevice.hpp>
 #include <QtBluetooth>
 #include <QGuiApplication>
+#include <f1x/openauto/Common/Log.hpp>
+#include <f1x/openauto/autoapp/Projection/LocalBluetoothDevice.hpp>
 
+// TODO: Check Overlap with BluetoothHandler
 namespace f1x::openauto::autoapp::projection {
 
   LocalBluetoothDevice::LocalBluetoothDevice(const QString &adapterAddress, QObject *parent) : QObject(parent) {

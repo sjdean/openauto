@@ -1,12 +1,12 @@
-//
-// Created by Simon Dean on 26/11/2024.
-//
-
 #ifndef OPENAUTO_BLUETOOTHHANDLER_HPP
-#define OPENAUTO_BLUETOOTHHANDLER_HPP#include <f1x/openauto/btservice/IBluetoothHandler.hpp>
+#define OPENAUTO_BLUETOOTHHANDLER_HPP
+
+#include <f1x/openauto/btservice/IBluetoothHandler.hpp>
 #include <f1x/openauto/btservice/IAndroidBluetoothServer.hpp>
 #include <f1x/openauto/btservice/IAndroidBluetoothService.hpp>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
+#include <QtDBus/QDBusInterface>
+#include <QtDBus/QDBusReply>
 #include <QObject>
 
 namespace f1x::openauto::btservice {
@@ -29,6 +29,8 @@ namespace f1x::openauto::btservice {
     void onError(QBluetoothLocalDevice::Error error);
 
     void onHostModeStateChanged(QBluetoothLocalDevice::HostMode state);
+
+    QString getAdapterPathByAddress(const QString &adapterAddress);
 
 
   private:

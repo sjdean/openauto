@@ -1,7 +1,7 @@
-
-
-#pragma once#include <aasdk/Channel/WifiProjection/WifiProjectionService.hpp>
+#pragma once
+#include <aasdk/Channel/WifiProjection/WifiProjectionService.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
+#include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 #include <boost/asio/io_service.hpp>
 #include <aasdk/Messenger/IMessenger.hpp>
 
@@ -13,7 +13,7 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
       public IService,
       public std::enable_shared_from_this<WifiProjectionService> {
   public:
-    WifiProjectionService(boost::asio::io_service &ioService, aasdk::messenger::IMessenger::Pointer messenger);
+    WifiProjectionService(boost::asio::io_service &ioService, aasdk::messenger::IMessenger::Pointer messenger, configuration::IConfiguration::Pointer configuration);
 
     void start() override;
 
@@ -35,6 +35,7 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
 
   private:
     using std::enable_shared_from_this<WifiProjectionService>::shared_from_this;
+    configuration::IConfiguration::Pointer configuration_;
     boost::asio::deadline_timer timer_;
     boost::asio::io_service::strand strand_;
     aasdk::channel::wifiprojection::WifiProjectionService::Pointer channel_;

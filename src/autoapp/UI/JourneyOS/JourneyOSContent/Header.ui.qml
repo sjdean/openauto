@@ -25,17 +25,20 @@ Item {
     property bool hasBluetooth: true
     property bool hasWifi: true
 
-    property bool bluetoothPaired: false
-    property bool bluetoothConnected: false
-    property bool bluetoothConnecting: false
+    property string bluetoothStatusText: bluetoothPopupHandler.statusText
+    property bool bluetoothPaired: bluetoothPopupHandler.bluetoothStatus = !BluetoothConnectionStatus.NOT_CONFIGURED
+    property bool bluetoothConnected: bluetoothPopupHandler.bluetoothStatus = BluetoothConnectionStatus.CONNECTED
+    property bool bluetoothConnecting: bluetoothPopupHandler.bluetoothStatus = BluetoothConnectionStatus.CONNECTING
+    //TODO: Wifi Connectivity Settings
     property bool wifiPaired: false
     property bool wifiConnected: false
     property bool wifiConnecting: false
 
-    property bool androidAutoConnected: false
-    property bool androidAutoConnecting: false
-
-
+    property bool androidAutoConnected: state === androidAutoMonitor.Connected
+    property bool androidAutoConnecting: state === AndroidAutoMonitor.Connected
+    property string androidAutoMethodText: androidAutoMonitor.USB ? "USB"
+                                                                  : androidAutoMonitor.WIFI ? "Wi-Fi"
+                                                                  : "Unknown"
 
     Rectangle {
         color: "#000000"
@@ -70,7 +73,7 @@ Item {
                         id: bluetoothButton
                         height: 25
                         textIsStatus: true
-                        text: "Status"
+                        text: headerItem.bluetoothStatusText
                         icon.source: "images/bluetooth-alt.svg"
                         iconColor: !headerItem.bluetoothPaired ? "#999900" : (headerItem.bluetoothConnecting ? "#000099" : (!headerItem.bluetoothConnected ? "#990000" : "#009900"))
                         iconSize: 12
@@ -98,10 +101,11 @@ Item {
                         id: androidAutoButton
                         height: 25
                         textIsStatus: true
-                        text: "Status"
+                        text: headerItem.androidAutoMethodText
                         icon.source: "images/android-auto.svg"
                         iconColor: headerItem.androidAutoConnecting ? "#000099" : (headerItem.androidAutoConnected ? "#009900" : "#999999")
                         iconSize: 12
+
                         Connections {
                             target: androidAutoButton
                             onClicked: headerItem.viewAndroidAutoStatus()

@@ -16,7 +16,7 @@ Item {
         TabBar {
             id: tabBar
             height: 60
-            currentIndex: 2
+            currentIndex: 3
             width: settingsView.width
 
             TabButton {
@@ -75,8 +75,12 @@ Item {
                         font.pixelSize: 15
                     }
                     ComboBox {
-                        id: drivingPosition
-                        model: ["Left", "Right", "Centre"]
+                        id: driverPosition
+                        model: driverPositionModel.comboBoxItems
+                        currentIndex: driverPositionModel.comboBoxItems.indexOf(driverPositionModel.currentComboBoxItem)
+                        onCurrentIndexChanged: {
+                            driverPositionModel.currentComboBoxItem = driverPositionModel.comboBoxItems[currentIndex];
+                        }
                     }
 
                 }
@@ -89,7 +93,11 @@ Item {
                     }
                     ComboBox {
                         id: fuelType
-                        model: ["Unleaded", "Leaded", "Diesel", "Electric", "Biodiesel", "E85", "LPG","CNG", "LNG", "Electric"]
+                        model: fuelTypeModel.comboBoxItems
+                        currentIndex: fuelTypeModel.comboBoxItems.indexOf(fuelTypeModel.currentComboBoxItem)
+                        onCurrentIndexChanged: {
+                            fuelTypeModel.currentComboBoxItem = fuelTypeModel.comboBoxItems[currentIndex];
+                        }
                     }
                 }
 
@@ -100,8 +108,12 @@ Item {
                         font.pixelSize: 15
                     }
                     ComboBox {
-                        id: electricChargingType
-                        model: ["J1772", "Mennekes", "Chadeno", "Tesla Supercharger", "GBT", "Other"]
+                        id: evConnectorType
+                        model: evConnectorTypeModel.comboBoxItems
+                        currentIndex: evConnectorTypeModel.comboBoxItems.indexOf(evConnectorTypeModel.currentComboBoxItem)
+                        onCurrentIndexChanged: {
+                            evConnectorTypeModel.currentComboBoxItem = evConnectorTypeModel.comboBoxItems[currentIndex];
+                        }
                     }
                 }
 
@@ -113,8 +125,10 @@ Item {
                     }
 
                     TextField {
-                        id: carMaketext
-                        placeholderText: qsTr("Text Field")
+                        id: carMake
+                        placeholderText: qsTr("Car Make")
+                        text: settingsViewHandler.carMake
+                        onTextChanged: settingsViewHandler.carMake = text
                     }
 
                 }
@@ -127,8 +141,10 @@ Item {
                     }
 
                     TextField {
-                        id: carModelText
-                        placeholderText: qsTr("Text Field")
+                        id: carModel
+                        placeholderText: qsTr("Car Model")
+                        text: settingsViewHandler.carModel
+                        onTextChanged: settingsViewHandler.carModel = text
                     }
 
                 }
@@ -153,6 +169,8 @@ Item {
                     spacing: 10
                     CheckBox {
                         id: autoPlayback
+                        checked: settingsViewHandler.mediaAutoPlayback
+                        onCheckedChanged: settingsViewHandler.mediaAutoPlayback = checked
                         text: qsTr("Auto play last song on playback")
                     }
                 }
@@ -161,6 +179,8 @@ Item {
                     spacing: 10
                     CheckBox {
                         id: autoStart
+                        checked: settingsViewHandler.mediaAutoStart
+                        onCheckedChanged: settingsViewHandler.mediaAutoStart = checked
                         text: qsTr("Instant playback on track/album select")
                     }
                 }
@@ -183,17 +203,23 @@ Item {
                     spacing: 10
 
                     CheckBox {
-                        id: checkBox
+                        id: channelMedia
+                        checked: settingsViewHandler.aaChannelMedia
+                        onCheckedChanged: settingsViewHandler.aaChannelMedia = checked
                         text: qsTr("Media")
                     }
 
                     CheckBox {
-                        id: checkBox1
+                        id: channelGuidance
+                        checked: settingsViewHandler.aaChannelGuidance
+                        onCheckedChanged: settingsViewHandler.aaChannelGuidance = checked
                         text: qsTr("Guidance")
                     }
 
                     CheckBox {
-                        id: checkBox2
+                        id: channelTelephony
+                        checked: settingsViewHandler.aaChannelTelephony
+                        onCheckedChanged: settingsViewHandler.aaChannelTelephony = checked
                         text: qsTr("Telephony")
                     }
 
@@ -207,15 +233,18 @@ Item {
                 Row {
                     spacing: 10
                     RadioButton {
-                        id: radioAudioRT
+                        id: audioRt
                         text: qsTr("RT Audio")
+                        checked: settingsViewHandler.audioTypeRt
+                        onCheckedChanged: settingsViewHandler.audioTypeRt = checked
                     }
 
                     RadioButton {
-                        id: radioAudioQT
+                        id: audioQt
                         text: qsTr("Qt")
+                        checked: settingsViewHandler.audioTypeQt
+                        onCheckedChanged: settingsViewHandler.audioTypeQt = checked
                     }
-
                 }
 
                 Row {
@@ -224,11 +253,14 @@ Item {
                         font.pixelSize: 15
                     }
                     spacing: 10
+
                     ComboBox {
-                        id: comboFrameRate
-                        flat: false
-                        displayText: ""
-                        textRole: ""
+                        id: frameRate
+                        model: frameRateModel.comboBoxItems
+                        currentIndex: frameRateModel.comboBoxItems.indexOf(frameRateModel.currentComboBoxItem)
+                        onCurrentIndexChanged: {
+                            frameRateModel.currentComboBoxItem = frameRateModel.comboBoxItems[currentIndex];
+                        }
                     }
 
                 }
@@ -239,10 +271,12 @@ Item {
                         font.pixelSize: 15
                     }
                     ComboBox {
-                        id: comboResolution
-                        flat: false
-                        displayText: ""
-                        textRole: ""
+                        id: resolution
+                        model: resolutionModel.comboBoxItems
+                        currentIndex: resolutionModel.comboBoxItems.indexOf(resolutionModel.currentComboBoxItem)
+                        onCurrentIndexChanged: {
+                            resolutionModel.currentComboBoxItem = resolutionModel.comboBoxItems[currentIndex];
+                        }
                     }
                 }
 
@@ -253,7 +287,9 @@ Item {
                         font.pixelSize: 15
                     }
                     SpinBox {
-                        id: spinOMXLayer
+                        id: omxLayer
+                        value: settingsViewHandler.videoOMXLayer
+                        onValueChanged: settingsViewHandler.videoOMXLayer = value
                     }
                 }
                 Text {
@@ -269,14 +305,18 @@ Item {
                         font.pixelSize: 15
                     }
                     SpinBox {
-                        id: spinMarginHeight
+                        id: marginHeight
+                        value: settingsViewHandler.videoMarginHeight
+                        onValueChanged: settingsViewHandler.videoMarginHeight = value
                     }
                     Text {
                         text: "Length"
                         font.pixelSize: 15
                     }
                     SpinBox {
-                        id: spinMarginWeight
+                        id: marginWidth
+                        value: settingsViewHandler.videoMarginWidth
+                        onValueChanged: settingsViewHandler.videoMarginWidth = value
                     }
                 }
                 Row {
@@ -286,8 +326,9 @@ Item {
                         font.pixelSize: 15
                     }
                     Slider {
-                        id: sliderDPI
-                        value: 0.5
+                        id: dpi
+                        value: settingsViewHandler.screenDPI
+                        onValueChanged: settingsViewHandler.screenDPI = value
                     }
 
                 }
@@ -304,23 +345,16 @@ Item {
                         text: "Playback Volume"
                         font.pixelSize: 15
                     }
-                    Slider {
-                        id: sliderVolumePlayback
-                        value: 0.5
-                    }
+                    RangeSlider {
+                        id: volumePlaybackRange
+                        from: 0
+                        to: 255
+                        first.value: settingsViewHandler.audioVolumePlaybackMin
+                        second.value: settingsViewHandler.audioVolumePlaybackMax
 
-                }
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "Capture Volume"
-                        font.pixelSize: 15
+                        onFirstChanged: settingsViewHandler.audioVolumePlaybackMin = first.value
+                        onSecondChanged: settingsViewHandler.audioVolumePlaybackMax = second.value
                     }
-                    Slider {
-                        id: sliderVolumeCapture
-                        value: 0.5
-                    }
-
                 }
                 Row {
                     spacing: 10
@@ -328,10 +362,48 @@ Item {
                         text: "Output Device"
                         font.pixelSize: 15
                     }
-                    ComboBox {
-                        id: comboAudioOutputDevkce
-                    }
 
+                    ComboBox {
+                        id: pulseAudioDeviceOutput
+                        model: pulseAudioDeviceModelOutput.comboBoxItems
+                        currentIndex: pulseAudioDeviceModelOutput.comboBoxItems.indexOf(pulseAudioDeviceModelOutput.currentComboBoxItem)
+                        onCurrentIndexChanged: {
+                            pulseAudioDeviceModelOutput.currentComboBoxItem = pulseAudioDeviceModelOutput.comboBoxItems[currentIndex];
+                        }
+                    }
+                }
+
+
+                Row {
+                    spacing: 10
+                    Text {
+                        text: "Capture Volume"
+                        font.pixelSize: 15
+                    }
+                    Slider {
+                        id: volumeCapture
+                        from: 0
+                        to: 255
+                        value: settingsViewHandler.audioVolumeCapture
+                        onValueChanged: settingsViewHandler.audioVolumeCapture = value
+                    }
+                }
+                Row {
+                    spacing: 10
+                    Text {
+                        text: "Capture Range"
+                        font.pixelSize: 15
+                    }
+                    RangeSlider {
+                        id: volumeCaptureRange
+                        from: 0
+                        to: 255
+                        first.value: settingsViewHandler.audioVolumeCaptureMin
+                        second.value: settingsViewHandler.audioVolumeCaptureMax
+
+                        onFirstChanged: settingsViewHandler.audioVolumeCaptureMin = first.value
+                        onSecondChanged: settingsViewHandler.audioVolumeCaptureMax = second.value
+                    }
                 }
                 Row {
                     spacing: 10
@@ -340,9 +412,13 @@ Item {
                         font.pixelSize: 15
                     }
                     ComboBox {
-                        id: comboAudioInputDevice
+                        id: pulseAudioDeviceInput
+                        model: pulseAudioDeviceModelInput.comboBoxItems
+                        currentIndex: pulseAudioDeviceModelInput.comboBoxItems.indexOf(pulseAudioDeviceModelInput.currentComboBoxItem)
+                        onCurrentIndexChanged: {
+                            pulseAudioDeviceModelInput.currentComboBoxItem = pulseAudioDeviceModelInput.comboBoxItems[currentIndex];
+                        }
                     }
-
                 }
             }
 
@@ -361,23 +437,6 @@ Item {
                 }
 
                 Row {
-
-                    width: 800
-                    height: 40
-                    spacing: 10
-                    Text {
-                        text: "Current"
-                        font.pixelSize: 15
-                    }
-                     Slider {
-                        id: currentBrightness
-                        from: 0
-                        to: 100
-                        value: 50
-                    }
-                }
-
-                Row {
                     width: 800
                     height: 40
                     spacing: 10
@@ -386,9 +445,14 @@ Item {
                         font.pixelSize: 15
                     }
                     RangeSlider {
-                        id: brightnessRangeDay
+                        id: brightnessDayRange
                         from: 0
-                        to: 100
+                        to: 255
+                        first.value: settingsViewHandler.screenBrightnessDayMin
+                        second.value: settingsViewHandler.screenBrightnessDayMax
+                        
+                        onFirstChanged: settingsViewHandler.screenBrightnessDayMin = first.value
+                        onSecondChanged: settingsViewHandler.screenBrightnessDayMax = second.value
                     }
                 }
 
@@ -402,9 +466,14 @@ Item {
                         font.pixelSize: 15
                     }
                     RangeSlider {
-                        id: brightnessRangeNight
+                        id: brightnessNightRange
                         from: 0
-                        to: 100
+                        to: 255
+                        first.value: settingsViewHandler.screenBrightnessNightMin
+                        second.value: settingsViewHandler.screenBrightnessNightMax
+                        
+                        onFirstChanged: settingsViewHandler.screenBrightnessNightMin = first.value
+                        onSecondChanged: settingsViewHandler.screenBrightnessNightMax = second.value
                     }
 
                 }
@@ -419,15 +488,18 @@ Item {
                 Row {
                     spacing: 10
                     RadioButton {
-                        id: radioEGL
+                        id: videoEgl
 
                         text: qsTr("EGL")
-                        checked: true
+                        checked: settingsViewHandler.videoTypeEgl
+                        onCheckedChanged: settingsViewHandler.videoTypeEgl = checked
                     }
 
                     RadioButton {
-                        id: radioX11
+                        id: videoX11
                         text: qsTr("X11")
+                        checked: settingsViewHandler.videoTypeX11
+                        onCheckedChanged: settingsViewHandler.videoTypeX11 = checked
                     }
                 }
 
@@ -442,21 +514,18 @@ Item {
                 Row {
                     spacing: 10
                     Switch {
-                        id: switchRotate
+                        id: rotateDisplay
                         text: qsTr("Rotate Display")
+                        checked: settingsViewHandler.videoRotateDisplay
+                        onCheckedChanged: settingsViewHandler.videoRotateDisplay = checked
                     }
 
                 }
-
-
-
 
             }
 
         }
 
     }
-
-
 
 }

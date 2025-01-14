@@ -1,5 +1,3 @@
-
-
 #ifdef USE_OMX
 
 extern "C"

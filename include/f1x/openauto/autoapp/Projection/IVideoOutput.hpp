@@ -1,6 +1,5 @@
-
-
-#pragma once#include <memory>
+#pragma once
+#include <memory>
 #include <QRect>
 #include <aasdk/Common/Data.hpp>
 #include <aasdk/Messenger/Timestamp.hpp>

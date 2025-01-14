@@ -1,262 +1,362 @@
-//
-// Created by Simon Dean on 19/12/2024.
-//#include <QtCore/QObject>
+#include <QtCore/QObject>
 #include <f1x/openauto/autoapp/UI/SettingsView.hpp>
 
-SettingsView::SettingsView(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration, QObject *parent) :
-    QObject(parent),
-    configuration_(std::move(configuration)),
-    m_carMake(configuration_->getCarMake()),
-    m_carModel(configuration_->getCarModel()),
-    m_autoPlayback(configuration_->getAutoPlayback()),
-    m_autoStart(configuration_->getAutoStart()),
-    m_channelMedia(configuration_->getChannelMedia()),
-    m_channelGuidance(configuration_->getChannelGuidance()),
-    m_channelTelephony(configuration_->getChannelTelephony()),
-    m_omxLayer(configuration_->getOMXLayer()),
-    m_marginHeight(configuration_->getMargin().height()),
-    m_marginWidth(configuration_->getMargin().width()),
-    m_dpi(configuration_->getDPI()),
-    m_audioType(configuration_->getAudioType()),
-    m_volumePlayback(configuration_->getVolumePlaybackCurrent()),
-    m_volumeCapture(configuration_->getVolumeCaptureCurrent()),
-    m_videoType(configuration_->getVideoType()),
-    m_rotateDisplay(configuration_->getRotateDisplay()),
-    m_brightnessDayMin(configuration_->getBrightnessDayMin()),
-    m_brightnessDayMax(configuration_->getBrightnessDayMax()),
-    m_brightnessNightMin(configuration_->getBrightnessNightMin()),
-    m_brightnessNightMax(configuration_->getBrightnessNightMax()) {
+namespace f1x::openauto::autoapp::UI {
+  SettingsView::SettingsView(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration,
+                             QObject *parent) :
+      QObject(parent),
+      configuration_(std::move(configuration)),
+      m_carMake(configuration_->getSettingByName<QString>("Car", "Make")),
+      m_carModel(configuration_->getSettingByName<QString>("Car", "Model")),
+      m_carFuelType(
+          static_cast<aap_protobuf::service::sensorsource::message::FuelType>(configuration_->getSettingByName<int>(
+              "Car",
+              "FuelType"))),
+      m_carEvConnectorType(
+          static_cast<aap_protobuf::service::sensorsource::message::EvConnectorType>(configuration_->getSettingByName<int>(
+              "Car", "EvConnectorType"))),
+      m_carDriverPosition(
+          static_cast<aap_protobuf::service::control::message::DriverPosition>(configuration_->getSettingByName<int>(
+              "Car", "DriverPosition"))),
 
-}
+      m_screenBrightnessDayMin(configuration_->getSettingByName<int>("Screen", "DayMin")),
+      m_screenBrightnessDayMax(configuration_->getSettingByName<int>("Screen", "DayMax")),
+      m_screenBrightnessNightMin(configuration_->getSettingByName<int>("Screen", "NightMin")),
+      m_screenBrightnessNightMax(configuration_->getSettingByName<int>("Screen", "NightMax")),
+      m_screenBrightness(configuration_->getSettingByName<int>("Screen", "Brightness")),
+      m_screenDPI(configuration_->getSettingByName<int>("Screen", "DPI")),
 
-QString SettingsView::carMake() const {
-  return m_carMake;
-}
+      m_videoMarginHeight(configuration_->getSettingByName<int>("Video", "Height")),
+      m_videoMarginWidth(configuration_->getSettingByName<int>("Video", "Width")),
+      m_videoOMXLayer(configuration_->getSettingByName<int>("Video", "OMXLayer")),
+      m_videoType(configuration_->getSettingByName<int>("Video", "Type")),
+      m_videoRotateDisplay(configuration_->getSettingByName<bool>("Video", "Rotate")),
 
-void SettingsView::setCarMake(QString value) {
-  if (m_carMake != value) {
-    m_carMake = value;
-    emit carMakeChanged();
+      m_mediaAutoPlayback(configuration_->getSettingByName<bool>("Media", "AutoPlayback")),
+      m_mediaAutoStart(configuration_->getSettingByName<bool>("Media", "AutoStart")),
+
+      m_aaChannelMedia(configuration_->getSettingByName<bool>("AndroidAuto", "Media")),
+      m_aaChannelGuidance(configuration_->getSettingByName<bool>("AndroidAuto", "Guidance")),
+      m_aaChannelTelephony(configuration_->getSettingByName<bool>("AndroidAuto", "Telephony")),
+
+      m_audioVolumePlaybackMin(configuration_->getSettingByName<int>("Audio", "PlaybackMin")),
+      m_audioVolumePlaybackMax(configuration_->getSettingByName<int>("Audio", "PlaybackMax")),
+      m_audioVolumeCaptureMin(configuration_->getSettingByName<int>("Audio", "CaptureMin")),
+      m_audioVolumeCaptureMax(configuration_->getSettingByName<int>("Audio", "CaptureMax")),
+      m_audioVolumePlayback(configuration_->getSettingByName<int>("Audio", "PlaybackVolume")),
+      m_audioVolumeCapture(configuration_->getSettingByName<int>("Audio", "CaptureVolume")),
+
+      m_audioType(
+          static_cast<f1x::openauto::autoapp::configuration::AudioOutputBackendType>(configuration_->getSettingByName<int>(
+              "Audio", "Type"))) {
+
   }
-}
 
-QString SettingsView::carModel() const {
-  return m_carModel;
-}
-
-void SettingsView::setCarModel(QString value) {
-  if (m_carModel != value) {
-    m_carModel = value;
-    emit carModelChanged();
+  QString SettingsView::getCarMake() const {
+    return m_carMake;
   }
-}
 
-bool SettingsView::autoPlayback() {
-  return m_autoPlayback;
-}
-
-void SettingsView::setAutoPlayback(bool value) {
-  if (m_autoPlayback != value) {
-    m_autoPlayback = value;
-    emit autoPlaybackChanged();
+  void SettingsView::setCarMake(QString value) {
+    if (m_carMake != value) {
+      m_carMake = value;
+      emit carMakeChanged();
+    }
   }
-}
 
-bool SettingsView::autoStart() {
-  return m_autoStart;
-}
-
-void SettingsView::setAutoStart(bool value) {
-  if (m_autoStart != value) {
-    m_autoStart = value;
-    emit autoStartChanged();
+  QString SettingsView::getCarModel() const {
+    return m_carModel;
   }
-}
 
-bool SettingsView::channelMedia() {
-  return m_channelMedia;
-}
-
-void SettingsView::setChannelMedia(bool value) {
-  if (m_channelMedia != value) {
-    m_channelMedia = value;
-    emit channelMediaChanged();
+  void SettingsView::setCarModel(QString value) {
+    if (m_carModel != value) {
+      m_carModel = value;
+      emit carModelChanged();
+    }
   }
-}
 
-bool SettingsView::channelGuidance() {
-  return m_channelGuidance;
-}
-
-void SettingsView::setChannelGuidance(bool value) {
-  if (m_channelGuidance != value) {
-    m_channelGuidance = value;
-    emit channelGuidanceChanged();
+  bool SettingsView::getMediaAutoPlayback() const {
+    return m_mediaAutoPlayback;
   }
-}
 
-bool SettingsView::channelTelephony() {
-  return m_channelTelephony;
-}
-
-void SettingsView::setChannelTelephony(bool value) {
-  if (m_channelTelephony != value) {
-    m_channelTelephony = value;
-    emit channelTelephonyChanged();
+  void SettingsView::setMediaAutoPlayback(bool value) {
+    if (m_mediaAutoPlayback != value) {
+      m_mediaAutoPlayback = value;
+      emit mediaAutoPlaybackChanged();
+    }
   }
-}
 
-bool SettingsView::audioRt() {
-  return m_audioType == f1x::openauto::autoapp::configuration::AudioOutputBackendType::RTAUDIO;
-}
-
-void SettingsView::setAudioRt(bool value) {
-  // If Rt unselected and AudioType is Rt, or Rt selected and AudioType is Qt...
-  if ((!value && m_audioType == f1x::openauto::autoapp::configuration::AudioOutputBackendType::RTAUDIO) || (value && m_audioType == f1x::openauto::autoapp::configuration::AudioOutputBackendType::QT)) {
-    m_audioType = value ? f1x::openauto::autoapp::configuration::AudioOutputBackendType::RTAUDIO : f1x::openauto::autoapp::configuration::AudioOutputBackendType::QT;
-    emit audioRtChanged();
-    emit audioQtChanged();
+  bool SettingsView::getMediaAutoStart() const {
+    return m_mediaAutoStart;
   }
-}
 
-bool SettingsView::audioQt() {
-  return m_audioType == f1x::openauto::autoapp::configuration::AudioOutputBackendType::QT;
-}
-
-void SettingsView::setAudioQt(bool value) {
-  // If Qt unselected and AudioType is Rt, or Qt selected and AudioType is Rt...
-  if ((!value && m_audioType == f1x::openauto::autoapp::configuration::AudioOutputBackendType::QT) || (value && m_audioType == f1x::openauto::autoapp::configuration::AudioOutputBackendType::RTAUDIO)) {
-    m_audioType = value ? f1x::openauto::autoapp::configuration::AudioOutputBackendType::QT : f1x::openauto::autoapp::configuration::AudioOutputBackendType::RTAUDIO;
-    emit audioRtChanged();
-    emit audioQtChanged();
+  void SettingsView::setMediaAutoStart(bool value) {
+    if (m_mediaAutoStart != value) {
+      m_mediaAutoStart = value;
+      emit mediaAutoStartChanged();
+    }
   }
-}
 
-int SettingsView::omxLayer() {
-  return m_omxLayer;
-}
-
-void SettingsView::setOmxLayer(int value) {
-  if (value != m_omxLayer) {
-    m_omxLayer = value;
-    emit omxLayerChanged();
+  bool SettingsView::getAAChannelMedia() const {
+    return m_aaChannelMedia;
   }
-}
 
-int SettingsView::marginHeight() {
-  return m_marginHeight;
-}
-
-void SettingsView::setMarginHeight(int value) {
-  if (value != m_marginHeight) {
-    m_marginHeight = value;
-    emit marginHeightChanged();
+  void SettingsView::setAAChannelMedia(bool value) {
+    if (m_aaChannelMedia != value) {
+      m_aaChannelMedia = value;
+      emit aaChannelMediaChanged();
+    }
   }
-}
 
-int SettingsView::marginWidth() {
-  return m_marginWidth;
-}
-
-void SettingsView::setMarginWidth(int value) {
-  if (value != m_marginWidth) {
-    m_marginWidth = value;
-    emit marginWidthChanged();
+  bool SettingsView::getAAChannelGuidance() const {
+    return m_aaChannelGuidance;
   }
-}
 
-int SettingsView::volumePlayback() {
-  return m_volumePlayback;
-}
-
-void SettingsView::setVolumePlayback(int value) {
-  if (value != m_volumePlayback) {
-    m_volumePlayback = value;
-    emit volumePlaybackChanged();
+  void SettingsView::setAAChannelGuidance(bool value) {
+    if (m_aaChannelGuidance != value) {
+      m_aaChannelGuidance = value;
+      emit aaChannelGuidanceChanged();
+    }
   }
-}
 
-int SettingsView::volumeCapture() {
-  return m_volumeCapture;
-}
-
-void SettingsView::setVolumeCapture(int value) {
-  if (value != m_volumeCapture) {
-    m_volumeCapture = value;
-    emit volumeCaptureChanged();
+  bool SettingsView::getAAChannelTelephony() const {
+    return m_aaChannelTelephony;
   }
-}
 
-int SettingsView::brightnessDayMin() {
-  return m_brightnessDayMin;
-}
-
-void SettingsView::setBrightnessDayMin(int value) {
-  if (value != m_brightnessDayMin) {
-    m_brightnessDayMin = value;
-    emit brightnessDayMinChanged();
+  void SettingsView::setAAChannelTelephony(bool value) {
+    if (m_aaChannelTelephony != value) {
+      m_aaChannelTelephony = value;
+      emit aaChannelTelephonyChanged();
+    }
   }
-}
 
-int SettingsView::brightnessDayMax() {
-  return m_brightnessDayMax;
-}
-
-void SettingsView::setBrightnessDayMax(int value) {
-  if (value != m_brightnessDayMax) {
-    m_brightnessDayMax = value;
-    emit brightnessDayMaxChanged();
+  int SettingsView::getVideoOMXLayer() const {
+    return m_videoOMXLayer;
   }
-}
 
-int SettingsView::brightnessNightMin() {
-  return m_brightnessNightMin;
-}
-
-void SettingsView::setBrightnessNightMin(int value) {
-  if (value != m_brightnessNightMin) {
-    m_brightnessNightMin = value;
-    emit brightnessNightMinChanged();
+  void SettingsView::setVideoOMXLayer(int value) {
+    if (value != m_videoOMXLayer) {
+      m_videoOMXLayer = value;
+      emit videoOMXLayerChanged();
+    }
   }
-}
 
-int SettingsView::brightnessNightMax() {
-  return m_brightnessNightMax;
-}
-
-void SettingsView::setBrightnessNightMax(int value) {
-  if (value != m_brightnessNightMax) {
-    m_brightnessNightMax = value;
-    emit brightnessNightMaxChanged();
+  int SettingsView::getVideoMarginHeight() const {
+    return m_videoMarginHeight;
   }
-}
 
-bool SettingsView::videoEgl() {
-  return m_videoType == 1;
-}
-
-bool SettingsView::videoX11() {
-  return m_videoType == 2;
-}
-
-bool SettingsView::rotateDisplay() {
-  return m_rotateDisplay;
-}
-
-void SettingsView::setRotateDisplay(bool value) {
-  if (m_rotateDisplay != value) {
-    m_rotateDisplay = value;
-    emit rotateDisplayChanged();
+  void SettingsView::setVideoMarginHeight(int value) {
+    if (value != m_videoMarginHeight) {
+      m_videoMarginHeight = value;
+      emit videoMarginHeightChanged();
+    }
   }
-}
 
-int SettingsView::dpi() {
-  return m_dpi;
-}
+  int SettingsView::getVideoMarginWidth() const {
+    return m_videoMarginWidth;
+  }
 
-void SettingsView::setDpi(int value) {
-  if (value != m_dpi) {
-    m_dpi = value;
-    emit dpiChanged();
+  void SettingsView::setVideoMarginWidth(int value) {
+    if (value != m_videoMarginWidth) {
+      m_videoMarginWidth = value;
+      emit videoMarginWidthChanged();
+    }
+  }
+
+  int SettingsView::getAudioVolumePlayback() const {
+    return m_audioVolumePlayback;
+  }
+
+  void SettingsView::setAudioVolumePlayback(int value) {
+    if (value != m_audioVolumePlayback) {
+      m_audioVolumePlayback = value;
+      emit audioVolumePlaybackChanged();
+    }
+  }
+
+  int SettingsView::getAudioVolumeCapture() const {
+    return m_audioVolumeCapture;
+  }
+
+  void SettingsView::setAudioVolumeCapture(int value) {
+    if (value != m_audioVolumeCapture) {
+      m_audioVolumeCapture = value;
+      emit audioVolumeCaptureChanged();
+    }
+  }
+
+  int SettingsView::getScreenBrightnessDayMin() const {
+    return m_screenBrightnessDayMin;
+  }
+
+  void SettingsView::setScreenBrightnessDayMin(int value) {
+    if (value != m_screenBrightnessDayMin) {
+      m_screenBrightnessDayMin = value;
+      emit screenBrightnessDayMinChanged();
+    }
+  }
+
+  int SettingsView::getScreenBrightnessDayMax() const {
+    return m_screenBrightnessDayMax;
+  }
+
+  void SettingsView::setScreenBrightnessDayMax(int value) {
+    if (value != m_screenBrightnessDayMax) {
+      m_screenBrightnessDayMax = value;
+      emit screenBrightnessDayMaxChanged();
+    }
+  }
+
+  int SettingsView::getScreenBrightnessNightMin() const {
+    return m_screenBrightnessNightMin;
+  }
+
+  void SettingsView::setScreenBrightnessNightMin(int value) {
+    if (value != m_screenBrightnessNightMin) {
+      m_screenBrightnessNightMin = value;
+      emit screenBrightnessNightMinChanged();
+    }
+  }
+
+  int SettingsView::getScreenBrightnessNightMax() const {
+    return m_screenBrightnessNightMax;
+  }
+
+  void SettingsView::setScreenBrightnessNightMax(int value) {
+    if (value != m_screenBrightnessNightMax) {
+      m_screenBrightnessNightMax = value;
+      emit screenBrightnessNightMaxChanged();
+    }
+  }
+
+  bool SettingsView::getVideoRotateDisplay() const {
+    return m_videoRotateDisplay;
+  }
+
+  void SettingsView::setVideoRotateDisplay(bool value) {
+    if (m_videoRotateDisplay != value) {
+      m_videoRotateDisplay = value;
+      emit videoRotateDisplayChanged();
+    }
+  }
+
+  int SettingsView::getScreenDPI() const {
+    return m_screenDPI;
+  }
+
+  void SettingsView::setScreenDPI(int value) {
+    if (value != m_screenDPI) {
+      m_screenDPI = value;
+      emit screenDPIChanged();
+    }
+  }
+
+  void SettingsView::setAudioType(f1x::openauto::autoapp::configuration::AudioOutputBackendType value) {
+    if (value != m_audioType) {
+      m_audioType = value;
+      emit audioTypeChanged(value);
+    }
+  }
+
+  void SettingsView::setAudioVolumeCaptureMax(int value) {
+    if (value != m_audioVolumeCaptureMax) {
+      m_audioVolumeCaptureMax = value;
+      emit audioVolumeCaptureMaxChanged();
+    }
+  }
+
+  void SettingsView::setAudioVolumeCaptureMin(int value) {
+    if (value != m_audioVolumeCaptureMin) {
+      m_audioVolumeCaptureMin = value;
+      emit audioVolumeCaptureMinChanged();
+    }
+  }
+
+  void SettingsView::setAudioVolumePlaybackMax(int value) {
+    if (value != m_audioVolumePlaybackMax) {
+      m_audioVolumePlaybackMax = value;
+      emit audioVolumePlaybackMaxChanged();
+    }
+  }
+
+  void SettingsView::setAudioVolumePlaybackMin(int value) {
+    if (value != m_audioVolumePlaybackMin) {
+      m_audioVolumePlaybackMin = value;
+      emit audioVolumePlaybackMinChanged();
+    }
+  }
+
+  f1x::openauto::autoapp::configuration::AudioOutputBackendType SettingsView::getAudioType() const {
+    return m_audioType;
+  }
+
+  int SettingsView::getAudioVolumeCaptureMax() const {
+    return m_audioVolumeCaptureMax;
+  }
+
+  int SettingsView::getAudioVolumeCaptureMin() const {
+    return m_audioVolumeCaptureMin;
+  }
+
+  int SettingsView::getAudioVolumePlaybackMax() const {
+    return m_audioVolumePlaybackMax;
+  }
+
+  int SettingsView::getAudioVolumePlaybackMin() const {
+    return m_audioVolumePlaybackMin;
+  }
+
+  void SettingsView::setVideoType(int value) {
+    if (value != m_videoType) {
+      m_videoType = value;
+      emit videoTypeChanged(value);
+    }
+  }
+
+  int SettingsView::getVideoType() const {
+    return m_videoType;
+  }
+
+  void SettingsView::setScreenBrightness(int value) {
+    if (value != m_screenBrightness) {
+      m_screenBrightness = value;
+      emit screenBrightnessChanged();
+    }
+  }
+
+  int SettingsView::getScreenBrightness() const {
+    return m_screenBrightness;
+  }
+
+  void SettingsView::setCarDriverPosition(aap_protobuf::service::control::message::DriverPosition value) {
+    if (value != m_carDriverPosition) {
+      m_carDriverPosition = value;
+      emit carDriverPositionChanged();
+    }
+  }
+
+  void SettingsView::setCarEvConnectorType(aap_protobuf::service::sensorsource::message::EvConnectorType value) {
+    if (value != m_carEvConnectorType) {
+      m_carEvConnectorType = value;
+      emit carEvConnectorTypeChanged();
+    }
+  }
+
+  void SettingsView::setCarFuelType(aap_protobuf::service::sensorsource::message::FuelType value) {
+    if (value != m_carFuelType) {
+      m_carFuelType = value;
+      emit carFuelTypeChanged();
+    }
+  }
+
+  aap_protobuf::service::control::message::DriverPosition SettingsView::getCarDriverPosition() const {
+    return m_carDriverPosition;
+  }
+
+  aap_protobuf::service::sensorsource::message::EvConnectorType SettingsView::getCarEvConnectorType() const {
+    return m_carEvConnectorType;
+  }
+
+  aap_protobuf::service::sensorsource::message::FuelType SettingsView::getCarFuelType() const {
+    return m_carFuelType;
   }
 }

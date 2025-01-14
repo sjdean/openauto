@@ -1,6 +1,5 @@
-
-
-#pragma once#include <QAudioFormat>
+#pragma once
+#include <QAudioFormat>
 #include <QAudioSink>
 #include <f1x/openauto/autoapp/Projection/IAudioOutput.hpp>
 #include <f1x/openauto/autoapp/Projection/SequentialBuffer.hpp>

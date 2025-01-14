@@ -1,6 +1,5 @@
-
-
-#pragma once#include <memory>
+#pragma once
+#include <memory>
 #include <f1x/openauto/autoapp/Service/IAndroidAutoEntityEventHandler.hpp>
 
 namespace f1x

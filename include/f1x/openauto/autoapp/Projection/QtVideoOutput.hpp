@@ -1,6 +1,5 @@
-
-
-#pragma once#include <QMediaPlayer>
+#pragma once
+#include <QMediaPlayer>
 #include <QVideoWidget>
 #include <boost/noncopyable.hpp>
 #include <f1x/openauto/autoapp/Projection/VideoOutput.hpp>

@@ -1,6 +1,5 @@
-
-
-#pragma once#include <mutex>
+#pragma once
+#include <mutex>
 #include <QAudioFormat>
 #include <QAudioSource>
 #include <f1x/openauto/autoapp/Projection/IAudioInput.hpp>

@@ -1,8 +1,8 @@
-#include <f1x/openauto/Common/Log.hpp>
-#include <f1x/openauto/autoapp/Projection/QtAudioOutput.hpp>#include <QGuiApplication>
+#include <QGuiApplication>
 #include <QMediaDevices>
 #include <QThread>
-
+#include <f1x/openauto/Common/Log.hpp>
+#include <f1x/openauto/autoapp/Projection/QtAudioOutput.hpp>
 
 namespace f1x::openauto::autoapp::projection {
 
@@ -100,7 +100,6 @@ namespace f1x::openauto::autoapp::projection {
       playbackStarted_ = false;
     }
   }
-
 }
 
 

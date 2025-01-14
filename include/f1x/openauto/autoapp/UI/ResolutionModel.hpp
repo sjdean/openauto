@@ -1,19 +1,35 @@
-#ifndef OPENAUTO_RESOLUTIONMODEL_H
-#define OPENAUTO_RESOLUTIONMODEL_H
+#ifndef OPENAUTO_RESOLUTIONMODEL_HPP
+#define OPENAUTO_RESOLUTIONMODEL_HPP
 
 #include <QList>
 #include <QQmlListProperty>
 #include <QtCore/QObject>
-#include "ComboBoxModel.hpp"
-#include <aap_protobuf/service/media/sink/message/VideoCodecResolutionType.pb.h>
+#include <f1x/openauto/autoapp/UI/ResolutionModelItem.hpp>
 
-class ResolutionModel : public ComboBoxModel {
+namespace f1x::openauto::autoapp::UI {
+  class ResolutionModel : public QObject {
   Q_OBJECT
+    Q_PROPERTY(QList<QObject *> comboBoxItems READ getComboBoxItems NOTIFY comboBoxItemsChanged)
+    Q_PROPERTY(ResolutionModelItem* currentComboBoxItem READ getCurrentComboBoxItem WRITE setCurrentComboBoxItem NOTIFY currentComboBoxItemChanged)
 
-public:
-  explicit ResolutionModel(QObject *parent = nullptr);
-protected:
-  void populateComboBoxItems() override;
-};
+  public:
+    explicit ResolutionModel(QObject *parent = nullptr);
 
-#endif //OPENAUTO_RESOLUTIONMODEL_H
+  signals:
+    void comboBoxItemsChanged();
+    void currentComboBoxItemChanged();
+
+  protected:
+    QList<QObject *> getComboBoxItems() const;
+    ResolutionModelItem* getCurrentComboBoxItem() const;
+    void setCurrentComboBoxItem(ResolutionModelItem* value);
+
+    void populateComboBoxItems();
+    void addComboBoxItem(const QString &display,
+                         aap_protobuf::service::media::sink::message::VideoCodecResolutionType value);
+  private:
+    QList<ResolutionModelItem *> m_comboBoxItems;
+    ResolutionModelItem* m_currentComboBoxItem;
+  };
+}
+#endif //OPENAUTO_RESOLUTIONMODEL_HPP

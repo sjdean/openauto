@@ -1,0 +1,33 @@
+#include <QSettings>
+#include <QString>
+#include <f1x/openauto/autoapp/Configuration/ConfigurationGroup.hpp>
+
+// TODO: DIisplayOnTab - Mirror HPP?
+namespace f1x::openauto::autoapp::configuration {
+  ConfigurationGroup::ConfigurationGroup(const QString& name, bool displayOnTab)
+  : m_name(name), m_displayOnTab(displayOnTab)
+  {
+
+  }
+
+  void ConfigurationGroup::load(QSettings& settings) {
+    settings.beginGroup(m_name); // Use the group's name
+    for (auto& setting : m_configurationSettings) {
+      setting.load(settings); // Use QVariant for generic loading
+    }
+    settings.endGroup();
+  }
+
+  void ConfigurationGroup::save(QSettings& settings) const {
+    settings.beginGroup(m_name); // Use the group's name
+    for (const auto& setting : m_configurationSettings) {
+      setting.save(settings);
+    }
+    settings.endGroup();
+  }
+
+  QString ConfigurationGroup::getName() const {
+    return m_name;
+  }
+}
+

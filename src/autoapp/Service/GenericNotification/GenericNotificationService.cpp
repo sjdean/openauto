@@ -1,7 +1,6 @@
 #include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/GenericNotification/GenericNotificationService.hpp>
 #include <fstream>
-#include <QString>
 
 namespace f1x::openauto::autoapp::service::genericnotification {
 

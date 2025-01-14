@@ -3,6 +3,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickView>
+#include <QQmlContext>
 #include <QtQml/qqmlextensionplugin.h>
 
 #include <pulse/pulseaudio.h>
@@ -33,9 +34,14 @@
 
 #include <f1x/openauto/autoapp/UI/PulseAudioDeviceModel.hpp>
 #include <f1x/openauto/autoapp/UI/BluetoothAdapterModel.hpp>
+#include <f1x/openauto/autoapp/UI/BrightnessHandler.hpp>
+#include <f1x/openauto/autoapp/UI/VolumeHandler.hpp>
 
+#include <f1x/openauto/autoapp/UI/AndroidAutoMonitor.hpp>
+#include <f1x/openauto/autoapp/UI/PulseAudioHandler.hpp>
 
 namespace autoapp = f1x::openauto::autoapp;
+
 using ThreadPool = std::vector<std::thread>;
 
 Q_IMPORT_QML_PLUGIN(JourneyOSPlugin)
@@ -88,83 +94,90 @@ void startIOServiceWorkers(boost::asio::io_service &ioService, ThreadPool &threa
   threadPool.emplace_back(ioServiceWorker);
 }
 
-pa_mainloop *m;
-pa_mainloop_api *mainloop_api;
-pa_context *context;
-
-void initPulseAudio() {
-  m = pa_mainloop_new();
-  mainloop_api = pa_mainloop_get_api(m);
-
-  context = pa_context_new(mainloop_api, "Your Application Name");
-  pa_context_set_state_callback(context,
-                                [](pa_context *c, void *userdata) {
-                                  if (pa_context_get_state(c) == PA_CONTEXT_READY) {
-                                    pa_threaded_mainloop_signal((pa_threaded_mainloop *) userdata, 0);
-                                  }
-                                }, m);
-
-  if (pa_context_connect(context, NULL, PA_CONTEXT_NOFLAGS, NULL) < 0) {
-    fprintf(stderr, "Failed to connect to PulseAudio server\n");
-    return;
-  }
-
-  pa_threaded_mainloop *loop = pa_threaded_mainloop_new();
-  pa_threaded_mainloop_start(loop);
-
-  // Wait for the context to be ready
-  if (pa_context_get_state(context) != PA_CONTEXT_READY) {
-    pa_threaded_mainloop_wait(loop);
-  }
-
-  pa_threaded_mainloop_free(loop);
-}
-
 int main(int argc, char *argv[]) {
-  // Initialize PulseAudio here
-  initPulseAudio();
 
+  // Initial High Level Connectivity
   libusb_context *usbContext;
   if (libusb_init(&usbContext) != 0) {
     OPENAUTO_LOG(error) << "[AutoApp] libusb_init failed.";
     return 1;
   }
 
+  // IO
   boost::asio::io_service ioService;
   boost::asio::io_service::work work(ioService);
   std::vector<std::thread> threadPool;
+
+  // Start Workers
   startUSBWorkers(ioService, usbContext, threadPool);
   startIOServiceWorkers(ioService, threadPool);
 
+  // Environment
+  f1x::openauto::autoapp::UI::PulseAudioHandler pulseAudioHandler;
+
+
   set_qt_environment();
+
+  fprintf(stderr, "Loading Configuration\n");
+  auto configuration = std::make_shared<autoapp::configuration::Configuration>();
+
+  // GUI
   QGuiApplication qApplication(argc, argv);
   QQmlApplicationEngine engine;
   QQuickView oj;
 
-  SettingsView cppHandler;
+  fprintf(stderr, "Init Enum Combo\n");
 
-  FrameRateModel frameRateModel;
-  ResolutionModel resolutionModel;
+  // Initialise ComboBox Items - Backed by AA Enum's
+  f1x::openauto::autoapp::UI::FrameRateModel frameRateModel;
+  f1x::openauto::autoapp::UI::ResolutionModel resolutionModel;
+  f1x::openauto::autoapp::UI::DriverPositionModel driverPositionModel;
+  f1x::openauto::autoapp::UI::FuelTypeModel fuelTypeModel;
+  f1x::openauto::autoapp::UI::EvConnectorTypeModel evConnectorTypeModel;
 
-  DriverPositionModel driverPositionModel;
-  FuelTypeModel fuelTypeModel;
-  EvConnectorTypeModel evConnectorTypeModel;
-
-  PulseAudioDeviceModel pulseAudioDeviceModelOutput(context, pa_direction::PA_DIRECTION_OUTPUT);
-  PulseAudioDeviceModel pulseAudioDeviceModelInput(context, pa_direction::PA_DIRECTION_INPUT);
-
-  BluetoothAdapterModel bluetoothAdapterModel;
-  //AvailableBluetoothDevicesForPairingModel availableBluetoothDevicesForPairingModel;
-
-  engine.rootContext()->setContextProperty("cppHandler", &cppHandler);
-
-  engine.rootContext()->setContextProperty("bluetoothAdapterModel", &bluetoothAdapterModel);
-  engine.rootContext()->setContextProperty("driverPositionModel", &driverPositionModel);
-  engine.rootContext()->setContextProperty("evConnectorTypeModel", &evConnectorTypeModel);
   engine.rootContext()->setContextProperty("frameRateModel", &frameRateModel);
+  engine.rootContext()->setContextProperty("resolutionModel", &resolutionModel);
+  engine.rootContext()->setContextProperty("driverPositionModel", &driverPositionModel);
   engine.rootContext()->setContextProperty("fuelTypeModel", &fuelTypeModel);
+  engine.rootContext()->setContextProperty("evConnectorTypeModel", &evConnectorTypeModel);
+
+  fprintf(stderr, "Init PulseAudio\n");
+
+  // Pulse Audio Input/Output (Sound) Devices
+  f1x::openauto::autoapp::UI::PulseAudioDeviceModel pulseAudioDeviceModelOutput(pulseAudioHandler, pa_direction::PA_DIRECTION_OUTPUT);
+  f1x::openauto::autoapp::UI::PulseAudioDeviceModel pulseAudioDeviceModelInput(pulseAudioHandler, pa_direction::PA_DIRECTION_INPUT);
   engine.rootContext()->setContextProperty("pulseAudioDeviceModelOutput", &pulseAudioDeviceModelOutput);
   engine.rootContext()->setContextProperty("pulseAudioDeviceModelInput", &pulseAudioDeviceModelInput);
+
+  fprintf(stderr, "Grabbing Bluetooth...\n");
+  // Bluetooth Adapters on Host
+  f1x::openauto::autoapp::UI::BluetoothAdapterModel bluetoothAdapterModel;
+  //AvailableBluetoothDevicesForPairingModel availableBluetoothDevicesForPairingModel;
+
+  engine.rootContext()->setContextProperty("bluetoothAdapterModel", &bluetoothAdapterModel);
+
+  fprintf(stderr, "Connecting to Settings View Handler\n");
+  // Setting Handlers
+  f1x::openauto::autoapp::UI::SettingsView settingsView(configuration);
+  fprintf(stderr, "Connecting to Volume Handler\n");
+  f1x::openauto::autoapp::UI::VolumeHandler volumeHandler(configuration, pulseAudioHandler);
+  fprintf(stderr, "Connecting to Brightness Handler\n");
+  f1x::openauto::autoapp::UI::BrightnessHandler brightnessHandler(configuration);
+
+  engine.rootContext()->setContextProperty("settingsViewHandler", &settingsView);
+  engine.rootContext()->setContextProperty("volumePopupHandler", &volumeHandler);
+  engine.rootContext()->setContextProperty("brightnessPopupHandler", &brightnessHandler);
+
+  fprintf(stderr, "Monitors...n");
+  // Monitors
+  auto androidAutoMonitor = std::make_shared<f1x::openauto::autoapp::UI::AndroidAutoMonitor>();
+  engine.rootContext()->setContextProperty("androidAutoMonitor", androidAutoMonitor.get());
+
+  // Bluetooth Status and Connectivity // DBus/BlueZ
+  // Wifi Status // Other
+  // Android Auto Status and Connectivity / Within App
+
+  fprintf(stderr, "Fire it up \n");
 
   const QUrl url(mainQmlFile);
   QObject::connect(
@@ -178,6 +191,8 @@ int main(int argc, char *argv[]) {
   engine.addImportPath(":/");
   engine.load(url);
 
+
+  // Screen Configuration
   int width = 0;
   int height = 0;
 
@@ -204,8 +219,6 @@ int main(int argc, char *argv[]) {
   OPENAUTO_LOG(info) << "[AutoApp] Display width: " << width;
   OPENAUTO_LOG(info) << "[AutoApp] Display height: " << height;
 
-  auto configuration = std::make_shared<autoapp::configuration::Configuration>();
-
   autoapp::configuration::RecentAddressesList recentAddressesList(7);
   recentAddressesList.read();
 
@@ -215,13 +228,13 @@ int main(int argc, char *argv[]) {
   aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
   aasdk::usb::AccessoryModeQueryChainFactory queryChainFactory(usbWrapper, ioService, queryFactory);
   autoapp::service::ServiceFactory serviceFactory(ioService, configuration);
-  autoapp::service::AndroidAutoEntityFactory androidAutoEntityFactory(ioService, configuration, serviceFactory);
+  autoapp::service::AndroidAutoEntityFactory androidAutoEntityFactory(ioService, configuration, serviceFactory, androidAutoMonitor);
 
   auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, ioService, queryChainFactory));
   auto connectedAccessoriesEnumerator(
       std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));
   auto app = std::make_shared<autoapp::App>(ioService, usbWrapper, tcpWrapper, androidAutoEntityFactory,
-                                            std::move(usbHub), std::move(connectedAccessoriesEnumerator));
+                                            std::move(usbHub), std::move(connectedAccessoriesEnumerator), androidAutoMonitor);
 
   app->waitForUSBDevice();
 

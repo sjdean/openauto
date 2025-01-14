@@ -1,5 +1,3 @@
-
-
 #pragma once
 #include <aasdk/Messenger/IMessenger.hpp>
 #include <aasdk/Channel/MediaSink/Audio/IAudioMediaSinkService.hpp>

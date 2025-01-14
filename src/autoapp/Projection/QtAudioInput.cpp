@@ -1,9 +1,7 @@
-#include <f1x/openauto/autoapp/Projection/QtAudioInput.hpp>
 #include <QGuiApplication>
 #include <QMediaDevices>
 #include <f1x/openauto/autoapp/Projection/QtAudioInput.hpp>
 #include <f1x/openauto/Common/Log.hpp>
-
 
 namespace f1x::openauto::autoapp::projection {
 
@@ -22,28 +20,24 @@ namespace f1x::openauto::autoapp::projection {
       audioFormat_.setSampleFormat(QAudioFormat::Int32);
     } // Handle other cases if necessary
 
-
     this->moveToThread(QGuiApplication::instance()->thread());
     connect(this, &QtAudioInput::startRecording, this, &QtAudioInput::onStartRecording, Qt::QueuedConnection);
     connect(this, &QtAudioInput::stopRecording, this, &QtAudioInput::onStopRecording, Qt::QueuedConnection);
     QMetaObject::invokeMethod(this, "createAudioInput", Qt::BlockingQueuedConnection);
-
   }
 
   void QtAudioInput::createAudioInput() {
-    OPENAUTO_LOG(info) << "[AudioInput] createAudioInput()";
+    OPENAUTO_LOG(info) << "[AudioInput::createAudioInput]";
     audioInput_ = (std::make_unique<QAudioSource>(QMediaDevices::defaultAudioInput(), audioFormat_));
   }
 
   bool QtAudioInput::open() {
     std::lock_guard<decltype(mutex_)> lock(mutex_);
-
     return ioDevice_ == nullptr;
   }
 
   bool QtAudioInput::isActive() const {
     std::lock_guard<decltype(mutex_)> lock(mutex_);
-
     return ioDevice_ != nullptr;
   }
 
@@ -138,7 +132,6 @@ namespace f1x::openauto::autoapp::projection {
       readPromise_.reset();
     }
   }
-
 }
 
 

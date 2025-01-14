@@ -1,7 +1,6 @@
 #include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSource/MediaSourceService.hpp>
 
-
 namespace f1x::openauto::autoapp::service::mediasource {
 
   MediaSourceService::MediaSourceService(boost::asio::io_service &ioService,

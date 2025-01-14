@@ -2,25 +2,34 @@
 #define OPENAUTO_WIFIPOPUP_H
 
 #include <QtCore/QObject>
-
-class WifiPopup : public QObject {
+namespace f1x::openauto::autoapp::UI {
+  class WifiPopup : public QObject {
   Q_OBJECT
-  Q_PROPERTY(QString ssid READ ssid WRITE setSsid NOTIFY ssidChanged)
-  Q_PROPERTY(int wifiStatus READ wifiStatus WRITE setWifiStatus NOTIFY wifiStatusChanged)
 
-public:
-  explicit WifiPopup(QObject *parent = nullptr);
+    Q_PROPERTY(QString ssid READ getSsid WRITE setSsid NOTIFY ssidChanged)
+    Q_PROPERTY(int wifiStatus READ getWifiStatus WRITE setWifiStatus NOTIFY wifiStatusChanged)
 
-signals:
+  public:
+    explicit WifiPopup(QObject *parent = nullptr);
+
+  signals:
+
     void ssidChanged();
+
     void wifiStatusChanged();
 
-private:
-  QString setSsid();
-  void setSsid(QString value);
+  private:
+    QString getSsid();
 
-  int wifiStatus();
-  void wifiStatusChanged(int value);
-};
+    void setSsid(QString value);
+
+    int getWifiStatus();
+
+    void setWifiStatus(int value);
+
+    int m_wifiStatus;
+    QString m_ssid;
+  };
+}
 
 #endif //OPENAUTO_WIFIPOPUP_H

@@ -6,6 +6,10 @@ Item {
     width: 800
     height: 480
 
+    // TODO: Bluetooth Status, Connectivity (Device), respond to Connectivity Request
+    // TODO: Bluetooth PIN
+    // TODO: Virtual Keyboard, Bluetooth Name
+
     Row {
         id: row
         spacing: 10

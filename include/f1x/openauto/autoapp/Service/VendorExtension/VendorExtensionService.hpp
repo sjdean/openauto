@@ -1,6 +1,5 @@
-
-
-#pragma once#include <aasdk/Channel/VendorExtension/VendorExtensionService.hpp>
+#pragma once
+#include <aasdk/Channel/VendorExtension/VendorExtensionService.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
 #include <boost/asio/io_service.hpp>
 #include <aasdk/Messenger/IMessenger.hpp>

@@ -1,6 +1,5 @@
-
-
-#pragma once#include <vector>
+#pragma once
+#include <vector>
 #include <memory>
 #include <f1x/openauto/Common/Log.hpp>
 #include <aap_protobuf/service/control/message/ServiceDiscoveryResponse.pb.h>

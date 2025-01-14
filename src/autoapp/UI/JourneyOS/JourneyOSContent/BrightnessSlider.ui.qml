@@ -16,6 +16,8 @@ Slider {
     property color sliderColor: "#cc2d004d"
     property color alternateColor: "#ab381353"
 
+    // TODO: Brightness Repsonses
+
     Rectangle {
         id: baseBackground
         x: brightnessSlider.leftPadding + brightnessSlider.availableWidth / 2 - width / 2

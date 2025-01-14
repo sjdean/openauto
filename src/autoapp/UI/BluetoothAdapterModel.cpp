@@ -1,20 +1,65 @@
 #include <QBluetoothHostInfo>
 #include <QBluetoothLocalDevice>
+#include <f1x/openauto/autoapp/UI/BluetoothAdapterModel.hpp>
+#include <QProcess>
 
-BluetoothAdapterModel::BluetoothAdapterModel(QObject *parent) : ComboBoxModel(parent) {
-  BluetoothAdapterModel::populateComboBoxItems();
-}
+namespace f1x::openauto::autoapp::UI {
+  BluetoothAdapterModel::BluetoothAdapterModel(QObject *parent) : QObject(parent) {
+    BluetoothAdapterModel::populateComboBoxItems();
+  }
 
-void BluetoothAdapterModel::populateComboBoxItems() {
-  QList<QBluetoothHostInfo> adapters = QBluetoothLocalDevice::allDevices();
-  if (!adapters.isEmpty()) {
-    for (const QBluetoothHostInfo &adapter: adapters) {
-      QString adapterAddress = adapter.address().toString();
+  bool isBlueZRunning() {
+    QProcess process;
+    process.start("systemctl", QStringList() << "is-active" << "bluetooth.service");
+    process.waitForFinished();
+    QString output = process.readAllStandardOutput();
+    return output.trimmed() == "active";
+  }
 
-      addComboBoxItem(QString("%1 (%2)").arg(adapter.name()).arg(
-          adapterAddress).toUtf8().constData(), QVariant(adapterAddress));
+  void BluetoothAdapterModel::populateComboBoxItems() {
+    if (isBlueZRunning()) {
+      fprintf(stderr, "Populating items...\n");
+      QList<QBluetoothHostInfo> adapters = QBluetoothLocalDevice::allDevices();
+      if (!adapters.isEmpty()) {
+        for (const QBluetoothHostInfo &adapter: adapters) {
+          QString adapterAddress = adapter.address().toString();
+
+          addComboBoxItem(QString("%1 (%2)").arg(adapter.name()).arg(
+                              adapterAddress).toUtf8().constData(),
+                          adapterAddress);
+        }
+      } else {
+        fprintf(stderr, "Empty?\n");
+        addComboBoxItem("SettingsWindow", "none");
+      }
+    } else {
+      fprintf(stderr, "Bluetooth service is not running.\n");
+      addComboBoxItem("SettingsWindow", "none");
     }
-  } else {
-    addComboBoxItem("SettingsWindow", "none");
+
+
+  }
+
+  QList<QObject *> BluetoothAdapterModel::getComboBoxItems() const {
+    QList<QObject *> list;
+    for (BluetoothAdapterModelItem *item: m_comboBoxItems) {
+      list.append(item);
+    }
+    return list;
+  }
+
+  BluetoothAdapterModelItem* BluetoothAdapterModel::getCurrentComboBoxItem() const { return m_currentComboBoxItem; }
+
+  void BluetoothAdapterModel::setCurrentComboBoxItem(BluetoothAdapterModelItem* value) {
+    if (m_currentComboBoxItem != value) {
+      m_currentComboBoxItem = value;
+      emit currentComboBoxItemChanged();
+    }
+  }
+
+  void BluetoothAdapterModel::addComboBoxItem(const QString &display,
+                                        QString value) {
+    auto item = BluetoothAdapterModelItem(display, value);
+    m_comboBoxItems.emplace_back(&item);
   }
 }

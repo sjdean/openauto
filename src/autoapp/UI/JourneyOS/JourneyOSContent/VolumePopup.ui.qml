@@ -13,7 +13,6 @@ Item {
     signal mutePressed(bool isMuted)
 
 
-
     Column {
         id: volumeColumn
         width: 50
@@ -30,6 +29,8 @@ Item {
             anchors.topMargin: 0
             alternateColor: "#d113a8fd"
             anchors.horizontalCenter: parent.horizontalCenter
+            onValueChanged: volumePopupHandler.volumeSink = value
+
         }
 
         JourneyButton {
@@ -44,7 +45,11 @@ Item {
             width: parent.width
             Connections {
                 target: muteButton
-                onClicked: volumePopup.isMuted = !volumePopup.isMuted
+                onClicked: {
+                    volumePopup.isMuted = !volumePopup.isMuted
+                    volumePopupHandler.volumeSinkMute = volumePopup.isMuted
+                }
+
             }
         }
     }

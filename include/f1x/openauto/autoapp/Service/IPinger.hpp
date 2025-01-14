@@ -1,6 +1,5 @@
-
-
-#pragma once#include <aasdk/IO/Promise.hpp>
+#pragma once
+#include <aasdk/IO/Promise.hpp>
 
 namespace f1x
 {

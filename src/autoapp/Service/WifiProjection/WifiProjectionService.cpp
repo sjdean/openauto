@@ -3,13 +3,15 @@
 #include <fstream>
 #include <QString>
 #include <QNetworkInterface>
-
+#include <utility>
 
 namespace f1x::openauto::autoapp::service::wifiprojection {
   WifiProjectionService::WifiProjectionService(boost::asio::io_service &ioService,
-                                               aasdk::messenger::IMessenger::Pointer messenger)
-      : strand_(ioService),
+                                               aasdk::messenger::IMessenger::Pointer messenger,
+                                               configuration::IConfiguration::Pointer configuration)
+      : configuration_(std::move(configuration)),
         timer_(ioService),
+        strand_(ioService),
         channel_(
             std::make_shared<aasdk::channel::wifiprojection::WifiProjectionService>(strand_, std::move(messenger))) {
 
@@ -58,8 +60,8 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
     aap_protobuf::service::wifiprojection::message::WifiCredentialsResponse response;
 
     response.set_access_point_type(aap_protobuf::service::wifiprojection::message::AccessPointType::STATIC);
-    response.set_car_wifi_ssid("CRANKSHAFT-NG");
-    response.set_car_wifi_password("1234567890");
+    response.set_car_wifi_ssid(configuration_->getSettingByName<QString>("WiFi", "SSID").toStdString());
+    response.set_car_wifi_password(configuration_->getSettingByName<QString>("WiFi", "Password").toStdString());
     response.set_car_wifi_security_mode(
         aap_protobuf::service::wifiprojection::message::WifiSecurityMode::WPA2_PERSONAL);
 

@@ -1,6 +1,5 @@
-
-
-#pragma once#include <stdint.h>
+#pragma once
+#include <stdint.h>
 #include <memory>
 #include <QBluetoothServer>
 #include <f1x/openauto/btservice/IAndroidBluetoothServer.hpp>

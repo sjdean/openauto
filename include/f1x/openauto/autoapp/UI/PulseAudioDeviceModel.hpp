@@ -1,26 +1,46 @@
-#ifndef OPENAUTO_PULSEAUDIODEVICEMODEL_H
-#define OPENAUTO_PULSEAUDIODEVICEMODEL_H
+#ifndef OPENAUTO_PULSEAUDIODEVICEMODEL_HPP
+#define OPENAUTO_PULSEAUDIODEVICEMODEL_HPP
 
 #include <QList>
 #include <QQmlListProperty>
 #include <QtCore/QObject>
-#include "ComboBoxModel.hpp"
 #include <pulse/pulseaudio.h>
 #include <iostream>
 #include <vector>
 #include <string>
+#include <f1x/openauto/autoapp/UI/PulseAudioHandler.hpp>
+#include <f1x/openauto/autoapp/UI/PulseAudioDeviceModelItem.hpp>
 
-class PulseAudioDeviceModel : public ComboBoxModel {
+namespace f1x::openauto::autoapp::UI {
+  class PulseAudioDeviceModel : public QObject {
   Q_OBJECT
+    Q_PROPERTY(QList<QObject *> comboBoxItems READ getComboBoxItems NOTIFY comboBoxItemsChanged)
+    Q_PROPERTY(PulseAudioDeviceModelItem* currentComboBoxItem READ getCurrentComboBoxItem WRITE setCurrentComboBoxItem NOTIFY currentComboBoxItemChanged)
 
-public:
-  explicit PulseAudioDeviceModel(pa_context* context, pa_direction_t direction, QObject *parent = nullptr);
-protected:
-  void populateComboBoxItems() override;
-private:
-  static std::vector<std::pair<std::string, std::string>> getPulseAudioDevices(pa_context* context, pa_direction_t direction);
-  pa_context* m_context;
-  pa_direction_t m_direction;
-};
+  public:
+    explicit PulseAudioDeviceModel(PulseAudioHandler pulseAudioHandler, pa_direction_t direction, QObject *parent = nullptr);
 
-#endif //OPENAUTO_PULSEAUDIODEVICEMODEL_H
+  signals:
+    void comboBoxItemsChanged();
+    void currentComboBoxItemChanged();
+
+  protected:
+    QList<QObject *> getComboBoxItems() const;
+    PulseAudioDeviceModelItem* getCurrentComboBoxItem() const;
+    void setCurrentComboBoxItem(PulseAudioDeviceModelItem* value);
+
+    void populateComboBoxItems();
+    void addComboBoxItem(const QString &display, QString value);
+
+
+  private:
+    QList<PulseAudioDeviceModelItem *> m_comboBoxItems;
+    PulseAudioDeviceModelItem* m_currentComboBoxItem;
+
+    std::vector<std::pair<std::string, std::string>> getPulseAudioDevices();
+    pa_direction_t m_direction;
+    PulseAudioHandler m_pulseAudioHandler;
+  };
+}
+
+#endif //OPENAUTO_PULSEAUDIODEVICEMODEL_HPP

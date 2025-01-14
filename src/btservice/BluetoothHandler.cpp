@@ -1,6 +1,4 @@
-//
-// Created by Simon Dean on 26/11/2024.
-//#include <f1x/openauto/btservice/BluetoothHandler.hpp>
+#include <f1x/openauto/btservice/BluetoothHandler.hpp>
 #include <f1x/openauto/btservice/AndroidBluetoothService.hpp>
 #include <f1x/openauto/btservice/AndroidBluetoothServer.hpp>
 #include <f1x/openauto/Common/Log.hpp>
@@ -14,7 +12,7 @@ namespace f1x::openauto::btservice {
 
     OPENAUTO_LOG(info) << "[BluetoothHandler::BluetoothHandler] Starting Up...";
 
-    QString adapterAddress = QString::fromStdString(configuration_->getBluetoothAdapterAddress());
+    QString adapterAddress = configuration_->getSettingByName<QString>("Bluetooth", "AdapterAddress");
     QBluetoothAddress address(adapterAddress);
     localDevice_ = std::make_unique<QBluetoothLocalDevice>(QBluetoothAddress());
 
@@ -25,7 +23,17 @@ namespace f1x::openauto::btservice {
     }
 
     #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    // TODO: Move to QDBus for monitoring BlueZ.
+    QString adapterPath = getAdapterPathByAddress(adapterAddress);
+    if (!adapterPath.isEmpty()) {
+      // Connect to BlueZ signals for device changes on the specific adapter
+      QDBusConnection::systemBus().connect("org.bluez", "/org/bluez", "org.bluez.AgentManager1", "RequestPinCode", this, SLOT(onRequestPinCode(QDBusObjectPath)));
+      QDBusConnection::systemBus().connect("org.bluez", "/org/bluez", "org.bluez.AgentManager1", "RequestConfirmation", this, SLOT(onRequestConfirmation(QDBusObjectPath, quint32)));
+      QDBusConnection::systemBus().connect("org.bluez", adapterPath, "org.bluez.Adapter1", "DeviceFound", this, SLOT(onDeviceFound(QDBusObjectPath, QVariantMap)));
+      QDBusConnection::systemBus().connect("org.bluez", adapterPath, "org.bluez.Adapter1", "DeviceConnected", this, SLOT(onDeviceConnected(QDBusObjectPath)));
+      QDBusConnection::systemBus().connect("org.bluez", adapterPath, "org.bluez.Adapter1", "DeviceDisconnected", this, SLOT(onDeviceDisconnected(QDBusObjectPath)));
+    } else {
+      qWarning() << "No adapter found with address:" << adapterAddress;
+    }
     #else
       QObject::connect(localDevice_.get(), &QBluetoothLocalDevice::pairingDisplayPinCode, this, &BluetoothHandler::onPairingDisplayPinCode);
       QObject::connect(localDevice_.get(), &QBluetoothLocalDevice::pairingDisplayConfirmation, this, &BluetoothHandler::onPairingDisplayConfirmation);
@@ -59,6 +67,30 @@ namespace f1x::openauto::btservice {
     }
 
     // TODO: Connect to any previously paired devices
+  }
+
+  QString BluetoothHandler::getAdapterPathByAddress(const QString &adapterAddress) {
+
+    QDBusInterface manager("org.bluez", "/", "org.freedesktop.DBus.ObjectManager", QDBusConnection::systemBus());
+    QDBusReply<QVariantMap> reply = manager.call("GetManagedObjects");
+
+    if (!reply.isValid()) {
+      qWarning() << "Error getting managed objects:" << reply.error().message();
+      return QString();
+    }
+
+    QVariantMap managedObjects = reply.value();
+    for (auto it = managedObjects.begin(); it != managedObjects.end(); ++it) {
+      QVariantMap interfaces = it->toMap();
+      if (interfaces.contains("org.bluez.Adapter1")) {
+        QVariantMap adapterProperties = interfaces["org.bluez.Adapter1"].toMap();
+        QString address = adapterProperties["Address"].toString();
+        if (address == adapterAddress) {
+          return it.key();
+        }
+      }
+    }
+    return QString(); // No matching adapter found
   }
 
   void BluetoothHandler::shutdownService() {

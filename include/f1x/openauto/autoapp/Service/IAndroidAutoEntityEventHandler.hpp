@@ -1,6 +1,5 @@
-
-
-#pragma once#include <aasdk/Error/Error.hpp>
+#pragma once
+#include <aasdk/Error/Error.hpp>
 
 namespace f1x
 {

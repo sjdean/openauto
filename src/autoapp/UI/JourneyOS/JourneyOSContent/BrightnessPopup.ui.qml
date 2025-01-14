@@ -9,7 +9,7 @@ Item {
     height: 380
 
     Column {
-        id: volumeColumn
+        id: brightnessColumn
         width: 50
         height: brightnessPopup.height - 24
         anchors.top: parent.top
@@ -24,6 +24,7 @@ Item {
             anchors.topMargin: 0
             alternateColor: "#ab381353"
             anchors.horizontalCenter: parent.horizontalCenter
+            onValueChanged: brightnessPopupHandler.brightness = value
         }
     }
 

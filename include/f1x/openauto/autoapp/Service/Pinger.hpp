@@ -1,6 +1,5 @@
-
-
-#pragma once#include <f1x/openauto/autoapp/Service/IPinger.hpp>
+#pragma once
+#include <f1x/openauto/autoapp/Service/IPinger.hpp>
 
 namespace f1x
 {

@@ -98,7 +98,9 @@ find_package(gps REQUIRED)
 
 
 set(UI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/autoapp/UI/JourneyOS")
+
 add_subdirectory(src/autoapp/UI/JourneyOS)
+
 set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
 set(QML_IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
         CACHE STRING "Import paths for Qt Creator's code model"
@@ -134,6 +136,7 @@ target_include_directories(autoapp PUBLIC ${AAP_PROTOBUF_INCLUDE_DIR} ${AASDK_IN
 
 target_link_libraries(autoapp PUBLIC
     libusb
+    pulse
     JourneyOSplugin
     JourneyOSContentplugin
     ${Boost_LIBRARIES}
@@ -182,6 +185,8 @@ target_link_libraries(btservice PUBLIC
 
 set_target_properties(autoapp
         PROPERTIES VERSION ${PROGRAM_VERSION_STRING} SOVERSION ${OPENAUTO_BUILD_INCREMENTAL})
+
+
 
 # Install rules
 #install(TARGETS autoapp btservice

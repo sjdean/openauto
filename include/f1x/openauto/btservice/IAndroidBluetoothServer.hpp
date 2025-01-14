@@ -1,6 +1,5 @@
-
-
-#pragma once#include <memory>
+#pragma once
+#include <memory>
 #include <QBluetoothAddress>
 
 namespace f1x::openauto::btservice {

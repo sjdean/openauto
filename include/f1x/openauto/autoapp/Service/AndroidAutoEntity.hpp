@@ -1,6 +1,5 @@
-
-
-#pragma once#include <boost/asio.hpp>
+#pragma once
+#include <boost/asio.hpp>
 #include <aasdk/Transport/ITransport.hpp>
 #include <aasdk/Channel/Control/IControlServiceChannel.hpp>
 #include <aasdk/Channel/Control/IControlServiceChannelEventHandler.hpp>
@@ -12,6 +11,7 @@
 #include <aap_protobuf/service/control/message/AudioFocusRequestType.pb.h>
 #include <aap_protobuf/service/control/message/AudioFocusStateType.pb.h>
 #include <aap_protobuf/service/control/message/NavFocusType.pb.h>
+#include <f1x/openauto/autoapp/UI/AndroidAutoMonitor.hpp>
 
 namespace f1x
 {
@@ -31,14 +31,15 @@ public:
                       aasdk::messenger::IMessenger::Pointer messenger,
                       configuration::IConfiguration::Pointer configuration,
                       ServiceList serviceList,
-                      IPinger::Pointer pinger);
+                      IPinger::Pointer pinger,
+                      std::shared_ptr<UI::AndroidAutoMonitor> androidAutoMonitor);
     ~AndroidAutoEntity() override;
 
     void start(IAndroidAutoEntityEventHandler& eventHandler) override;
     void stop() override;
     void pause() override;
     void resume() override;
-    // TODO: on channel open request... on channel close...  on navigation focus, on voice session notification, on user switch, on call availability, on service disc update, on battery status, on car connected devices
+
     void onVersionResponse(uint16_t majorCode, uint16_t minorCode, aap_protobuf::shared::MessageStatus status) override;
     void onHandshake(const aasdk::common::DataConstBuffer& payload) override;
     void onServiceDiscoveryRequest(const aap_protobuf::service::control::message::ServiceDiscoveryRequest& request) override;
@@ -67,6 +68,7 @@ private:
     ServiceList serviceList_;
     IPinger::Pointer pinger_;
     IAndroidAutoEntityEventHandler* eventHandler_;
+    std::shared_ptr<UI::AndroidAutoMonitor> androidAutoMonitor_;
 };
 
 }

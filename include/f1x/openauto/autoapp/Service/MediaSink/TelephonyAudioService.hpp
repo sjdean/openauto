@@ -1,6 +1,5 @@
-
-
-#pragma once#include <f1x/openauto/autoapp/Service/MediaSink/AudioMediaSinkService.hpp>
+#pragma once
+#include <f1x/openauto/autoapp/Service/MediaSink/AudioMediaSinkService.hpp>
 #include <aasdk/Channel/MediaSink/Audio/Channel/TelephonyAudioChannel.hpp>
 
 

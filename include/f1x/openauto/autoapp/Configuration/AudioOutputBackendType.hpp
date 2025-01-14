@@ -1,23 +1,12 @@
-
-
 #pragma once
 
-namespace f1x
-{
-namespace openauto
-{
-namespace autoapp
-{
-namespace configuration
-{
+namespace f1x::openauto::autoapp::configuration {
 
-enum class AudioOutputBackendType
-{
-    RTAUDIO,
-    QT
-};
+  enum class AudioOutputBackendType {
+    RTAUDIO = 1,
+    QT = 2
+  };
+}
 
-}
-}
-}
-}
+
+

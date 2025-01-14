@@ -3,7 +3,6 @@
 #include <fstream>
 #include <QString>
 
-
 namespace f1x::openauto::autoapp::service::mediabrowser {
 
   MediaBrowserService::MediaBrowserService(boost::asio::io_service &ioService,

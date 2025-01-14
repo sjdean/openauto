@@ -1,6 +1,5 @@
-
-
-#pragma once#include <QIODevice>
+#pragma once
+#include <QIODevice>
 #include <mutex>
 #include <boost/circular_buffer.hpp>
 #include <aasdk/Common/Data.hpp>

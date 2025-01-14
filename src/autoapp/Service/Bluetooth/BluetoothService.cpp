@@ -3,6 +3,10 @@
 
 namespace f1x::openauto::autoapp::service::bluetooth {
 
+  /// This Service is just a Handler to Negotiate Bluetooth Connectivity Information
+  /// \param ioService
+  /// \param messenger
+  /// \param bluetoothDevice
   BluetoothService::BluetoothService(boost::asio::io_service &ioService,
                                      aasdk::messenger::IMessenger::Pointer messenger,
                                      projection::IBluetoothDevice::Pointer bluetoothDevice)

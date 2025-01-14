@@ -1,7 +1,4 @@
-
-
 #pragma once
-
 
 namespace f1x::openauto::autoapp::configuration {
 

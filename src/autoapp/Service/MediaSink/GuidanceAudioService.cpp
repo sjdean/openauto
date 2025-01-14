@@ -1,6 +1,5 @@
 #include <f1x/openauto/autoapp/Service/MediaSink/GuidanceAudioService.hpp>
 
-
 namespace f1x::openauto::autoapp::service::mediasink {
   using f1x::openauto::autoapp::service::mediasink::GuidanceAudioService;
   using f1x::openauto::autoapp::service::mediasink::AudioMediaSinkService;

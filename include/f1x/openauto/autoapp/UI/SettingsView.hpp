@@ -4,180 +4,278 @@
 #include <QtCore/QObject>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 
-class SettingsView : public QObject {
-  Q_OBJECT
+namespace f1x::openauto::autoapp::UI {
 
-  Q_PROPERTY(QString carMake READ carMake WRITE setCarMake NOTIFY carMakeChanged)
-  Q_PROPERTY(QString carModel READ carModel WRITE setCarModel NOTIFY carModelChanged)
-  Q_PROPERTY(bool autoPlayback READ autoPlayback WRITE setAutoPlayback NOTIFY autoPlaybackChanged)
-  Q_PROPERTY(bool autoStart READ autoStart WRITE setAutoStart NOTIFY autoStartChanged)
-  Q_PROPERTY(bool channelMedia READ channelMedia WRITE setChannelMedia NOTIFY channelMediaChanged)
-  Q_PROPERTY(bool channelGuidance READ channelGuidance WRITE setChannelGuidance NOTIFY channelGuidanceChanged)
-  Q_PROPERTY(bool channelTelephony READ channelTelephony WRITE setChannelTelephony NOTIFY channelTelephonyChanged)
-  Q_PROPERTY(bool audioRt READ audioRt WRITE setAudioRt NOTIFY audioRtChanged)
-  Q_PROPERTY(bool audioQt READ audioQt WRITE setAudioQt NOTIFY audioQtChanged)
-  Q_PROPERTY(int omxLayer READ omxLayer WRITE setOmxLayer NOTIFY omxLayerChanged)
-  Q_PROPERTY(int marginHeight READ marginHeight WRITE setMarginHeight NOTIFY marginHeightChanged)
-  Q_PROPERTY(int marginWidth READ marginWidth WRITE setMarginWidth NOTIFY marginWidthChanged)
-  Q_PROPERTY(int dpi READ dpi WRITE setDpi NOTIFY dpiChanged)
-  Q_PROPERTY(int volumePlayback READ volumePlayback WRITE setVolumePlayback NOTIFY volumePlaybackChanged)
-  Q_PROPERTY(int volumeCapture READ volumeCapture WRITE setVolumeCapture NOTIFY volumeCaptureChanged)
-  Q_PROPERTY(int brightnessDayMin READ brightnessDayMin WRITE setBrightnessDayMin NOTIFY brightnessDayMinChanged)
-  Q_PROPERTY(int brightnessDayMax READ brightnessDayMax WRITE setBrightnessDayMax NOTIFY brightnessDayMaxChanged)
-  Q_PROPERTY(int brightnessNightMin READ brightnessNightMin WRITE seBbrightnessNightMin NOTIFY brightnessNightMinChanged)
-  Q_PROPERTY(int brightnessNightMax READ brightnessNightMax WRITE setBrightnessNightMax NOTIFY brightnessNightMaxChanged)
-  Q_PROPERTY(bool videoEgl READ videoEgl WRITE setVideoEgl NOTIFY videoEglChanged)
-  Q_PROPERTY(bool videoX11 READ videoX11 WRITE setVideoX11 NOTIFY videoX11Changed)
-  Q_PROPERTY(bool rotateDisplay READ rotateDisplay WRITE setRotateDisplay NOTIFY rotateDisplayChanged)
+  class SettingsView : public QObject {
+    Q_OBJECT
 
-public:
-  explicit SettingsView(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration, QObject *parent = nullptr);
+    Q_PROPERTY(QString carMake READ getCarMake WRITE setCarMake NOTIFY carMakeChanged)
+    Q_PROPERTY(QString carModel READ getCarModel WRITE setCarModel NOTIFY carModelChanged)
+    Q_PROPERTY(aap_protobuf::service::sensorsource::message::FuelType carFuelType READ getCarFuelType WRITE setCarFuelType NOTIFY carFuelTypeChanged)
+    Q_PROPERTY(
+        aap_protobuf::service::sensorsource::message::EvConnectorType carEvConnectorType READ getCarEvConnectorType WRITE setCarEvConnectorType NOTIFY carEvConnectorTypeChanged)
+    Q_PROPERTY(
+        aap_protobuf::service::control::message::DriverPosition carDriverPosition READ getCarDriverPosition WRITE setCarDriverPosition NOTIFY carDriverPositionChanged)
 
-signals:
+    Q_PROPERTY(
+        int screenBrightnessDayMin READ getScreenBrightnessDayMin WRITE setScreenBrightnessDayMin NOTIFY screenBrightnessDayMinChanged)
+    Q_PROPERTY(
+        int screenBrightnessDayMax READ getScreenBrightnessDayMax WRITE setScreenBrightnessDayMax NOTIFY screenBrightnessDayMaxChanged)
+    Q_PROPERTY(
+        int screenBrightnessNightMin READ getScreenBrightnessNightMin WRITE setScreenBrightnessNightMin NOTIFY screenBrightnessNightMinChanged)
+    Q_PROPERTY(
+        int screenBrightnessNightMax READ getScreenBrightnessNightMax WRITE setScreenBrightnessNightMax NOTIFY screenBrightnessNightMaxChanged)
+    Q_PROPERTY(int screenBrightness READ getScreenBrightness WRITE setScreenBrightness NOTIFY screenBrightnessChanged)
+    Q_PROPERTY(int screenDPI READ getScreenDPI WRITE setScreenDPI NOTIFY screenDPIChanged)
 
-  void carMakeChanged();
-  void carModelChanged();
+    Q_PROPERTY(
+        int videoMarginHeight READ getVideoMarginHeight WRITE setVideoMarginHeight NOTIFY videoMarginHeightChanged)
+    Q_PROPERTY(int videoMarginWidth READ getVideoMarginWidth WRITE setVideoMarginWidth NOTIFY videoMarginWidthChanged)
+    Q_PROPERTY(int videoOMXLayer READ getVideoOMXLayer WRITE setVideoOMXLayer NOTIFY videoOMXLayerChanged)
+    Q_PROPERTY(int videoType READ getVideoType WRITE setVideoType NOTIFY videoTypeChanged)
+    Q_PROPERTY(
+        bool videoRotateDisplay READ getVideoRotateDisplay WRITE setVideoRotateDisplay NOTIFY videoRotateDisplayChanged)
 
-  void autoPlaybackChanged();
-  void autoStartChanged();
-  void channelMediaChanged();
-  void channelGuidanceChanged();
-  void channelTelephonyChanged();
-  void omxLayerChanged();
-  void marginHeightChanged();
-  void marginWidthChanged();
-  void dpiChanged();
+    Q_PROPERTY(
+        bool mediaAutoPlayback READ getMediaAutoPlayback WRITE setMediaAutoPlayback NOTIFY mediaAutoPlaybackChanged)
+    Q_PROPERTY(bool mediaAutoStart READ getMediaAutoStart WRITE setMediaAutoStart NOTIFY mediaAutoStartChanged)
 
-  void audioQtChanged();
-  void audioRtChanged();
+    Q_PROPERTY(bool aaChannelMedia READ getAAChannelMedia WRITE setAAChannelMedia NOTIFY aaChannelMediaChanged)
+    Q_PROPERTY(
+        bool aaChannelGuidance READ getAAChannelGuidance WRITE setAAChannelGuidance NOTIFY aaChannelGuidanceChanged)
+    Q_PROPERTY(
+        bool aaChannelTelephony READ getAAChannelTelephony WRITE setAAChannelTelephony NOTIFY aaChannelTelephonyChanged)
+    Q_PROPERTY(
+        int audioVolumePlaybackMin READ getAudioVolumePlaybackMin WRITE setAudioVolumePlaybackMin NOTIFY audioVolumePlaybackMinChanged)
+    Q_PROPERTY(
+        int audioVolumePlaybackMax READ getAudioVolumePlaybackMax WRITE setAudioVolumePlaybackMax NOTIFY audioVolumePlaybackMaxChanged)
+    Q_PROPERTY(
+        int audioVolumeCaptureMin READ getAudioVolumeCaptureMin WRITE setAudioVolumeCaptureMin NOTIFY audioVolumeCaptureMinChanged)
+    Q_PROPERTY(
+        int audioVolumeCaptureMax READ getAudioVolumeCaptureMax WRITE setAudioVolumeCaptureMax NOTIFY audioVolumeCaptureMaxChanged)
+    Q_PROPERTY(
+        int audioVolumePlayback READ getAudioVolumePlayback WRITE setAudioVolumePlayback NOTIFY audioVolumePlaybackChanged)
+    Q_PROPERTY(
+        int audioVolumeCapture READ getAudioVolumeCapture WRITE setAudioVolumeCapture NOTIFY audioVolumeCaptureChanged)
+    Q_PROPERTY(f1x::openauto::autoapp::configuration::AudioOutputBackendType audioType READ getAudioType WRITE setAudioType NOTIFY audioTypeChanged)
 
-  void volumePlaybackChanged();
-  void volumeCaptureChanged();
+  public:
+    explicit SettingsView(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration,
+                          QObject *parent = nullptr);
 
-  void rotateDisplayChanged();
+  signals:
 
-  void brightnessDayMinChanged();
-  void brightnessDayMaxChanged();
-  void brightnessNightMinChanged();
-  void brightnessNightMaxChanged();
+    void carMakeChanged();
 
-private:
-  f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration_;
+    void carModelChanged();
 
-  // Car Settings
-  QString m_carMake;
-  QString m_carModel;
+    void carEvConnectorTypeChanged();
 
-  // Media Settings
-  bool m_autoPlayback;
-  bool m_autoStart;
+    void carFuelTypeChanged();
 
-  // Android Auto Settings - Channels
-  bool m_channelMedia;
-  bool m_channelGuidance;
-  bool m_channelTelephony;
+    void carDriverPositionChanged();
 
-  // Android Auto Settings - Display
-  int m_omxLayer;
-  int m_marginHeight;
-  int m_marginWidth;
-  int m_dpi;
+    void screenBrightnessDayMinChanged();
 
-  // Audio Settings
-  f1x::openauto::autoapp::configuration::AudioOutputBackendType m_audioType;
-  int m_volumePlayback;
-  int m_volumeCapture;
+    void screenBrightnessDayMaxChanged();
 
-  // Video Settings
-  int m_videoType;
-  bool m_rotateDisplay;
-  int m_brightnessDayMin;
-  int m_brightnessDayMax;
-  int m_brightnessNightMin;
-  int m_brightnessNightMax;
+    void screenBrightnessNightMinChanged();
 
-  void setDpi(int value);
+    void screenBrightnessNightMaxChanged();
 
-  int dpi();
+    void screenBrightnessChanged();
 
-  void setRotateDisplay(bool value);
+    void screenDPIChanged();
 
-  bool rotateDisplay();
+    void videoMarginHeightChanged();
 
-  bool videoX11();
+    void videoMarginWidthChanged();
 
-  bool videoEgl();
+    void videoOMXLayerChanged();
 
-  void setBrightnessNightMax(int value);
+    void videoTypeChanged(int type);
 
-  void setBrightnessNightMin(int value);
+    void videoRotateDisplayChanged();
 
-  int brightnessNightMax();
+    void mediaAutoPlaybackChanged();
 
-  int brightnessNightMin();
+    void mediaAutoStartChanged();
 
-  int brightnessDayMin();
+    void aaChannelMediaChanged();
 
-  int brightnessDayMax();
+    void aaChannelGuidanceChanged();
 
-  void setBrightnessDayMin(int value);
-  void setBrightnessDayMax(int value);
+    void aaChannelTelephonyChanged();
 
-  void setVolumeCapture(int value);
+    void audioVolumePlaybackMinChanged();
 
-  int volumeCapture();
+    void audioVolumePlaybackMaxChanged();
 
-  void setVolumePlayback(int value);
+    void audioVolumePlaybackChanged();
 
-  int volumePlayback();
+    void audioVolumeCaptureChanged();
 
-  void setMarginWidth(int value);
+    void audioVolumeCaptureMinChanged();
 
-  int marginWidth();
+    void audioVolumeCaptureMaxChanged();
 
-  void setMarginHeight(int value);
+    void audioTypeChanged(f1x::openauto::autoapp::configuration::AudioOutputBackendType type);
 
-  int marginHeight();
+  private:
+    f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration_;
 
-  void setOmxLayer(int value);
+    // Car Settings
+    QString m_carMake;
+    QString m_carModel;
+    aap_protobuf::service::sensorsource::message::FuelType m_carFuelType;
+    aap_protobuf::service::sensorsource::message::EvConnectorType m_carEvConnectorType;
+    aap_protobuf::service::control::message::DriverPosition m_carDriverPosition;
 
-  int omxLayer();
+    QString getCarMake() const;
 
-  void setAudioQt(bool value);
+    QString getCarModel() const;
 
-  bool audioQt();
+    aap_protobuf::service::sensorsource::message::FuelType getCarFuelType() const;
 
-  void setAudioRt(bool value);
+    aap_protobuf::service::sensorsource::message::EvConnectorType getCarEvConnectorType() const;
 
-  bool audioRt();
+    aap_protobuf::service::control::message::DriverPosition getCarDriverPosition() const;
 
-  bool channelTelephony();
+    void setCarMake(QString value);
 
-  void setChannelTelephony(bool value);
+    void setCarModel(QString value);
 
-  void setChannelGuidance(bool value);
+    void setCarFuelType(aap_protobuf::service::sensorsource::message::FuelType value);
 
-  bool channelGuidance();
+    void setCarEvConnectorType(aap_protobuf::service::sensorsource::message::EvConnectorType value);
 
-  void setChannelMedia(bool value);
+    void setCarDriverPosition(aap_protobuf::service::control::message::DriverPosition value);
 
-  bool channelMedia();
+    // Screen
+    int m_screenBrightnessDayMin;
+    int m_screenBrightnessDayMax;
+    int m_screenBrightnessNightMin;
+    int m_screenBrightnessNightMax;
+    int m_screenBrightness;
+    int m_screenDPI;
 
-  void setAutoStart(bool value);
+    int getScreenBrightnessDayMin() const;
 
-  bool autoStart();
+    int getScreenBrightnessDayMax() const;
 
-  void setAutoPlayback(bool value);
+    int getScreenBrightnessNightMin() const;
 
-  bool autoPlayback();
+    int getScreenBrightnessNightMax() const;
 
-  void setCarModel(QString value);
+    int getScreenBrightness() const;
 
-  QString carModel() const;
+    int getScreenDPI() const;
 
-  void setCarMake(QString value);
+    void setScreenBrightnessDayMin(int value);
 
-  QString carMake() const;
-};
+    void setScreenBrightnessDayMax(int value);
 
+    void setScreenBrightnessNightMin(int value);
+
+    void setScreenBrightnessNightMax(int value);
+
+    void setScreenBrightness(int value);
+
+    void setScreenDPI(int value);
+
+    // Video
+    int m_videoMarginHeight;
+    int m_videoMarginWidth;
+    int m_videoOMXLayer;
+    int m_videoType;
+    bool m_videoRotateDisplay;
+
+    int getVideoMarginHeight() const;
+
+    int getVideoMarginWidth() const;
+
+    int getVideoOMXLayer() const;
+
+    int getVideoType() const;
+
+    bool getVideoRotateDisplay() const;
+
+    void setVideoMarginHeight(int value);
+
+    void setVideoMarginWidth(int value);
+
+    void setVideoOMXLayer(int value);
+
+    void setVideoType(int value);
+
+    void setVideoRotateDisplay(bool value);
+
+    // Media Settings
+    bool m_mediaAutoPlayback;
+    bool m_mediaAutoStart;
+
+    bool getMediaAutoPlayback() const;
+
+    bool getMediaAutoStart() const;
+
+    void setMediaAutoPlayback(bool value);
+
+    void setMediaAutoStart(bool value);
+
+    // Android Auto Settings - Channels
+    bool m_aaChannelMedia;
+    bool m_aaChannelGuidance;
+    bool m_aaChannelTelephony;
+
+    bool getAAChannelMedia() const;
+
+    bool getAAChannelGuidance() const;
+
+    bool getAAChannelTelephony() const;
+
+    void setAAChannelMedia(bool value);
+
+    void setAAChannelGuidance(bool value);
+
+    void setAAChannelTelephony(bool value);
+
+    // Audio Settings
+    int m_audioVolumePlaybackMin;
+    int m_audioVolumePlaybackMax;
+    int m_audioVolumeCaptureMin;
+    int m_audioVolumeCaptureMax;
+    int m_audioVolumePlayback;
+    int m_audioVolumeCapture;
+    f1x::openauto::autoapp::configuration::AudioOutputBackendType m_audioType;
+
+    int getAudioVolumePlaybackMin() const;
+
+    int getAudioVolumePlaybackMax() const;
+
+    int getAudioVolumeCaptureMin() const;
+
+    int getAudioVolumeCaptureMax() const;
+
+    int getAudioVolumePlayback() const;
+
+    int getAudioVolumeCapture() const;
+
+    f1x::openauto::autoapp::configuration::AudioOutputBackendType getAudioType() const;
+
+    void setAudioVolumePlaybackMin(int value);
+
+    void setAudioVolumePlaybackMax(int value);
+
+    void setAudioVolumeCaptureMin(int value);
+
+    void setAudioVolumeCaptureMax(int value);
+
+    void setAudioVolumePlayback(int value);
+
+    void setAudioVolumeCapture(int value);
+
+    void setAudioType(f1x::openauto::autoapp::configuration::AudioOutputBackendType value);
+
+  };
+}
 #endif //OPENAUTO_SETTINGSVIEW_H

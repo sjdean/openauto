@@ -64,7 +64,7 @@ namespace f1x::openauto::autoapp::projection {
       }
         catch(const RtAudioError& e)
         {
-          // TODO: Later version of RtAudio uses a different mechanism - FIXME - support new versions
+            // TODO: Later version of RtAudio uses a different mechanism - FIXME - support new versions
             OPENAUTO_LOG(error) << "[RtAudioOutput] Failed to open audio output, what: " << e.what();
         }
 #endif

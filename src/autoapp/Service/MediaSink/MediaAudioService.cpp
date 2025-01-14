@@ -1,6 +1,5 @@
 #include <f1x/openauto/autoapp/Service/MediaSink/MediaAudioService.hpp>
 
-
 namespace f1x::openauto::autoapp::service::mediasink {
   MediaAudioService::MediaAudioService(boost::asio::io_service &ioService,
                                        aasdk::messenger::IMessenger::Pointer messenger,

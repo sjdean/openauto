@@ -1,6 +1,5 @@
-
-
-#pragma once#include <aasdk/Messenger/IMessenger.hpp>
+#pragma once
+#include <aasdk/Messenger/IMessenger.hpp>
 #include <aasdk/Channel/MediaSink/Video/IVideoMediaSinkService.hpp>
 #include <aasdk/Channel/MediaSink/Video/IVideoMediaSinkServiceEventHandler.hpp>
 #include <f1x/openauto/autoapp/Projection/IVideoOutput.hpp>

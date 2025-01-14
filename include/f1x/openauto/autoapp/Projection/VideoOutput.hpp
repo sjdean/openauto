@@ -1,6 +1,5 @@
-
-
-#pragma once#include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
+#pragma once
+#include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 #include <f1x/openauto/autoapp/Projection/IVideoOutput.hpp>
 
 namespace f1x
