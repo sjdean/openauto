@@ -26,12 +26,11 @@ namespace f1x::openauto::autoapp::UI {
 
   protected:
     QList<QObject *> getComboBoxItems() const;
-    PulseAudioDeviceModelItem* getCurrentComboBoxItem() const;
+    PulseAudioDeviceModelItem* getCurrentComboBoxItem();
     void setCurrentComboBoxItem(PulseAudioDeviceModelItem* value);
 
     void populateComboBoxItems();
     void addComboBoxItem(const QString &display, QString value);
-
 
   private:
     QList<PulseAudioDeviceModelItem *> m_comboBoxItems;

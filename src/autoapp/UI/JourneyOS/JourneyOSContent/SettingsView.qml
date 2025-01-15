@@ -77,6 +77,7 @@ Item {
                     ComboBox {
                         id: driverPosition
                         model: driverPositionModel.comboBoxItems
+                        textRole: "display"
                         currentIndex: driverPositionModel.comboBoxItems.indexOf(driverPositionModel.currentComboBoxItem)
                         onCurrentIndexChanged: {
                             driverPositionModel.currentComboBoxItem = driverPositionModel.comboBoxItems[currentIndex];
@@ -94,6 +95,7 @@ Item {
                     ComboBox {
                         id: fuelType
                         model: fuelTypeModel.comboBoxItems
+                        textRole: "display"
                         currentIndex: fuelTypeModel.comboBoxItems.indexOf(fuelTypeModel.currentComboBoxItem)
                         onCurrentIndexChanged: {
                             fuelTypeModel.currentComboBoxItem = fuelTypeModel.comboBoxItems[currentIndex];
@@ -110,6 +112,7 @@ Item {
                     ComboBox {
                         id: evConnectorType
                         model: evConnectorTypeModel.comboBoxItems
+                        textRole: "display"
                         currentIndex: evConnectorTypeModel.comboBoxItems.indexOf(evConnectorTypeModel.currentComboBoxItem)
                         onCurrentIndexChanged: {
                             evConnectorTypeModel.currentComboBoxItem = evConnectorTypeModel.comboBoxItems[currentIndex];
@@ -232,18 +235,19 @@ Item {
                 }
                 Row {
                     spacing: 10
+                    // TODO Enum
                     RadioButton {
                         id: audioRt
                         text: qsTr("RT Audio")
-                        checked: settingsViewHandler.audioTypeRt
-                        onCheckedChanged: settingsViewHandler.audioTypeRt = checked
+                        checked: settingsViewHandler.audioType == 1
+                        onCheckedChanged: settingsViewHandler.audioType = 1
                     }
 
                     RadioButton {
                         id: audioQt
                         text: qsTr("Qt")
-                        checked: settingsViewHandler.audioTypeQt
-                        onCheckedChanged: settingsViewHandler.audioTypeQt = checked
+                        checked: settingsViewHandler.audioType == 2
+                        onCheckedChanged: settingsViewHandler.audioType = 2
                     }
                 }
 
@@ -257,6 +261,7 @@ Item {
                     ComboBox {
                         id: frameRate
                         model: frameRateModel.comboBoxItems
+                        textRole: "display"
                         currentIndex: frameRateModel.comboBoxItems.indexOf(frameRateModel.currentComboBoxItem)
                         onCurrentIndexChanged: {
                             frameRateModel.currentComboBoxItem = frameRateModel.comboBoxItems[currentIndex];
@@ -273,6 +278,7 @@ Item {
                     ComboBox {
                         id: resolution
                         model: resolutionModel.comboBoxItems
+                        textRole: "display"
                         currentIndex: resolutionModel.comboBoxItems.indexOf(resolutionModel.currentComboBoxItem)
                         onCurrentIndexChanged: {
                             resolutionModel.currentComboBoxItem = resolutionModel.comboBoxItems[currentIndex];
@@ -352,8 +358,8 @@ Item {
                         first.value: settingsViewHandler.audioVolumePlaybackMin
                         second.value: settingsViewHandler.audioVolumePlaybackMax
 
-                        onFirstChanged: settingsViewHandler.audioVolumePlaybackMin = first.value
-                        onSecondChanged: settingsViewHandler.audioVolumePlaybackMax = second.value
+                        first.onValueChanged: settingsViewHandler.audioVolumePlaybackMin = first.value
+                        second.onValueChanged: settingsViewHandler.audioVolumePlaybackMax = second.value
                     }
                 }
                 Row {
@@ -366,6 +372,7 @@ Item {
                     ComboBox {
                         id: pulseAudioDeviceOutput
                         model: pulseAudioDeviceModelOutput.comboBoxItems
+                        textRole: "display"
                         currentIndex: pulseAudioDeviceModelOutput.comboBoxItems.indexOf(pulseAudioDeviceModelOutput.currentComboBoxItem)
                         onCurrentIndexChanged: {
                             pulseAudioDeviceModelOutput.currentComboBoxItem = pulseAudioDeviceModelOutput.comboBoxItems[currentIndex];
@@ -401,8 +408,8 @@ Item {
                         first.value: settingsViewHandler.audioVolumeCaptureMin
                         second.value: settingsViewHandler.audioVolumeCaptureMax
 
-                        onFirstChanged: settingsViewHandler.audioVolumeCaptureMin = first.value
-                        onSecondChanged: settingsViewHandler.audioVolumeCaptureMax = second.value
+                        first.onValueChanged: settingsViewHandler.audioVolumeCaptureMin = first.value
+                        second.onValueChanged: settingsViewHandler.audioVolumeCaptureMax = second.value
                     }
                 }
                 Row {
@@ -414,6 +421,7 @@ Item {
                     ComboBox {
                         id: pulseAudioDeviceInput
                         model: pulseAudioDeviceModelInput.comboBoxItems
+                        textRole: "display"
                         currentIndex: pulseAudioDeviceModelInput.comboBoxItems.indexOf(pulseAudioDeviceModelInput.currentComboBoxItem)
                         onCurrentIndexChanged: {
                             pulseAudioDeviceModelInput.currentComboBoxItem = pulseAudioDeviceModelInput.comboBoxItems[currentIndex];
@@ -451,8 +459,8 @@ Item {
                         first.value: settingsViewHandler.screenBrightnessDayMin
                         second.value: settingsViewHandler.screenBrightnessDayMax
                         
-                        onFirstChanged: settingsViewHandler.screenBrightnessDayMin = first.value
-                        onSecondChanged: settingsViewHandler.screenBrightnessDayMax = second.value
+                        first.onValueChanged: settingsViewHandler.screenBrightnessDayMin = first.value
+                        second.onValueChanged: settingsViewHandler.screenBrightnessDayMax = second.value
                     }
                 }
 
@@ -472,8 +480,8 @@ Item {
                         first.value: settingsViewHandler.screenBrightnessNightMin
                         second.value: settingsViewHandler.screenBrightnessNightMax
                         
-                        onFirstChanged: settingsViewHandler.screenBrightnessNightMin = first.value
-                        onSecondChanged: settingsViewHandler.screenBrightnessNightMax = second.value
+                        first.onValueChanged: settingsViewHandler.screenBrightnessNightMin = first.value
+                        second.onValueChanged: settingsViewHandler.screenBrightnessNightMax = second.value
                     }
 
                 }
@@ -491,15 +499,15 @@ Item {
                         id: videoEgl
 
                         text: qsTr("EGL")
-                        checked: settingsViewHandler.videoTypeEgl
-                        onCheckedChanged: settingsViewHandler.videoTypeEgl = checked
+                        checked: settingsViewHandler.videoType == 1
+                        onCheckedChanged: settingsViewHandler.videoType = 1
                     }
 
                     RadioButton {
                         id: videoX11
                         text: qsTr("X11")
-                        checked: settingsViewHandler.videoTypeX11
-                        onCheckedChanged: settingsViewHandler.videoTypeX11 = checked
+                        checked: settingsViewHandler.videoType == 2
+                        onCheckedChanged: settingsViewHandler.videoType = 2
                     }
                 }
 

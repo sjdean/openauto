@@ -13,7 +13,6 @@ namespace f1x::openauto::autoapp::UI {
   public:
     explicit BluetoothAdapterModelItem(QString display, QString value, QObject *parent = nullptr);
 
-  protected: // Override the base class functions
     QString getDisplay() const;
     void setDisplay(const QString &display);
     QString getValue() const;

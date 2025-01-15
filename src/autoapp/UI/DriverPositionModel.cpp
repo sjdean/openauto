@@ -1,11 +1,12 @@
 #include <f1x/openauto/autoapp/UI/DriverPositionModel.hpp>
 
 namespace f1x::openauto::autoapp::UI {
-  DriverPositionModel::DriverPositionModel(QObject *parent) : QObject(parent) {
+  DriverPositionModel::DriverPositionModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
     DriverPositionModel::populateComboBoxItems();
   }
 
   void DriverPositionModel::populateComboBoxItems() {
+    m_comboBoxItems.clear();
     addComboBoxItem("Left",
                     aap_protobuf::service::control::message::DriverPosition::DRIVER_POSITION_LEFT);
     addComboBoxItem("Right",
@@ -23,7 +24,13 @@ namespace f1x::openauto::autoapp::UI {
     return list;
   }
 
-  DriverPositionModelItem* DriverPositionModel::getCurrentComboBoxItem() const { return m_currentComboBoxItem; }
+  DriverPositionModelItem* DriverPositionModel::getCurrentComboBoxItem() {
+    if (!m_currentComboBoxItem && !m_comboBoxItems.isEmpty()) {
+      fprintf(stderr, "Empty or not set\n");
+      m_currentComboBoxItem = m_comboBoxItems.first(); // Select the first item by default
+    }
+    return m_currentComboBoxItem;
+  }
 
   void DriverPositionModel::setCurrentComboBoxItem(DriverPositionModelItem* value) {
     if (m_currentComboBoxItem != value) {
@@ -34,7 +41,7 @@ namespace f1x::openauto::autoapp::UI {
 
   void DriverPositionModel::addComboBoxItem(const QString &display,
                                             aap_protobuf::service::control::message::DriverPosition value) {
-    auto item = DriverPositionModelItem(display, value);
-    m_comboBoxItems.emplace_back(&item);
+    auto item = new DriverPositionModelItem(display, value);
+    m_comboBoxItems.emplace_back(item);
   }
 }

@@ -13,7 +13,6 @@ namespace f1x::openauto::autoapp::UI {
   public:
     explicit EvConnectorTypeModelItem(QString display, aap_protobuf::service::sensorsource::message::EvConnectorType value, QObject *parent = nullptr);
 
-  protected: // Override the base class functions
     QString getDisplay() const;
     void setDisplay(const QString &display);
     aap_protobuf::service::sensorsource::message::EvConnectorType getValue() const;

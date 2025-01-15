@@ -13,7 +13,6 @@ namespace f1x::openauto::autoapp::UI {
   public:
     explicit ResolutionModelItem(QString display, aap_protobuf::service::media::sink::message::VideoCodecResolutionType value, QObject *parent = nullptr);
 
-  protected: // Override the base class functions
     QString getDisplay() const;
     void setDisplay(const QString &display);
     aap_protobuf::service::media::sink::message::VideoCodecResolutionType getValue() const;

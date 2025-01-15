@@ -1,18 +1,21 @@
 #include <f1x/openauto/autoapp/UI/VolumeHandler.hpp>
+#include <utility>
 
 namespace f1x::openauto::autoapp::UI {
   VolumeHandler::VolumeHandler(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration, PulseAudioHandler pulseAudioHandler) :
-  configuration_(configuration),
+  configuration_(std::move(configuration)),
   m_pulseAudioHandler(pulseAudioHandler) {
 
   }
 
   void VolumeHandler::setVolumeSink(int volume) {
 
-    int min = configuration_->getSettingByName<int>("Audio", "audioPlaybackVolumeMin");
-    int max = configuration_->getSettingByName<int>("Audio", "audioPlaybackVolumeMax");
+    int min = configuration_->getSettingByName<int>("Audio", "PlaybackMin");
+    int max = configuration_->getSettingByName<int>("Audio", "PlaybackMax");
 
     int calculatedVolume = calculateVolume(min, max, volume);
+
+    // TODO: Write Volume to File
 
     m_pulseAudioHandler.setSinkVolume(calculatedVolume);
     m_volumeSink = calculatedVolume;
@@ -20,12 +23,14 @@ namespace f1x::openauto::autoapp::UI {
 
   void VolumeHandler::setVolumeSource(int volume) {
 
-    int min = configuration_->getSettingByName<int>("Audio", "audioCaptureVolumeMin");
-    int max = configuration_->getSettingByName<int>("Audio", "audioCaptureVolumeMax");
+    int min = configuration_->getSettingByName<int>("Audio", "CaptureMin");
+    int max = configuration_->getSettingByName<int>("Audio", "CaptureMax");
 
     int calculatedVolume = calculateVolume(min, max, volume);
 
     m_pulseAudioHandler.setSourceVolume(calculatedVolume);
+
+    // TODO: Write Volume to File
 
     m_volumeSource = calculatedVolume;
   }

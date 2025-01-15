@@ -1,11 +1,12 @@
 #include <f1x/openauto/autoapp/UI/FuelTypeModel.hpp>
 
 namespace f1x::openauto::autoapp::UI {
-  FuelTypeModel::FuelTypeModel(QObject *parent) : QObject(parent) {
+  FuelTypeModel::FuelTypeModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
     FuelTypeModel::populateComboBoxItems();
   }
 
   void FuelTypeModel::populateComboBoxItems() {
+    m_comboBoxItems.clear();
     addComboBoxItem("BioDiesel",
                     aap_protobuf::service::sensorsource::message::FuelType::FUEL_TYPE_BIODIESEL);
     addComboBoxItem("Diesel",
@@ -36,7 +37,13 @@ namespace f1x::openauto::autoapp::UI {
     return list;
   }
 
-  FuelTypeModelItem* FuelTypeModel::getCurrentComboBoxItem() const { return m_currentComboBoxItem; }
+  FuelTypeModelItem* FuelTypeModel::getCurrentComboBoxItem() {
+    if (!m_currentComboBoxItem && !m_comboBoxItems.isEmpty()) {
+      fprintf(stderr, "Empty or not set\n");
+      m_currentComboBoxItem = m_comboBoxItems.first(); // Select the first item by default
+    }
+    return m_currentComboBoxItem;
+  }
 
   void FuelTypeModel::setCurrentComboBoxItem( FuelTypeModelItem* value) {
     if (m_currentComboBoxItem != value) {
@@ -47,7 +54,7 @@ namespace f1x::openauto::autoapp::UI {
 
   void FuelTypeModel::addComboBoxItem(const QString &display,
                                       aap_protobuf::service::sensorsource::message::FuelType value) {
-    auto item = FuelTypeModelItem(display, value);
-    m_comboBoxItems.emplace_back(&item);
+    auto item = new FuelTypeModelItem(display, value);
+    m_comboBoxItems.emplace_back(item);
   }
 }

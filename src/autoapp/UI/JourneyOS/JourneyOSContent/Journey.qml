@@ -8,7 +8,7 @@ Window {
     height: 480
 
     visible: true
-    color: "#000000"                    // TODO: Change This
+    color: "#000000"
     title: "JourneyOS"
 
     StackView {

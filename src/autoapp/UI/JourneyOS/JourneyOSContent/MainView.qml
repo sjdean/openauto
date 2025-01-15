@@ -19,31 +19,23 @@ Item {
         id: header
         height: 100
         Connections {
-            target: header.viewVolume()
-            function onViewVolume() {
-                volumePopup.open()
-            }
+            target: header
+            onViewVolume: volumePopup.open()
         }
 
         Connections {
-            target: header.viewBrightness()
-            function onViewBrightness() {
-                brightnessPopup.open()
-            }
+            target: header
+            onViewBrightness: brightnessPopup.open()
         }
 
         Connections {
-            target: header.viewBluetoothStatus()
-            function onViewBluetoothStatus() {
-                bluetoothPopup.open()
-            }
+            target: header
+            onViewBluetoothStatus: bluetoothPopup.open()
         }
 
         Connections {
-            target: header.viewWifiStatus()
-            function onViewWifiStatus() {
-                wifiPopup.open()
-            }
+            target: header
+            onViewWifiStatus: wifiPopup.open()
         }
     }
 
@@ -166,10 +158,9 @@ Item {
             clip: true
             opacity: mainView.isMediaPlaying ? 0 : 1 // Initial opacity based on isMediaPlaying
             Connections {
-                target: mainScreen.viewSettings()
-                function onViewSettings() {
-                    mainView.viewSettings()
-                }
+                target: mainMenu
+                onViewSettings: mainView.viewSettings()
+
             }
         }
 
@@ -181,10 +172,9 @@ Item {
             clip: true
             opacity: mainView.isMediaPlaying ? 1 : 0 // Initial opacity based on isMediaPlaying
             Connections {
-                target: mainScreen.viewSettings()
-                function onViewSettings() {
-                    mainView.viewSettings()
-                }
+                target: mediaMenu
+                onViewSettings: mainView.viewSettings()
+
             }
         }
     }

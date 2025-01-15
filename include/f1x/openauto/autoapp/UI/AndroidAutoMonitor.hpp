@@ -6,36 +6,54 @@
 #include <f1x/openauto/autoapp/UI/IAndroidAutoMonitor.hpp>
 
 namespace f1x::openauto::autoapp::UI {
-  enum AndroidAutoConnectivityState {
-    AA_STARTUP,
-    AA_DISCONNECTED,
-    AA_CONNECTING,
-    AA_CONNECTED
+
+  class AndroidAutoConnectivityMethod : public QObject {
+    Q_OBJECT
+
+  public:
+    enum Value {
+      AA_INDETERMINATE,
+      AA_USB,
+      AA_WIFI
+    };
+    Q_ENUM(Value)
   };
 
-  enum AndroidAutoConnectivityMethod {
-    AA_INDETERMINATE,
-    AA_USB,
-    AA_WIFI
+  class AndroidAutoConnectivityState : public QObject {
+  Q_OBJECT
+
+  public:
+    enum Value {
+      AA_STARTUP,
+      AA_DISCONNECTED,
+      AA_CONNECTING,
+      AA_CONNECTED
+    };
+    Q_ENUM(Value)
   };
 
   class AndroidAutoMonitor : public QObject, IAndroidAutoMonitor {
     Q_OBJECT
-    Q_ENUM(AndroidAutoConnectivityState)
-    Q_ENUM(AndroidAutoConnectivityMethod)
+    Q_PROPERTY(AndroidAutoConnectivityState::Value state READ getState WRITE setState NOTIFY connectivityStateChanged)
+    Q_PROPERTY(AndroidAutoConnectivityMethod::Value method READ getMethod WRITE setMethod NOTIFY connectivityMethodChanged)
   public:
     explicit AndroidAutoMonitor(QObject *parent = nullptr);
-    void onConnectionMethodUpdate(AndroidAutoConnectivityMethod method);
-    void onConnectionStateUpdate(AndroidAutoConnectivityState state);
+    void onConnectionMethodUpdate(AndroidAutoConnectivityMethod::Value method);
+    void onConnectionStateUpdate(AndroidAutoConnectivityState::Value state);
+
+    AndroidAutoConnectivityState::Value getState();
+    AndroidAutoConnectivityMethod::Value getMethod();
+
+    void setState(AndroidAutoConnectivityState::Value value);
+    void setMethod(AndroidAutoConnectivityMethod::Value value);
 
   signals:
-
-    void connectivityStateChanged(AndroidAutoConnectivityState state);
-    void connectivityMethodChanged(AndroidAutoConnectivityMethod method);
+    void connectivityStateChanged(AndroidAutoConnectivityState::Value state);
+    void connectivityMethodChanged(AndroidAutoConnectivityMethod::Value method);
 
   private:
-    AndroidAutoConnectivityMethod m_connectivityMethod;
-    AndroidAutoConnectivityState m_connectivityState;
+    AndroidAutoConnectivityMethod::Value m_connectivityMethod;
+    AndroidAutoConnectivityState::Value m_connectivityState;
 
   };
 }

@@ -4,7 +4,7 @@
 #include <QProcess>
 
 namespace f1x::openauto::autoapp::UI {
-  BluetoothAdapterModel::BluetoothAdapterModel(QObject *parent) : QObject(parent) {
+  BluetoothAdapterModel::BluetoothAdapterModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
     BluetoothAdapterModel::populateComboBoxItems();
   }
 
@@ -17,6 +17,7 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   void BluetoothAdapterModel::populateComboBoxItems() {
+    m_comboBoxItems.clear();
     if (isBlueZRunning()) {
       fprintf(stderr, "Populating items...\n");
       QList<QBluetoothHostInfo> adapters = QBluetoothLocalDevice::allDevices();
@@ -36,8 +37,6 @@ namespace f1x::openauto::autoapp::UI {
       fprintf(stderr, "Bluetooth service is not running.\n");
       addComboBoxItem("SettingsWindow", "none");
     }
-
-
   }
 
   QList<QObject *> BluetoothAdapterModel::getComboBoxItems() const {
@@ -48,7 +47,13 @@ namespace f1x::openauto::autoapp::UI {
     return list;
   }
 
-  BluetoothAdapterModelItem* BluetoothAdapterModel::getCurrentComboBoxItem() const { return m_currentComboBoxItem; }
+  BluetoothAdapterModelItem* BluetoothAdapterModel::getCurrentComboBoxItem() {
+    if (!m_currentComboBoxItem && !m_comboBoxItems.isEmpty()) {
+      fprintf(stderr, "Empty or not set\n");
+      m_currentComboBoxItem = m_comboBoxItems.first(); // Select the first item by default
+    }
+    return m_currentComboBoxItem;
+  }
 
   void BluetoothAdapterModel::setCurrentComboBoxItem(BluetoothAdapterModelItem* value) {
     if (m_currentComboBoxItem != value) {
@@ -59,7 +64,7 @@ namespace f1x::openauto::autoapp::UI {
 
   void BluetoothAdapterModel::addComboBoxItem(const QString &display,
                                         QString value) {
-    auto item = BluetoothAdapterModelItem(display, value);
-    m_comboBoxItems.emplace_back(&item);
+    auto item = new BluetoothAdapterModelItem(display, value);
+    m_comboBoxItems.emplace_back(item);
   }
 }

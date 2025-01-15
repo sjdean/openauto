@@ -8,6 +8,7 @@ Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import AndroidAutoMonitor 1.0
 
 Item {
     id: headerItem
@@ -26,18 +27,18 @@ Item {
     property bool hasWifi: true
 
     property string bluetoothStatusText: bluetoothPopupHandler.statusText
-    property bool bluetoothPaired: bluetoothPopupHandler.bluetoothStatus = !BluetoothConnectionStatus.NOT_CONFIGURED
-    property bool bluetoothConnected: bluetoothPopupHandler.bluetoothStatus = BluetoothConnectionStatus.CONNECTED
-    property bool bluetoothConnecting: bluetoothPopupHandler.bluetoothStatus = BluetoothConnectionStatus.CONNECTING
+    property bool bluetoothPaired: bluetoothPopupHandler.bluetoothStatus = !BluetoothConnectionStatus.BC_NOT_CONFIGURED
+    property bool bluetoothConnected: bluetoothPopupHandler.bluetoothStatus = BluetoothConnectionStatus.BC_CONNECTED
+    property bool bluetoothConnecting: bluetoothPopupHandler.bluetoothStatus = BluetoothConnectionStatus.BC_CONNECTING
     //TODO: Wifi Connectivity Settings
     property bool wifiPaired: false
     property bool wifiConnected: false
     property bool wifiConnecting: false
 
-    property bool androidAutoConnected: state === androidAutoMonitor.Connected
-    property bool androidAutoConnecting: state === AndroidAutoMonitor.Connected
-    property string androidAutoMethodText: androidAutoMonitor.USB ? "USB"
-                                                                  : androidAutoMonitor.WIFI ? "Wi-Fi"
+    property bool androidAutoConnected: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED
+    property bool androidAutoConnecting: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTING
+    property string androidAutoMethodText: androidAutoMonitor.method === AndroidAutoConnectivityMethod.AA_USB ? "USB"
+                                                                  : AndroidAutoConnectivityMethod.AA_WIFI ? "Wi-Fi"
                                                                   : "Unknown"
 
     Rectangle {
@@ -137,6 +138,19 @@ Item {
                     spacing: 5
 
                     JourneyButton {
+                        id: brightnessButton
+                        width: 25
+                        height: 25
+                        text: ""
+                        icon.source: "images/fi-br-brightness.svg"
+                        iconSize: 12
+                        Connections {
+                            target: brightnessButton
+                            onClicked: headerItem.viewBrightness()
+                        }
+                    }
+
+                    JourneyButton {
                         id: volumeButton
                         width: 25
                         height: 25
@@ -150,18 +164,7 @@ Item {
 
                     }
 
-                    JourneyButton {
-                        id: brightnessButton
-                        width: 25
-                        height: 25
-                        text: ""
-                        icon.source: "images/fi-br-brightness.svg"
-                        iconSize: 12
-                        Connections {
-                            target: brightnessButton
-                            onClicked: headerItem.viewBrightness()
-                        }
-                    }
+
                 }
             }
         }

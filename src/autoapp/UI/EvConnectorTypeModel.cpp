@@ -1,11 +1,12 @@
 #include <f1x/openauto/autoapp/UI/EvConnectorTypeModel.hpp>
 
 namespace f1x::openauto::autoapp::UI {
-  EvConnectorTypeModel::EvConnectorTypeModel(QObject *parent) : QObject(parent) {
+  EvConnectorTypeModel::EvConnectorTypeModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
     EvConnectorTypeModel::populateComboBoxItems();
   }
 
   void EvConnectorTypeModel::populateComboBoxItems() {
+    m_comboBoxItems.clear();
     addComboBoxItem("Unknown",
                     aap_protobuf::service::sensorsource::message::EvConnectorType::EV_CONNECTOR_TYPE_UNKNOWN);
     addComboBoxItem("J1772",
@@ -35,7 +36,13 @@ namespace f1x::openauto::autoapp::UI {
     return list;
   }
 
-  EvConnectorTypeModelItem* EvConnectorTypeModel::getCurrentComboBoxItem() const { return m_currentComboBoxItem; }
+  EvConnectorTypeModelItem* EvConnectorTypeModel::getCurrentComboBoxItem() {
+    if (!m_currentComboBoxItem && !m_comboBoxItems.isEmpty()) {
+      fprintf(stderr, "Empty or not set\n");
+      m_currentComboBoxItem = m_comboBoxItems.first(); // Select the first item by default
+    }
+    return m_currentComboBoxItem;
+  }
 
   void EvConnectorTypeModel::setCurrentComboBoxItem(EvConnectorTypeModelItem* value) {
     if (m_currentComboBoxItem != value) {
@@ -46,7 +53,7 @@ namespace f1x::openauto::autoapp::UI {
 
   void EvConnectorTypeModel::addComboBoxItem(const QString &display,
                                              aap_protobuf::service::sensorsource::message::EvConnectorType value) {
-    auto item = EvConnectorTypeModelItem(display, value);
-    m_comboBoxItems.emplace_back(&item);
+    auto item = new EvConnectorTypeModelItem(display, value);
+    m_comboBoxItems.emplace_back(item);
   }
 }

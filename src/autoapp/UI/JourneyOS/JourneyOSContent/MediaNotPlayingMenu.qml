@@ -18,84 +18,100 @@ Item {
     signal viewSettings
 
 
-    Grid {
-        id: menuGrid
-        width: Constants.width - 200    // TODO: Dynamic Sizing of Left/Right Columns and Buttons based on Screen Size
+    Rectangle {
+        anchors.fill: parent
+        color: "#00ffffff"
+    }
+
+    Rectangle {
+        width: 800-200
+        height: 480 - 200
+        color: "#00ffffff"
+
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
-        spacing: 10
-        padding: 5
 
-        JourneyButton {
-            id: settingsButton
-            text: "Settings"
-            icon.source: "images/gears.svg"
 
-            Connections {
-                target: settingsButton
-                onClicked: mediaNotPlayingMenu.viewSettings()
+        Grid {
+            id: menuGrid
+            width: Constants.width - 200    // TODO: Dynamic Sizing of Left/Right Columns and Buttons based on Screen Size
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 10
+            padding: 5
+
+            JourneyButton {
+                id: settingsButton
+                text: "Settings"
+                icon.source: "images/gears.svg"
+
+                Connections {
+                    target: settingsButton
+                    onClicked: mediaNotPlayingMenu.viewSettings()
+                }
+            }
+
+            JourneyButton {
+                id: radioButton
+                icon.source: "images/radio.svg"
+                text: "Radio"
+                Connections {
+                    target: radioButton
+                    onClicked: console.log("clicked")
+                }
+            }
+
+            JourneyButton {
+                id: navigationButton
+                text: "Navigation"
+                icon.source: "images/map-marker.svg"
+                Connections {
+                    target: navigationButton
+                    onClicked: console.log("clicked")
+                }
+            }
+
+            JourneyButton {
+                id: bluetoothButton
+                text: "Bluetooth"
+                icon.source: "images/bluetooth-alt.svg"
+                Connections {
+                    target: bluetoothButton
+                    onClicked: console.log("clicked")
+                }
+            }
+
+            JourneyButton {
+                id: usbButton
+                text: "USB"
+                icon.source: "images/usb-pendrive.svg"
+                Connections {
+                    target: usbButton
+                    onClicked: console.log("clicked")
+                }
+            }
+
+            JourneyButton {
+                id: powerButton
+                text: "Power"
+                icon.source: "images/power.svg"
+                Connections {
+                    target: powerButton
+                    onClicked: console.log("clicked")
+                }
+            }
+
+            JourneyButton {
+                id: obdButton
+                text: "OBD"
+                icon.source: "images/chart-tree.svg"
+                Connections {
+                    target: obdButton
+                    onClicked: console.log("clicked")
+                }
             }
         }
 
-        JourneyButton {
-            id: radioButton
-            icon.source: "images/radio.svg"
-            text: "Radio"
-            Connections {
-                target: radioButton
-                onClicked: console.log("clicked")
-            }
-        }
-
-        JourneyButton {
-            id: navigationButton
-            text: "Navigation"
-            icon.source: "images/map-marker.svg"
-            Connections {
-                target: navigationButton
-                onClicked: console.log("clicked")
-            }
-        }
-
-        JourneyButton {
-            id: bluetoothButton
-            text: "Bluetooth"
-            icon.source: "images/bluetooth-alt.svg"
-            Connections {
-                target: bluetoothButton
-                onClicked: console.log("clicked")
-            }
-        }
-
-        JourneyButton {
-            id: usbButton
-            text: "USB"
-            icon.source: "images/usb-pendrive.svg"
-            Connections {
-                target: usbButton
-                onClicked: console.log("clicked")
-            }
-        }
-
-        JourneyButton {
-            id: powerButton
-            text: "Power"
-            icon.source: "images/power.svg"
-            Connections {
-                target: powerButton
-                onClicked: console.log("clicked")
-            }
-        }
-
-        JourneyButton {
-            id: obdButton
-            text: "OBD"
-            icon.source: "images/chart-tree.svg"
-            Connections {
-                target: obdButton
-                onClicked: console.log("clicked")
-            }
-        }
     }
+
 
 }

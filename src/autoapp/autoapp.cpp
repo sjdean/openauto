@@ -126,6 +126,11 @@ int main(int argc, char *argv[]) {
   QQmlApplicationEngine engine;
   QQuickView oj;
 
+  qmlRegisterType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityState>("AndroidAutoMonitor",1,0,"AndroidAutoConnectivityState");
+  qmlRegisterType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityMethod>("AndroidAutoMonitor",1,0,"AndroidAutoConnectivityMethod");
+  qRegisterMetaType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityState::Value>("AndroidAutoConnectivityState::Value");
+  qRegisterMetaType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityMethod::Value>("AndroidAutoConnectivityMethod::Value");
+
   fprintf(stderr, "Init Enum Combo\n");
 
   // Initialise ComboBox Items - Backed by AA Enum's

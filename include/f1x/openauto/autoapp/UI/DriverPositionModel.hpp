@@ -21,7 +21,7 @@ namespace f1x::openauto::autoapp::UI {
 
   protected:
     QList<QObject *> getComboBoxItems() const;
-    DriverPositionModelItem* getCurrentComboBoxItem() const;
+    DriverPositionModelItem* getCurrentComboBoxItem();
     void setCurrentComboBoxItem(DriverPositionModelItem* value);
 
     void populateComboBoxItems();

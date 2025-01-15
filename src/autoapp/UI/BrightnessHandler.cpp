@@ -2,15 +2,16 @@
 
 namespace f1x::openauto::autoapp::UI {
   BrightnessHandler::BrightnessHandler(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration,  QObject *parent) :
-      configuration_(configuration),
-      QObject(parent) {
+      QObject(parent),
+      configuration_(configuration) {
 
   }
 
   void BrightnessHandler::setBrightness(int brightness) {
-
-    int min = configuration_->getSettingByName<int>("Audio", "audioPlaybackVolumeMin");
-    int max = configuration_->getSettingByName<int>("Audio", "audioPlaybackVolumeMax");
+    bool isNight = false;
+    // TODO: Add Day/Night Handler, so if Day we get one value, if night we get another
+    int min = configuration_->getSettingByName<int>("Screen", isNight ? "NightMin" : "DayMin");
+    int max = configuration_->getSettingByName<int>("Screen", isNight ? "NightMax" : "DayMax");
 
     int calculatedBrightness = calculateBrightness(min, max, brightness);
 
@@ -23,7 +24,7 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int BrightnessHandler::calculateBrightness(int min, int max, int target) {
-    auto calculatedVolume = min + (((max - min) * target) / 255);
-    return calculatedVolume;
+    auto calculatedBrightness = min + (((max - min) * target) / 255);
+    return calculatedBrightness;
   }
 }

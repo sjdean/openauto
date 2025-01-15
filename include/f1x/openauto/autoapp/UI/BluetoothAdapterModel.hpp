@@ -21,14 +21,14 @@ namespace f1x::openauto::autoapp::UI {
 
   protected:
     QList<QObject *> getComboBoxItems() const;
-    BluetoothAdapterModelItem* getCurrentComboBoxItem() const;
+    BluetoothAdapterModelItem* getCurrentComboBoxItem();
     void setCurrentComboBoxItem(BluetoothAdapterModelItem* value);
 
     void populateComboBoxItems();
     void addComboBoxItem(const QString &display, QString value);
 
     QList<BluetoothAdapterModelItem *> m_comboBoxItems;
-    BluetoothAdapterModelItem* m_currentComboBoxItem{};
+    BluetoothAdapterModelItem* m_currentComboBoxItem;
 
   };
 }

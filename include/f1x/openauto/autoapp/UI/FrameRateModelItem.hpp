@@ -13,7 +13,6 @@ namespace f1x::openauto::autoapp::UI {
   public:
     explicit FrameRateModelItem(QString display, aap_protobuf::service::media::sink::message::VideoFrameRateType value, QObject *parent = nullptr);
 
-  protected: // Override the base class functions
     QString getDisplay() const;
     void setDisplay(const QString &display);
     aap_protobuf::service::media::sink::message::VideoFrameRateType getValue() const;

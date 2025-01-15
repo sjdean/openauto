@@ -22,15 +22,6 @@ Button {
     property bool textIsStatus: false
 
     visible: true
-    //implicitWidth: control.textIsStatus ? itemButtonRow.width : itemButton.width
-    //implicitHeight: control.textIsStatus ? itemButtonRow.height : itemButton.height
-
-   // implicitWidth: Math.max(
-   //                    rectangleBackground ? rectangleBackground.implicitWidth : 0,
-   //                    textItem.implicitWidth + leftPadding + rightPadding)
-   // implicitHeight: Math.max(
-   //                     rectangleBackground ? rectangleBackground.implicitHeight : 0,
-   //                     textItem.implicitHeight + topPadding + bottomPadding)
 
     leftPadding: buttonPadding
     rightPadding: buttonPadding
@@ -187,7 +178,7 @@ Button {
             when: !control.down
 
             PropertyChanges {
-                target: buttonBackground
+                target: rectangleBackground
                 color: "#55999999"
             }
 
@@ -215,7 +206,7 @@ Button {
             }
 
             PropertyChanges {
-                target: buttonBackground
+                target: rectangleBackground
                 color: "#bb999999"
             }
         }

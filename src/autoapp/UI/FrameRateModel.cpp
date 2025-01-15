@@ -1,11 +1,12 @@
 #include <f1x/openauto/autoapp/UI/FrameRateModel.hpp>
 
 namespace f1x::openauto::autoapp::UI {
-  FrameRateModel::FrameRateModel(QObject *parent) : QObject(parent) {
+  FrameRateModel::FrameRateModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
     FrameRateModel::populateComboBoxItems();
   }
 
   void FrameRateModel::populateComboBoxItems() {
+    m_comboBoxItems.clear();
     addComboBoxItem("60 FPS",
                     aap_protobuf::service::media::sink::message::VideoFrameRateType::VIDEO_FPS_60);  // VIDEO_FPS_60 from ProtoBuf
     addComboBoxItem("30 FPS",
@@ -20,7 +21,13 @@ namespace f1x::openauto::autoapp::UI {
     return list;
   }
 
-  FrameRateModelItem* FrameRateModel::getCurrentComboBoxItem() const { return m_currentComboBoxItem; }
+  FrameRateModelItem* FrameRateModel::getCurrentComboBoxItem() {
+    if (!m_currentComboBoxItem && !m_comboBoxItems.isEmpty()) {
+      fprintf(stderr, "Empty or not set\n");
+      m_currentComboBoxItem = m_comboBoxItems.first(); // Select the first item by default
+    }
+    return m_currentComboBoxItem;
+  }
 
   void FrameRateModel::setCurrentComboBoxItem(FrameRateModelItem* value) {
     if (m_currentComboBoxItem != value) {
@@ -31,7 +38,7 @@ namespace f1x::openauto::autoapp::UI {
 
   void FrameRateModel::addComboBoxItem(const QString &display,
                                        aap_protobuf::service::media::sink::message::VideoFrameRateType value) {
-    auto item = FrameRateModelItem(display, value);
-    m_comboBoxItems.emplace_back(&item);
+    auto item = new FrameRateModelItem(display, value);
+    m_comboBoxItems.emplace_back(item);
   }
 }

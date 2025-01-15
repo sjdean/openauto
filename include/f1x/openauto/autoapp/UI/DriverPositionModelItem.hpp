@@ -13,7 +13,6 @@ namespace f1x::openauto::autoapp::UI {
   public:
     explicit DriverPositionModelItem(QString display, aap_protobuf::service::control::message::DriverPosition value, QObject *parent = nullptr);
 
-  protected: // Override the base class functions
     QString getDisplay() const;
     void setDisplay(const QString &display);
     aap_protobuf::service::control::message::DriverPosition getValue() const;

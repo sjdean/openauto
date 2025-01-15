@@ -21,7 +21,7 @@ namespace f1x::openauto::autoapp::UI {
 
   protected:
     QList<QObject *> getComboBoxItems() const;
-    EvConnectorTypeModelItem* getCurrentComboBoxItem() const;
+    EvConnectorTypeModelItem* getCurrentComboBoxItem();
     void setCurrentComboBoxItem(EvConnectorTypeModelItem* value);
 
     void populateComboBoxItems();

@@ -21,14 +21,14 @@ namespace f1x::openauto::autoapp::UI {
 
   protected:
     QList<QObject *> getComboBoxItems() const;
-    FuelTypeModelItem* getCurrentComboBoxItem() const;
+    FuelTypeModelItem* getCurrentComboBoxItem();
     void setCurrentComboBoxItem(FuelTypeModelItem* value);
 
     void populateComboBoxItems();
     void addComboBoxItem(const QString &display, aap_protobuf::service::sensorsource::message::FuelType value);
   private:
     QList<FuelTypeModelItem *> m_comboBoxItems;
-    FuelTypeModelItem* m_currentComboBoxItem;
+    FuelTypeModelItem* m_currentComboBoxItem{};
   };
 }
 #endif //OPENAUTO_FUELTYPEMODEL_HPP

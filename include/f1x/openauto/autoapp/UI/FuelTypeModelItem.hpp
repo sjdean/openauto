@@ -13,7 +13,6 @@ namespace f1x::openauto::autoapp::UI {
   public:
     explicit FuelTypeModelItem(QString display, aap_protobuf::service::sensorsource::message::FuelType value, QObject *parent = nullptr);
 
-  protected: // Override the base class functions
     QString getDisplay() const;
     void setDisplay(const QString &display);
     aap_protobuf::service::sensorsource::message::FuelType getValue() const;
