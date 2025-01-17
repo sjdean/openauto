@@ -26,7 +26,6 @@ namespace f1x::openauto::autoapp::UI {
 
   DriverPositionModelItem* DriverPositionModel::getCurrentComboBoxItem() {
     if (!m_currentComboBoxItem && !m_comboBoxItems.isEmpty()) {
-      fprintf(stderr, "Empty or not set\n");
       m_currentComboBoxItem = m_comboBoxItems.first(); // Select the first item by default
     }
     return m_currentComboBoxItem;

@@ -28,7 +28,6 @@ namespace f1x::openauto::autoapp::configuration {
 
     template<typename T>
     T getSettingByName(QString groupName, QString settingName) {
-
       // Find the group
       auto groupIt = std::find_if(m_configurationGroups.begin(), m_configurationGroups.end(),
                                   [&groupName](const ConfigurationGroup& group) {
@@ -53,7 +52,6 @@ namespace f1x::openauto::autoapp::configuration {
 
       if (groupIt != m_configurationGroups.end()) {
         (*groupIt).setValueForSetting(settingName, value);
-        // TODO: Update Setting
       } else {
         // Group not found
         fprintf(stderr, "Unable to find group 2 %s\n", groupName.toStdString().c_str());

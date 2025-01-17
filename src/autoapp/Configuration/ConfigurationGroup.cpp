@@ -7,7 +7,7 @@ namespace f1x::openauto::autoapp::configuration {
   ConfigurationGroup::ConfigurationGroup(const QString& name, bool displayOnTab)
   : m_name(name), m_displayOnTab(displayOnTab)
   {
-
+    m_configurationSettings.clear();
   }
 
   void ConfigurationGroup::load(QSettings& settings) {

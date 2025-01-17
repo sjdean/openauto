@@ -19,7 +19,7 @@ namespace f1x::openauto::autoapp::UI {
   void BluetoothAdapterModel::populateComboBoxItems() {
     m_comboBoxItems.clear();
     if (isBlueZRunning()) {
-      fprintf(stderr, "Populating items...\n");
+
       QList<QBluetoothHostInfo> adapters = QBluetoothLocalDevice::allDevices();
       if (!adapters.isEmpty()) {
         for (const QBluetoothHostInfo &adapter: adapters) {
@@ -30,11 +30,9 @@ namespace f1x::openauto::autoapp::UI {
                           adapterAddress);
         }
       } else {
-        fprintf(stderr, "Empty?\n");
         addComboBoxItem("SettingsWindow", "none");
       }
     } else {
-      fprintf(stderr, "Bluetooth service is not running.\n");
       addComboBoxItem("SettingsWindow", "none");
     }
   }
@@ -49,7 +47,6 @@ namespace f1x::openauto::autoapp::UI {
 
   BluetoothAdapterModelItem* BluetoothAdapterModel::getCurrentComboBoxItem() {
     if (!m_currentComboBoxItem && !m_comboBoxItems.isEmpty()) {
-      fprintf(stderr, "Empty or not set\n");
       m_currentComboBoxItem = m_comboBoxItems.first(); // Select the first item by default
     }
     return m_currentComboBoxItem;

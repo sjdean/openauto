@@ -24,23 +24,17 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   QList<QObject *> PulseAudioDeviceModel::getComboBoxItems() const {
-    fprintf(stderr, "Getting Pulse Audio Devices\n");
     QList<QObject *> list;
     for (PulseAudioDeviceModelItem *item: m_comboBoxItems) {
-      fprintf(stderr, "Appending to List...\n");
       list.append(item);
     }
-    fprintf(stderr, "Returning to List...\n");
     return list;
   }
 
   PulseAudioDeviceModelItem* PulseAudioDeviceModel::getCurrentComboBoxItem() {
-    fprintf(stderr, "Get Current ComboBox Item\n");
     if (!m_currentComboBoxItem && !m_comboBoxItems.isEmpty()) {
-      fprintf(stderr, "Empty or not set\n");
       m_currentComboBoxItem = m_comboBoxItems.first(); // Select the first item by default
     }
-    fprintf(stderr, "Returning Item name %s display %s\n", m_currentComboBoxItem->getValue().toStdString().c_str(), m_currentComboBoxItem->getDisplay().toStdString().c_str());
     return m_currentComboBoxItem;
   }
 

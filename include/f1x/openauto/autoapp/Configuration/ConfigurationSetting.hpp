@@ -4,6 +4,14 @@
 #include <QSettings>
 #include <QString>
 #include <QVariant>
+#include <utility>
+
+#include <execinfo.h>
+#include <cxxabi.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <dlfcn.h>
+#include <unistd.h>
 
 namespace f1x::openauto::autoapp::configuration {
   class ConfigurationSetting {
@@ -14,10 +22,12 @@ namespace f1x::openauto::autoapp::configuration {
         : m_name(name), m_hasValue(false), m_defaultValue(QVariant::fromValue(defaultValue)), m_value(QVariant::fromValue(defaultValue)) {
 
     }
+
+
     QString getName() const;
 
     void setValue(QVariant value) {
-      m_value = value;
+      m_value = std::move(value);
       m_hasValue = true;
     }
 
@@ -27,7 +37,7 @@ namespace f1x::openauto::autoapp::configuration {
     }
 
     QVariant getValue() const {
-      return m_hasValue ? m_value : m_defaultValue;
+      return QVariant::fromValue(m_hasValue ? m_value : m_defaultValue);
     }
 
 

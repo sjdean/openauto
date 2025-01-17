@@ -14,36 +14,35 @@ namespace f1x::openauto::autoapp::configuration {
 
     m_configurationGroups.clear();
 
-    auto carGroup = ConfigurationGroup("Car");
-
+    ConfigurationGroup carGroup("Car");
     carGroup.addSetting<QString>("Make", "Unknown");
     carGroup.addSetting<QString>("Model", "Unknown");
     carGroup.addSetting<int>("FuelType", aap_protobuf::service::sensorsource::message::FuelType::FUEL_TYPE_UNKNOWN);
     carGroup.addSetting<int>("EvConnectorType", aap_protobuf::service::sensorsource::message::EvConnectorType::EV_CONNECTOR_TYPE_UNKNOWN);
-    carGroup.addSetting<int>("DriverPosition", aap_protobuf::service::control::message::DriverPosition::DRIVER_POSITION_UNKNOWN);
+    carGroup.addSetting<int>("DriverPosition", aap_protobuf::service::control::message::DriverPosition::DRIVER_POSITION_RIGHT);
     carGroup.load(settings);
     m_configurationGroups.append(carGroup);
 
-    auto screenGroup = ConfigurationGroup("Screen");
-    screenGroup.addSetting<int>("DayMin", 0);
-    screenGroup.addSetting<int>("DayMax", 255);
+    ConfigurationGroup screenGroup("Screen");
+    screenGroup.addSetting<int>("DayMin", 10);
+    screenGroup.addSetting<int>("DayMax", 150);
     screenGroup.addSetting<int>("NightMin", 10);
     screenGroup.addSetting<int>("NightMax", 150);
     screenGroup.addSetting<int>("Brightness", 150);
-    screenGroup.addSetting<int>("DPI", 255);
+    screenGroup.addSetting<int>("DPI", 140);
     screenGroup.load(settings);
     m_configurationGroups.append(screenGroup);
 
-    auto videoGroup = ConfigurationGroup("Video");
+    ConfigurationGroup videoGroup("Video");
     videoGroup.addSetting<int>("Height", 0);
     videoGroup.addSetting<int>("Width", 0);
-    videoGroup.addSetting<int>("OMXLayer", 1);
+    videoGroup.addSetting<int>("OMXLayer", 2);
     videoGroup.addSetting<bool>("Rotate", false);
-    videoGroup.addSetting<int>("Type", 1);
+    videoGroup.addSetting<int>("Type", 1);  // TODO: Convert to ENUM
     videoGroup.load(settings);
     m_configurationGroups.append(videoGroup);
 
-    auto audioGroup = ConfigurationGroup("Audio");
+    ConfigurationGroup audioGroup("Audio");
     audioGroup.addSetting<int>("PlaybackMin", 0);
     audioGroup.addSetting<int>("PlaybackMax", 255);
     audioGroup.addSetting<int>("CaptureMin", 0);
@@ -54,29 +53,29 @@ namespace f1x::openauto::autoapp::configuration {
     audioGroup.load(settings);
     m_configurationGroups.append(audioGroup);
 
-    auto mediaGroup = ConfigurationGroup("Media");
+    ConfigurationGroup mediaGroup("Media");
     mediaGroup.addSetting<bool>("AutoPlayback", false);
     mediaGroup.addSetting<bool>("AutoStart", false);
     mediaGroup.load(settings);
     m_configurationGroups.append(mediaGroup);
 
-    auto aaGroup = ConfigurationGroup("AndroidAuto");
+    ConfigurationGroup aaGroup("AndroidAuto");
     aaGroup.addSetting<bool>("Media", true);
     aaGroup.addSetting<bool>("Guidance", true);
-    aaGroup.addSetting<bool>("Telephony", true);
+    aaGroup.addSetting<bool>("Telephony", false);
     aaGroup.addSetting<int>("FrameRate", aap_protobuf::service::media::sink::message::VideoFrameRateType::VIDEO_FPS_60);
     aaGroup.addSetting<int>("Resolution", aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_800x480);
     aaGroup.load(settings);
     m_configurationGroups.append(aaGroup);
 
-    auto bluetoothGroup = ConfigurationGroup("Bluetooth");
+    ConfigurationGroup bluetoothGroup("Bluetooth");
     bluetoothGroup.addSetting<bool>("Enabled", true);
     bluetoothGroup.addSetting<QString>("AdapterAddress", "");
     bluetoothGroup.addSetting<QString>("PairedDeviceAddress", "");
     bluetoothGroup.load(settings);
     m_configurationGroups.append(bluetoothGroup);
 
-    auto wirelessGroup = ConfigurationGroup("Wireless");
+    ConfigurationGroup wirelessGroup("Wireless");
     wirelessGroup.addSetting<bool>("Enabled", true);
     wirelessGroup.addSetting<QString>("SSID", "JourneyOS");
     wirelessGroup.addSetting<QString>("Password", generateRandomString(8));

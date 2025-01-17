@@ -118,7 +118,6 @@ int main(int argc, char *argv[]) {
 
   set_qt_environment();
 
-  fprintf(stderr, "Loading Configuration\n");
   auto configuration = std::make_shared<autoapp::configuration::Configuration>();
 
   // GUI
@@ -130,8 +129,6 @@ int main(int argc, char *argv[]) {
   qmlRegisterType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityMethod>("AndroidAutoMonitor",1,0,"AndroidAutoConnectivityMethod");
   qRegisterMetaType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityState::Value>("AndroidAutoConnectivityState::Value");
   qRegisterMetaType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityMethod::Value>("AndroidAutoConnectivityMethod::Value");
-
-  fprintf(stderr, "Init Enum Combo\n");
 
   // Initialise ComboBox Items - Backed by AA Enum's
   f1x::openauto::autoapp::UI::FrameRateModel frameRateModel;
@@ -146,34 +143,27 @@ int main(int argc, char *argv[]) {
   engine.rootContext()->setContextProperty("fuelTypeModel", &fuelTypeModel);
   engine.rootContext()->setContextProperty("evConnectorTypeModel", &evConnectorTypeModel);
 
-  fprintf(stderr, "Init PulseAudio\n");
-
   // Pulse Audio Input/Output (Sound) Devices
   f1x::openauto::autoapp::UI::PulseAudioDeviceModel pulseAudioDeviceModelOutput(pulseAudioHandler, pa_direction::PA_DIRECTION_OUTPUT);
   f1x::openauto::autoapp::UI::PulseAudioDeviceModel pulseAudioDeviceModelInput(pulseAudioHandler, pa_direction::PA_DIRECTION_INPUT);
   engine.rootContext()->setContextProperty("pulseAudioDeviceModelOutput", &pulseAudioDeviceModelOutput);
   engine.rootContext()->setContextProperty("pulseAudioDeviceModelInput", &pulseAudioDeviceModelInput);
 
-  fprintf(stderr, "Grabbing Bluetooth...\n");
   // Bluetooth Adapters on Host
   f1x::openauto::autoapp::UI::BluetoothAdapterModel bluetoothAdapterModel;
   //AvailableBluetoothDevicesForPairingModel availableBluetoothDevicesForPairingModel;
 
   engine.rootContext()->setContextProperty("bluetoothAdapterModel", &bluetoothAdapterModel);
 
-  fprintf(stderr, "Connecting to Settings View Handler\n");
   // Setting Handlers
   f1x::openauto::autoapp::UI::SettingsView settingsView(configuration);
-  fprintf(stderr, "Connecting to Volume Handler\n");
   f1x::openauto::autoapp::UI::VolumeHandler volumeHandler(configuration, pulseAudioHandler);
-  fprintf(stderr, "Connecting to Brightness Handler\n");
   f1x::openauto::autoapp::UI::BrightnessHandler brightnessHandler(configuration);
 
   engine.rootContext()->setContextProperty("settingsViewHandler", &settingsView);
   engine.rootContext()->setContextProperty("volumePopupHandler", &volumeHandler);
   engine.rootContext()->setContextProperty("brightnessPopupHandler", &brightnessHandler);
 
-  fprintf(stderr, "Monitors...n");
   // Monitors
   auto androidAutoMonitor = std::make_shared<f1x::openauto::autoapp::UI::AndroidAutoMonitor>();
   engine.rootContext()->setContextProperty("androidAutoMonitor", androidAutoMonitor.get());
@@ -181,8 +171,6 @@ int main(int argc, char *argv[]) {
   // Bluetooth Status and Connectivity // DBus/BlueZ
   // Wifi Status // Other
   // Android Auto Status and Connectivity / Within App
-
-  fprintf(stderr, "Fire it up \n");
 
   const QUrl url(mainQmlFile);
   QObject::connect(

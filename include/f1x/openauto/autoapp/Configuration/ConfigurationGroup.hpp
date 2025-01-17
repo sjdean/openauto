@@ -14,8 +14,7 @@ namespace f1x::openauto::autoapp::configuration {
 
     template<typename T>
     void addSetting(const QString& name, const T& defaultValue) {
-      auto configurationSetting = ConfigurationSetting(name, defaultValue);
-      m_configurationSettings.emplace_back(name, configurationSetting);
+      m_configurationSettings.emplace_back(name, defaultValue);
     }
 
 

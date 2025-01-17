@@ -53,7 +53,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   QString SettingsView::getCarMake() const {
-    fprintf(stderr, "Car Make...\n");
     return m_carMake;
   }
 
@@ -65,7 +64,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   QString SettingsView::getCarModel() const {
-    fprintf(stderr, "Car Model...\n");
     return m_carModel;
   }
 
@@ -77,7 +75,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   bool SettingsView::getMediaAutoPlayback() const {
-    fprintf(stderr, "Audio Playback...\n");
     return m_mediaAutoPlayback;
   }
 
@@ -89,7 +86,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   bool SettingsView::getMediaAutoStart() const {
-    fprintf(stderr, "Car Media Start...\n");
     return m_mediaAutoStart;
   }
 
@@ -101,7 +97,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   bool SettingsView::getAAChannelMedia() const {
-    fprintf(stderr, "AA Media...\n");
     return m_aaChannelMedia;
   }
 
@@ -113,7 +108,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   bool SettingsView::getAAChannelGuidance() const {
-    fprintf(stderr, "AA Guidance...\n");
     return m_aaChannelGuidance;
   }
 
@@ -125,7 +119,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   bool SettingsView::getAAChannelTelephony() const {
-    fprintf(stderr, "AA Telephony...\n");
     return m_aaChannelTelephony;
   }
 
@@ -137,7 +130,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int SettingsView::getVideoOMXLayer() const {
-    fprintf(stderr, "Video OMX...\n");
     return m_videoOMXLayer;
   }
 
@@ -149,7 +141,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int SettingsView::getVideoMarginHeight() const {
-    fprintf(stderr, "Nargin Height...\n");
     return m_videoMarginHeight;
   }
 
@@ -161,7 +152,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int SettingsView::getVideoMarginWidth() const {
-    fprintf(stderr, "Margin Weight...\n");
     return m_videoMarginWidth;
   }
 
@@ -173,7 +163,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int SettingsView::getAudioVolumePlayback() const {
-    fprintf(stderr, "Volume Playback...\n");
     return m_audioVolumePlayback;
   }
 
@@ -185,7 +174,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int SettingsView::getAudioVolumeCapture() const {
-    fprintf(stderr, "Volume Captre...\n");
     return m_audioVolumeCapture;
   }
 
@@ -197,7 +185,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int SettingsView::getScreenBrightnessDayMin() const {
-    fprintf(stderr, "Day Min Brightness...\n");
     return m_screenBrightnessDayMin;
   }
 
@@ -209,7 +196,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int SettingsView::getScreenBrightnessDayMax() const {
-    fprintf(stderr, "Day Max Brightness...\n");
     return m_screenBrightnessDayMax;
   }
 
@@ -221,19 +207,18 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int SettingsView::getScreenBrightnessNightMin() const {
-    fprintf(stderr, "Bight Min Brightness...\n");
     return m_screenBrightnessNightMin;
   }
 
   void SettingsView::setScreenBrightnessNightMin(int value) {
     if (value != m_screenBrightnessNightMin) {
+      configuration_->updateSettingByName<int>("Screen", "NightMin", value);
       m_screenBrightnessNightMin = value;
       emit screenBrightnessNightMinChanged();
     }
   }
 
   int SettingsView::getScreenBrightnessNightMax() const {
-    fprintf(stderr, "Night Max Bright...\n");
     return m_screenBrightnessNightMax;
   }
 
@@ -245,7 +230,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   bool SettingsView::getVideoRotateDisplay() const {
-    fprintf(stderr, "Rotate...\n");
     return m_videoRotateDisplay;
   }
 
@@ -257,7 +241,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int SettingsView::getScreenDPI() const {
-    fprintf(stderr, "OPI...\n");
     return m_screenDPI;
   }
 
@@ -304,27 +287,22 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   f1x::openauto::autoapp::configuration::AudioOutputBackendType SettingsView::getAudioType() const {
-    fprintf(stderr, "AudioM Type...\n");
     return m_audioType;
   }
 
   int SettingsView::getAudioVolumeCaptureMax() const {
-    fprintf(stderr, "Vol Capt Max...\n");
     return m_audioVolumeCaptureMax;
   }
 
   int SettingsView::getAudioVolumeCaptureMin() const {
-    fprintf(stderr, "Vol Capt Min...\n");
     return m_audioVolumeCaptureMin;
   }
 
   int SettingsView::getAudioVolumePlaybackMax() const {
-    fprintf(stderr, "Vol Play Max...\n");
     return m_audioVolumePlaybackMax;
   }
 
   int SettingsView::getAudioVolumePlaybackMin() const {
-    fprintf(stderr, "Vol Play Min...\n");
     return m_audioVolumePlaybackMin;
   }
 
@@ -336,7 +314,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int SettingsView::getVideoType() const {
-    fprintf(stderr, "Vid type...\n");
     return m_videoType;
   }
 
@@ -348,7 +325,6 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   int SettingsView::getScreenBrightness() const {
-    fprintf(stderr, "Brg=ightn4ww...\n");
     return m_screenBrightness;
   }
 
@@ -374,16 +350,14 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   aap_protobuf::service::control::message::DriverPosition SettingsView::getCarDriverPosition() const {
-    fprintf(stderr, "Driver pos..=..\n");
     return m_carDriverPosition;
   }
 
   aap_protobuf::service::sensorsource::message::EvConnectorType SettingsView::getCarEvConnectorType() const {
-    fprintf(stderr, "EVConn Type...\n");
+    return m_carEvConnectorType;
   }
 
   aap_protobuf::service::sensorsource::message::FuelType SettingsView::getCarFuelType() const {
-    fprintf(stderr, "Fuel type...\n");
     return m_carFuelType;
   }
 }
