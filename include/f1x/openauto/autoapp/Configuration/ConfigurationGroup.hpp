@@ -34,12 +34,14 @@ namespace f1x::openauto::autoapp::configuration {
 
     template<typename T>
     void setValueForSetting(const QString& settingName, const T& value) {
+      fprintf(stderr, "setValueForSetting\n");
       auto it = std::find_if(m_configurationSettings.begin(), m_configurationSettings.end(),
                              [&](const ConfigurationSetting& setting) {
                                return setting.getName() == settingName;
                              });
 
       if (it != m_configurationSettings.end()) {
+        fprintf(stderr, "setting\n");
         it->setValue(value);
       } else {
         throw std::runtime_error("Setting not found: " + settingName.toStdString());

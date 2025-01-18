@@ -21,6 +21,7 @@ namespace f1x::openauto::autoapp::configuration {
 
   class IConfiguration {
   public:
+
     typedef std::shared_ptr<IConfiguration> Pointer;
     typedef std::vector<aap_protobuf::service::media::sink::message::KeyCode> ButtonCodes;
 
@@ -45,12 +46,14 @@ namespace f1x::openauto::autoapp::configuration {
 
     template<typename T>
     void updateSettingByName(QString groupName, QString settingName, T value) {
+      fprintf(stderr, "updateSettingByName\n");
       auto groupIt = std::find_if(m_configurationGroups.begin(), m_configurationGroups.end(),
                                   [&groupName](const ConfigurationGroup& group) {
                                     return group.getName() == groupName;
                                   });
 
       if (groupIt != m_configurationGroups.end()) {
+        fprintf(stderr, "Found Setting\n");
         (*groupIt).setValueForSetting(settingName, value);
       } else {
         // Group not found
@@ -60,8 +63,10 @@ namespace f1x::openauto::autoapp::configuration {
     }
 
     virtual bool hasTouchScreen() const = 0;
-
+    virtual void save() const = 0;
     QList<ConfigurationGroup> m_configurationGroups;
+
+
   };
 }
 

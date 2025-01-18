@@ -13,11 +13,11 @@ namespace f1x::openauto::autoapp::configuration {
     Configuration();
 
     bool hasTouchScreen() const override;
+    void save() const override;
 
   private:
-
     QString generateRandomString(size_t length);
-
+    QSettings m_settings;
   };
 
 }

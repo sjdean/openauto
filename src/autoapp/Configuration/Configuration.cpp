@@ -7,11 +7,10 @@
 
 namespace f1x::openauto::autoapp::configuration {
 
-  Configuration::Configuration() {
-
+  Configuration::Configuration()
+  : m_settings("journey.conf", QSettings::IniFormat)
+  {
     // Initialise Settings
-    QSettings settings("journey.conf", QSettings::IniFormat);
-
     m_configurationGroups.clear();
 
     ConfigurationGroup carGroup("Car");
@@ -20,7 +19,7 @@ namespace f1x::openauto::autoapp::configuration {
     carGroup.addSetting<int>("FuelType", aap_protobuf::service::sensorsource::message::FuelType::FUEL_TYPE_UNKNOWN);
     carGroup.addSetting<int>("EvConnectorType", aap_protobuf::service::sensorsource::message::EvConnectorType::EV_CONNECTOR_TYPE_UNKNOWN);
     carGroup.addSetting<int>("DriverPosition", aap_protobuf::service::control::message::DriverPosition::DRIVER_POSITION_RIGHT);
-    carGroup.load(settings);
+    carGroup.load(m_settings);
     m_configurationGroups.append(carGroup);
 
     ConfigurationGroup screenGroup("Screen");
@@ -30,7 +29,7 @@ namespace f1x::openauto::autoapp::configuration {
     screenGroup.addSetting<int>("NightMax", 150);
     screenGroup.addSetting<int>("Brightness", 150);
     screenGroup.addSetting<int>("DPI", 140);
-    screenGroup.load(settings);
+    screenGroup.load(m_settings);
     m_configurationGroups.append(screenGroup);
 
     ConfigurationGroup videoGroup("Video");
@@ -39,7 +38,7 @@ namespace f1x::openauto::autoapp::configuration {
     videoGroup.addSetting<int>("OMXLayer", 2);
     videoGroup.addSetting<bool>("Rotate", false);
     videoGroup.addSetting<int>("Type", 1);  // TODO: Convert to ENUM
-    videoGroup.load(settings);
+    videoGroup.load(m_settings);
     m_configurationGroups.append(videoGroup);
 
     ConfigurationGroup audioGroup("Audio");
@@ -50,13 +49,13 @@ namespace f1x::openauto::autoapp::configuration {
     audioGroup.addSetting<int>("PlaybackVolume", 150);
     audioGroup.addSetting<int>("CaptureVolume", 150);
     audioGroup.addSetting<int>("Type", static_cast<const int>(AudioOutputBackendType::RTAUDIO));
-    audioGroup.load(settings);
+    audioGroup.load(m_settings);
     m_configurationGroups.append(audioGroup);
 
     ConfigurationGroup mediaGroup("Media");
     mediaGroup.addSetting<bool>("AutoPlayback", false);
     mediaGroup.addSetting<bool>("AutoStart", false);
-    mediaGroup.load(settings);
+    mediaGroup.load(m_settings);
     m_configurationGroups.append(mediaGroup);
 
     ConfigurationGroup aaGroup("AndroidAuto");
@@ -65,22 +64,33 @@ namespace f1x::openauto::autoapp::configuration {
     aaGroup.addSetting<bool>("Telephony", false);
     aaGroup.addSetting<int>("FrameRate", aap_protobuf::service::media::sink::message::VideoFrameRateType::VIDEO_FPS_60);
     aaGroup.addSetting<int>("Resolution", aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_800x480);
-    aaGroup.load(settings);
+    aaGroup.load(m_settings);
     m_configurationGroups.append(aaGroup);
 
     ConfigurationGroup bluetoothGroup("Bluetooth");
     bluetoothGroup.addSetting<bool>("Enabled", true);
     bluetoothGroup.addSetting<QString>("AdapterAddress", "");
     bluetoothGroup.addSetting<QString>("PairedDeviceAddress", "");
-    bluetoothGroup.load(settings);
+    bluetoothGroup.load(m_settings);
     m_configurationGroups.append(bluetoothGroup);
 
     ConfigurationGroup wirelessGroup("Wireless");
     wirelessGroup.addSetting<bool>("Enabled", true);
     wirelessGroup.addSetting<QString>("SSID", "JourneyOS");
     wirelessGroup.addSetting<QString>("Password", generateRandomString(8));
-    wirelessGroup.load(settings);
+    wirelessGroup.load(m_settings);
     m_configurationGroups.append(wirelessGroup);
+  }
+
+  void Configuration::save() const {
+    fprintf(stderr, "Saving...\n");
+    // Initialise Settings
+    QSettings settings("journey.conf", QSettings::IniFormat);
+
+    for (const auto& group : m_configurationGroups) {
+      fprintf(stderr, "Saving Grouo %s\n", group.getName().toStdString().c_str());
+      group.save(settings);
+    }
   }
 
   /// To generate a random string for a wifi password of reqyested length

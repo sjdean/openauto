@@ -6,7 +6,8 @@
 namespace f1x::openauto::autoapp::configuration {
 
   void ConfigurationSetting::save(QSettings& settings) const {
-    settings.setValue(m_name, QVariant::fromValue(m_value));
+    fprintf(stderr, "Saving Value %s\n", getValue().toString().toStdString().c_str());
+    settings.setValue(m_name, getValue());
   }
 
   QString ConfigurationSetting::getName() const {

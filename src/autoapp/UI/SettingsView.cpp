@@ -57,7 +57,10 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   void SettingsView::setCarMake(QString value) {
+    fprintf(stderr, "SettingsView::setCarMake %s\n", value.toStdString().c_str());
     if (m_carMake != value) {
+      configuration_->updateSettingByName<QString>("Car", "Make", value);
+      configuration_->save();
       m_carMake = value;
       emit carMakeChanged();
     }
@@ -69,6 +72,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setCarModel(QString value) {
     if (m_carModel != value) {
+      configuration_->updateSettingByName<QString>("Car", "Model", value);
+      configuration_->save();
       m_carModel = value;
       emit carModelChanged();
     }
@@ -80,6 +85,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setMediaAutoPlayback(bool value) {
     if (m_mediaAutoPlayback != value) {
+      configuration_->updateSettingByName<bool>("Media", "AutoPlayback", value);
+      configuration_->save();
       m_mediaAutoPlayback = value;
       emit mediaAutoPlaybackChanged();
     }
@@ -91,6 +98,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setMediaAutoStart(bool value) {
     if (m_mediaAutoStart != value) {
+      configuration_->updateSettingByName<bool>("Media", "AutoStart", value);
+      configuration_->save();
       m_mediaAutoStart = value;
       emit mediaAutoStartChanged();
     }
@@ -102,6 +111,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setAAChannelMedia(bool value) {
     if (m_aaChannelMedia != value) {
+      configuration_->updateSettingByName<bool>("AndroidAuto", "Media", value);
+      configuration_->save();
       m_aaChannelMedia = value;
       emit aaChannelMediaChanged();
     }
@@ -113,6 +124,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setAAChannelGuidance(bool value) {
     if (m_aaChannelGuidance != value) {
+      configuration_->updateSettingByName<bool>("AndroidAuto", "Guidance", value);
+      configuration_->save();
       m_aaChannelGuidance = value;
       emit aaChannelGuidanceChanged();
     }
@@ -124,6 +137,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setAAChannelTelephony(bool value) {
     if (m_aaChannelTelephony != value) {
+      configuration_->updateSettingByName<bool>("AndroidAuto", "Telephony", value);
+      configuration_->save();
       m_aaChannelTelephony = value;
       emit aaChannelTelephonyChanged();
     }
@@ -135,6 +150,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setVideoOMXLayer(int value) {
     if (value != m_videoOMXLayer) {
+      configuration_->updateSettingByName<int>("Video", "OMXLayer", value);
+      configuration_->save();
       m_videoOMXLayer = value;
       emit videoOMXLayerChanged();
     }
