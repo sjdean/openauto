@@ -16,7 +16,7 @@ Item {
         TabBar {
             id: tabBar
             height: 60
-            currentIndex: 3
+            currentIndex: 2
             width: settingsView.width
 
             TabButton {
@@ -78,9 +78,15 @@ Item {
                         id: driverPosition
                         model: driverPositionModel.comboBoxItems
                         textRole: "display"
-                        currentIndex: driverPositionModel.comboBoxItems.indexOf(driverPositionModel.currentComboBoxItem)
+                        currentIndex: {
+                            let index = driverPositionModel.comboBoxItems.findIndex(item => item.value === settingsViewHandler.carDriverPosition);
+                            return index !== -1 ? index : 0; // Default to first item if not found
+                        }
                         onCurrentIndexChanged: {
-                            driverPositionModel.currentComboBoxItem = driverPositionModel.comboBoxItems[currentIndex];
+                            if (currentIndex >= 0 && currentIndex < driverPositionModel.comboBoxItems.length) {
+                                settingsViewHandler.carDriverPosition = driverPositionModel.comboBoxItems[currentIndex].value;
+                                driverPositionModel.currentComboBoxItem = driverPositionModel.comboBoxItems[currentIndex];
+                            }
                         }
                     }
 
@@ -96,9 +102,15 @@ Item {
                         id: fuelType
                         model: fuelTypeModel.comboBoxItems
                         textRole: "display"
-                        currentIndex: fuelTypeModel.comboBoxItems.indexOf(fuelTypeModel.currentComboBoxItem)
+                        currentIndex: {
+                            let index = fuelTypeModel.comboBoxItems.findIndex(item => item.value === settingsViewHandler.carFuelType);
+                            return index !== -1 ? index : 0; // Default to first item if not found
+                        }
                         onCurrentIndexChanged: {
-                            fuelTypeModel.currentComboBoxItem = fuelTypeModel.comboBoxItems[currentIndex];
+                            if (currentIndex >= 0 && currentIndex < fuelTypeModel.comboBoxItems.length) {
+                                settingsViewHandler.carFuelType = fuelTypeModel.comboBoxItems[currentIndex].value;
+                                fuelTypeModel.currentComboBoxItem = fuelTypeModel.comboBoxItems[currentIndex];
+                            }
                         }
                     }
                 }
@@ -113,9 +125,15 @@ Item {
                         id: evConnectorType
                         model: evConnectorTypeModel.comboBoxItems
                         textRole: "display"
-                        currentIndex: evConnectorTypeModel.comboBoxItems.indexOf(evConnectorTypeModel.currentComboBoxItem)
+                        currentIndex: {
+                            let index = evConnectorTypeModel.comboBoxItems.findIndex(item => item.value === settingsViewHandler.carEvConnectorType);
+                            return index !== -1 ? index : 0; // Default to first item if not found
+                        }
                         onCurrentIndexChanged: {
-                            evConnectorTypeModel.currentComboBoxItem = evConnectorTypeModel.comboBoxItems[currentIndex];
+                            if (currentIndex >= 0 && currentIndex < evConnectorTypeModel.comboBoxItems.length) {
+                                settingsViewHandler.carEvConnectorType = evConnectorTypeModel.comboBoxItems[currentIndex].value;
+                                evConnectorTypeModel.currentComboBoxItem = evConnectorTypeModel.comboBoxItems[currentIndex];
+                            }
                         }
                     }
                 }
@@ -262,9 +280,15 @@ Item {
                         id: frameRate
                         model: frameRateModel.comboBoxItems
                         textRole: "display"
-                        currentIndex: frameRateModel.comboBoxItems.indexOf(frameRateModel.currentComboBoxItem)
+                        currentIndex: {
+                            let index = frameRateModel.comboBoxItems.findIndex(item => item.value === settingsViewHandler.aaFrameRate);
+                            return index !== -1 ? index : 0; // Default to first item if not found
+                        }
                         onCurrentIndexChanged: {
-                            frameRateModel.currentComboBoxItem = frameRateModel.comboBoxItems[currentIndex];
+                            if (currentIndex >= 0 && currentIndex < frameRateModel.comboBoxItems.length) {
+                                settingsViewHandler.aaFrameRate = frameRateModel.comboBoxItems[currentIndex].value;
+                                frameRateModel.currentComboBoxItem = frameRateModel.comboBoxItems[currentIndex];
+                            }
                         }
                     }
 
@@ -279,9 +303,15 @@ Item {
                         id: resolution
                         model: resolutionModel.comboBoxItems
                         textRole: "display"
-                        currentIndex: resolutionModel.comboBoxItems.indexOf(resolutionModel.currentComboBoxItem)
+                        currentIndex: {
+                            let index = resolutionModel.comboBoxItems.findIndex(item => item.value === settingsViewHandler.aaResolution);
+                            return index !== -1 ? index : 0; // Default to first item if not found
+                        }
                         onCurrentIndexChanged: {
-                            resolutionModel.currentComboBoxItem = resolutionModel.comboBoxItems[currentIndex];
+                            if (currentIndex >= 0 && currentIndex < resolutionModel.comboBoxItems.length) {
+                                settingsViewHandler.aaResolution = resolutionModel.comboBoxItems[currentIndex].value;
+                                resolutionModel.currentComboBoxItem = resolutionModel.comboBoxItems[currentIndex];
+                            }
                         }
                     }
                 }
@@ -373,9 +403,15 @@ Item {
                         id: pulseAudioDeviceOutput
                         model: pulseAudioDeviceModelOutput.comboBoxItems
                         textRole: "display"
-                        currentIndex: pulseAudioDeviceModelOutput.comboBoxItems.indexOf(pulseAudioDeviceModelOutput.currentComboBoxItem)
+                        currentIndex: {
+                            let index = pulseAudioDeviceModelOutput.comboBoxItems.findIndex(item => item.value === settingsViewHandler.audioPlaybackDevice);
+                            return index !== -1 ? index : 0; // Default to first item if not found
+                        }
                         onCurrentIndexChanged: {
-                            pulseAudioDeviceModelOutput.currentComboBoxItem = pulseAudioDeviceModelOutput.comboBoxItems[currentIndex];
+                            if (currentIndex >= 0 && currentIndex < pulseAudioDeviceModelOutput.comboBoxItems.length) {
+                                settingsViewHandler.audioPlaybackDevice = pulseAudioDeviceModelOutput.comboBoxItems[currentIndex].value;
+                                pulseAudioDeviceModelOutput.currentComboBoxItem = pulseAudioDeviceModelOutput.comboBoxItems[currentIndex];
+                            }
                         }
                     }
                 }
@@ -422,9 +458,15 @@ Item {
                         id: pulseAudioDeviceInput
                         model: pulseAudioDeviceModelInput.comboBoxItems
                         textRole: "display"
-                        currentIndex: pulseAudioDeviceModelInput.comboBoxItems.indexOf(pulseAudioDeviceModelInput.currentComboBoxItem)
+                        currentIndex: {
+                            let index = pulseAudioDeviceModelInput.comboBoxItems.findIndex(item => item.value === settingsViewHandler.audioCaptureDvice);
+                            return index !== -1 ? index : 0; // Default to first item if not found
+                        }
                         onCurrentIndexChanged: {
-                            pulseAudioDeviceModelInput.currentComboBoxItem = pulseAudioDeviceModelInput.comboBoxItems[currentIndex];
+                            if (currentIndex >= 0 && currentIndex < pulseAudioDeviceModelInput.comboBoxItems.length) {
+                                settingsViewHandler.audioCaptureDvice = pulseAudioDeviceModelInput.comboBoxItems[currentIndex].value;
+                                pulseAudioDeviceModelInput.currentComboBoxItem = pulseAudioDeviceModelInput.comboBoxItems[currentIndex];
+                            }
                         }
                     }
                 }

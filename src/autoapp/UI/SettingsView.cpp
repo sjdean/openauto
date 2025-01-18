@@ -38,6 +38,8 @@ namespace f1x::openauto::autoapp::UI {
       m_aaChannelMedia(configuration_->getSettingByName<bool>("AndroidAuto", "Media")),
       m_aaChannelGuidance(configuration_->getSettingByName<bool>("AndroidAuto", "Guidance")),
       m_aaChannelTelephony(configuration_->getSettingByName<bool>("AndroidAuto", "Telephony")),
+      m_aaFrameRate(configuration_->getSettingByName<aap_protobuf::service::media::sink::message::VideoFrameRateType>("AndroidAuto", "FrameRate")),
+      m_aaResolution(configuration_->getSettingByName<aap_protobuf::service::media::sink::message::VideoCodecResolutionType>("AndroidAuto", "Resolution")),
 
       m_audioVolumePlaybackMin(configuration_->getSettingByName<int>("Audio", "PlaybackMin")),
       m_audioVolumePlaybackMax(configuration_->getSettingByName<int>("Audio", "PlaybackMax")),
@@ -45,6 +47,8 @@ namespace f1x::openauto::autoapp::UI {
       m_audioVolumeCaptureMax(configuration_->getSettingByName<int>("Audio", "CaptureMax")),
       m_audioVolumePlayback(configuration_->getSettingByName<int>("Audio", "PlaybackVolume")),
       m_audioVolumeCapture(configuration_->getSettingByName<int>("Audio", "CaptureVolume")),
+      m_audioCaptureDeviceValue(configuration_->getSettingByName<QString>("Audio", "CaptureDevice")),
+      m_audioPlaybackDeviceValue(configuration_->getSettingByName<QString>("Audio", "PlaybackDevice")),
 
       m_audioType(
           static_cast<f1x::openauto::autoapp::configuration::AudioOutputBackendType>(configuration_->getSettingByName<int>(

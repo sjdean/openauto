@@ -45,6 +45,8 @@ namespace f1x::openauto::autoapp::UI {
         bool aaChannelGuidance READ getAAChannelGuidance WRITE setAAChannelGuidance NOTIFY aaChannelGuidanceChanged)
     Q_PROPERTY(
         bool aaChannelTelephony READ getAAChannelTelephony WRITE setAAChannelTelephony NOTIFY aaChannelTelephonyChanged)
+    Q_PROPERTY(aap_protobuf::service::media::sink::message::VideoFrameRateType aaFrameRate, READ getAAFrameRate WRITE setAAFrameRate NOTIFY aaFrameRateChanged)
+    Q_PROPERTY(aap_protobuf::service::media::sink::message::VideoCodecResolutionType aaResolution READ getAAResolution WRITE setAAResolution NOTIFY aaResolutionChanged)
     Q_PROPERTY(
         int audioVolumePlaybackMin READ getAudioVolumePlaybackMin WRITE setAudioVolumePlaybackMin NOTIFY audioVolumePlaybackMinChanged)
     Q_PROPERTY(
@@ -58,6 +60,10 @@ namespace f1x::openauto::autoapp::UI {
     Q_PROPERTY(
         int audioVolumeCapture READ getAudioVolumeCapture WRITE setAudioVolumeCapture NOTIFY audioVolumeCaptureChanged)
     Q_PROPERTY(f1x::openauto::autoapp::configuration::AudioOutputBackendType audioType READ getAudioType WRITE setAudioType NOTIFY audioTypeChanged)
+    Q_PROPERTY(
+        int audioPlaybackDevice READ getAudioPlaybackDevice WRITE setAudioPlaybackDevice NOTIFY audioPlaybackDeviceChangeed)
+    Q_PROPERTY(
+        int audioCaptureDevice READ getAudioCaptureDevice WRITE setAudioCaptureDevice NOTIFY audioPlaybackCaptureChangeed)
 
   public:
     explicit SettingsView(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration,
@@ -107,6 +113,10 @@ namespace f1x::openauto::autoapp::UI {
 
     void aaChannelTelephonyChanged();
 
+    void aaFrameRateChanged();
+
+    void aaResolution();
+
     void audioVolumePlaybackMinChanged();
 
     void audioVolumePlaybackMaxChanged();
@@ -120,6 +130,9 @@ namespace f1x::openauto::autoapp::UI {
     void audioVolumeCaptureMaxChanged();
 
     void audioTypeChanged(f1x::openauto::autoapp::configuration::AudioOutputBackendType type);
+
+    void audioPlaybackDeviceChanged();
+    void audioCaptureDecviceChanged();
 
   private:
     f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration_;
@@ -226,6 +239,8 @@ namespace f1x::openauto::autoapp::UI {
     bool m_aaChannelMedia;
     bool m_aaChannelGuidance;
     bool m_aaChannelTelephony;
+    aap_protobuf::service::media::sink::message::VideoFrameRateType m_aaFrameRate;
+    aap_protobuf::service::media::sink::message::VideoCodecResolutionType m_aaResolution;
 
     bool getAAChannelMedia() const;
 
@@ -233,11 +248,18 @@ namespace f1x::openauto::autoapp::UI {
 
     bool getAAChannelTelephony() const;
 
+    aap_protobuf::service::media::sink::message::VideoFrameRateType getAAFrameRate() const;
+    aap_protobuf::service::media::sink::message::VideoCodecResolutionType getAAResolution() const;
+
     void setAAChannelMedia(bool value);
 
     void setAAChannelGuidance(bool value);
 
     void setAAChannelTelephony(bool value);
+
+    void setAAFrameRate(aap_protobuf::service::media::sink::message::VideoFrameRateType value);
+    void setAAResolution(aap_protobuf::service::media::sink::message::VideoCodecResolutionType value);
+
 
     // Audio Settings
     int m_audioVolumePlaybackMin;
@@ -246,6 +268,9 @@ namespace f1x::openauto::autoapp::UI {
     int m_audioVolumeCaptureMax;
     int m_audioVolumePlayback;
     int m_audioVolumeCapture;
+    QString m_audioCaptureDeviceValue;
+    QString m_audioPlaybackDeviceValue;
+
     f1x::openauto::autoapp::configuration::AudioOutputBackendType m_audioType;
 
     int getAudioVolumePlaybackMin() const;
@@ -262,6 +287,9 @@ namespace f1x::openauto::autoapp::UI {
 
     f1x::openauto::autoapp::configuration::AudioOutputBackendType getAudioType() const;
 
+    QString getAudioPlaybackDeviceCapture() const;
+    QString getAudioCaptureDeviceCapture() const;
+
     void setAudioVolumePlaybackMin(int value);
 
     void setAudioVolumePlaybackMax(int value);
@@ -276,6 +304,8 @@ namespace f1x::openauto::autoapp::UI {
 
     void setAudioType(f1x::openauto::autoapp::configuration::AudioOutputBackendType value);
 
+    void setAudioPlaybackDeviceCapture(QString value);
+    void setAudioCaptureDeviceCapture(QString value);
   };
 }
 #endif //OPENAUTO_SETTINGSVIEW_H

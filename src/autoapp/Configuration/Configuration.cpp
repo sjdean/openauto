@@ -49,6 +49,8 @@ namespace f1x::openauto::autoapp::configuration {
     audioGroup.addSetting<int>("PlaybackVolume", 150);
     audioGroup.addSetting<int>("CaptureVolume", 150);
     audioGroup.addSetting<int>("Type", static_cast<const int>(AudioOutputBackendType::RTAUDIO));
+    audioGroup.addSetting<QString>("PlaybackDevice", "");
+    audioGroup.addSetting<QString>("CaptureDevice", "");
     audioGroup.load(m_settings);
     m_configurationGroups.append(audioGroup);
 
