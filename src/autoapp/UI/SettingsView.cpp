@@ -163,6 +163,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setVideoMarginHeight(int value) {
     if (value != m_videoMarginHeight) {
+      configuration_->updateSettingByName<int>("Video", "Height", value);
+      configuration_->save();
       m_videoMarginHeight = value;
       emit videoMarginHeightChanged();
     }
@@ -174,6 +176,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setVideoMarginWidth(int value) {
     if (value != m_videoMarginWidth) {
+      configuration_->updateSettingByName<int>("Video", "Width", value);
+      configuration_->save();
       m_videoMarginWidth = value;
       emit videoMarginWidthChanged();
     }
@@ -185,6 +189,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setAudioVolumePlayback(int value) {
     if (value != m_audioVolumePlayback) {
+      configuration_->updateSettingByName<int>("Audio", "PlaybackVolume", value);
+      configuration_->save();
       m_audioVolumePlayback = value;
       emit audioVolumePlaybackChanged();
     }
@@ -196,6 +202,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setAudioVolumeCapture(int value) {
     if (value != m_audioVolumeCapture) {
+      configuration_->updateSettingByName<int>("Car", "CaptureVolume", value);
+      configuration_->save();
       m_audioVolumeCapture = value;
       emit audioVolumeCaptureChanged();
     }
@@ -207,6 +215,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setScreenBrightnessDayMin(int value) {
     if (value != m_screenBrightnessDayMin) {
+      configuration_->updateSettingByName<int>("Screen", "DayMin", value);
+      configuration_->save();
       m_screenBrightnessDayMin = value;
       emit screenBrightnessDayMinChanged();
     }
@@ -218,6 +228,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setScreenBrightnessDayMax(int value) {
     if (value != m_screenBrightnessDayMax) {
+      configuration_->updateSettingByName<int>("Screen", "DayMax", value);
+      configuration_->save();
       m_screenBrightnessDayMax = value;
       emit screenBrightnessDayMaxChanged();
     }
@@ -241,6 +253,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setScreenBrightnessNightMax(int value) {
     if (value != m_screenBrightnessNightMax) {
+      configuration_->updateSettingByName<int>("Screen", "NightMax", value);
+      configuration_->save();
       m_screenBrightnessNightMax = value;
       emit screenBrightnessNightMaxChanged();
     }
@@ -252,6 +266,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setVideoRotateDisplay(bool value) {
     if (m_videoRotateDisplay != value) {
+      configuration_->updateSettingByName<bool>("Video", "Rotate", value);
+      configuration_->save();
       m_videoRotateDisplay = value;
       emit videoRotateDisplayChanged();
     }
@@ -263,6 +279,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setScreenDPI(int value) {
     if (value != m_screenDPI) {
+      configuration_->updateSettingByName<int>("Screen", "DPI", value);
+      configuration_->save();
       m_screenDPI = value;
       emit screenDPIChanged();
     }
@@ -270,6 +288,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setAudioType(f1x::openauto::autoapp::configuration::AudioOutputBackendType value) {
     if (value != m_audioType) {
+      configuration_->updateSettingByName<int>("Audio", "Type", static_cast<int>(value));
+      configuration_->save();
       m_audioType = value;
       emit audioTypeChanged(value);
     }
@@ -277,6 +297,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setAudioVolumeCaptureMax(int value) {
     if (value != m_audioVolumeCaptureMax) {
+      configuration_->updateSettingByName<int>("Audio", "CaptureMax", value);
+      configuration_->save();
       m_audioVolumeCaptureMax = value;
       emit audioVolumeCaptureMaxChanged();
     }
@@ -284,6 +306,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setAudioVolumeCaptureMin(int value) {
     if (value != m_audioVolumeCaptureMin) {
+      configuration_->updateSettingByName<int>("Audio", "CaptureMin", value);
+      configuration_->save();
       m_audioVolumeCaptureMin = value;
       emit audioVolumeCaptureMinChanged();
     }
@@ -291,6 +315,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setAudioVolumePlaybackMax(int value) {
     if (value != m_audioVolumePlaybackMax) {
+      configuration_->updateSettingByName<int>("Audio", "PlaybackMax", value);
+      configuration_->save();
       m_audioVolumePlaybackMax = value;
       emit audioVolumePlaybackMaxChanged();
     }
@@ -298,6 +324,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setAudioVolumePlaybackMin(int value) {
     if (value != m_audioVolumePlaybackMin) {
+      configuration_->updateSettingByName<int>("Audio", "PlaybackMin", value);
+      configuration_->save();
       m_audioVolumePlaybackMin = value;
       emit audioVolumePlaybackMinChanged();
     }
@@ -325,6 +353,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setVideoType(int value) {
     if (value != m_videoType) {
+      configuration_->updateSettingByName<int>("Video", "Type", value);
+      configuration_->save();
       m_videoType = value;
       emit videoTypeChanged(value);
     }
@@ -336,6 +366,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setScreenBrightness(int value) {
     if (value != m_screenBrightness) {
+      configuration_->updateSettingByName<int>("Screen", "Brightness", value);
+      configuration_->save();
       m_screenBrightness = value;
       emit screenBrightnessChanged();
     }
@@ -347,6 +379,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setCarDriverPosition(aap_protobuf::service::control::message::DriverPosition value) {
     if (value != m_carDriverPosition) {
+      configuration_->updateSettingByName<aap_protobuf::service::control::message::DriverPosition>("Car", "DriverPosition", value);
+      configuration_->save();
       m_carDriverPosition = value;
       emit carDriverPositionChanged();
     }
@@ -354,6 +388,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setCarEvConnectorType(aap_protobuf::service::sensorsource::message::EvConnectorType value) {
     if (value != m_carEvConnectorType) {
+      configuration_->updateSettingByName<aap_protobuf::service::sensorsource::message::EvConnectorType>("Car", "EvConnectorType", value);
+      configuration_->save();
       m_carEvConnectorType = value;
       emit carEvConnectorTypeChanged();
     }
@@ -361,6 +397,8 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::setCarFuelType(aap_protobuf::service::sensorsource::message::FuelType value) {
     if (value != m_carFuelType) {
+      configuration_->updateSettingByName<aap_protobuf::service::sensorsource::message::FuelType>("Car", "FuelType", value);
+      configuration_->save();
       m_carFuelType = value;
       emit carFuelTypeChanged();
     }
