@@ -62,6 +62,104 @@ namespace f1x::openauto::autoapp::UI {
     return defaultSinkName;
   }
 
+  void PulseAudioHandler::GetSinkInfoCallback(pa_context *c, const pa_sink_info *i, int eol, void *userdata) {
+
+    Q_UNUSED(c);
+
+    ListDevicesState *state = reinterpret_cast<ListDevicesState*>(userdata);
+    if (!state) return;
+
+    if (i) {
+      EngineDevice device;
+      device.description = QString::fromUtf8(i->description);
+      device.value = QString::fromUtf8(i->name);
+      device.iconname = device.GuessIconName();
+
+      state->devices.append(device);
+    }
+
+    if (eol > 0) {
+      state->finished = true;
+    }
+  }
+
+  EngineDeviceList PulseAudioHandler::getSinks() {
+    if (!m_context || pa_context_get_state(m_context) != PA_CONTEXT_READY) {
+      // Log error or attempt reconnection
+      return EngineDeviceList();
+    }
+
+    ListDevicesState state;
+    pa_operation *op = pa_context_get_sink_info_list(m_context, &PulseAudioHandler::GetSinkInfoCallback, &state);
+
+    if (op) {
+      pa_threaded_mainloop *loop = pa_threaded_mainloop_new();
+      pa_threaded_mainloop_start(loop);
+
+      // Wait for the callback to finish
+      while (!state.finished) {
+        pa_threaded_mainloop_wait(loop);
+      }
+
+      pa_threaded_mainloop_free(loop);
+      pa_operation_unref(op);
+    } else {
+      // Handle the error, e.g., log it or throw an exception
+      throw std::runtime_error("Failed to get sink list");
+    }
+
+    return state.devices;
+  }
+
+  void PulseAudioHandler::GetSourceInfoCallback(pa_context *c, const pa_source_info *i, int eol, void *userdata) {
+
+    Q_UNUSED(c);
+
+    ListDevicesState *state = reinterpret_cast<ListDevicesState*>(userdata);
+    if (!state) return;
+
+    if (i) {
+      EngineDevice device;
+      device.description = QString::fromUtf8(i->description);
+      device.value = QString::fromUtf8(i->name);
+      device.iconname = device.GuessIconName();
+
+      state->devices.append(device);
+    }
+
+    if (eol > 0) {
+      state->finished = true;
+    }
+  }
+
+  EngineDeviceList PulseAudioHandler::getSources() {
+    if (!m_context || pa_context_get_state(m_context) != PA_CONTEXT_READY) {
+      // Log error or attempt reconnection
+      return EngineDeviceList();
+    }
+
+    ListDevicesState state;
+    pa_operation *op = pa_context_get_source_info_list(m_context, &PulseAudioHandler::GetSourceInfoCallback, &state);
+
+    if (op) {
+      pa_threaded_mainloop *loop = pa_threaded_mainloop_new();
+      pa_threaded_mainloop_start(loop);
+
+      // Wait for the callback to finish
+      while (!state.finished) {
+        pa_threaded_mainloop_wait(loop);
+      }
+
+      pa_threaded_mainloop_free(loop);
+      pa_operation_unref(op);
+    } else {
+      // Handle the error, e.g., log it or throw an exception
+      throw std::runtime_error("Failed to get sink list");
+    }
+
+    return state.devices;
+  }
+
   QString PulseAudioHandler::getDefaultSource() {
     pa_operation *op;
     QString defaultSourceName;
@@ -95,6 +193,7 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   void PulseAudioHandler::setSinkVolume(int volume) {
+    // TODO: Swap to Configured Sink
     QString sinkName = getDefaultSink();
     pa_cvolume cvolume;
     pa_cvolume_init(&cvolume);
@@ -116,6 +215,7 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   void PulseAudioHandler::setSourceVolume(int volume) {
+    // TODO: Swap to Configured Source
     QString sinkName = getDefaultSource();
     pa_cvolume cvolume;
     pa_cvolume_init(&cvolume);
@@ -137,6 +237,7 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   void PulseAudioHandler::setSinkMute(bool mute) {
+    // TODO: Swap to Configured Sink
     QString sinkName = getDefaultSink();
     pa_operation *op = pa_context_set_sink_mute_by_name(m_context, sinkName.toStdString().c_str(), mute,
                                                         [](pa_context *, int success, void *) {
@@ -150,6 +251,7 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   void PulseAudioHandler::setSourceMute(bool mute) {
+    // TODO: Swap to Configured Soure
     QString sinkName = getDefaultSink();
     pa_operation *op = pa_context_set_sink_mute_by_name(m_context, sinkName.toStdString().c_str(), mute,
                                                         [](pa_context *, int success, void *) {

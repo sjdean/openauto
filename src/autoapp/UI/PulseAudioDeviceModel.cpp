@@ -13,13 +13,24 @@ namespace f1x::openauto::autoapp::UI {
   void PulseAudioDeviceModel::populateComboBoxItems() {
     m_comboBoxItems.clear();
     addComboBoxItem("None", "No Device Selected");
-    auto devices = PulseAudioDeviceModel::getPulseAudioDevices();
-    for (auto &device : devices) {
-      addComboBoxItem(QString::fromStdString(device.first), QString::fromStdString(device.second));
+    if (m_direction == pa_direction_t::PA_DIRECTION_INPUT) {
+      auto devices = m_pulseAudioHandler.getSources();
+      for (auto &device : devices) {
+        addComboBoxItem(QString::fromStdString(device.first), QString::fromStdString(device.second));
+      }
+    } else {
+      auto devices = m_pulseAudioHandler.getSinks();
+      for (auto &device : devices) {
+        addComboBoxItem(device.value.toString(), device.description);
+      }
     }
+
+    auto devices = PulseAudioDeviceModel::getPulseAudioDevices();
+
   }
 
   std::vector<std::pair<std::string, std::string>> PulseAudioDeviceModel::getPulseAudioDevices() {
+    // TODO: Replace with get Sinks or getSources
     return m_pulseAudioHandler.getDeviceList();
   }
 
