@@ -8,6 +8,7 @@ Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import JourneyOS
 import AndroidAutoMonitor 1.0
 
 Item {
@@ -42,7 +43,7 @@ Item {
                                                                   : "Unknown"
 
     Rectangle {
-        color: "#000000"
+        color: Constants.primaryBackgroundColor
         anchors.fill: parent
     }
 
@@ -76,7 +77,7 @@ Item {
                         textIsStatus: true
                         text: headerItem.bluetoothStatusText
                         icon.source: "images/bluetooth-alt.svg"
-                        iconColor: !headerItem.bluetoothPaired ? "#999900" : (headerItem.bluetoothConnecting ? "#000099" : (!headerItem.bluetoothConnected ? "#990000" : "#009900"))
+                        iconColor: !headerItem.bluetoothPaired ? Constants.waitColor : (headerItem.bluetoothConnecting ? Constants.actionColor : (!headerItem.bluetoothConnected ? Constants.badColor : Constants.okColor))
                         iconSize: 12
                         visible: headerItem.hasBluetooth
                         Connections {
@@ -90,7 +91,7 @@ Item {
                         textIsStatus: true
                         text: "Status"
                         icon.source: "images/fi-br-wifi.svg"
-                        iconColor: !headerItem.wifiPaired ? "#999900" : (headerItem.wifiConnecting ? "#000099" : (!headerItem.wifiConnected ? "#990000" : "#009900"))
+                        iconColor: !headerItem.wifiPaired ? Constants.waitColor : (headerItem.wifiConnecting ? Constants.actionColor : (!headerItem.wifiConnected ? Constants.badColor : Constants.okColor))
                         iconSize: 12
                         visible: headerItem.hasWifi
                         Connections {
@@ -104,7 +105,7 @@ Item {
                         textIsStatus: true
                         text: headerItem.androidAutoMethodText
                         icon.source: "images/android-auto.svg"
-                        iconColor: headerItem.androidAutoConnecting ? "#000099" : (headerItem.androidAutoConnected ? "#009900" : "#999999")
+                        iconColor: headerItem.androidAutoConnecting ? Constants.actionColor : (headerItem.androidAutoConnected ? Constants.okColor : Constants.baseColor)
                         iconSize: 12
 
                         Connections {
@@ -163,8 +164,6 @@ Item {
                         }
 
                     }
-
-
                 }
             }
         }

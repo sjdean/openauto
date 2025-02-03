@@ -20,13 +20,13 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: "#00ffffff"
+        color: "#00000000"
     }
 
     Rectangle {
         width: 800-200
         height: 480 - 200
-        color: "#00ffffff"
+        color: "#00000000"
 
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter

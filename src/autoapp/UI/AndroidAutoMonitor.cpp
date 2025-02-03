@@ -1,6 +1,10 @@
 #include <f1x/openauto/autoapp/UI/AndroidAutoMonitor.hpp>
 
 namespace f1x::openauto::autoapp::UI {
+  /**
+   * Monitor for Android Auto Status
+   * @param parent
+   */
   AndroidAutoMonitor::AndroidAutoMonitor(QObject *parent) :
       QObject(parent) {
   }

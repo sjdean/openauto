@@ -1,4 +1,4 @@
-#ifndef OPENAUTO_WIFIPOPUP_H
+/*#ifndef OPENAUTO_WIFIPOPUP_H
 #define OPENAUTO_WIFIPOPUP_H
 
 #include <QtCore/QObject>
@@ -27,9 +27,11 @@ namespace f1x::openauto::autoapp::UI {
 
     void setWifiStatus(int value);
 
-    int m_wifiStatus;
+    int m_wifiStatus{};
     QString m_ssid;
   };
 }
 
-#endif //OPENAUTO_WIFIPOPUP_H
+#endif //OPENAUTO_WIFIPOPUP_H*/
+
+// TODO: DELETE ME / Replace with Settings View

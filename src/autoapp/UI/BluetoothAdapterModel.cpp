@@ -3,7 +3,9 @@
 #include <f1x/openauto/autoapp/UI/BluetoothAdapterModel.hpp>
 #include <QProcess>
 
+
 namespace f1x::openauto::autoapp::UI {
+  // TODO: Bring in Bluetooth Monitor
   BluetoothAdapterModel::BluetoothAdapterModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
     BluetoothAdapterModel::populateComboBoxItems();
   }
@@ -19,6 +21,7 @@ namespace f1x::openauto::autoapp::UI {
   void BluetoothAdapterModel::populateComboBoxItems() {
     m_comboBoxItems.clear();
     if (isBlueZRunning()) {
+
 
       QList<QBluetoothHostInfo> adapters = QBluetoothLocalDevice::allDevices();
       if (!adapters.isEmpty()) {

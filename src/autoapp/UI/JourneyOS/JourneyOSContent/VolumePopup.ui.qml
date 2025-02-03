@@ -27,7 +27,7 @@ Item {
             height: volumePopup.height - 89
             anchors.top: parent.top
             anchors.topMargin: 0
-            alternateColor: "#d113a8fd"
+            alternateColor: Constants.sliderAlternateColor
             anchors.horizontalCenter: parent.horizontalCenter
             onValueChanged: volumePopupHandler.volumeSink = value
 
@@ -64,7 +64,7 @@ Item {
             }
             PropertyChanges {
                 target: volumeSlider
-                sliderColor: "#cc2d004d"
+                sliderColor: Constants.sliderPrimaryColor
             }
         },
         State {

@@ -1,3 +1,6 @@
+#ifndef OPENAUTO_IANDROIDAUTOMONITOR_HPP
+#define OPENAUTO_IANDROIDAUTOMONITOR_HPP
+
 #pragma once
 #include <string>
 
@@ -11,6 +14,4 @@ namespace f1x::openauto::autoapp::UI {
 
   };
 }
-
-
-
+#endif//OPENAUTO_IANDROIDAUTOMONITOR_HPP

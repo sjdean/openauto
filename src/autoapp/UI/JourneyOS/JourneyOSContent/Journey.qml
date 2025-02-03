@@ -8,7 +8,7 @@ Window {
     height: 480
 
     visible: true
-    color: "#000000"
+    color: Constants.primaryBackgroundColor
     title: "JourneyOS"
 
     StackView {

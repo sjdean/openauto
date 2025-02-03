@@ -1,5 +1,5 @@
-#ifndef OPENAUTO_BLUETOOTHPOPUP_H
-#define OPENAUTO_BLUETOOTHPOPUP_H
+#ifndef OPENAUTO_BLUETOOTHPOPUP_HPP
+#define OPENAUTO_BLUETOOTHPOPUP_HPP
 
 #include <QtCore/QObject>
 #include <QtDBus/QDBusConnection>
@@ -8,27 +8,37 @@
 #include <QBluetoothAddress>
 #include <QBluetoothLocalDevice>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
+#include "BluetoothConnectionStatus.hpp"
 
 namespace f1x::openauto::autoapp::UI {
-  enum BluetoothConnectionStatus {
-    BC_NOT_CONFIGURED,
-    BC_DISCONNECTED,
-    BC_CONNECTING,
-    BC_CONNECTED
+
+  struct BluetoothDevice {
+    QString address;
+    QString name;
+    QDBusObjectPath path;
   };
+  Q_DECLARE_METATYPE(BluetoothDevice)
 
   class BluetoothPopup : public QObject {
      Q_OBJECT
 
     Q_PROPERTY(QString bluetoothLocalDevice READ getBluetoothLocalDevice WRITE setBluetoothLocalDevice NOTIFY bluetoothLocalDeviceChanged)
-    Q_PROPERTY(QString bluetoothConnectedDevice READ getBluetoothConnectedDevice WRITE setBluetoothConnectedDevice NOTIFY bluetoothConnectedDeviceChanged)
+    Q_PROPERTY(BluetoothDevice bluetoothConnectedDevice READ getBluetoothConnectedDevice WRITE setBluetoothConnectedDevice NOTIFY bluetoothConnectedDeviceChanged)
     Q_PROPERTY(
-        BluetoothConnectionStatus bluetoothStatus READ getBluetoothStatus WRITE setBluetoothStatus NOTIFY bluetoothStatusChanged)
+        BluetoothConnectionStatus bluetoothStatus READ getBluetoothStatus NOTIFY bluetoothStatusChanged)
     Q_PROPERTY(int pairedDeviceCount READ getPairedDeviceCount NOTIFY pairedDeviceCountChanged)
     Q_PROPERTY(int connectedDeviceCount READ getConnectedDeviceCount NOTIFY connectedDeviceCountChanged)
-    Q_ENUM(BluetoothConnectionStatus)
+    Q_PROPERTY(bool isScanning READ getIsScanning NOTIFY isScanningChanged)
+    Q_PROPERTY(QList<BluetoothDevice> discoveredDevices READ getDiscoveredDevices NOTIFY discoveredDevicesChanged)
+
   public:
     explicit BluetoothPopup(const QString &hardwareAddress, QObject *parent);
+    bool doConnectToPairedDevice(BluetoothDevice device);
+    bool doRemovePair(const BluetoothDevice& device);
+    bool doRemoveAllPairs();
+    QList<BluetoothDevice> getDiscoveredDevices() const;
+    BluetoothDevice* getBluetoothConnectedDevice();
+    void setBluetoothConnectedDevice(BluetoothDevice* value);
 
   signals:
 
@@ -37,6 +47,7 @@ namespace f1x::openauto::autoapp::UI {
     void bluetoothStatusChanged();
     void pairedDeviceCountChanged();
     void connectedDeviceCountChanged();
+    void discoveredDevicesChanged();
 
 
   private slots:
@@ -49,21 +60,16 @@ namespace f1x::openauto::autoapp::UI {
     QString getBluetoothLocalDevice();
     void setBluetoothLocalDevice(QString value);
 
-    QString getBluetoothConnectedDevice();
-    void setBluetoothConnectedDevice(QString value);
 
-    BluetoothConnectionStatus getBluetoothStatus();
+
+    BluetoothConnectionStatus::Value getBluetoothStatus();
 
     int getPairedDeviceCount();
     int getConnectedDeviceCount();
 
-
-
-    void setBluetoothStatus(BluetoothConnectionStatus value);
-
     QString m_bluetoothLocalDevice;
-    QString m_bluetoothConnectedDevice;
-    BluetoothConnectionStatus m_bluetoothStatus;
+    BluetoothDevice* m_bluetoothConnectedDevice;
+    BluetoothConnectionStatus::Value m_bluetoothStatus;
     int m_pairedDeviceCount;
     int m_connectedDeviceCount;
     void listPairedDevices();
@@ -73,6 +79,21 @@ namespace f1x::openauto::autoapp::UI {
     QString m_adapterPath;
     QDBusInterface m_adapterInterface;
 
+    void disconnectCurrentdevice(const QDBusInterface &adapter, const QString devicePath);
+
+    bool connectToDevice(const QDBusInterface &adapter);
+
+    bool connectToDevice(const QDBusInterface &adapter, const QString devicePath, const QString deviceAddress);
+
+    bool doScanDevicesForPairing();
+
+    bool connectToDevice(const BluetoothDevice& device);
+    bool disconnectCurrentDevice();
+
+    QList<BluetoothDevice> m_foundDevices;
+
+    BluetoothDevice* findDeviceByPath(const QDBusObjectPath &path);
+
   };
 }
-#endif //OPENAUTO_BLUETOOTHPOPUP_H
+#endif //OPENAUTO_BLUETOOTHPOPUP_HPP

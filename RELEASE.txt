@@ -1,21 +1,111 @@
 Release Notes
 
+pi@debian:~$ pactl list sinks
+Sink #76
+	State: SUSPENDED
+	Name: alsa_output.pci-0000_02_02.0.analog-stereo.2
+	Description: ES1371/ES1373 / Creative Labs CT2518 (Audio PCI 64V/128/5200 / Creative CT4810/CT5803/CT5806 [Sound Blaster PCI]) Analog Stereo
+	Driver: PipeWire
+	Sample Specification: s16le 2ch 48000Hz
+	Channel Map: front-left,front-right
+	Owner Module: 4294967295
+	Mute: no
+	Volume: front-left: 26214 /  40% / -23.88 dB,   front-right: 26214 /  40% / -23.88 dB
+	        balance 0.00
+	Base Volume: 6554 /  10% / -60.00 dB
+	Monitor Source: alsa_output.pci-0000_02_02.0.analog-stereo.2.monitor
+	Latency: 0 usec, configured 0 usec
+	Flags: HARDWARE HW_MUTE_CTRL HW_VOLUME_CTRL DECIBEL_VOLUME LATENCY
+	Properties:
+		alsa.card = "0"
+		alsa.card_name = "Ensoniq AudioPCI"
+		alsa.class = "generic"
+		alsa.device = "0"
+		alsa.driver_name = "snd_ens1371"
+		alsa.id = "ES1371/1"
+		alsa.long_card_name = "Ensoniq AudioPCI ENS1371 at 0x2040, irq 16"
+		alsa.name = "ES1371 DAC2/ADC"
+		alsa.resolution_bits = "16"
+		alsa.subclass = "generic-mix"
+		alsa.subdevice = "0"
+		alsa.subdevice_name = "subdevice #0"
+		api.alsa.card.longname = "Ensoniq AudioPCI ENS1371 at 0x2040, irq 16"
+		api.alsa.card.name = "Ensoniq AudioPCI"
+		api.alsa.headroom = "8192"
+		api.alsa.path = "front:0"
+		api.alsa.pcm.card = "0"
+		api.alsa.pcm.stream = "playback"
+		api.alsa.period-size = "256"
+		audio.channels = "2"
+		audio.position = "FL,FR"
+		card.profile.device = "4"
+		device.api = "alsa"
+		device.class = "sound"
+		device.id = "48"
+		device.profile.description = "Analog Stereo"
+		device.profile.name = "analog-stereo"
+		device.routes = "1"
+		factory.name = "api.alsa.pcm.sink"
+		media.class = "Audio/Sink"
+		device.description = "ES1371/ES1373 / Creative Labs CT2518 (Audio PCI 64V/128/5200 / Creative CT4810/CT5803/CT5806 [Sound Blaster PCI])"
+		node.name = "alsa_output.pci-0000_02_02.0.analog-stereo.2"
+		node.nick = "ES1371 DAC2/ADC"
+		node.pause-on-idle = "false"
+		object.path = "alsa:pcm:0:front:0:playback"
+		priority.driver = "1009"
+		priority.session = "1009"
+		factory.id = "18"
+		clock.quantum-limit = "8192"
+		client.id = "33"
+		node.driver = "true"
+		factory.mode = "merge"
+		audio.adapt.follower = ""
+		library.name = "audioconvert/libspa-audioconvert"
+		object.id = "49"
+		object.serial = "76"
+		api.acp.auto-port = "false"
+		api.acp.auto-profile = "false"
+		api.alsa.card = "0"
+		api.alsa.use-acp = "true"
+		api.dbus.ReserveDevice1 = "Audio0"
+		device.bus = "pci"
+		device.bus_path = "pci-0000:02:02.0"
+		device.enum.api = "udev"
+		device.icon_name = "audio-card-analog-pci"
+		device.name = "alsa_card.pci-0000_02_02.0"
+		device.nick = "Ensoniq AudioPCI"
+		device.plugged.usec = "6588640"
+		device.product.id = "0x1371"
+		device.product.name = "ES1371/ES1373 / Creative Labs CT2518 (Audio PCI 64V/128/5200 / Creative CT4810/CT5803/CT5806 [Sound Blaster PCI])"
+		device.subsystem = "sound"
+		sysfs.path = "/devices/pci0000:00/0000:00:11.0/0000:02:02.0/sound/card0"
+		device.vendor.id = "0x1274"
+		device.vendor.name = "Ensoniq"
+		device.string = "0"
+	Ports:
+		analog-output: Analog Output (type: Analog, priority: 9900, availability unknown)
+	Active Port: analog-output
+	Formats:
+		pcm
+
+
 20250101 - 5.0.0 - Journey Rebrand
 * Introduce new GUI
 
-TODO - Save All Settings, and Update ComboBox Settings
-TODO - Video Display
-TODO - Wireless Modal Popup
-TODO - Bluetooth Modal Popup
+TODO - Wireless Modal Popup / Status, Connection Details
+TODO - Bluetooth Modal Popup / Status, Connection Details / Pin
+TODO - Add PIN display for authentication to bluetooth
+TODO - Update ComboBox Settings / Test
 TODO - BrightnessHandler - Pass a Light`Handler to switch between day and night
+TODO - Settings Layout
+TODO - Add Virtual Keyboards
+TODO - Audio Output Format support
+TODO - Bluetooth QDBus Monitoring
 TODO - Recent Address List of WiFi/Bluetooth Devices
 FIXME - DisplayOnTab Mirror HPP
 TODO - LocalBluetoothDevice and BluetoothHandler - check overlap
-TODO - Add PIN display for authentication to bluetooth
-TODO - Add Virtual Keyboards
-TODO - Audio Output Format support
 TODO - Work out WiFi Projection Service
-TODO - Bluetooth QDBus Monitoring
+
 
 20241124 - 4.1.0 - Bluetooth Updates
 * Rename BluetootAdapterType to BluetoothAdapterType, and change from NONE, LOCAL, REMOTE to NONE, LOCAL, EXTERNAL to better match available settings

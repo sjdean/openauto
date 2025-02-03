@@ -16,12 +16,12 @@ namespace f1x::openauto::autoapp::UI {
     if (m_direction == pa_direction_t::PA_DIRECTION_INPUT) {
       auto devices = m_pulseAudioHandler.getSources();
       for (auto &device : devices) {
-        addComboBoxItem(QString::fromStdString(device.first), QString::fromStdString(device.second));
+        addComboBoxItem(device.description, device.value);
       }
     } else {
       auto devices = m_pulseAudioHandler.getSinks();
       for (auto &device : devices) {
-        addComboBoxItem(device.value.toString(), device.description);
+        addComboBoxItem(device.description, device.value);
       }
     }
 

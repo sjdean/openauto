@@ -10,9 +10,9 @@ namespace f1x::openauto::autoapp::configuration {
   Configuration::Configuration()
   : m_settings("journey.conf", QSettings::IniFormat)
   {
-    // Initialise Settings
     m_configurationGroups.clear();
 
+    // Initialise and Configure Default Settings prior to loading...
     ConfigurationGroup carGroup("Car");
     carGroup.addSetting<QString>("Make", "Unknown");
     carGroup.addSetting<QString>("Model", "Unknown");
@@ -37,7 +37,7 @@ namespace f1x::openauto::autoapp::configuration {
     videoGroup.addSetting<int>("Width", 0);
     videoGroup.addSetting<int>("OMXLayer", 2);
     videoGroup.addSetting<bool>("Rotate", false);
-    videoGroup.addSetting<int>("Type", 1);  // TODO: Convert to ENUM
+    videoGroup.addSetting<UI::VideoType::Value>("Type", UI::VideoType::Value::EGL);
     videoGroup.load(m_settings);
     m_configurationGroups.append(videoGroup);
 
@@ -78,19 +78,21 @@ namespace f1x::openauto::autoapp::configuration {
 
     ConfigurationGroup wirelessGroup("Wireless");
     wirelessGroup.addSetting<bool>("Enabled", true);
-    wirelessGroup.addSetting<QString>("SSID", "JourneyOS");
-    wirelessGroup.addSetting<QString>("Password", generateRandomString(8));
+    wirelessGroup.addSetting<QString>("HotspotSSID", "JourneyOS");
+    wirelessGroup.addSetting<QString>("HotspotPassword", generateRandomString(8));
+    wirelessGroup.addSetting<QString>("ClientSSID", "");
+    wirelessGroup.addSetting<QString>("ClientPassword", "");
+
+    wirelessGroup.addSetting<UI::WirelessType::Value>("Type", UI::WirelessType::WIRELESS_HOTSPOT);
     wirelessGroup.load(m_settings);
     m_configurationGroups.append(wirelessGroup);
   }
 
   void Configuration::save() const {
-    fprintf(stderr, "Saving...\n");
     // Initialise Settings
     QSettings settings("journey.conf", QSettings::IniFormat);
 
     for (const auto& group : m_configurationGroups) {
-      fprintf(stderr, "Saving Grouo %s\n", group.getName().toStdString().c_str());
       group.save(settings);
     }
   }

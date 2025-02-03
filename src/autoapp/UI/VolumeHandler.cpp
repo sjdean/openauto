@@ -15,9 +15,9 @@ namespace f1x::openauto::autoapp::UI {
 
     int calculatedVolume = calculateVolume(min, max, volume);
 
-    // TODO: Write Volume to File
-
     m_pulseAudioHandler.setSinkVolume(calculatedVolume);
+    configuration_->updateSettingByName("Audio", "PlaybackVolume", volume);
+
     m_volumeSink = calculatedVolume;
   }
 
@@ -29,8 +29,7 @@ namespace f1x::openauto::autoapp::UI {
     int calculatedVolume = calculateVolume(min, max, volume);
 
     m_pulseAudioHandler.setSourceVolume(calculatedVolume);
-
-    // TODO: Write Volume to File
+    configuration_->updateSettingByName("Audio", "CaptureVolume", volume);
 
     m_volumeSource = calculatedVolume;
   }

@@ -2,6 +2,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import JourneyOS
 
 Item {
     id: settingsView
@@ -10,7 +11,7 @@ Item {
 
     Rectangle {
         id: displayRectangle
-        color: "#a3caed"
+        color: Constants.settingsBackgroundColor
         anchors.fill: parent
 
         TabBar {
@@ -53,11 +54,11 @@ Item {
 
         StackLayout {
             width: settingsView.width - 20
-            height: settingsView.height - tabBar.height - 20
+            height: settingsView.height - tabBar.height
             anchors.left: parent.left
             anchors.top: tabBar.bottom
             anchors.leftMargin: 10
-            anchors.topMargin: 10
+            anchors.topMargin: 0
             anchors.horizontalCenter: parent.horizontalCenter
             currentIndex: tabBar.currentIndex
 

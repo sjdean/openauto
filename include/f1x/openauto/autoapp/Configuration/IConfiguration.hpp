@@ -20,6 +20,7 @@ namespace f1x::openauto::autoapp::configuration {
   using SettingType = std::variant<bool, int, QString>;
 
   class IConfiguration {
+
   public:
 
     typedef std::shared_ptr<IConfiguration> Pointer;

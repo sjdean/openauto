@@ -9,12 +9,12 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
+import JourneyOS
 
 Button {
     id: control
-    property color textColor: "#ffffff"
-    property color iconColor: "#ffffff"
-    property color backgroundColor: "#2d004d"
+    property color textColor: Constants.buttonColor
+    property color iconColor: Constants.buttonColor
 
     property double iconSize: 48
     property double buttonPadding: iconSize / 10
@@ -45,7 +45,7 @@ Button {
 
     Rectangle {
         id: rectangleBackground
-        color: "#55999999"
+        color: Constants.buttonBackgroundColor
         opacity: enabled ? 1 : 0.3
         radius: 5
         border.width: 0
@@ -179,7 +179,7 @@ Button {
 
             PropertyChanges {
                 target: rectangleBackground
-                color: "#55999999"
+                color: control.textColor
             }
 
             PropertyChanges {
@@ -189,7 +189,7 @@ Button {
 
             PropertyChanges {
                 target: textItem
-                color: "#ffffff"
+                color: Constants.buttonColor
             }
         },
         State {
@@ -197,17 +197,17 @@ Button {
             when: control.down
             PropertyChanges {
                 target: textItem
-                color: "#80ffffff"
+                color: Constants.buttonPressedColor
             }
 
             PropertyChanges {
                 target: control
-                icon.color: "#80ffffff"
+                icon.color: Constants.buttonPressedColor
             }
 
             PropertyChanges {
                 target: rectangleBackground
-                color: "#bb999999"
+                color: Constants.buttonPressedBackgroundColor
             }
         }
 

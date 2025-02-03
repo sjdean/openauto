@@ -1,25 +1,56 @@
-/*#include <QCoreApplication>
-#include <QDBusConnection>
-#include <QDBusInterface>
-#include <QDBusMessage>
-#include <QDebug>
+#include <f1x/openauto/autoapp/UI/WifiMonitor.hpp>
 
-class WiFiMonitor : public QObject {
-Q_OBJECT
+namespace f1x::openauto::autoapp::UI {
 
-public:
-  WiFiMonitor(QObject *parent = nullptr) : QObject(parent) {
+  /**
+   * Monitor signals to bounce up to interface.
+   * @param parent
+   */
+  WifiMonitor::WifiMonitor(QObject *parent) : QObject(parent) {
     if (!QDBusConnection::systemBus().isConnected()) {
       qWarning() << "Cannot connect to the D-Bus session bus.";
       return;
     }
 
-    // wpa_supplicant uses the 'fi.w1.wpa_supplicant1' service when configured for D-Bus
-    QDBusConnection::systemBus().connect("fi.w1.wpa_supplicant1", "/fi/w1/wpa_supplicant1", "fi.w1.wpa_supplicant1.Interface", "StateChanged", this, SLOT(onStateChanged(int, QString)));
+    bool isHotspot = true;
+
+    if (!isHotspot) {
+
+      // wpa_supplicant uses the 'fi.w1.wpa_supplicant1' service when configured for D-Bus
+      QDBusConnection::systemBus().connect("fi.w1.wpa_supplicant1", "/fi/w1/wpa_supplicant1",
+                                           "fi.w1.wpa_supplicant1.Interface", "StateChanged", this,
+                                           SLOT(onStateChanged(int, QString)));
+    } else {
+
+      // Assuming hostapd uses 'fi.w1.hostapd1' for D-Bus (this might vary)
+      QDBusConnection::systemBus().connect("fi.w1.hostapd1", "/fi/w1/hostapd1", "fi.w1.hostapd1", "AP-STA-CONNECTED",
+                                           this, SLOT(onStaConnected(QString, QString)));
+      QDBusConnection::systemBus().connect("fi.w1.hostapd1", "/fi/w1/hostapd1", "fi.w1.hostapd1", "AP-STA-DISCONNECTED",
+                                           this, SLOT(onStaDisconnected(QString, QString)));
+    }
   }
 
-private slots:
-  void onStateChanged(int newState, const QString &interface) {
+  /**
+   * Update notification when device is connected.
+   * @param address Connected Device Address
+   * @param interface
+   */
+  void WifiMonitor::onStaConnected(const QString &address, const QString &interface) {
+    qDebug() << "Station" << address << "connected on interface" << interface;
+    updateIcon(interface, "green");
+  }
+
+  /**
+   * Update notification when device is disconnected
+   * @param address Connected Device Address
+   * @param interface
+   */
+  void WifiMonitor::onStaDisconnected(const QString &address, const QString &interface) {
+    qDebug() << "Station" << address << "disconnected from interface" << interface;
+    updateIcon(interface, "red");
+  }
+
+  void WifiMonitor::onStateChanged(int newState, const QString &interface) {
     // wpa_supplicant state codes:
     // 0 = Disconnected, 1 = Inactive, 2 = Scanning, 3 = Associating, 4 = Associated, 5 = 4-way handshake, 6 = Group handshake, 7 = Completed
     qDebug() << "WiFi state changed on interface" << interface << "to state:" << newState;
@@ -30,20 +61,13 @@ private slots:
     }
   }
 
-  void updateIcon(const QString &interface, const QString &color) {
+  void WifiMonitor::updateIcon(const QString &interface, const QString &color) {
     qDebug() << "Updating icon for WiFi interface" << interface << "to color" << color;
     // Implement your UI update logic here
   }
 };
 
-int main(int argc, char *argv[]) {
-  QCoreApplication a(argc, argv);
-  WiFiMonitor monitor;
-
-  return a.exec();
-}
-
-#include "main.moc"
+/*
 
 
 Note: You'll need to configure wpa_supplicant to use D-Bus. This typically involves adding dbus_ctrl_interface=DBUS_CTRL_INTERFACE to your wpa_supplicant.conf.

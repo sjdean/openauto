@@ -11,7 +11,7 @@ namespace f1x::openauto::autoapp::UI {
     explicit EngineDevice();
     QString GuessIconName() const;
     QString description;
-    QVariant value;
+    QString value;
     QString iconname;
     int card;
     int device;

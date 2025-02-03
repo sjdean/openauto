@@ -1,5 +1,7 @@
 #pragma once
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
+#include <f1x/openauto/autoapp/UI/WirelessType.hpp>
+#include <f1x/openauto/autoapp/UI/VideoType.hpp>
 #include <iostream>
 #include <string>
 #include <fstream>

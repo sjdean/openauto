@@ -1,14 +1,19 @@
-#ifndef OPENAUTO_SETTINGSVIEW_H
-#define OPENAUTO_SETTINGSVIEW_H
+#ifndef OPENAUTO_SETTINGSVIEW_HPP
+#define OPENAUTO_SETTINGSVIEW_HPP
 
 #include <QtCore/QObject>
+#include <f1x/openauto/autoapp/UI/WirelessType.hpp>
+#include <f1x/openauto/autoapp/UI/VideoType.hpp>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 
 namespace f1x::openauto::autoapp::UI {
 
+  // TODO: Add Car ID
+
   class SettingsView : public QObject {
     Q_OBJECT
 
+    Q_PROPERTY(QString carId READ getCarId WRITE getCarId NOTIFY carIdChanged)
     Q_PROPERTY(QString carMake READ getCarMake WRITE setCarMake NOTIFY carMakeChanged)
     Q_PROPERTY(QString carModel READ getCarModel WRITE setCarModel NOTIFY carModelChanged)
     Q_PROPERTY(aap_protobuf::service::sensorsource::message::FuelType carFuelType READ getCarFuelType WRITE setCarFuelType NOTIFY carFuelTypeChanged)
@@ -32,7 +37,7 @@ namespace f1x::openauto::autoapp::UI {
         int videoMarginHeight READ getVideoMarginHeight WRITE setVideoMarginHeight NOTIFY videoMarginHeightChanged)
     Q_PROPERTY(int videoMarginWidth READ getVideoMarginWidth WRITE setVideoMarginWidth NOTIFY videoMarginWidthChanged)
     Q_PROPERTY(int videoOMXLayer READ getVideoOMXLayer WRITE setVideoOMXLayer NOTIFY videoOMXLayerChanged)
-    Q_PROPERTY(int videoType READ getVideoType WRITE setVideoType NOTIFY videoTypeChanged)
+    Q_PROPERTY(VideoType videoType READ getVideoType WRITE setVideoType NOTIFY videoTypeChanged)
     Q_PROPERTY(
         bool videoRotateDisplay READ getVideoRotateDisplay WRITE setVideoRotateDisplay NOTIFY videoRotateDisplayChanged)
 
@@ -64,12 +69,25 @@ namespace f1x::openauto::autoapp::UI {
         int audioPlaybackDevice READ getAudioPlaybackDevice WRITE setAudioPlaybackDevice NOTIFY audioPlaybackDeviceChangeed)
     Q_PROPERTY(
         int audioCaptureDevice READ getAudioCaptureDevice WRITE setAudioCaptureDevice NOTIFY audioPlaybackCaptureChangeed)
+    Q_PROPERTY(
+        QString wirelessClientSSID READ getWirelessClientSSID WRITE setWirelessClientSSID NOTIFY wirelessClientSSIDChanged)
+    Q_PROPERTY (
+        QString wirelessClientPassword READ getWirelessClientPassword WRITE setWirelessClientPassword NOTIFY wirelessClientPasswordChanged)
+    Q_PROPERTY(
+        QString wirelessHotspotSSID READ getWirelessHotspotSSID WRITE setWirelessHotspotSSID NOTIFY wirelessHotspotSSIDChanged)
+    Q_PROPERTY (
+        QString wirelessHotspotPassword READ getWirelessHotspotPassword WRITE setWirelessHotspotPassword NOTIFY wirelessHotspotPasswordChanged)
+    Q_PROPERTY(WirelessType wirelessType READ getWirelessType WRITE setWirelessType NOTIFY wirelessTypeChanged)
+    Q_PROPERTY(bool wirelessEnabled READ getWirelessEnabled WRITE setWirelessEnabled wirelessEnabledChanged)
 
+    Q_PROPERTY(QString hwBluetoothAdapter READ getHwBluetoothAdapter WRITE setHwBluetoothAdapter NOTIFY hwBluetoothAdapterChanged)
   public:
     explicit SettingsView(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration,
                           QObject *parent = nullptr);
 
   signals:
+
+    void carIdChanged();
 
     void carMakeChanged();
 
@@ -99,7 +117,7 @@ namespace f1x::openauto::autoapp::UI {
 
     void videoOMXLayerChanged();
 
-    void videoTypeChanged(int type);
+    void videoTypeChanged(VideoType::Value type);
 
     void videoRotateDisplayChanged();
 
@@ -134,15 +152,28 @@ namespace f1x::openauto::autoapp::UI {
     void audioPlaybackDeviceChanged();
     void audioCaptureDecviceChanged();
 
+    void wirelessClientSSIDChanged();
+    void wirelessClientPasswordChanged();
+    void wirelessHotspotSSIDChanged();
+    void wirelessHotspotPasswordChanged();
+
+    void wirelessTypeChanged();
+    void wirelessEnabledChanged();
+
+    void hwBluetoothAdapterChanged();
+
   private:
     f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration_;
 
     // Car Settings
+    QString m_carId;
     QString m_carMake;
     QString m_carModel;
     aap_protobuf::service::sensorsource::message::FuelType m_carFuelType;
     aap_protobuf::service::sensorsource::message::EvConnectorType m_carEvConnectorType;
     aap_protobuf::service::control::message::DriverPosition m_carDriverPosition;
+
+    QString getCarId() const;
 
     QString getCarMake() const;
 
@@ -153,6 +184,8 @@ namespace f1x::openauto::autoapp::UI {
     aap_protobuf::service::sensorsource::message::EvConnectorType getCarEvConnectorType() const;
 
     aap_protobuf::service::control::message::DriverPosition getCarDriverPosition() const;
+
+    void setCarId(QString value);
 
     void setCarMake(QString value);
 
@@ -200,7 +233,7 @@ namespace f1x::openauto::autoapp::UI {
     int m_videoMarginHeight;
     int m_videoMarginWidth;
     int m_videoOMXLayer;
-    int m_videoType;
+    VideoType::Value m_videoType;
     bool m_videoRotateDisplay;
 
     int getVideoMarginHeight() const;
@@ -209,7 +242,7 @@ namespace f1x::openauto::autoapp::UI {
 
     int getVideoOMXLayer() const;
 
-    int getVideoType() const;
+    VideoType::Value getVideoType() const;
 
     bool getVideoRotateDisplay() const;
 
@@ -219,7 +252,7 @@ namespace f1x::openauto::autoapp::UI {
 
     void setVideoOMXLayer(int value);
 
-    void setVideoType(int value);
+    void setVideoType(VideoType::Value value);
 
     void setVideoRotateDisplay(bool value);
 
@@ -306,6 +339,37 @@ namespace f1x::openauto::autoapp::UI {
 
     void setAudioPlaybackDeviceCapture(QString value);
     void setAudioCaptureDeviceCapture(QString value);
+
+    // Wireless Settings
+    QString m_wirelessClientSSID;
+    QString m_wirelessClientPassword;
+    QString m_wirelessHotspotSSID;
+    QString m_wirelessHotspotPassword;
+
+    WirelessType::Value m_wirelessType;
+    bool m_wirelessEnabled;
+
+    void setWirelessClientSSID(QString value);
+    void setWirelessClientPassword(QString value);
+    void setWirelessHotspotSSID(QString value);
+    void setWirelessHotspotPassword(QString value);
+    void setWirelessType(WirelessType::Value value);
+    void setWirelessEnabled(bool value);
+
+
+    QString getWirelessClientSSID();
+    QString getWirelessClientPassword();
+    QString getWirelessHotspotSSID();
+    QString getWirelessHotspotPassword();
+    WirelessType::Value getWirelessType();
+    bool getWirelessEnabled();
+
+    QString m_hwBluetoothAdapter;
+    QString getHwBluetoothAdapter();
+    void setHwBluetoothAdapter(QString value);
+
+  private:
+    void activateWireless();
   };
 }
-#endif //OPENAUTO_SETTINGSVIEW_H
+#endif //OPENAUTO_SETTINGSVIEW_HPP

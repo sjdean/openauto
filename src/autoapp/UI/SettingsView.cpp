@@ -1,4 +1,5 @@
 #include <QtCore/QObject>
+#include <QProcess>
 #include <f1x/openauto/autoapp/UI/SettingsView.hpp>
 
 namespace f1x::openauto::autoapp::UI {
@@ -29,7 +30,7 @@ namespace f1x::openauto::autoapp::UI {
       m_videoMarginHeight(configuration_->getSettingByName<int>("Video", "Height")),
       m_videoMarginWidth(configuration_->getSettingByName<int>("Video", "Width")),
       m_videoOMXLayer(configuration_->getSettingByName<int>("Video", "OMXLayer")),
-      m_videoType(configuration_->getSettingByName<int>("Video", "Type")),
+      m_videoType(configuration_->getSettingByName<VideoType::Value>("Video", "Type")),
       m_videoRotateDisplay(configuration_->getSettingByName<bool>("Video", "Rotate")),
 
       m_mediaAutoPlayback(configuration_->getSettingByName<bool>("Media", "AutoPlayback")),
@@ -52,7 +53,14 @@ namespace f1x::openauto::autoapp::UI {
 
       m_audioType(
           static_cast<f1x::openauto::autoapp::configuration::AudioOutputBackendType>(configuration_->getSettingByName<int>(
-              "Audio", "Type"))) {
+              "Audio", "Type"))),
+      m_wirelessClientSSID(configuration_->getSettingByName<QString>("Wireless", "ClientSSID")),
+      m_wirelessClientPassword(configuration_->getSettingByName<QString>("Wireless", "ClientPassword")),
+      m_wirelessHotspotSSID(configuration_->getSettingByName<QString>("Wireless", "HotspotSSID")),
+      m_wirelessHotspotPassword(configuration_->getSettingByName<QString>("Wireless", "HotspotPassword")),
+
+      m_wirelessType(configuration_->getSettingByName<WirelessType::Value>("Wireless", "Type")),
+      m_wirelessEnabled(configuration_->getSettingByName<bool>("Wireless", "Enabled")) {
 
   }
 
@@ -355,16 +363,16 @@ namespace f1x::openauto::autoapp::UI {
     return m_audioVolumePlaybackMin;
   }
 
-  void SettingsView::setVideoType(int value) {
+  void SettingsView::setVideoType(VideoType::Value value) {
     if (value != m_videoType) {
-      configuration_->updateSettingByName<int>("Video", "Type", value);
+      configuration_->updateSettingByName<VideoType::Value>("Video", "Type", value);
       configuration_->save();
       m_videoType = value;
       emit videoTypeChanged(value);
     }
   }
 
-  int SettingsView::getVideoType() const {
+  VideoType::Value SettingsView::getVideoType() const {
     return m_videoType;
   }
 
@@ -418,5 +426,168 @@ namespace f1x::openauto::autoapp::UI {
 
   aap_protobuf::service::sensorsource::message::FuelType SettingsView::getCarFuelType() const {
     return m_carFuelType;
+  }
+
+  void SettingsView::setWirelessClientSSID(QString value) {
+    if (m_carMake != value) {
+      configuration_->updateSettingByName<QString>("Wireless", "SSID", value);
+      configuration_->save();
+
+      m_wirelessClientSSID = value;
+      QSettings settings("/etc/wpa_supplicant/wpa_supplicant.conf", QSettings::IniFormat);
+
+      // Assuming you want to update or add a network block
+      settings.beginGroup("network");
+      settings.setValue("ssid", QString("\"%1\"").arg(m_wirelessClientSSID)); // Quote the SSID since it's typically in quotes
+      settings.setValue("id_str", "network_" + m_wirelessClientSSID.toLower().replace(' ', '_')); // A unique identifier
+      settings.endGroup();
+
+      // Sync to write changes
+      settings.sync();
+
+      // Reconfigure wpa_supplicant to apply changes
+      QProcess::execute("sudo", QStringList() << "wpa_cli" << "-i" << "wlan0" << "reconfigure");
+      emit wirelessClientSSIDChanged();
+    }
+  }
+
+  void SettingsView::setWirelessClientPassword(QString value) {
+    if (m_carMake != value) {
+      configuration_->updateSettingByName<QString>("Wireless", "Password", value);
+      configuration_->save();
+      m_wirelessClientPassword = value;
+
+      QSettings settings("/etc/wpa_supplicant/wpa_supplicant.conf", QSettings::IniFormat);
+
+      // Assuming you want to update or add a network block
+      settings.beginGroup("network");
+      settings.setValue("psk", m_wirelessClientPassword);
+      settings.endGroup();
+
+      // Sync to write changes
+      settings.sync();
+
+      // Reconfigure wpa_supplicant to apply changes
+      QProcess::execute("sudo", QStringList() << "wpa_cli" << "-i" << "wlan0" << "reconfigure");
+
+      emit wirelessClientPasswordChanged();
+    }
+  }
+
+  QString SettingsView::getWirelessClientSSID() {
+    return m_wirelessClientSSID;
+  }
+
+  QString SettingsView::getWirelessClientPassword() {
+    return m_wirelessClientPassword;
+  }
+
+  void SettingsView::setWirelessHotspotSSID(QString value) {
+    if (m_carMake != value) {
+      configuration_->updateSettingByName<QString>("Wireless", "SSID", value);
+      configuration_->save();
+
+      m_wirelessHotspotSSID = value;
+      QSettings settings("/etc/hostapd/hostapd.conf", QSettings::IniFormat);
+
+      // Update SSID
+      settings.setValue("ssid", m_wirelessHotspotSSID);
+
+      // Sync to write changes
+      settings.sync();
+
+      // Restart hostapd to apply changes
+      QProcess::execute("sudo", QStringList() << "systemctl" << "restart" << "hostapd");
+
+      emit wirelessHotspotSSIDChanged();
+    }
+  }
+
+  void SettingsView::setWirelessHotspotPassword(QString value) {
+    if (m_carMake != value) {
+      configuration_->updateSettingByName<QString>("Wireless", "Password", value);
+      configuration_->save();
+      m_wirelessHotspotPassword = value;
+      QSettings settings("/etc/hostapd/hostapd.conf", QSettings::IniFormat);
+
+      // Update wpa_passphrase
+      settings.setValue("wpa_passphrase", m_wirelessHotspotPassword);
+
+      // Sync to write changes
+      settings.sync();
+
+      // Restart hostapd to apply changes
+      QProcess::execute("sudo", QStringList() << "systemctl" << "restart" << "hostapd");
+
+      emit wirelessHotspotPasswordChanged();
+    }
+  }
+
+  QString SettingsView::getWirelessHotspotSSID() {
+    return m_wirelessHotspotSSID;
+  }
+
+  QString SettingsView::getWirelessHotspotPassword() {
+    return m_wirelessHotspotPassword;
+  }
+
+  bool SettingsView::getWirelessEnabled() {
+    return m_wirelessEnabled;
+  }
+
+  WirelessType::Value SettingsView::getWirelessType() {
+    return m_wirelessType;
+  }
+
+  void SettingsView::setWirelessEnabled(bool value) {
+    if (value != m_wirelessEnabled) {
+      configuration_->updateSettingByName<int>("Wireless", "Enabled", value);
+      configuration_->save();
+      m_wirelessEnabled = value;
+      activateWireless();
+      emit wirelessEnabledChanged();
+    }
+  }
+
+  void SettingsView::activateWireless() {
+    if (m_wirelessEnabled) {
+      if (m_wirelessType == WirelessType::Value::WIRELESS_HOTSPOT) {
+        QProcess::execute("sudo", QStringList() << "systemctl" << "stop" << "hostapd");
+        QProcess::execute("sudo", QStringList() << "systemctl" << "stop" << "dnsmasq");
+        QProcess::execute("sudo", QStringList() << "iptables" << "-F");
+        QProcess::execute("sudo", QStringList() << "iptables" << "-X");
+        QProcess::execute("sudo", QStringList() << "iptables" << "-t" << "nat" << "-F");
+        QProcess::execute("sudo", QStringList() << "ifconfig" << "wlan0" << "down");
+        QProcess::execute("sudo", QStringList() << "ifconfig" << "wlan0" << "up");
+      } else {
+        QProcess::execute("sudo", QStringList() << "systemctl" << "stop" << "wpa_supplicant");
+        QProcess::execute("sudo", QStringList() << "ifconfig" << "wlan0" << "down");
+        QProcess::execute("sudo",
+                          QStringList() << "ifconfig" << "wlan0" << "192.168.254.1" << "netmask" << "255.255.255.240"
+                                        << "up");
+        QProcess::execute("sudo",
+                          QStringList() << "iptables" << "-t" << "nat" << "-A" << "POSTROUTING" << "-o" << "eth0"
+                                        << "-j" << "MASQUERADE");
+        QProcess::execute("sudo",
+                          QStringList() << "iptables" << "-A" << "FORWARD" << "-i" << "wlan0" << "-o" << "eth0" << "-j"
+                                        << "ACCEPT");
+        QProcess::execute("sudo", QStringList() << "systemctl" << "start" << "hostapd");
+        QProcess::execute("sudo", QStringList() << "systemctl" << "start" << "dnsmasq");
+      }
+    } else {
+      QProcess::execute("sudo", QStringList() << "systemctl" << "stop" << "hostapd");
+      QProcess::execute("sudo", QStringList() << "systemctl" << "stop" << "dnsmasq");
+      QProcess::execute("sudo", QStringList() << "systemctl" << "stop" << "wpa_supplicant");
+    }
+  }
+
+  void SettingsView::setWirelessType(WirelessType::Value value) {
+    if (value != m_wirelessType) {
+      configuration_->updateSettingByName<WirelessType::Value>("Wireless", "Type", value);
+      configuration_->save();
+      m_wirelessType = value;
+      activateWireless();
+      emit wirelessTypeChanged();
+    }
   }
 }

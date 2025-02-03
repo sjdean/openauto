@@ -7,14 +7,15 @@ Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on
 
 import QtQuick
 import QtQuick.Controls
+import JourneyOS 1.0
 
 Slider {
     id: volumeSlider
     value: 0.5
     orientation: Qt.Vertical
     background: baseBackground
-    property color sliderColor: "#cc2d004d"
-    property color alternateColor: "#cc1334fd"
+    property color sliderColor: Constants.sliderPrimaryColor
+    property color alternateColor: Constants.sliderAlternateColor
 
     Rectangle {
         id: baseBackground
@@ -26,7 +27,7 @@ Slider {
         width: implicitWidth
         height: volumeSlider.availableHeight
         radius: 10
-        color: "#77bdbebf"
+        color: Constants.sliderBackgroundColor
 
         Rectangle {
             y: ((volumeSlider.availableHeight - handleItem.height) * volumeSlider.visualPosition) + volumeSlider.topPadding
@@ -83,7 +84,7 @@ Slider {
 
             PropertyChanges {
                 target: handleItem
-                color: "#cc2d004d"
+                color: Constants.sliderPrimaryColor
                 border.color: "#ffffff"
             }
         }

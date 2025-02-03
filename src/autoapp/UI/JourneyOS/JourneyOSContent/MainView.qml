@@ -49,7 +49,7 @@ Item {
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
         background: Rectangle {
-            color: "#FFFFFF" // or whatever background color you prefer
+            color: "#FFFFFF"
             border.color: "transparent"
             border.width: 0
         }
@@ -68,7 +68,7 @@ Item {
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
         background: Rectangle {
-            color: "#FFFFFF" // or whatever background color you prefer
+            color: "#FFFFFF"
             border.color: "transparent"
             border.width: 0
         }
@@ -87,7 +87,7 @@ Item {
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
         background: Rectangle {
-            color: "#777900b5" // or whatever background color you prefer
+            color: Constants.sliderPopupBackgroundColor // or whatever background color you prefer
             border.color: "transparent"
             border.width: 0
         }
@@ -106,7 +106,7 @@ Item {
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
         background: Rectangle {
-            color: "#777900b5" // or whatever background color you prefer
+            color: Constants.sliderPopupBackgroundColor // or whatever background color you prefer
             border.color: "transparent"
             border.width: 0
         }

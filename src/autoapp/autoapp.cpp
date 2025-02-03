@@ -38,7 +38,9 @@
 #include <f1x/openauto/autoapp/UI/VolumeHandler.hpp>
 
 #include <f1x/openauto/autoapp/UI/AndroidAutoMonitor.hpp>
+#include <f1x/openauto/autoapp/UI/WifiMonitor.hpp>
 #include <f1x/openauto/autoapp/UI/PulseAudioHandler.hpp>
+#include <f1x/openauto/autoapp/UI/BluetoothPopup.hpp>
 
 namespace autoapp = f1x::openauto::autoapp;
 
@@ -129,6 +131,8 @@ int main(int argc, char *argv[]) {
   qmlRegisterType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityMethod>("AndroidAutoMonitor",1,0,"AndroidAutoConnectivityMethod");
   qRegisterMetaType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityState::Value>("AndroidAutoConnectivityState::Value");
   qRegisterMetaType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityMethod::Value>("AndroidAutoConnectivityMethod::Value");
+  qRegisterMetaType<f1x::openauto::autoapp::UI::BluetoothConnectionStatus::Value>("BluetoothConnectionStatus::Value");
+  qRegisterMetaType<f1x::openauto::autoapp::UI::WirelessType::Value>("WirelessType::Value");
 
   // Initialise ComboBox Items - Backed by AA Enum's
   f1x::openauto::autoapp::UI::FrameRateModel frameRateModel;
@@ -166,7 +170,9 @@ int main(int argc, char *argv[]) {
 
   // Monitors
   auto androidAutoMonitor = std::make_shared<f1x::openauto::autoapp::UI::AndroidAutoMonitor>();
+  auto wifiMonitor = std::make_shared<f1x::openauto::autoapp::UI::WifiMonitor>();
   engine.rootContext()->setContextProperty("androidAutoMonitor", androidAutoMonitor.get());
+  engine.rootContext()->setContextProperty("wifiMonitor", wifiMonitor.get());
 
   // Bluetooth Status and Connectivity // DBus/BlueZ
   // Wifi Status // Other
