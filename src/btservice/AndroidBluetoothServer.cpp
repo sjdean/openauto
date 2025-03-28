@@ -145,9 +145,9 @@ namespace f1x::openauto::btservice {
 
     aap_protobuf::aaw::WifiInfoResponse response;
 
-    response.set_ssid(configuration_->getParamFromFile("/etc/hostapd/hostapd.conf", "ssid").toStdString());
-    response.set_password(
-        configuration_->getParamFromFile("/etc/hostapd/hostapd.conf", "wpa_passphrase").toStdString());
+    response.set_ssid((configuration_->getSettingByName<QString>("Wireless", "SSID")).toStdString());
+    response.set_password((configuration_->getSettingByName<QString>("Wireless", "Password")).toStdString());
+
     response.set_bssid(QNetworkInterface::interfaceFromName("wlan0").hardwareAddress().toStdString());
     // TODO: AAP uses different values than WiFiProjection....
     response.set_security_mode(

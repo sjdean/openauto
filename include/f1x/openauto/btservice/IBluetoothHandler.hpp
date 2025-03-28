@@ -3,7 +3,7 @@
 //
 
 #ifndef OPENAUTO_IBLUETOOTHHANDLER_HPP
-#define OPENAUTO_IBLUETOOTHHANDLER_HPP#include <memory>
+#define OPENAUTO_IBLUETOOTHHANDLER_HPP #include <memory>
 
 #include <QBluetoothAddress>
 #include <QBluetoothLocalDevice>

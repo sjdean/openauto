@@ -45,7 +45,7 @@ namespace f1x::openauto::autoapp::UI {
         bool aaChannelGuidance READ getAAChannelGuidance WRITE setAAChannelGuidance NOTIFY aaChannelGuidanceChanged)
     Q_PROPERTY(
         bool aaChannelTelephony READ getAAChannelTelephony WRITE setAAChannelTelephony NOTIFY aaChannelTelephonyChanged)
-    Q_PROPERTY(aap_protobuf::service::media::sink::message::VideoFrameRateType aaFrameRate, READ getAAFrameRate WRITE setAAFrameRate NOTIFY aaFrameRateChanged)
+    Q_PROPERTY(aap_protobuf::service::media::sink::message::VideoFrameRateType aaFrameRate READ getAAFrameRate WRITE setAAFrameRate NOTIFY aaFrameRateChanged)
     Q_PROPERTY(aap_protobuf::service::media::sink::message::VideoCodecResolutionType aaResolution READ getAAResolution WRITE setAAResolution NOTIFY aaResolutionChanged)
     Q_PROPERTY(
         int audioVolumePlaybackMin READ getAudioVolumePlaybackMin WRITE setAudioVolumePlaybackMin NOTIFY audioVolumePlaybackMinChanged)
