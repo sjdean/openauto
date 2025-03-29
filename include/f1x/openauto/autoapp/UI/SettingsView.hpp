@@ -61,9 +61,9 @@ namespace f1x::openauto::autoapp::UI {
         int audioVolumeCapture READ getAudioVolumeCapture WRITE setAudioVolumeCapture NOTIFY audioVolumeCaptureChanged)
     Q_PROPERTY(f1x::openauto::autoapp::configuration::AudioOutputBackendType audioType READ getAudioType WRITE setAudioType NOTIFY audioTypeChanged)
     Q_PROPERTY(
-        int audioPlaybackDevice READ getAudioPlaybackDevice WRITE setAudioPlaybackDevice NOTIFY audioPlaybackDeviceChangeed)
+        int audioPlaybackDevice READ getAudioPlaybackDevice WRITE setAudioPlaybackDevice NOTIFY audioPlaybackDeviceChanged)
     Q_PROPERTY(
-        int audioCaptureDevice READ getAudioCaptureDevice WRITE setAudioCaptureDevice NOTIFY audioPlaybackCaptureChangeed)
+        int audioCaptureDevice READ getAudioCaptureDevice WRITE setAudioCaptureDevice NOTIFY audioPlaybackCaptureChanged)
 
   public:
     explicit SettingsView(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration,
@@ -115,7 +115,7 @@ namespace f1x::openauto::autoapp::UI {
 
     void aaFrameRateChanged();
 
-    void aaResolution();
+    void aaResolutionChanged();
 
     void audioVolumePlaybackMinChanged();
 
@@ -132,7 +132,7 @@ namespace f1x::openauto::autoapp::UI {
     void audioTypeChanged(f1x::openauto::autoapp::configuration::AudioOutputBackendType type);
 
     void audioPlaybackDeviceChanged();
-    void audioCaptureDecviceChanged();
+    void audioCaptureDeviceChanged();
 
   private:
     f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration_;
