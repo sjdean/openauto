@@ -4,7 +4,7 @@
 #include <QtCore/QObject>
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
-#include <QtDbus/QDBusObjectPath>
+#include <QtDBus/QDBusObjectPath>
 #include <QDebug>
 
 class BluetoothAgent : public QObject {
