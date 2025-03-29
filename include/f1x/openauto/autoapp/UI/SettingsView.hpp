@@ -61,9 +61,9 @@ namespace f1x::openauto::autoapp::UI {
         int audioVolumeCapture READ getAudioVolumeCapture WRITE setAudioVolumeCapture NOTIFY audioVolumeCaptureChanged)
     Q_PROPERTY(f1x::openauto::autoapp::configuration::AudioOutputBackendType audioType READ getAudioType WRITE setAudioType NOTIFY audioTypeChanged)
     Q_PROPERTY(
-        int audioPlaybackDevice READ getAudioPlaybackDevice WRITE setAudioPlaybackDevice NOTIFY audioPlaybackDeviceChanged)
+        int audioPlaybackDevice READ getAudioPlaybackDeviceCapture WRITE setAudioPlaybackDevice NOTIFY audioPlaybackDeviceChanged)
     Q_PROPERTY(
-        int audioCaptureDevice READ getAudioCaptureDevice WRITE setAudioCaptureDevice NOTIFY audioPlaybackCaptureChanged)
+        int audioCaptureDevice READ getAudioCaptureDeviceCapture WRITE setAudioCaptureDevice NOTIFY audioPlaybackCaptureChanged)
 
   public:
     explicit SettingsView(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration,
