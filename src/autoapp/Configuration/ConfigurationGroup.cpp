@@ -1,4 +1,3 @@
-#include <QSettings>
 #include <QString>
 #include <f1x/openauto/autoapp/Configuration/ConfigurationGroup.hpp>
 

@@ -1,12 +1,21 @@
 #include <QtCore/QObject>
 #include <QProcess>
 #include <f1x/openauto/autoapp/UI/SettingsView.hpp>
+#include <service/control/message/DriverPosition.pb.h>
+#include <service/media/sink/message/VideoFrameRateType.pb.h>
+#include <service/sensorsource/message/EvConnectorType.pb.h>
+#include <service/sensorsource/message/FuelType.pb.h>
+
+#include "f1x/openauto/autoapp/UI/Enum/AudioOutputType.hpp"
+#include "f1x/openauto/autoapp/UI/Enum/VideoType.hpp"
+#include "f1x/openauto/autoapp/UI/Enum/WirelessType.hpp"
 
 namespace f1x::openauto::autoapp::UI {
   SettingsView::SettingsView(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration,
                              QObject *parent) :
       QObject(parent),
       configuration_(std::move(configuration)),
+      m_carId(configuration->getSettingByName<QString>("Car", "Id")),
       m_carMake(configuration_->getSettingByName<QString>("Car", "Make")),
       m_carModel(configuration_->getSettingByName<QString>("Car", "Model")),
       m_carFuelType(
@@ -30,7 +39,7 @@ namespace f1x::openauto::autoapp::UI {
       m_videoMarginHeight(configuration_->getSettingByName<int>("Video", "Height")),
       m_videoMarginWidth(configuration_->getSettingByName<int>("Video", "Width")),
       m_videoOMXLayer(configuration_->getSettingByName<int>("Video", "OMXLayer")),
-      m_videoType(configuration_->getSettingByName<VideoType::Value>("Video", "Type")),
+      m_videoType(configuration_->getSettingByName<Enum::VideoType::Value>("Video", "Type")),
       m_videoRotateDisplay(configuration_->getSettingByName<bool>("Video", "Rotate")),
 
       m_mediaAutoPlayback(configuration_->getSettingByName<bool>("Media", "AutoPlayback")),
@@ -52,20 +61,83 @@ namespace f1x::openauto::autoapp::UI {
       m_audioPlaybackDeviceValue(configuration_->getSettingByName<QString>("Audio", "PlaybackDevice")),
 
       m_audioType(
-          static_cast<f1x::openauto::autoapp::configuration::AudioOutputBackendType>(configuration_->getSettingByName<int>(
+          static_cast<Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>(
               "Audio", "Type"))),
       m_wirelessClientSSID(configuration_->getSettingByName<QString>("Wireless", "ClientSSID")),
       m_wirelessClientPassword(configuration_->getSettingByName<QString>("Wireless", "ClientPassword")),
       m_wirelessHotspotSSID(configuration_->getSettingByName<QString>("Wireless", "HotspotSSID")),
       m_wirelessHotspotPassword(configuration_->getSettingByName<QString>("Wireless", "HotspotPassword")),
 
-      m_wirelessType(configuration_->getSettingByName<WirelessType::Value>("Wireless", "Type")),
+      m_wirelessType(configuration_->getSettingByName<Enum::WirelessType::Value>("Wireless", "Type")),
       m_wirelessEnabled(configuration_->getSettingByName<bool>("Wireless", "Enabled")) {
 
   }
 
   QString SettingsView::getCarMake() const {
     return m_carMake;
+  }
+
+  QString SettingsView::getCarId() const {
+    return QString();
+  }
+
+  void SettingsView::setCarId(QString value) {
+
+  }
+
+  aap_protobuf::service::media::sink::message::VideoFrameRateType SettingsView::getAAFrameRate() const {
+    return aap_protobuf::service::media::sink::message::VIDEO_FPS_60;
+  }
+
+  aap_protobuf::service::media::sink::message::VideoCodecResolutionType SettingsView::getAAResolution() const {
+    return aap_protobuf::service::media::sink::message::VIDEO_2160x3840;
+  }
+
+  void SettingsView::setAAFrameRate(aap_protobuf::service::media::sink::message::VideoFrameRateType value) {
+
+  }
+
+  void SettingsView::setAAResolution(aap_protobuf::service::media::sink::message::VideoCodecResolutionType value) {
+
+  }
+
+  QString SettingsView::getAudioPlaybackDevice() const {
+    return m_audioPlaybackDeviceValue;
+  }
+
+  QString SettingsView::getAudioCaptureDevice() const {
+    return m_audioCaptureDeviceValue;
+  }
+
+  void SettingsView::setAudioPlaybackDevice(QString value) {
+    if (m_audioPlaybackDeviceValue != value) {
+      configuration_->updateSettingByName<QString>("Car", "Model", value);
+      configuration_->save();
+      m_audioPlaybackDeviceValue = value;
+      emit audioPlaybackDeviceChanged();
+    }
+  }
+
+  void SettingsView::setAudioCaptureDevice(QString value) {
+    if (m_audioCaptureDeviceValue != value) {
+      configuration_->updateSettingByName<QString>("Car", "Model", value);
+      configuration_->save();
+      m_audioCaptureDeviceValue = value;
+      emit audioCaptureDeviceChanged();
+    }
+  }
+
+  QString SettingsView::getHwBluetoothAdapter() {
+    return m_hwBluetoothAdapter;
+  }
+
+  void SettingsView::setHwBluetoothAdapter(QString value) {
+    if (m_hwBluetoothAdapter != value) {
+      configuration_->updateSettingByName<QString>("Car", "Model", value);
+      configuration_->save();
+      m_hwBluetoothAdapter = value;
+      emit hwBluetoothAdapterChanged();
+    }
   }
 
   void SettingsView::setCarMake(QString value) {
@@ -298,7 +370,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setAudioType(f1x::openauto::autoapp::configuration::AudioOutputBackendType value) {
+  void SettingsView::setAudioType(Enum::AudioOutputType::Value value) {
     if (value != m_audioType) {
       configuration_->updateSettingByName<int>("Audio", "Type", static_cast<int>(value));
       configuration_->save();
@@ -343,7 +415,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  f1x::openauto::autoapp::configuration::AudioOutputBackendType SettingsView::getAudioType() const {
+  Enum::AudioOutputType::Value SettingsView::getAudioType() const {
     return m_audioType;
   }
 
@@ -363,16 +435,16 @@ namespace f1x::openauto::autoapp::UI {
     return m_audioVolumePlaybackMin;
   }
 
-  void SettingsView::setVideoType(VideoType::Value value) {
+  void SettingsView::setVideoType(Enum::VideoType::Value value) {
     if (value != m_videoType) {
-      configuration_->updateSettingByName<VideoType::Value>("Video", "Type", value);
+      configuration_->updateSettingByName<Enum::VideoType::Value>("Video", "Type", value);
       configuration_->save();
       m_videoType = value;
       emit videoTypeChanged(value);
     }
   }
 
-  VideoType::Value SettingsView::getVideoType() const {
+  Enum::VideoType::Value SettingsView::getVideoType() const {
     return m_videoType;
   }
 
@@ -535,7 +607,7 @@ namespace f1x::openauto::autoapp::UI {
     return m_wirelessEnabled;
   }
 
-  WirelessType::Value SettingsView::getWirelessType() {
+  Enum::WirelessType::Value SettingsView::getWirelessType() {
     return m_wirelessType;
   }
 
@@ -551,7 +623,7 @@ namespace f1x::openauto::autoapp::UI {
 
   void SettingsView::activateWireless() {
     if (m_wirelessEnabled) {
-      if (m_wirelessType == WirelessType::Value::WIRELESS_HOTSPOT) {
+      if (m_wirelessType == Enum::WirelessType::Value::WIRELESS_HOTSPOT) {
         QProcess::execute("sudo", QStringList() << "systemctl" << "stop" << "hostapd");
         QProcess::execute("sudo", QStringList() << "systemctl" << "stop" << "dnsmasq");
         QProcess::execute("sudo", QStringList() << "iptables" << "-F");
@@ -581,9 +653,9 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setWirelessType(WirelessType::Value value) {
+  void SettingsView::setWirelessType(Enum::WirelessType::Value value) {
     if (value != m_wirelessType) {
-      configuration_->updateSettingByName<WirelessType::Value>("Wireless", "Type", value);
+      configuration_->updateSettingByName<Enum::WirelessType::Value>("Wireless", "Type", value);
       configuration_->save();
       m_wirelessType = value;
       activateWireless();

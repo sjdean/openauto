@@ -25,22 +25,28 @@
 
 #include <f1x/openauto/autoapp/UI/SettingsView.hpp>
 
-#include <f1x/openauto/autoapp/UI/FrameRateModel.hpp>
-#include <f1x/openauto/autoapp/UI/ResolutionModel.hpp>
+// AASDK Backed Enum's
+#include <f1x/openauto/autoapp/UI/Combo/DriverPositionModel.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/EvConnectorTypeModel.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/FrameRateModel.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/FuelTypeModel.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/ResolutionModel.hpp>
 
-#include <f1x/openauto/autoapp/UI/DriverPositionModel.hpp>
-#include <f1x/openauto/autoapp/UI/FuelTypeModel.hpp>
-#include <f1x/openauto/autoapp/UI/EvConnectorTypeModel.hpp>
+// Backed from System Calls
+#include <f1x/openauto/autoapp/UI/Combo/BluetoothAdapterModel.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/BluetoothDeviceModel.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/PulseAudioDeviceModel.hpp>
 
-#include <f1x/openauto/autoapp/UI/PulseAudioDeviceModel.hpp>
-#include <f1x/openauto/autoapp/UI/BluetoothAdapterModel.hpp>
-#include <f1x/openauto/autoapp/UI/BrightnessHandler.hpp>
-#include <f1x/openauto/autoapp/UI/VolumeHandler.hpp>
+//
+#include <f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp>
+#include <f1x/openauto/autoapp/UI/Monitor/BluetoothHandler.hpp>
+#include <f1x/openauto/autoapp/UI/Monitor/BrightnessHandler.hpp>
+#include <f1x/openauto/autoapp/UI/Monitor/LightHandler.hpp>
+#include <f1x/openauto/autoapp/UI/Monitor/PulseAudioHandler.hpp>
+#include <f1x/openauto/autoapp/UI/Monitor/VolumeHandler.hpp>
+#include <f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp>
+#include "f1x/openauto/autoapp/UI/Enum/WirelessType.hpp"
 
-#include <f1x/openauto/autoapp/UI/AndroidAutoMonitor.hpp>
-#include <f1x/openauto/autoapp/UI/WifiMonitor.hpp>
-#include <f1x/openauto/autoapp/UI/PulseAudioHandler.hpp>
-#include <f1x/openauto/autoapp/UI/BluetoothPopup.hpp>
 
 namespace autoapp = f1x::openauto::autoapp;
 
@@ -115,7 +121,7 @@ int main(int argc, char *argv[]) {
   startIOServiceWorkers(ioService, threadPool);
 
   // Environment
-  f1x::openauto::autoapp::UI::PulseAudioHandler pulseAudioHandler;
+  f1x::openauto::autoapp::UI::Monitor::PulseAudioHandler pulseAudioHandler;
 
 
   set_qt_environment();
@@ -127,50 +133,58 @@ int main(int argc, char *argv[]) {
   QQmlApplicationEngine engine;
   QQuickView oj;
 
-  qmlRegisterType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityState>("AndroidAutoMonitor",1,0,"AndroidAutoConnectivityState");
-  qmlRegisterType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityMethod>("AndroidAutoMonitor",1,0,"AndroidAutoConnectivityMethod");
-  qRegisterMetaType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityState::Value>("AndroidAutoConnectivityState::Value");
-  qRegisterMetaType<f1x::openauto::autoapp::UI::AndroidAutoConnectivityMethod::Value>("AndroidAutoConnectivityMethod::Value");
-  qRegisterMetaType<f1x::openauto::autoapp::UI::BluetoothConnectionStatus::Value>("BluetoothConnectionStatus::Value");
-  qRegisterMetaType<f1x::openauto::autoapp::UI::WirelessType::Value>("WirelessType::Value");
+  // Type Registration
+  qmlRegisterType<f1x::openauto::autoapp::UI::Enum::AndroidAutoConnectivityState>("AndroidAutoMonitor",1,0,"AndroidAutoConnectivityState");
+  qmlRegisterType<f1x::openauto::autoapp::UI::Enum::AndroidAutoConnectivityMethod>("AndroidAutoMonitor",1,0,"AndroidAutoConnectivityMethod");
+  qRegisterMetaType<f1x::openauto::autoapp::UI::Enum::AndroidAutoConnectivityState::Value>("AndroidAutoConnectivityState::Value");
+  qRegisterMetaType<f1x::openauto::autoapp::UI::Enum::AndroidAutoConnectivityMethod::Value>("AndroidAutoConnectivityMethod::Value");
+  qRegisterMetaType<f1x::openauto::autoapp::UI::Enum::BluetoothConnectionStatus::Value>("BluetoothConnectionStatus::Value");
+  qRegisterMetaType<f1x::openauto::autoapp::UI::Enum::WirelessType::Value>("WirelessType::Value");
 
   // Initialise ComboBox Items - Backed by AA Enum's
-  f1x::openauto::autoapp::UI::FrameRateModel frameRateModel;
-  f1x::openauto::autoapp::UI::ResolutionModel resolutionModel;
-  f1x::openauto::autoapp::UI::DriverPositionModel driverPositionModel;
-  f1x::openauto::autoapp::UI::FuelTypeModel fuelTypeModel;
-  f1x::openauto::autoapp::UI::EvConnectorTypeModel evConnectorTypeModel;
+  f1x::openauto::autoapp::UI::Combo::DriverPositionModel driverPositionModel;
+  f1x::openauto::autoapp::UI::Combo::EvConnectorTypeModel evConnectorTypeModel;
+  f1x::openauto::autoapp::UI::Combo::FrameRateModel frameRateModel;
+  f1x::openauto::autoapp::UI::Combo::FuelTypeModel fuelTypeModel;
+  f1x::openauto::autoapp::UI::Combo::ResolutionModel resolutionModel;
 
-  engine.rootContext()->setContextProperty("frameRateModel", &frameRateModel);
-  engine.rootContext()->setContextProperty("resolutionModel", &resolutionModel);
   engine.rootContext()->setContextProperty("driverPositionModel", &driverPositionModel);
-  engine.rootContext()->setContextProperty("fuelTypeModel", &fuelTypeModel);
   engine.rootContext()->setContextProperty("evConnectorTypeModel", &evConnectorTypeModel);
+  engine.rootContext()->setContextProperty("frameRateModel", &frameRateModel);
+  engine.rootContext()->setContextProperty("fuelTypeModel", &fuelTypeModel);
+  engine.rootContext()->setContextProperty("resolutionModel", &resolutionModel);
 
   // Pulse Audio Input/Output (Sound) Devices
-  f1x::openauto::autoapp::UI::PulseAudioDeviceModel pulseAudioDeviceModelOutput(pulseAudioHandler, pa_direction::PA_DIRECTION_OUTPUT);
-  f1x::openauto::autoapp::UI::PulseAudioDeviceModel pulseAudioDeviceModelInput(pulseAudioHandler, pa_direction::PA_DIRECTION_INPUT);
+  f1x::openauto::autoapp::UI::Combo::PulseAudioDeviceModel pulseAudioDeviceModelOutput(pulseAudioHandler, pa_direction::PA_DIRECTION_OUTPUT);
+  f1x::openauto::autoapp::UI::Combo::PulseAudioDeviceModel pulseAudioDeviceModelInput(pulseAudioHandler, pa_direction::PA_DIRECTION_INPUT);
   engine.rootContext()->setContextProperty("pulseAudioDeviceModelOutput", &pulseAudioDeviceModelOutput);
   engine.rootContext()->setContextProperty("pulseAudioDeviceModelInput", &pulseAudioDeviceModelInput);
 
-  // Bluetooth Adapters on Host
-  f1x::openauto::autoapp::UI::BluetoothAdapterModel bluetoothAdapterModel;
-  //AvailableBluetoothDevicesForPairingModel availableBluetoothDevicesForPairingModel;
+  // Connect to Bluetooth
+  f1x::openauto::autoapp::UI::Monitor::BluetoothHandler bluetoothHandler(configuration);
 
+  // Bluetooth Adapters on Host
+  f1x::openauto::autoapp::UI::Combo::BluetoothAdapterModel bluetoothAdapterModel;
   engine.rootContext()->setContextProperty("bluetoothAdapterModel", &bluetoothAdapterModel);
 
+  // Bluetooth Devices
+  f1x::openauto::autoapp::UI::Combo::BluetoothDeviceModel bluetoothDeviceModel(&bluetoothHandler);
+  engine.rootContext()->setContextProperty("bluetoothAdapterModel", &bluetoothDeviceModel);
+
   // Setting Handlers
+  f1x::openauto::autoapp::UI::Monitor::LightHandler lightHandler(configuration);
+  f1x::openauto::autoapp::UI::Monitor::VolumeHandler volumeHandler(configuration, pulseAudioHandler);
+  f1x::openauto::autoapp::UI::Monitor::BrightnessHandler brightnessHandler(configuration, lightHandler);
+
   f1x::openauto::autoapp::UI::SettingsView settingsView(configuration);
-  f1x::openauto::autoapp::UI::VolumeHandler volumeHandler(configuration, pulseAudioHandler);
-  f1x::openauto::autoapp::UI::BrightnessHandler brightnessHandler(configuration);
 
   engine.rootContext()->setContextProperty("settingsViewHandler", &settingsView);
   engine.rootContext()->setContextProperty("volumePopupHandler", &volumeHandler);
   engine.rootContext()->setContextProperty("brightnessPopupHandler", &brightnessHandler);
 
   // Monitors
-  auto androidAutoMonitor = std::make_shared<f1x::openauto::autoapp::UI::AndroidAutoMonitor>();
-  auto wifiMonitor = std::make_shared<f1x::openauto::autoapp::UI::WifiMonitor>();
+  auto androidAutoMonitor = std::make_shared<f1x::openauto::autoapp::UI::Monitor::AndroidAutoMonitor>();
+  auto wifiMonitor = std::make_shared<f1x::openauto::autoapp::UI::Monitor::WifiMonitor>();
   engine.rootContext()->setContextProperty("androidAutoMonitor", androidAutoMonitor.get());
   engine.rootContext()->setContextProperty("wifiMonitor", wifiMonitor.get());
 

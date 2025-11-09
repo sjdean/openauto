@@ -7,7 +7,7 @@
 #include <aasdk/TCP/ITCPEndpoint.hpp>
 #include <f1x/openauto/autoapp/Service/IAndroidAutoEntityEventHandler.hpp>
 #include <f1x/openauto/autoapp/Service/IAndroidAutoEntityFactory.hpp>
-#include <f1x/openauto/autoapp/UI/AndroidAutoMonitor.hpp>
+#include <f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp>
 
 namespace f1x::openauto::autoapp {
 
@@ -23,7 +23,7 @@ namespace f1x::openauto::autoapp {
         service::IAndroidAutoEntityFactory &androidAutoEntityFactory,
         aasdk::usb::IUSBHub::Pointer usbHub,
         aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator,
-        std::shared_ptr<UI::AndroidAutoMonitor> androidAutoMonitor
+        std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor
     );
 
     void waitForUSBDevice();
@@ -60,7 +60,7 @@ namespace f1x::openauto::autoapp {
     aasdk::usb::IUSBHub::Pointer usbHub_;
     aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator_;
     service::IAndroidAutoEntity::Pointer androidAutoEntity_;
-    std::shared_ptr<UI::AndroidAutoMonitor> androidAutoMonitor_;
+    std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor_;
 
     bool isStopped_;
 

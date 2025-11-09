@@ -1,6 +1,3 @@
-#include <QSettings>
-#include <QString>
-#include <QVariant>
 #include <f1x/openauto/autoapp/Configuration/ConfigurationGroup.hpp>
 
 namespace f1x::openauto::autoapp::configuration {

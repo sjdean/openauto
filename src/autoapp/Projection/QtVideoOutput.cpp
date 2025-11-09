@@ -64,7 +64,7 @@ namespace f1x::openauto::autoapp::projection {
     OPENAUTO_LOG(debug) << "Player error state -> " << mediaPlayer_->errorString().toStdString();
   }
 
-  void QtVideoOutput::onStopPlayback() {
+  void QtVideoOutput::onStopPlayback() const {
     videoWidget_->hide();
     mediaPlayer_->stop();
   }

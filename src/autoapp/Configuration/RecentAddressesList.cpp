@@ -4,11 +4,12 @@
 
 namespace f1x::openauto::autoapp::configuration
 {
-// TODO: Re-write
+
 const std::string RecentAddressesList::cConfigFileName = "openauto_wifi_recent.ini";
 const std::string RecentAddressesList::cRecentEntiresCount = "Recent.EntiresCount";
 const std::string RecentAddressesList::cRecentEntryPrefix = "Recent.Entry_";
 
+// TODO: Do we still need this? Or will Wi-Fi information be gathered from NetworkManager???
 RecentAddressesList::RecentAddressesList(size_t maxListSize)
     : maxListSize_(maxListSize)
 {

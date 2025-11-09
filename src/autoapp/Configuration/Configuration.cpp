@@ -4,6 +4,14 @@
 #include <QInputDevice>
 #include <QSettings>
 #include <QRandomGenerator>
+#include <service/control/message/DriverPosition.pb.h>
+#include <service/media/sink/message/VideoFrameRateType.pb.h>
+#include <service/sensorsource/message/EvConnectorType.pb.h>
+#include <service/sensorsource/message/FuelType.pb.h>
+
+#include "f1x/openauto/autoapp/UI/Enum/AudioOutputType.hpp"
+#include "f1x/openauto/autoapp/UI/Enum/VideoType.hpp"
+#include "f1x/openauto/autoapp/UI/Enum/WirelessType.hpp"
 
 namespace f1x::openauto::autoapp::configuration {
 
@@ -19,6 +27,7 @@ namespace f1x::openauto::autoapp::configuration {
     carGroup.addSetting<int>("FuelType", aap_protobuf::service::sensorsource::message::FuelType::FUEL_TYPE_UNKNOWN);
     carGroup.addSetting<int>("EvConnectorType", aap_protobuf::service::sensorsource::message::EvConnectorType::EV_CONNECTOR_TYPE_UNKNOWN);
     carGroup.addSetting<int>("DriverPosition", aap_protobuf::service::control::message::DriverPosition::DRIVER_POSITION_RIGHT);
+    carGroup.addSetting<QString>("Id", generateRandomString(128));
     carGroup.load(m_settings);
     m_configurationGroups.append(carGroup);
 
@@ -37,7 +46,7 @@ namespace f1x::openauto::autoapp::configuration {
     videoGroup.addSetting<int>("Width", 0);
     videoGroup.addSetting<int>("OMXLayer", 2);
     videoGroup.addSetting<bool>("Rotate", false);
-    videoGroup.addSetting<UI::VideoType::Value>("Type", UI::VideoType::Value::EGL);
+    videoGroup.addSetting<UI::Enum::VideoType::Value>("Type", UI::Enum::VideoType::Value::EGL);
     videoGroup.load(m_settings);
     m_configurationGroups.append(videoGroup);
 
@@ -48,7 +57,7 @@ namespace f1x::openauto::autoapp::configuration {
     audioGroup.addSetting<int>("CaptureMax", 255);
     audioGroup.addSetting<int>("PlaybackVolume", 150);
     audioGroup.addSetting<int>("CaptureVolume", 150);
-    audioGroup.addSetting<int>("Type", static_cast<const int>(AudioOutputBackendType::RTAUDIO));
+    audioGroup.addSetting<int>("Type", static_cast<const int>(UI::Enum::AudioOutputType::RTAUDIO));
     audioGroup.addSetting<QString>("PlaybackDevice", "");
     audioGroup.addSetting<QString>("CaptureDevice", "");
     audioGroup.load(m_settings);
@@ -83,7 +92,7 @@ namespace f1x::openauto::autoapp::configuration {
     wirelessGroup.addSetting<QString>("ClientSSID", "");
     wirelessGroup.addSetting<QString>("ClientPassword", "");
 
-    wirelessGroup.addSetting<UI::WirelessType::Value>("Type", UI::WirelessType::WIRELESS_HOTSPOT);
+    wirelessGroup.addSetting<UI::Enum::WirelessType::Value>("Type", UI::Enum::WirelessType::WIRELESS_HOTSPOT);
     wirelessGroup.load(m_settings);
     m_configurationGroups.append(wirelessGroup);
   }
@@ -102,7 +111,7 @@ namespace f1x::openauto::autoapp::configuration {
   /// \return
   QString Configuration::generateRandomString(size_t length) {
     // Character set including uppercase, lowercase, and digits
-    QString charset = QStringLiteral("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+    auto charset = QStringLiteral("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
 
     QString randomString;
 

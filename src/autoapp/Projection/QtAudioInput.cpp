@@ -1,6 +1,7 @@
+#include "f1x/openauto/autoapp/Projection/QtAudioInput.hpp"
+
 #include <QGuiApplication>
 #include <QMediaDevices>
-#include <f1x/openauto/autoapp/Projection/QtAudioInput.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
 namespace f1x::openauto::autoapp::projection {
@@ -53,10 +54,12 @@ namespace f1x::openauto::autoapp::projection {
     }
   }
 
-  void QtAudioInput::start(StartPromise::Pointer promise) {
+  // TODO: Errors here with emit.  Local variable 'startRecording' is never used, but may have side-effects in its destructor
+  void QtAudioInput::start(IAudioInput::StartPromise::Pointer promise) {
     emit startRecording(std::move(promise));
   }
 
+  // TODO: Resolve Error - emit not found???
   void QtAudioInput::stop() {
     emit stopRecording();
   }
@@ -103,6 +106,7 @@ namespace f1x::openauto::autoapp::projection {
       readPromise_.reset();
     }
 
+    // TODO: Potential issue here - disconnect result is never used.
     if (ioDevice_ != nullptr) {
       ioDevice_->reset();
       ioDevice_->disconnect();

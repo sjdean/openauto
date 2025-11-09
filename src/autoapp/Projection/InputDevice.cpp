@@ -3,8 +3,7 @@
 #include <f1x/openauto/autoapp/Projection/InputDevice.hpp>
 
 namespace f1x::openauto::autoapp::projection {
-
-  InputDevice::InputDevice(QObject &parent, configuration::IConfiguration::Pointer configuration,
+    InputDevice::InputDevice(QObject &parent, configuration::IConfiguration::Pointer configuration,
                            const QRect &touchscreenGeometry, const QRect &displayGeometry)
       : parent_(parent), configuration_(std::move(configuration)), touchscreenGeometry_(touchscreenGeometry),
         displayGeometry_(displayGeometry), eventHandler_(nullptr) {

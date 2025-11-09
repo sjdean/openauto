@@ -1,16 +1,8 @@
 #pragma once
 
 #include <string>
-#include <QRect>
-#include <aap_protobuf/service/media/sink/message/VideoFrameRateType.pb.h>
 #include <aap_protobuf/service/media/sink/message/VideoCodecResolutionType.pb.h>
 #include <aap_protobuf/service/media/sink/message/KeyCode.pb.h>
-#include <f1x/openauto/autoapp/Configuration/BluetoothAdapterType.hpp>
-#include <f1x/openauto/autoapp/Configuration/HandednessOfTrafficType.hpp>
-#include <f1x/openauto/autoapp/Configuration/AudioOutputBackendType.hpp>
-#include <aap_protobuf/service/sensorsource/message/FuelType.pb.h>
-#include <aap_protobuf/service/sensorsource/message/EvConnectorType.pb.h>
-#include <aap_protobuf/service/control/message/DriverPosition.pb.h>
 #include <f1x/openauto/autoapp/Configuration/ConfigurationGroup.hpp>
 #include <f1x/openauto/autoapp/Configuration/ConfigurationSetting.hpp>
 #include <stdio.h>

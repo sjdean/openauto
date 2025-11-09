@@ -1,195 +1,189 @@
-cmake_minimum_required(VERSION 3.5.1)
-
+cmake_minimum_required(VERSION 3.15)
 project(openauto CXX)
-
 message(STATUS "OpenAuto")
 
-option(NOPI "Build for Non Raspberry Pi" OFF)
+# --- Global Configuration ---
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-# Set Compile Versions
-set(OPENAUTO_BUILD_DATE 20241124)       # Binary Release Build Date
-set(OPENAUTO_BUILD_MAJOR_RELEASE 4)     # Binary Release Build Major Number
-set(OPENAUTO_BUILD_MINOR_RELEASE 1)     # Binary Release Build Minor Number
-set(OPENAUTO_BUILD_INCREMENTAL 0)       # Binary Build Version - Increment for Each Build
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/")
+include(GNUInstallDirs)
 
-# Configure CMAKE
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_INIT} -Wall -pedantic -fPIC")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-set(CMAKE_CXX_FLAGS_RELEASE "-g -O3")
+# --- Automatic Versioning ---
+include(gitversion)
+set(OPENAUTO_BUILD_MAJOR_RELEASE 4)
+set(OPENAUTO_BUILD_MINOR_RELEASE 1)
+set(PROGRAM_VERSION_STRING "${OPENAUTO_BUILD_MAJOR_RELEASE}.${OPENAUTO_BUILD_MINOR_RELEASE}.${_git_commit_count}+${_build_version}")
+message(STATUS "Project Version: ${PROGRAM_VERSION_STRING}")
 
-# Default to Release mode unless overridden with -DCMAKE_BUILD_TYPE=Debug on cmake command
-if(NOT CMAKE_BUILD_TYPE)
+# --- Build Type Configuration ---
+if (NOT CMAKE_BUILD_TYPE)
     message(STATUS "Forcing Release build type")
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,/usr/local/qt5/lib")
-
-    # Set the possible values of build type for cmake-gui
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-endif()
-
-# Paths
-set(sources_directory ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set(include_directory ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/")
-
-# Configure Boost
-set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
-
-add_definitions(-DBOOST_ALL_DYN_LINK)
-
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    message(STATUS "Disabling Boost DEBUG logs")
-    add_definitions(-DNDEBUG)
-endif()
-
-if (WIN32)
-    set(WINSOCK2_LIBRARIES "ws2_32")
-endif (WIN32)
-
-if (DEFINED NOPI)
-    message(STATUS "Configuring for Non-Raspberry Pi")
-else()
-    message(STATUS "Configuring for RaspberryPi")
-    add_definitions(-DUSE_OMX -DOMX_SKIP64BIT -DRASPBERRYPI3)
-    set(BCM_HOST_LIBRARIES "/opt/vc/lib/libbcm_host.so")
-    set(BCM_HOST_INCLUDE_DIRS "/opt/vc/include")
-    set(ILCLIENT_INCLUDE_DIRS "/opt/vc/src/hello_pi/libs/ilclient")
-    set(ILCLIENT_LIBRARIES "/opt/vc/src/hello_pi/libs/ilclient/libilclient.a;/opt/vc/lib/libvcos.so;/opt/vc/lib/libvcilcs.a;/opt/vc/lib/libvchiq_arm.so")
 endif ()
 
-# Building on a Mac requires Abseil
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")  # macOS
+# --- Raspberry Pi (RPi) Configuration ---
+# To build for RPi, use a toolchain file that defines BCM_HOST_LIBRARIES
+if (DEFINED BCM_HOST_LIBRARIES)
+    message(STATUS "Configuring for Raspberry Pi (via toolchain file)")
+    add_definitions(-DUSE_OMX -DOMX_SKIP64BIT -DRASPBERRYPI3)
+else ()
+    message(STATUS "Configuring for Non-Raspberry Pi")
+endif ()
+
+# --- macOS Specifics ---
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")  # macOS
     message(STATUS "MacOS System Detected")
     add_definitions(-DMAC_OS)
     find_package(protobuf REQUIRED CONFIG)
     find_package(absl REQUIRED)
-    set(CMAKE_PREFIX_PATH "/usr/local/opt/qt@5" ${CMAKE_PREFIX_PATH})
-    list(APPEND CMAKE_PREFIX_PATH /usr/local/opt/util-linux)
-    list(APPEND CMAKE_PREFIX_PATH /usr/local/opt/taglib)
-    include(FindProtobuf)
 else ()
-    find_package(Protobuf REQUIRED)
+    find_package(Protobuf REQUIRED) # Provides Protobuf::protobuf
 endif ()
 
-find_package(aap_protobuf REQUIRED)
-find_package(aasdk REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system log OPTIONAL_COMPONENTS unit_test_framework)
-find_package(libusb-1.0 REQUIRED)
+# --- Find Dependencies (Modern CONFIG Mode) ---
+find_package(aap_protobuf REQUIRED CONFIG) # Finds config, provides AAPProto::aap_protobuf
+find_package(aasdk REQUIRED CONFIG)        # Finds config, provides AASDK::aasdk
+find_package(Boost REQUIRED COMPONENTS system log)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Bluetooth DBus Network Multimedia MultimediaWidgets)
+if(APPLE)
+    message(STATUS "Patching Qt6::Gui to remove deprecated AGL framework dependency...")
+
+    # Get the list of libraries Qt::Gui thinks it needs
+    get_property(QT_GUI_LIBS TARGET Qt6::Gui PROPERTY INTERFACE_LINK_LIBRARIES)
+
+    # Remove AGL from that list
+    list(REMOVE_ITEM QT_GUI_LIBS "-framework AGL")
+
+    # Set the list back without AGL
+    set_property(TARGET Qt6::Gui PROPERTY INTERFACE_LINK_LIBRARIES "${QT_GUI_LIBS}")
+endif()
 find_package(OpenSSL REQUIRED)
 find_package(rtaudio REQUIRED)
 find_package(taglib REQUIRED)
-find_package(blkid REQUIRED)
-find_package(gps REQUIRED)
 
+# --- Linux-Only Dependencies ---
+if (LINUX)
+    message(STATUS "Linux system detected, searching for Linux libraries")
+    find_package(blkid REQUIRED)
+    find_package(gps REQUIRED)
+else ()
+    message(STATUS "Non-Linux system, skipping linux only libraries")
+endif ()
 
+if (WIN32)
+    set(WINSOCK2_LIBRARIES "ws2_32")
+endif ()
+
+# --- QML Configuration ---
 set(UI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/autoapp/UI/JourneyOS")
-
-add_subdirectory(src/autoapp/UI/JourneyOS)
-
+add_subdirectory(${UI_DIR})
 set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
 set(QML_IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-        CACHE STRING "Import paths for Qt Creator's code model"
-        FORCE
+        CACHE STRING "Import paths for Qt Creator's code model" FORCE
 )
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}
-        ${Boost_INCLUDE_DIRS}
-        ${OPENSSL_INCLUDE_DIR}
-        ${RTAUDIO_INCLUDE_DIRS}
-        ${TAGLIB_INCLUDE_DIRS}
-        ${BLKID_INCLUDE_DIRS}
-        ${BCM_HOST_INCLUDE_DIRS}
-        ${ILCLIENT_INCLUDE_DIRS}
-        ${include_directory}
-        ${PROTOBUF_INCLUDE_DIR}
-        ${AAP_PROTOBUF_INCLUDE_DIR}
-        ${AASDK_INCLUDE_DIR})
+# --- Define Source Files (Warning: GLOB is not ideal) ---
+# ... (file GLOB commands are unchanged) ...
 
-link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-
-set(common_include_directory ${include_directory}/f1x/openauto/Common)
+set(sources_directory ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(include_directory ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(autoapp_sources_directory ${sources_directory}/autoapp)
 set(autoapp_include_directory ${include_directory}/f1x/openauto/autoapp)
 
+set(common_include_directory ${include_directory}/f1x/openauto/Common)
 
 file(GLOB_RECURSE autoapp_source_files ${autoapp_sources_directory}/*.ui ${autoapp_sources_directory}/*.cpp ${autoapp_include_directory}/*.hpp ${autoapp_include_directory}/*.h ${common_include_directory}/*.hpp)
 
-add_executable(autoapp ${autoapp_source_files})
-
-target_include_directories(autoapp PUBLIC ${AAP_PROTOBUF_INCLUDE_DIR} ${AASDK_INCLUDE_DIR})
-
-target_link_libraries(autoapp PUBLIC
-    libusb
-    pulse
-    JourneyOSplugin
-    JourneyOSContentplugin
-    ${Boost_LIBRARIES}
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Gui
-    Qt${QT_VERSION_MAJOR}::Quick
-    Qt${QT_VERSION_MAJOR}::Qml
-    Qt${QT_VERSION_MAJOR}::DBus
-    Qt${QT_VERSION_MAJOR}::Bluetooth
-    Qt${QT_VERSION_MAJOR}::Multimedia
-    Qt${QT_VERSION_MAJOR}::MultimediaWidgets
-    Qt${QT_VERSION_MAJOR}::Network
-    ${BCM_HOST_LIBRARIES}
-    ${ILCLIENT_LIBRARIES}
-    ${WINSOCK2_LIBRARIES}
-    ${RTAUDIO_LIBRARIES}
-    ${TAGLIB_LIBRARIES}
-    ${BLKID_LIBRARIES}
-    ${GPS_LIBRARIES}
-    ${PROTOBUF_LIBRARIES}
-    ${AAP_PROTOBUF_LIB_DIR}
-    ${AASDK_LIB_DIR})
-
-set(PROGRAM_VERSION_STRING "${OPENAUTO_BUILD_MAJOR_RELEASE}.${OPENAUTO_BUILD_MINOR_RELEASE}.${OPENAUTO_BUILD_INCREMENTAL}+${OPENAUTO_BUILD_DATE}")
-
-message(STATUS "Project Version: ${PROGRAM_VERSION_STRING}")
-
 set(btservice_sources_directory ${sources_directory}/btservice)
-
 set(btservice_include_directory ${include_directory}/f1x/openauto/btservice)
 file(GLOB_RECURSE btservice_source_files ${btservice_sources_directory}/*.cpp ${btservice_include_directory}/*.hpp ${autoapp_sources_directory}/Configuration/*.cpp ${autoapp_includes_directory}/Configuration/*.hpp ${common_include_directory}/*.hpp)
 
-add_executable(btservice ${btservice_source_files}
-        src/btservice/BluetoothHandler.cpp)
+# --- Target: autoapp ---
+add_executable(autoapp ${autoapp_source_files})
+target_compile_features(autoapp PRIVATE cxx_std_17)
+target_compile_options(autoapp PRIVATE -Wall -pedantic)
+target_compile_definitions(autoapp PRIVATE BOOST_ALL_DYN_LINK)
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_definitions(autoapp PRIVATE NDEBUG)
+endif ()
 
+# --- Simplified Includes (Modern) ---
+# All aasdk/aap_protobuf/boost/openssl includes are handled by the targets
+target_include_directories(autoapp PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${RTAUDIO_INCLUDE_DIRS}
+        ${TAGLIB_INCLUDE_DIRS}
+        ${BCM_HOST_INCLUDE_DIRS}
+        ${ILCLIENT_INCLUDE_DIRS}
+)
+
+# --- Simplified Linking (Modern) ---
+target_link_libraries(autoapp PUBLIC
+        AASDK::aasdk              # Modern target, handles ALL its dependencies
+        AAPProto::aap_protobuf    # Modern target, handles its dependencies
+        JourneyOSplugin
+        JourneyOSContentplugin
+        Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml Qt6::DBus
+        Qt6::Bluetooth Qt6::Multimedia Qt6::MultimediaWidgets Qt6::Network
+        PRIVATE
+        ${RTAUDIO_LIBRARIES}
+        ${TAGLIB_LIBRARIES}
+        ${BCM_HOST_LIBRARIES}
+        ${ILCLIENT_LIBRARIES}
+        ${WINSOCK2_LIBRARIES}
+)
+
+if (LINUX)
+    target_include_directories(autoapp PRIVATE
+            ${BLKID_INCLUDE_DIRS}
+            ${GPS_INCLUDE_DIRS}
+    )
+    target_link_libraries(autoapp PRIVATE
+            pulse
+            ${BLKID_LIBRARIES}
+            ${GPS_LIBRARIES}
+    )
+endif ()
+
+set_target_properties(autoapp PROPERTIES
+        VERSION ${PROGRAM_VERSION_STRING}
+        SOVERSION ${_git_commit_count}
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
+)
+
+# --- Target: btservice ---
+add_executable(btservice ${btservice_source_files})
+target_compile_features(btservice PRIVATE cxx_std_17)
+target_compile_options(btservice PRIVATE -Wall -pedantic)
+target_compile_definitions(btservice PRIVATE BOOST_ALL_DYN_LINK)
+
+# --- Simplified btservice Linking ---
 target_link_libraries(btservice PUBLIC
-        ${Boost_LIBRARIES}
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Gui
-        Qt${QT_VERSION_MAJOR}::Bluetooth
-        Qt${QT_VERSION_MAJOR}::Network
-        Qt${QT_VERSION_MAJOR}::Multimedia
-        Qt${QT_VERSION_MAJOR}::MultimediaWidgets
-        ${PROTOBUF_LIBRARIES}
-        ${AAP_PROTOBUF_LIB_DIR})
+        AAPProto::aap_protobuf    # Handles its own protobuf dependency
+        Qt6::Core Qt6::Gui Qt6::Bluetooth
+        Qt6::Network Qt6::Multimedia Qt6::MultimediaWidgets
+        PRIVATE
+        Boost::system
+        Boost::log
+)
 
-set_target_properties(autoapp
-        PROPERTIES VERSION ${PROGRAM_VERSION_STRING} SOVERSION ${OPENAUTO_BUILD_INCREMENTAL})
+set_target_properties(btservice PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
+)
 
-
-
-# Install rules
-#install(TARGETS autoapp btservice
-#        EXPORT aasdkTargets
-#        RUNTIME DESTINATION bin
-#)
+# --- Install Rules ---
+install(TARGETS autoapp btservice
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(DIRECTORY ${QT_QML_OUTPUT_DIRECTORY}/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/qml
+)

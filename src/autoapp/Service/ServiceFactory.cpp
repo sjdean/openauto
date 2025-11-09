@@ -20,8 +20,38 @@
 #include <f1x/openauto/autoapp/Projection/LocalBluetoothDevice.hpp>
 #include <f1x/openauto/autoapp/Projection/DummyBluetoothDevice.hpp>
 
-namespace f1x::openauto::autoapp::service {
+#include "f1x/openauto/autoapp/UI/Enum/AudioOutputType.hpp"
 
+namespace f1x::openauto::autoapp::service {
+  /**
+   * @class ServiceFactory
+   * @brief A factory class responsible for creating and managing instances of various services.
+   *
+   * This class provides mechanisms to instantiate, configure, and manage lifecycle of services
+   * within the application. It serves as an abstraction layer that simplifies the creation and
+   * retrieval of service objects, ensuring consistency and reducing tight coupling between components.
+   *
+   * The ServiceFactory is typically used to handle dependency injection, service discovery,
+   * or configuring and returning reusable service singletons or scoped service instances.
+   *
+   * Responsibilities of the ServiceFactory include:
+   * - Managing the instantiation logic for services.
+   * - Optionally supporting service configuration or dependency resolution.
+   * - Providing methods to retrieve service instances.
+   * - Ensuring services are properly disposed of when no longer needed (if applicable).
+   *
+   * Thread safety of this class depends on its implementation. If the ServiceFactory
+   * is intended to be shared across threads, the implementation should ensure concurrent
+   * safe access to service instances.
+   *
+   * Depending on the use case, the ServiceFactory can support various service lifetimes:
+   * - Singleton: One instance shared globally.
+   * - Transient: A new instance provided each time.
+   * - Scoped: Instances scoped to a certain context.
+   *
+   * Note that this class assumes responsibility for ensuring efficient use of resources
+   * and clean lifecycle management of the services it creates.
+   */
   ServiceFactory::ServiceFactory(boost::asio::io_service &ioService,
                                  configuration::IConfiguration::Pointer configuration)
       : ioService_(ioService), configuration_(std::move(configuration)) {
@@ -98,7 +128,7 @@ namespace f1x::openauto::autoapp::service {
     if (configuration_->getSettingByName<bool>("AndroidAuto", "Media")) {
       OPENAUTO_LOG(info) << "[ServiceFactory] Media Audio Channel enabled";
       auto mediaAudioOutput =
-          static_cast<configuration::AudioOutputBackendType>(configuration_->getSettingByName<int>("Audio", "Type")) == configuration::AudioOutputBackendType::RTAUDIO ?
+          static_cast<UI::Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>("Audio", "Type")) == UI::Enum::AudioOutputType::RTAUDIO ?
           std::make_shared<projection::RtAudioOutput>(2, 16, 48000) :
           projection::IAudioOutput::Pointer(new projection::QtAudioOutput(2, 16, 48000),
                                             std::bind(&QObject::deleteLater, std::placeholders::_1));
@@ -110,7 +140,7 @@ namespace f1x::openauto::autoapp::service {
     if (configuration_->getSettingByName<bool>("AndroidAuto", "Guidance")) {
       OPENAUTO_LOG(info) << "[ServiceFactory] Guidance Audio Channel enabled";
       auto guidanceAudioOutput =
-          static_cast<configuration::AudioOutputBackendType>(configuration_->getSettingByName<int>("Audio", "Type")) == configuration::AudioOutputBackendType::RTAUDIO ?
+          static_cast<UI::Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>("Audio", "Type")) == UI::Enum::AudioOutputType::RTAUDIO ?
           std::make_shared<projection::RtAudioOutput>(1, 16, 16000) :
           projection::IAudioOutput::Pointer(new projection::QtAudioOutput(1, 16, 16000),
                                             std::bind(&QObject::deleteLater, std::placeholders::_1));
@@ -140,7 +170,7 @@ namespace f1x::openauto::autoapp::service {
 
     OPENAUTO_LOG(info) << "[ServiceFactory] System Audio Channel enabled";
     auto systemAudioOutput =
-        static_cast<configuration::AudioOutputBackendType>(configuration_->getSettingByName<int>("Audio", "Type")) == configuration::AudioOutputBackendType::RTAUDIO ?
+        static_cast<UI::Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>("Audio", "Type")) == UI::Enum::AudioOutputType::RTAUDIO ?
         std::make_shared<projection::RtAudioOutput>(1, 16, 16000) :
         projection::IAudioOutput::Pointer(new projection::QtAudioOutput(1, 16, 16000),
                                           std::bind(&QObject::deleteLater, std::placeholders::_1));
@@ -148,6 +178,7 @@ namespace f1x::openauto::autoapp::service {
     serviceList.emplace_back(
         std::make_shared<mediasink::SystemAudioService>(ioService_, messenger, std::move(systemAudioOutput)));
 
+    // TODO: What is OMX???
 #ifdef USE_OMX
     auto videoOutput(std::make_shared<projection::OMXVideoOutput>(configuration_));
 #else

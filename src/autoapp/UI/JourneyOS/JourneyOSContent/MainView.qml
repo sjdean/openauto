@@ -53,10 +53,28 @@ Item {
             border.color: "transparent"
             border.width: 0
         }
-        contentItem: BluetoothPinPopup {
-
+        contentItem: BluetoothPopup {
+            onClose: bluetoothPopup.close()
         }
     }
+
+    Popup {
+            id: pinPopup
+            width: 300
+            height: 200
+            modal: true
+            focus: true
+            closePolicy: Popup.CloseOnEscape
+
+            // We will create this QML file next
+            contentItem: BluetoothPinPopup {
+                // We pass the agent from the C++ view model
+                agent: bluetoothViewModel.agent
+
+                onAccepted: pinPopup.close()
+                onRejected: pinPopup.close()
+            }
+        }
 
     Popup {
         id: wifiPopup
@@ -181,7 +199,25 @@ Item {
 
 
 
+    Connections {
+            // We listen to the agent for pairing requests
+            target: bluetoothViewModel.agent
 
+            // When the agent emits, we open the PIN popup
+            function onShowConfirmation(passkey) {
+                pinPopup.contentItem.pinText = "Confirm passkey: " + passkey
+                pinPopup.open()
+            }
+
+            function onShowPinCode(pincode) {
+                pinPopup.contentItem.pinText = "Enter this PIN on your device: " + pincode
+                pinPopup.open()
+            }
+
+            function onPairingComplete() {
+                pinPopup.close()
+            }
+        }
 
 }
 

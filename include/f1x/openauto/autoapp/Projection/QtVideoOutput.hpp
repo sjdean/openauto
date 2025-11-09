@@ -26,7 +26,7 @@ signals:
 protected slots:
     void createVideoOutput();
     void onStartPlayback();
-    void onStopPlayback();
+    void onStopPlayback() const;
 
 private:
     SequentialBuffer videoBuffer_;
