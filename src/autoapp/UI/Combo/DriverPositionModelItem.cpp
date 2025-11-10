@@ -1,6 +1,6 @@
-#include <f1x/openauto/autoapp/UI/DriverPositionModelItem.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/DriverPositionModelItem.hpp>
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::Combo {
   DriverPositionModelItem::DriverPositionModelItem(QString display,
                                                    aap_protobuf::service::control::message::DriverPosition value,
                                                    QObject *parent) :

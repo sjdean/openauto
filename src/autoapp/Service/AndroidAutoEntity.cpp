@@ -11,7 +11,7 @@ namespace f1x::openauto::autoapp::service {
                                        configuration::IConfiguration::Pointer configuration,
                                        ServiceList serviceList,
                                        IPinger::Pointer pinger,
-                                       std::shared_ptr<UI::AndroidAutoMonitor> androidAutoMonitor)
+                                       std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor)
       : strand_(ioService), cryptor_(std::move(cryptor)), transport_(std::move(transport)),
         messenger_(std::move(messenger)), controlServiceChannel_(
           std::make_shared<aasdk::channel::control::ControlServiceChannel>(strand_, messenger_)),
@@ -26,7 +26,7 @@ namespace f1x::openauto::autoapp::service {
   }
 
   void AndroidAutoEntity::start(IAndroidAutoEntityEventHandler &eventHandler) {
-    androidAutoMonitor_->onConnectionStateUpdate(UI::AndroidAutoConnectivityState::AA_CONNECTING);
+    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
 
 
     strand_.dispatch([this, self = this->shared_from_this(), eventHandler = &eventHandler]() {
@@ -47,7 +47,7 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoEntity::stop() {
 
-    androidAutoMonitor_->onConnectionStateUpdate(UI::AndroidAutoConnectivityState::AA_DISCONNECTED);
+    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED);
 
 
     strand_.dispatch([this, self = this->shared_from_this()]() {
@@ -95,7 +95,7 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoEntity::onVersionResponse(uint16_t majorCode, uint16_t minorCode,
                                             aap_protobuf::shared::MessageStatus status) {
-    androidAutoMonitor_->onConnectionStateUpdate(UI::AndroidAutoConnectivityState::AA_CONNECTING);
+    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
 
     OPENAUTO_LOG(info) << "[AndroidAutoEntity] onVersionResponse()";
     OPENAUTO_LOG(info) << "[AndroidAutoEntity] Version Received: " << majorCode << "." << minorCode
@@ -168,7 +168,6 @@ namespace f1x::openauto::autoapp::service {
     serviceDiscoveryResponse.mutable_channels()->Reserve(256);
     serviceDiscoveryResponse.set_driver_position(
         aap_protobuf::service::control::message::DriverPosition::DRIVER_POSITION_RIGHT);
-    serviceDiscoveryResponse.set_can_play_native_media_during_vr(false);
     serviceDiscoveryResponse.set_display_name("CubeOne Journey");
     serviceDiscoveryResponse.set_probe_for_support(false);
 
@@ -202,7 +201,7 @@ namespace f1x::openauto::autoapp::service {
     controlServiceChannel_->sendServiceDiscoveryResponse(serviceDiscoveryResponse, std::move(promise));
     controlServiceChannel_->receive(this->shared_from_this());
 
-    androidAutoMonitor_->onConnectionStateUpdate(UI::AndroidAutoConnectivityState::AA_CONNECTED);
+    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_CONNECTED);
   }
 
   void AndroidAutoEntity::onAudioFocusRequest(
@@ -257,13 +256,13 @@ namespace f1x::openauto::autoapp::service {
                   std::bind(&AndroidAutoEntity::onChannelError, this->shared_from_this(), std::placeholders::_1));
 
     controlServiceChannel_->sendShutdownResponse(response, std::move(promise));
-    androidAutoMonitor_->onConnectionStateUpdate(UI::AndroidAutoConnectivityState::AA_DISCONNECTED);
+    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED);
   }
 
   void AndroidAutoEntity::onByeByeResponse(
       const aap_protobuf::service::control::message::ByeByeResponse &response) {
     OPENAUTO_LOG(info) << "[AndroidAutoEntity] onByeByeResponse()";
-    androidAutoMonitor_->onConnectionStateUpdate(UI::AndroidAutoConnectivityState::AA_DISCONNECTED);
+    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED);
     this->triggerQuit();
   }
 

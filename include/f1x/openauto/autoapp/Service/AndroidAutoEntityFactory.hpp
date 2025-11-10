@@ -5,7 +5,7 @@
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 #include <f1x/openauto/autoapp/Service/IAndroidAutoEntityFactory.hpp>
 #include <f1x/openauto/autoapp/Service/IServiceFactory.hpp>
-#include <f1x/openauto/autoapp/UI/AndroidAutoMonitor.hpp>
+#include <f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp>
 
 namespace f1x::openauto::autoapp::service {
 
@@ -14,7 +14,7 @@ namespace f1x::openauto::autoapp::service {
     AndroidAutoEntityFactory(boost::asio::io_service &ioService,
                              configuration::IConfiguration::Pointer configuration,
                              IServiceFactory &serviceFactory,
-                             std::shared_ptr<UI::AndroidAutoMonitor> androidAutoMonitor);
+                             std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor);
 
     IAndroidAutoEntity::Pointer create(aasdk::usb::IAOAPDevice::Pointer aoapDevice) override;
 
@@ -26,7 +26,7 @@ namespace f1x::openauto::autoapp::service {
     boost::asio::io_service &ioService_;
     configuration::IConfiguration::Pointer configuration_;
     IServiceFactory &serviceFactory_;
-    std::shared_ptr<UI::AndroidAutoMonitor> androidAutoMonitor_;
+    std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor_;
   };
 
 }

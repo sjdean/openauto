@@ -1,6 +1,6 @@
-#include <f1x/openauto/autoapp/UI/PulseAudioDeviceModelItem.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/PulseAudioDeviceModelItem.hpp>
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::Combo {
   PulseAudioDeviceModelItem::PulseAudioDeviceModelItem(QString display, QString value, QObject *parent) :
       QObject(parent),
       m_display(display),

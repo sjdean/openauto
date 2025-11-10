@@ -1,6 +1,6 @@
-#include <f1x/openauto/autoapp/UI/FrameRateModelItem.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/FrameRateModelItem.hpp>
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::Combo {
 
   FrameRateModelItem::FrameRateModelItem(QString display,
                                          aap_protobuf::service::media::sink::message::VideoFrameRateType value,

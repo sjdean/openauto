@@ -1,8 +1,8 @@
-#include <f1x/openauto/autoapp/UI/FrameRateModel.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/FrameRateModel.hpp>
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::Combo {
   FrameRateModel::FrameRateModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
-    FrameRateModel::populateComboBoxItems();
+    populateComboBoxItems();
   }
 
   void FrameRateModel::populateComboBoxItems() {

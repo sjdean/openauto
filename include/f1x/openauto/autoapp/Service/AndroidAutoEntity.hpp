@@ -11,67 +11,57 @@
 #include <aap_protobuf/service/control/message/AudioFocusRequestType.pb.h>
 #include <aap_protobuf/service/control/message/AudioFocusStateType.pb.h>
 #include <aap_protobuf/service/control/message/NavFocusType.pb.h>
-#include <f1x/openauto/autoapp/UI/AndroidAutoMonitor.hpp>
+#include <f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp>
 
-namespace f1x
-{
-namespace openauto
-{
-namespace autoapp
-{
-namespace service
-{
+namespace f1x::openauto::autoapp::service {
 
-class AndroidAutoEntity: public IAndroidAutoEntity, public aasdk::channel::control::IControlServiceChannelEventHandler, public std::enable_shared_from_this<AndroidAutoEntity>
-{
-public:
-    AndroidAutoEntity(boost::asio::io_service& ioService,
-                      aasdk::messenger::ICryptor::Pointer cryptor,
-                      aasdk::transport::ITransport::Pointer transport,
-                      aasdk::messenger::IMessenger::Pointer messenger,
-                      configuration::IConfiguration::Pointer configuration,
-                      ServiceList serviceList,
-                      IPinger::Pointer pinger,
-                      std::shared_ptr<UI::AndroidAutoMonitor> androidAutoMonitor);
-    ~AndroidAutoEntity() override;
+    class AndroidAutoEntity: public IAndroidAutoEntity, public aasdk::channel::control::IControlServiceChannelEventHandler, public std::enable_shared_from_this<AndroidAutoEntity>
+    {
+    public:
+        AndroidAutoEntity(boost::asio::io_service& ioService,
+                          aasdk::messenger::ICryptor::Pointer cryptor,
+                          aasdk::transport::ITransport::Pointer transport,
+                          aasdk::messenger::IMessenger::Pointer messenger,
+                          configuration::IConfiguration::Pointer configuration,
+                          ServiceList serviceList,
+                          IPinger::Pointer pinger,
+                          std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor);
+        ~AndroidAutoEntity() override;
 
-    void start(IAndroidAutoEntityEventHandler& eventHandler) override;
-    void stop() override;
-    void pause() override;
-    void resume() override;
+        void start(IAndroidAutoEntityEventHandler& eventHandler) override;
+        void stop() override;
+        void pause() override;
+        void resume() override;
 
-    void onVersionResponse(uint16_t majorCode, uint16_t minorCode, aap_protobuf::shared::MessageStatus status) override;
-    void onHandshake(const aasdk::common::DataConstBuffer& payload) override;
-    void onServiceDiscoveryRequest(const aap_protobuf::service::control::message::ServiceDiscoveryRequest& request) override;
-    void onAudioFocusRequest(const aap_protobuf::service::control::message::AudioFocusRequest& request) override;
-    void onByeByeRequest(const aap_protobuf::service::control::message::ByeByeRequest& request) override;
-    void onByeByeResponse(const aap_protobuf::service::control::message::ByeByeResponse& response) override;
-    void onNavigationFocusRequest(const aap_protobuf::service::control::message::NavFocusRequestNotification& request) override;
-    void onVoiceSessionRequest(const aap_protobuf::service::control::message::VoiceSessionNotification &request) override;
-    void onBatteryStatusNotification(const aap_protobuf::service::control::message::BatteryStatusNotification &notification) override;
-    void onPingResponse(const aap_protobuf::service::control::message::PingResponse& response) override;
-    void onPingRequest(const aap_protobuf::service::control::message::PingRequest& request) override;
-    void onChannelError(const aasdk::error::Error& e) override;
+        void onVersionResponse(uint16_t majorCode, uint16_t minorCode, aap_protobuf::shared::MessageStatus status) override;
+        void onHandshake(const aasdk::common::DataConstBuffer& payload) override;
+        void onServiceDiscoveryRequest(const aap_protobuf::service::control::message::ServiceDiscoveryRequest& request) override;
+        void onAudioFocusRequest(const aap_protobuf::service::control::message::AudioFocusRequest& request) override;
+        void onByeByeRequest(const aap_protobuf::service::control::message::ByeByeRequest& request) override;
+        void onByeByeResponse(const aap_protobuf::service::control::message::ByeByeResponse& response) override;
+        void onNavigationFocusRequest(const aap_protobuf::service::control::message::NavFocusRequestNotification& request) override;
+        void onVoiceSessionRequest(const aap_protobuf::service::control::message::VoiceSessionNotification &request) override;
+        void onBatteryStatusNotification(const aap_protobuf::service::control::message::BatteryStatusNotification &notification) override;
+        void onPingResponse(const aap_protobuf::service::control::message::PingResponse& response) override;
+        void onPingRequest(const aap_protobuf::service::control::message::PingRequest& request) override;
+        void onChannelError(const aasdk::error::Error& e) override;
 
-private:
-    using std::enable_shared_from_this<AndroidAutoEntity>::shared_from_this;
-    void triggerQuit();
-    void schedulePing();
-    void sendPing();
+    private:
+        using std::enable_shared_from_this<AndroidAutoEntity>::shared_from_this;
+        void triggerQuit();
+        void schedulePing();
+        void sendPing();
 
-    boost::asio::io_service::strand strand_;
-    aasdk::messenger::ICryptor::Pointer cryptor_;
-    aasdk::transport::ITransport::Pointer transport_;
-    aasdk::messenger::IMessenger::Pointer messenger_;
-    aasdk::channel::control::IControlServiceChannel::Pointer controlServiceChannel_;
-    configuration::IConfiguration::Pointer configuration_;
-    ServiceList serviceList_;
-    IPinger::Pointer pinger_;
-    IAndroidAutoEntityEventHandler* eventHandler_;
-    std::shared_ptr<UI::AndroidAutoMonitor> androidAutoMonitor_;
-};
+        boost::asio::io_service::strand strand_;
+        aasdk::messenger::ICryptor::Pointer cryptor_;
+        aasdk::transport::ITransport::Pointer transport_;
+        aasdk::messenger::IMessenger::Pointer messenger_;
+        aasdk::channel::control::IControlServiceChannel::Pointer controlServiceChannel_;
+        configuration::IConfiguration::Pointer configuration_;
+        ServiceList serviceList_;
+        IPinger::Pointer pinger_;
+        IAndroidAutoEntityEventHandler* eventHandler_;
+        std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor_;
+    };
 
-}
-}
-}
 }

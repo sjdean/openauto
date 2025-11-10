@@ -1,8 +1,8 @@
-#include <f1x/openauto/autoapp/UI/ResolutionModel.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/ResolutionModel.hpp>
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::Combo {
   ResolutionModel::ResolutionModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
-    ResolutionModel::populateComboBoxItems();
+    populateComboBoxItems();
   }
 
   void ResolutionModel::populateComboBoxItems() {

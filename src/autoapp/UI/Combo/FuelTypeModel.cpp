@@ -1,8 +1,8 @@
-#include <f1x/openauto/autoapp/UI/FuelTypeModel.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/FuelTypeModel.hpp>
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::Combo {
   FuelTypeModel::FuelTypeModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
-    FuelTypeModel::populateComboBoxItems();
+    populateComboBoxItems();
   }
 
   void FuelTypeModel::populateComboBoxItems() {

@@ -1,15 +1,14 @@
 #include "f1x/openauto/autoapp/UI/Combo/BluetoothDeviceModel.hpp"
-
-#include <f1x/openauto/autoapp/UI/BluetoothDeviceModel.hpp>
 #include <QProcess>
 
-namespace f1x::openauto::autoapp::UI {
-  Combo::BluetoothDeviceModel::BluetoothDeviceModel(BluetoothHandler *bluetoothHandler, QObject *parent) : QObject(parent),
-                                                                                                           m_bluetoothHandler(
-                                                                                                             bluetoothHandler),
-                                                                                                           m_currentComboBoxItem(
-                                                                                                             nullptr) {
-    BluetoothDeviceModel::populateComboBoxItems();
+
+namespace f1x::openauto::autoapp::UI::Combo {
+  BluetoothDeviceModel::BluetoothDeviceModel(Monitor::BluetoothHandler *bluetoothHandler, QObject *parent) : QObject(parent),
+                                                                                                                    m_bluetoothHandler(
+                                                                                                                      bluetoothHandler),
+                                                                                                                    m_currentComboBoxItem(
+                                                                                                                      nullptr) {
+    populateComboBoxItems();
   }
 
   bool isBlueZRunning() {
@@ -30,7 +29,8 @@ namespace f1x::openauto::autoapp::UI {
       auto pairedDevices = m_bluetoothHandler->getPairedDeviceList();
       if (!pairedDevices.empty()) {
         for (auto pairedDevice: pairedDevices) {
-          addComboBoxItem(pairedDevice.name, pairedDevice.address);
+          QVariantMap properties = pairedDevice.toMap();
+          addComboBoxItem(properties.value("name").toString(), properties.value("address").toString());
         }
       } else {
         addComboBoxItem("SettingsWindow", "none");
@@ -63,7 +63,7 @@ namespace f1x::openauto::autoapp::UI {
   }
 
   void BluetoothDeviceModel::addComboBoxItem(const QString &display,
-                                             QString value) {
+                                                    QString value) {
     auto item = new BluetoothDeviceModelItem(display, value);
     m_comboBoxItems.emplace_back(item);
   }

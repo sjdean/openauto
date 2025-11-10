@@ -1,6 +1,6 @@
-#include <f1x/openauto/autoapp/UI/BluetoothDeviceModelItem.hpp>
+#include "f1x/openauto/autoapp/UI/Combo/BluetoothDeviceModelItem.hpp"
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::Combo {
   BluetoothDeviceModelItem::BluetoothDeviceModelItem(QString display, QString value, QObject *parent) :
       QObject(parent),
       m_display(display),

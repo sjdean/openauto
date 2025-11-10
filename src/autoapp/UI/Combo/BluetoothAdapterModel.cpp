@@ -7,7 +7,7 @@
 namespace f1x::openauto::autoapp::UI::Combo {
   // TODO: Bring in Bluetooth Monitor
   BluetoothAdapterModel::BluetoothAdapterModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
-    BluetoothAdapterModel::populateComboBoxItems();
+    populateComboBoxItems();
   }
 
   bool isBlueZRunning() {

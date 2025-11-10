@@ -1,8 +1,8 @@
-#include <f1x/openauto/autoapp/UI/DriverPositionModel.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/DriverPositionModel.hpp>
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::Combo {
   DriverPositionModel::DriverPositionModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
-    DriverPositionModel::populateComboBoxItems();
+    populateComboBoxItems();
   }
 
   void DriverPositionModel::populateComboBoxItems() {

@@ -1,6 +1,6 @@
-#include <f1x/openauto/autoapp/UI/FuelTypeModelItem.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/FuelTypeModelItem.hpp>
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::Combo {
 FuelTypeModelItem::FuelTypeModelItem(QString display, aap_protobuf::service::sensorsource::message::FuelType value,
                                      QObject *parent) :
     QObject(parent),

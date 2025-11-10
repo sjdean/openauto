@@ -1,6 +1,6 @@
-#include <f1x/openauto/autoapp/UI/ResolutionModelItem.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/ResolutionModelItem.hpp>
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::Combo {
   ResolutionModelItem::ResolutionModelItem(QString display,
                                            aap_protobuf::service::media::sink::message::VideoCodecResolutionType value,
                                            QObject *parent) :

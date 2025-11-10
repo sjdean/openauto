@@ -25,7 +25,7 @@ namespace f1x::openauto::autoapp::UI::Combo {
       }
     }
 
-    auto devices = PulseAudioDeviceModel::getPulseAudioDevices();
+    auto devices = getPulseAudioDevices();
 
   }
 

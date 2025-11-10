@@ -1,4 +1,3 @@
-#include <aasdk/USB/AOAPDevice.hpp>
 #include <aasdk/Transport/SSLWrapper.hpp>
 #include <aasdk/Transport/USBTransport.hpp>
 #include <aasdk/Transport/TCPTransport.hpp>
@@ -16,7 +15,7 @@ namespace f1x::openauto::autoapp::service {
   AndroidAutoEntityFactory::AndroidAutoEntityFactory(boost::asio::io_service &ioService,
                                                      configuration::IConfiguration::Pointer configuration,
                                                      IServiceFactory &serviceFactory,
-                                                     std::shared_ptr<UI::AndroidAutoMonitor> androidAutoMonitor) :
+                                                     std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor) :
                                                      ioService_(ioService),
                                                      configuration_(std::move(configuration)),
                                                      serviceFactory_(serviceFactory),
@@ -25,15 +24,15 @@ namespace f1x::openauto::autoapp::service {
   }
 
   IAndroidAutoEntity::Pointer AndroidAutoEntityFactory::create(aasdk::usb::IAOAPDevice::Pointer aoapDevice) {
-    androidAutoMonitor_->onConnectionStateUpdate(UI::AndroidAutoConnectivityState::AA_CONNECTING);
-    androidAutoMonitor_->onConnectionMethodUpdate(UI::AndroidAutoConnectivityMethod::AA_USB);
+    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
+    androidAutoMonitor_->onConnectionMethodUpdate(UI::Enum::AndroidAutoConnectivityMethod::AA_USB);
     auto transport(std::make_shared<aasdk::transport::USBTransport>(ioService_, std::move(aoapDevice)));
     return create(std::move(transport));
   }
 
   IAndroidAutoEntity::Pointer AndroidAutoEntityFactory::create(aasdk::tcp::ITCPEndpoint::Pointer tcpEndpoint) {
-    androidAutoMonitor_->onConnectionStateUpdate(UI::AndroidAutoConnectivityState::AA_CONNECTING);
-    androidAutoMonitor_->onConnectionMethodUpdate(UI::AndroidAutoConnectivityMethod::AA_WIFI);
+    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
+    androidAutoMonitor_->onConnectionMethodUpdate(UI::Enum::AndroidAutoConnectivityMethod::AA_WIFI);
     auto transport(std::make_shared<aasdk::transport::TCPTransport>(ioService_, std::move(tcpEndpoint)));
     return create(std::move(transport));
   }

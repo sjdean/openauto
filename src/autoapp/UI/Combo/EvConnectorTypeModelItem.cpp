@@ -1,6 +1,6 @@
-#include <f1x/openauto/autoapp/UI/EvConnectorTypeModelItem.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/EvConnectorTypeModelItem.hpp>
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::Combo {
   EvConnectorTypeModelItem::EvConnectorTypeModelItem(QString display,
                                                      aap_protobuf::service::sensorsource::message::EvConnectorType value,
                                                      QObject *parent) :

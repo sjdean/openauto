@@ -1,11 +1,11 @@
 #include "f1x/openauto/autoapp/UI/Combo/EvConnectorTypeModel.hpp"
 
-namespace f1x::openauto::autoapp::UI {
-    Combo::EvConnectorTypeModel::EvConnectorTypeModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
-      Combo::EvConnectorTypeModel::populateComboBoxItems();
+namespace f1x::openauto::autoapp::UI::Combo {
+    EvConnectorTypeModel::EvConnectorTypeModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
+      populateComboBoxItems();
   }
 
-  void Combo::EvConnectorTypeModel::populateComboBoxItems() {
+  void EvConnectorTypeModel::populateComboBoxItems() {
     m_comboBoxItems.clear();
     addComboBoxItem("Unknown",
                     aap_protobuf::service::sensorsource::message::EvConnectorType::EV_CONNECTOR_TYPE_UNKNOWN);
@@ -28,29 +28,29 @@ namespace f1x::openauto::autoapp::UI {
 
   }
 
-  QList<QObject *> Combo::EvConnectorTypeModel::getComboBoxItems() const {
+  QList<QObject *> EvConnectorTypeModel::getComboBoxItems() const {
     QList<QObject *> list;
-    for (Combo::EvConnectorTypeModelItem *item: m_comboBoxItems) {
+    for (EvConnectorTypeModelItem *item: m_comboBoxItems) {
       list.append(item);
     }
     return list;
   }
 
-  Combo::EvConnectorTypeModelItem* Combo::EvConnectorTypeModel::getCurrentComboBoxItem() {
+  EvConnectorTypeModelItem* EvConnectorTypeModel::getCurrentComboBoxItem() {
     if (!m_currentComboBoxItem && !m_comboBoxItems.isEmpty()) {
       m_currentComboBoxItem = m_comboBoxItems.first(); // Select the first item by default
     }
     return m_currentComboBoxItem;
   }
 
-  void Combo::EvConnectorTypeModel::setCurrentComboBoxItem(EvConnectorTypeModelItem* value) {
+  void EvConnectorTypeModel::setCurrentComboBoxItem(EvConnectorTypeModelItem* value) {
     if (m_currentComboBoxItem != value) {
       m_currentComboBoxItem = value;
       emit currentComboBoxItemChanged();
     }
   }
 
-  void Combo::EvConnectorTypeModel::addComboBoxItem(const QString &display,
+  void EvConnectorTypeModel::addComboBoxItem(const QString &display,
                                              aap_protobuf::service::sensorsource::message::EvConnectorType value) {
     auto item = new EvConnectorTypeModelItem(display, value);
     m_comboBoxItems.emplace_back(item);
