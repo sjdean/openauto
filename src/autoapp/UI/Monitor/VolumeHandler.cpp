@@ -2,9 +2,9 @@
 #include <utility>
 
 namespace f1x::openauto::autoapp::UI::Monitor  {
-  VolumeHandler::VolumeHandler(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration, PulseAudioHandler pulseAudioHandler) :
+  VolumeHandler::VolumeHandler(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration, std::shared_ptr<IAudioHandler> audioHandler) :
   configuration_(std::move(configuration)),
-  m_pulseAudioHandler(pulseAudioHandler) {
+  m_audioHandler(std::move(audioHandler)) {
 
   }
 
@@ -15,7 +15,7 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
 
     const int calculatedVolume = calculateVolume(min, max, volume);
 
-    m_pulseAudioHandler.setSinkVolume(calculatedVolume);
+    m_audioHandler->setSinkVolume(calculatedVolume);
     configuration_->updateSettingByName("Audio", "PlaybackVolume", volume);
 
     m_volumeSink = calculatedVolume;
@@ -28,19 +28,19 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
 
     const int calculatedVolume = calculateVolume(min, max, volume);
 
-    m_pulseAudioHandler.setSourceVolume(calculatedVolume);
+    m_audioHandler->setSourceVolume(calculatedVolume);
     configuration_->updateSettingByName("Audio", "CaptureVolume", volume);
 
     m_volumeSource = calculatedVolume;
   }
 
   void VolumeHandler::setVolumeSinkMute(const bool mute) {
-    m_pulseAudioHandler.setSinkMute(mute);
+    m_audioHandler->setSinkMute(mute);
     m_volumeSinkMute = mute;
   }
 
   void VolumeHandler::setVolumeSourceMute(const bool mute) {
-    m_pulseAudioHandler.setSourceMute(mute);
+    m_audioHandler->setSourceMute(mute);
     m_volumeSourceMute = mute;
   }
 

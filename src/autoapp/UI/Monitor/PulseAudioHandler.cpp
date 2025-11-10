@@ -1,3 +1,4 @@
+#if defined(__LINUX__)
 #include <f1x/openauto/autoapp/UI/Monitor/PulseAudioHandler.hpp>
 #include <string>
 
@@ -293,4 +294,15 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
 
     return devices;
   }
+
+  PulseAudioHandler::~PulseAudioHandler() {
+    if (m_context) {
+      pa_context_disconnect(m_context);
+      pa_context_unref(m_context);
+    }
+    if (m_mainloop) {
+      pa_mainloop_free(m_mainloop);
+    }
+  }
 }
+#endif

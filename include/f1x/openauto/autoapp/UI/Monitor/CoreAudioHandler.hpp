@@ -1,20 +1,20 @@
 #pragma once
-#if defined(__LINUX__)
-#ifndef OPENAUTO_PULSEAUDIOHANDLER_HPP
-#define OPENAUTO_PULSEAUDIOHANDLER_HPP
+#if defined(__APPLE__)
+
+#ifndef OPENAUTO_COREAUDIOHANDLER_HPP
+#define OPENAUTO_COREAUDIOHANDLER_HPP
 
 #include "IAudioHandler.h"
-#include <pulse/pulseaudio.h>
 #include <QString>
 #include <QVariant>
 
 namespace f1x::openauto::autoapp::UI::Monitor {
 
-  class PulseAudioHandler : public f1x::openauto::autoapp::UI::Monitor::IAudioHandler {
+  class CoreAudioHandler : public f1x::openauto::autoapp::UI::Monitor::IAudioHandler {
 
   public:
-    explicit PulseAudioHandler();
-    ~PulseAudioHandler() override; // Implement the virtual destructor
+    explicit CoreAudioHandler();
+    ~CoreAudioHandler() override; // Implement the virtual destructor
 
     QString getDefaultSink() override;
     QString getDefaultSource() override;
@@ -36,15 +36,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
       EngineDeviceList devices;
     };
 
-    static void GetSinkInfoCallback(pa_context *c, const pa_sink_info *i, int eol, void *userdata);
-    static void GetSourceInfoCallback(pa_context *c, const pa_source_info *i, int eol, void *userdata);
 
-
-    pa_mainloop *m_mainloop;
-    pa_mainloop_api *m_mainloop_api;
-    pa_context *m_context;
   };
 }
-#endif//OPENAUTO_PULSEAUDIOHANDLER_HPP
-
+#endif
 #endif
