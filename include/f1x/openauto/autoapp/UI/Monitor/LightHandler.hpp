@@ -1,7 +1,8 @@
 #ifndef OPENAUTO_LIGHTHANDLER_HPP
 #define OPENAUTO_LIGHTHANDLER_HPP
 
-#include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
+#include <QObject>
+#include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 
 namespace f1x::openauto::autoapp::UI::Monitor {
   class LightHandler final : public QObject {
@@ -11,7 +12,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     Q_PROPERTY(bool lightsOn READ getLightsOn WRITE setLightsOn NOTIFY lightsOnChanged)
 
   public:
-    explicit LightHandler(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration);
+    explicit LightHandler(configuration::IConfiguration::Pointer configuration);
 
     void setDay(bool day);
     void setLightsOn(bool lightsOn);
@@ -24,7 +25,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     void lightsOnChanged();
 
   private:
-    f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration_;
+    configuration::IConfiguration::Pointer configuration_;
     bool m_isDay;
     bool m_isLightsOn;
 

@@ -10,7 +10,7 @@ include(FetchContent)
 FetchContent_Declare(
     ds
     GIT_TAG qds-4.6
-    GIT_REPOSITORY https://code.qt.io/qt-labs/qtquickdesigner-components.git
+    GIT_REPOSITORY https://github.com/qt-labs/qtquickdesigner-components
 )
 
 FetchContent_GetProperties(ds)

@@ -2,7 +2,7 @@
 #define OPENAUTO_BRIGHTNESSHANDLER_HPP
 
 #include <pulse/pulseaudio.h>
-#include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
+#include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include <f1x/openauto/autoapp/UI/Monitor/LightHandler.hpp>
 
 namespace f1x::openauto::autoapp::UI::Monitor {

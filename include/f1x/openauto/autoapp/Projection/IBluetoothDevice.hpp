@@ -2,26 +2,18 @@
 
 #include <aasdk/IO/Promise.hpp>
 
-namespace f1x {
-  namespace openauto {
-    namespace autoapp {
-      namespace projection {
+namespace f1x::openauto::autoapp::projection {
+    class IBluetoothDevice {
+    public:
+        typedef aasdk::io::Promise<void, void> PairingPromise;
+        typedef std::shared_ptr<IBluetoothDevice> Pointer;
 
-        class IBluetoothDevice {
-        public:
-          typedef aasdk::io::Promise<void, void> PairingPromise;
-          typedef std::shared_ptr<IBluetoothDevice> Pointer;
+        virtual void stop() = 0;
 
-          virtual void stop() = 0;
+        virtual bool isPaired(const std::string &address) const = 0;
 
-          virtual bool isPaired(const std::string &address) const = 0;
+        virtual std::string getAdapterAddress() const = 0;
 
-          virtual std::string getAdapterAddress() const = 0;
-
-          virtual bool isAvailable() const = 0;
-        };
-
-      }
-    }
-  }
+        virtual bool isAvailable() const = 0;
+    };
 }

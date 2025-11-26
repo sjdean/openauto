@@ -1,8 +1,10 @@
-#include <f1x/openauto/btservice/AndroidBluetoothService.hpp>
+#include <f1x/openauto/autoapp/Bootstrap/AndroidBluetoothService.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
-namespace f1x::openauto::btservice {
-
+namespace f1x::openauto::autoapp::bootstrap {
+  /**
+   * Stage 1 Bootstrap - Handle iinitial RFCOMM connection to exchange WiFi credentials for Wireless AndroidAuto
+   */
   AndroidBluetoothService::AndroidBluetoothService() {
     OPENAUTO_LOG(info) << "[AndroidBluetoothService::AndroidBluetoothService] Initialising";
     const QBluetoothUuid serviceUuid(QLatin1String("4de17a00-52cb-11e6-bdf4-0800200c9a66"));

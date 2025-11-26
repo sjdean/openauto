@@ -3,10 +3,8 @@
 #ifndef OPENAUTO_VOLUMEHANDLER_HPP
 #define OPENAUTO_VOLUMEHANDLER_HPP
 
-
-#include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
-
 #include "IAudioHandler.h"
+#include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 
 namespace f1x::openauto::autoapp::UI::Monitor {
   class VolumeHandler : public QObject {
@@ -17,7 +15,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     Q_PROPERTY(bool volumeSinkMute READ getVolumeSinkMute WRITE setVolumeSinkMute NOTIFY volumeSinkMuteChanged)
     Q_PROPERTY(bool volumeSourceMute READ getVolumeSourceMute WRITE setVolumeSourceMute NOTIFY volumeSourceMuteChanged)
   public:
-    VolumeHandler(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration, std::shared_ptr<IAudioHandler> audioHandler);
+    VolumeHandler(configuration::IConfiguration::Pointer configuration, std::shared_ptr<IAudioHandler> audioHandler);
 
     void setVolumeSinkMute(bool mute);
     void setVolumeSink(int volume);
@@ -36,7 +34,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
       void volumeSourceMuteChanged();
 
   private:
-    f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration_;
+    configuration::IConfiguration::Pointer configuration_;
 
     int m_volumeSink{};
     int m_volumeSource{};

@@ -9,6 +9,9 @@
 #include <f1x/openauto/autoapp/Service/AndroidAutoEntity.hpp>
 #include <f1x/openauto/autoapp/Service/Pinger.hpp>
 
+#include "f1x/openauto/Common/Enum/AndroidAutoConnectivityMethod.hpp"
+#include "f1x/openauto/Common/Enum/AndroidAutoConnectivityState.hpp"
+
 
 namespace f1x::openauto::autoapp::service {
 
@@ -24,15 +27,15 @@ namespace f1x::openauto::autoapp::service {
   }
 
   IAndroidAutoEntity::Pointer AndroidAutoEntityFactory::create(aasdk::usb::IAOAPDevice::Pointer aoapDevice) {
-    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
-    androidAutoMonitor_->onConnectionMethodUpdate(UI::Enum::AndroidAutoConnectivityMethod::AA_USB);
+    androidAutoMonitor_->onConnectionStateUpdate(f1x::openauto::common::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
+    androidAutoMonitor_->onConnectionMethodUpdate(f1x::openauto::common::Enum::AndroidAutoConnectivityMethod::AA_USB);
     auto transport(std::make_shared<aasdk::transport::USBTransport>(ioService_, std::move(aoapDevice)));
     return create(std::move(transport));
   }
 
   IAndroidAutoEntity::Pointer AndroidAutoEntityFactory::create(aasdk::tcp::ITCPEndpoint::Pointer tcpEndpoint) {
-    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
-    androidAutoMonitor_->onConnectionMethodUpdate(UI::Enum::AndroidAutoConnectivityMethod::AA_WIFI);
+    androidAutoMonitor_->onConnectionStateUpdate(f1x::openauto::common::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
+    androidAutoMonitor_->onConnectionMethodUpdate(f1x::openauto::common::Enum::AndroidAutoConnectivityMethod::AA_WIFI);
     auto transport(std::make_shared<aasdk::transport::TCPTransport>(ioService_, std::move(tcpEndpoint)));
     return create(std::move(transport));
   }

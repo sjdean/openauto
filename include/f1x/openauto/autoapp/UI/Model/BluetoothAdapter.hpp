@@ -57,6 +57,6 @@ namespace f1x::openauto::autoapp::UI::Model {
     bool discoverable;
     bool discovering;
 
-    ~BluetoothAdapter();
+    ~BluetoothAdapter() = default;
   };
 }

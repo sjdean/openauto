@@ -1,24 +1,38 @@
 
 #include <boost/algorithm/hex.hpp>
 #include <f1x/openauto/Common/Log.hpp>
-#include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
-#include <f1x/openauto/btservice/AndroidBluetoothServer.hpp>
-#include <QString>
-#include <QtCore/QDataStream>
 #include <QNetworkInterface>
 #include <iostream>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/unknown_field_set.h>
+#include <service/control/message/AudioFocusRequestType.pb.h>
+#include <service/wifiprojection/WifiProjectionService.pb.h>
+#include <service/wifiprojection/message/WifiCredentialsRequest.pb.h>
+#include <service/wifiprojection/message/AccessPointType.pb.h>
+#include <service/wifiprojection/message/WifiSecurityMode.pb.h>
+#include "f1x/openauto/autoapp/Bootstrap/AndroidBluetoothServer.hpp"
+#include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
+#include "aaw/WifiVersionRequest.pb.h"
+#include "aaw/WifiVersionResponse.pb.h"
+#include "aaw/WifiInfoRequest.pb.h"
+#include "aaw/WifiInfoResponse.pb.h"
+#include "aaw/WifiStartRequest.pb.h"
+#include "aaw/WifiStartResponse.pb.h"
+#include "aaw/WifiConnectionStatus.pb.h"
 
 using namespace google::protobuf;
 using namespace google::protobuf::io;
 
 // 39171FDJG002WHhandleWifiVersionRequest
 
-namespace f1x::openauto::btservice {
+namespace f1x::openauto::autoapp::bootstrap {
 
-  AndroidBluetoothServer::AndroidBluetoothServer(autoapp::configuration::IConfiguration::Pointer configuration)
+  /**
+   * Stage 1 Bootstrap - Handle iinitial RFCOMM connection to exchange WiFi credentials for Wireless AndroidAuto
+   * @param configuration
+   */
+  AndroidBluetoothServer::AndroidBluetoothServer(configuration::IConfiguration::Pointer configuration)
       : rfcommServer_(std::make_unique<QBluetoothServer>(QBluetoothServiceInfo::RfcommProtocol, this)),
         configuration_(std::move(configuration)) {
     OPENAUTO_LOG(info) << "[AndroidBluetoothServer::AndroidBluetoothServer] Initialising";
@@ -57,8 +71,10 @@ namespace f1x::openauto::btservice {
 
       connect(socket, &QBluetoothSocket::readyRead, this, &AndroidBluetoothServer::readSocket);
 
+      aap_protobuf::service::control::message::AudioFocusRequestType afrt;
       aap_protobuf::aaw::WifiVersionRequest versionRequest;
       aap_protobuf::aaw::WifiStartRequest startRequest;
+      // TODO: No Hardcoding - this needs to be pulled from settings by MAc and converted to Interface Name
       startRequest.set_ip_address(getIP4_("wlan0"));
       startRequest.set_port(5000);
 
@@ -145,11 +161,12 @@ namespace f1x::openauto::btservice {
 
     aap_protobuf::aaw::WifiInfoResponse response;
 
-    response.set_ssid(configuration_->getParamFromFile("/etc/hostapd/hostapd.conf", "ssid").toStdString());
-    response.set_password(
-        configuration_->getParamFromFile("/etc/hostapd/hostapd.conf", "wpa_passphrase").toStdString());
+    response.set_ssid(configuration_->getSettingByName<QString>("Wireless", "HotspotSSID").toStdString());
+    response.set_password(configuration_->getSettingByName<QString>("Wireless", "HotspotPassword").toStdString());
+
+    // TODO: Make Interface Name Dynamic
     response.set_bssid(QNetworkInterface::interfaceFromName("wlan0").hardwareAddress().toStdString());
-    // TODO: AAP uses different values than WiFiProjection....
+
     response.set_security_mode(
         aap_protobuf::service::wifiprojection::message::WifiSecurityMode::WPA2_ENTERPRISE);
     response.set_access_point_type(aap_protobuf::service::wifiprojection::message::AccessPointType::STATIC);
@@ -162,10 +179,8 @@ namespace f1x::openauto::btservice {
   /// \param length
   void AndroidBluetoothServer::handleWifiVersionResponse(QByteArray &buffer, uint16_t length) {
     OPENAUTO_LOG(info) << "[AndroidBluetoothServer::handleWifiVersionResponse] Handling wifi version response";
-
     aap_protobuf::aaw::WifiVersionResponse response;
-    response.ParseFromArray(buffer.data() + 4, length);
-    OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::handleWifiVersionResponse] Unknown Param 1: " << response.unknown_value_a() << " Unknown Param 2: " << response.unknown_value_b();
+    response.ParseFromArray(buffer.data() + 4, length);OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::handleWifiVersionResponse] Unknown Param 1: " << response.major_version() << " Unknown Param 2: " << response.minor_version();
   }
 
   /// Listens for WifiStartResponse from MD - usually just a notification with a status
@@ -173,7 +188,6 @@ namespace f1x::openauto::btservice {
   /// \param length
   void AndroidBluetoothServer::handleWifiStartResponse(QByteArray &buffer, uint16_t length) {
     OPENAUTO_LOG(info) << "[AndroidBluetoothServer::handleWifiStartResponse] Handling wifi start response";
-
     aap_protobuf::aaw::WifiStartResponse response;
     response.ParseFromArray(buffer.data() + 4, length);
     OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::handleWifiStartResponse] " << response.ip_address() << " port " << response.port() << " status " << Status_Name(response.status());

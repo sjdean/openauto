@@ -3,49 +3,41 @@
 #include <f1x/openauto/autoapp/Projection/IBluetoothDevice.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
 
-namespace f1x {
-  namespace openauto {
-    namespace autoapp {
-      namespace service {
-        namespace bluetooth {
+namespace f1x::openauto::autoapp::service::bluetooth {
 
-          class BluetoothService
-              : public aasdk::channel::bluetooth::IBluetoothServiceEventHandler,
-                public IService,
-                public std::enable_shared_from_this<BluetoothService> {
-          public:
-            BluetoothService(boost::asio::io_service &ioService,
-                             aasdk::messenger::IMessenger::Pointer messenger,
-                             projection::IBluetoothDevice::Pointer bluetoothDevice);
+  class BluetoothService
+      : public aasdk::channel::bluetooth::IBluetoothServiceEventHandler,
+        public IService,
+        public std::enable_shared_from_this<BluetoothService> {
+  public:
+    BluetoothService(boost::asio::io_service &ioService,
+                     aasdk::messenger::IMessenger::Pointer messenger,
+                     projection::IBluetoothDevice::Pointer bluetoothDevice);
 
-            void start() override;
-            void stop() override;
-            void pause() override;
-            void resume() override;
-            void fillFeatures(aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) override;
+    void start() override;
+    void stop() override;
+    void pause() override;
+    void resume() override;
+    void fillFeatures(aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) override;
 
-            void onChannelOpenRequest(const aap_protobuf::service::control::message::ChannelOpenRequest &request) override;
+    void onChannelOpenRequest(const aap_protobuf::service::control::message::ChannelOpenRequest &request) override;
 
-            void onBluetoothPairingRequest(
-                const aap_protobuf::service::bluetooth::message::BluetoothPairingRequest &request) override;
+    void onBluetoothPairingRequest(
+      const aap_protobuf::service::bluetooth::message::BluetoothPairingRequest &request) override;
 
-            void onBluetoothAuthenticationResult(const aap_protobuf::service::bluetooth::message::BluetoothAuthenticationResult &request) override;
+    void onBluetoothAuthenticationResult(const aap_protobuf::service::bluetooth::message::BluetoothAuthenticationResult &request) override;
 
-            void onChannelError(const aasdk::error::Error &e) override;
+    void onChannelError(const aasdk::error::Error &e) override;
 
 
-          private:
-            using std::enable_shared_from_this<BluetoothService>::shared_from_this;
+  private:
+    using std::enable_shared_from_this<BluetoothService>::shared_from_this;
 
-            void sendBluetoothAuthenticationData();
+    void sendBluetoothAuthenticationData();
 
-            boost::asio::io_service::strand strand_;
-            aasdk::channel::bluetooth::BluetoothService::Pointer channel_;
-            projection::IBluetoothDevice::Pointer bluetoothDevice_;
-          };
+    boost::asio::io_service::strand strand_;
+    aasdk::channel::bluetooth::BluetoothService::Pointer channel_;
+    projection::IBluetoothDevice::Pointer bluetoothDevice_;
+  };
 
-        }
-      }
-    }
-  }
 }

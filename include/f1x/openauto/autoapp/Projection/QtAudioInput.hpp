@@ -7,7 +7,6 @@
 
 namespace f1x::openauto::autoapp::projection {
     class QtAudioInput : public QObject, public IAudioInput {
-
         Q_OBJECT
 
     public:
@@ -31,6 +30,7 @@ namespace f1x::openauto::autoapp::projection {
 
     signals:
         void startRecording(aasdk::io::Promise<void, void>::Pointer promise);
+
         void stopRecording();
 
     private slots:

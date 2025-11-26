@@ -2,6 +2,8 @@
 #include <f1x/openauto/autoapp/Service/AndroidAutoEntity.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
+#include "f1x/openauto/Common/Enum/AndroidAutoConnectivityState.hpp"
+
 namespace f1x::openauto::autoapp::service {
 
   AndroidAutoEntity::AndroidAutoEntity(boost::asio::io_service &ioService,
@@ -26,7 +28,7 @@ namespace f1x::openauto::autoapp::service {
   }
 
   void AndroidAutoEntity::start(IAndroidAutoEntityEventHandler &eventHandler) {
-    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
+    androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
 
 
     strand_.dispatch([this, self = this->shared_from_this(), eventHandler = &eventHandler]() {
@@ -47,7 +49,7 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoEntity::stop() {
 
-    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED);
+    androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED);
 
 
     strand_.dispatch([this, self = this->shared_from_this()]() {
@@ -95,7 +97,7 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoEntity::onVersionResponse(uint16_t majorCode, uint16_t minorCode,
                                             aap_protobuf::shared::MessageStatus status) {
-    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
+    androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
 
     OPENAUTO_LOG(info) << "[AndroidAutoEntity] onVersionResponse()";
     OPENAUTO_LOG(info) << "[AndroidAutoEntity] Version Received: " << majorCode << "." << minorCode
@@ -201,7 +203,7 @@ namespace f1x::openauto::autoapp::service {
     controlServiceChannel_->sendServiceDiscoveryResponse(serviceDiscoveryResponse, std::move(promise));
     controlServiceChannel_->receive(this->shared_from_this());
 
-    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_CONNECTED);
+    androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_CONNECTED);
   }
 
   void AndroidAutoEntity::onAudioFocusRequest(
@@ -256,13 +258,13 @@ namespace f1x::openauto::autoapp::service {
                   std::bind(&AndroidAutoEntity::onChannelError, this->shared_from_this(), std::placeholders::_1));
 
     controlServiceChannel_->sendShutdownResponse(response, std::move(promise));
-    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED);
+    androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED);
   }
 
   void AndroidAutoEntity::onByeByeResponse(
       const aap_protobuf::service::control::message::ByeByeResponse &response) {
     OPENAUTO_LOG(info) << "[AndroidAutoEntity] onByeByeResponse()";
-    androidAutoMonitor_->onConnectionStateUpdate(UI::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED);
+    androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED);
     this->triggerQuit();
   }
 

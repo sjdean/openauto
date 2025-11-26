@@ -8,28 +8,23 @@
 #include <f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp>
 
 namespace f1x::openauto::autoapp::service {
+    class AndroidAutoEntityFactory : public IAndroidAutoEntityFactory {
+    public:
+        AndroidAutoEntityFactory(boost::asio::io_service &ioService,
+                                 configuration::IConfiguration::Pointer configuration,
+                                 IServiceFactory &serviceFactory,
+                                 std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor);
 
-  class AndroidAutoEntityFactory : public IAndroidAutoEntityFactory {
-  public:
-    AndroidAutoEntityFactory(boost::asio::io_service &ioService,
-                             configuration::IConfiguration::Pointer configuration,
-                             IServiceFactory &serviceFactory,
-                             std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor);
+        IAndroidAutoEntity::Pointer create(aasdk::usb::IAOAPDevice::Pointer aoapDevice) override;
 
-    IAndroidAutoEntity::Pointer create(aasdk::usb::IAOAPDevice::Pointer aoapDevice) override;
+        IAndroidAutoEntity::Pointer create(aasdk::tcp::ITCPEndpoint::Pointer tcpEndpoint) override;
 
-    IAndroidAutoEntity::Pointer create(aasdk::tcp::ITCPEndpoint::Pointer tcpEndpoint) override;
+    private:
+        IAndroidAutoEntity::Pointer create(aasdk::transport::ITransport::Pointer transport);
 
-  private:
-    IAndroidAutoEntity::Pointer create(aasdk::transport::ITransport::Pointer transport);
-
-    boost::asio::io_service &ioService_;
-    configuration::IConfiguration::Pointer configuration_;
-    IServiceFactory &serviceFactory_;
-    std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor_;
-  };
-
+        boost::asio::io_service &ioService_;
+        configuration::IConfiguration::Pointer configuration_;
+        IServiceFactory &serviceFactory_;
+        std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor_;
+    };
 }
-
-
-

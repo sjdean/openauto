@@ -1,5 +1,5 @@
 #include "f1x/openauto/autoapp/UI/BluetoothAgent.hpp"
-#include <QDBusMessage>
+
 #include <QDBusConnection>
 #include <QDBusError>
 #include <QRandomGenerator>
@@ -7,7 +7,7 @@
 Q_LOGGING_CATEGORY(logAgent, "autoapp.agent")
 
 /**
- * @brief Creates the agent and registers it on D-Bus.
+ * @brief BluetoothAgent for QT/BlueZ/Dbus - Handles Pairing
  * @param dbusPath The path to register this object on (e.g., "/org/journeyos/agent")
  */
 BluetoothAgent::BluetoothAgent(const QString &dbusPath, QObject *parent) :
@@ -28,7 +28,7 @@ BluetoothAgent::~BluetoothAgent() {
 }
 
 // --- D-Bus Slots (Called by BlueZ) ---
-
+// TODO: I presume we don't need to explicitly connect to the slots as we have these here registered on the agent?
 QString BluetoothAgent::RequestPinCode(const QDBusObjectPath &device) {
     qInfo(logAgent) << "Requesting PIN for device" << device.path();
 

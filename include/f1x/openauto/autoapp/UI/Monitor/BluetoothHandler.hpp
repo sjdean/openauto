@@ -1,34 +1,55 @@
 #pragma once
-#include <QtDBus/QDBusReply>
-#include <QtCore/qtimer.h>
-#include <f1x/openauto/autoapp/UI/Model/BluetoothDevice.hpp>
-#include <f1x/openauto/autoapp/UI/Model/BluetoothAdapter.hpp>
-#include <f1x/openauto/autoapp/UI/Enum/BluetoothConnectionStatus.hpp>
-#include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
+#include <QtCore/QObject>
+#include <QTimer>
+#include <QBluetoothLocalDevice>
+#include <QBluetoothDeviceDiscoveryAgent>
 
+#include "f1x/openauto/autoapp/UI/Model/BluetoothDevice.hpp"
+#include "f1x/openauto/autoapp/UI/Model/BluetoothAdapter.hpp"
+#include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
+
+#if defined(__LINUX__)
 #include "f1x/openauto/autoapp/UI/BluetoothAgent.hpp"
+#include <QtDBus/QDBusReply>
+#include <QtDBus/QDBusInterface>
+#endif
+
+#include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"
+#include "f1x/openauto/autoapp/Projection/LocalBluetoothDevice.hpp"
+
 
 namespace f1x::openauto::autoapp::UI::Monitor {
     class BluetoothHandler : public QObject {
         Q_OBJECT
-
-        Q_PROPERTY(
-            QVariantList bluetoothAdapterList READ getBluetoothAdapterList NOTIFY
-            bluetoothAdapterListChanged)
-        Q_PROPERTY(
-            QVariantList unpairedDeviceList READ getUnpairedDeviceList NOTIFY unpairedDeviceListChanged)
+        // Properties
+        Q_PROPERTY(QVariantList bluetoothAdapterList READ getBluetoothAdapterList NOTIFY bluetoothAdapterListChanged)
+        Q_PROPERTY(QVariantList unpairedDeviceList READ getUnpairedDeviceList NOTIFY unpairedDeviceListChanged)
         Q_PROPERTY(QVariantList pairedDeviceList READ getPairedDeviceList NOTIFY pairedDeviceListChanged)
         Q_PROPERTY(int connectedDeviceCount READ getConnectedDeviceCount NOTIFY connectedDeviceCountChanged)
         Q_PROPERTY(int adapterCount READ getAdapterCount NOTIFY adapterCountChanged)
         Q_PROPERTY(int activeDeviceIndex READ getActiveDeviceIndex NOTIFY activeDeviceIndexChanged)
         Q_PROPERTY(
-            Enum::BluetoothConnectionStatus::Value bluetoothConnectionStatus READ getBluetoothConnectionStatus NOTIFY
-            bluetoothConnnectionStatusChanged)
+            f1x::openauto::common::Enum::BluetoothConnectionStatus::Value bluetoothConnectionStatus READ
+            getBluetoothConnectionStatus NOTIFY bluetoothConnnectionStatusChanged)
+        // Agent property only valid on Linux, or return nullptr on Mac
         Q_PROPERTY(QObject* agent READ getAgent CONSTANT)
 
     public:
         explicit BluetoothHandler(configuration::IConfiguration::Pointer configuration,
                                   QObject *parent = nullptr);
+
+        // Public Q_INVOKABLEs (Called by UI)
+        Q_INVOKABLE QString getAdapterAddress() const;
+
+        Q_INVOKABLE void startScan();
+
+        Q_INVOKABLE void pair(const QString &address);
+
+        Q_INVOKABLE bool doConnectToPairedDevice(const QString &address);
+
+        Q_INVOKABLE bool doRemovePair(const QString &address);
+
+        Q_INVOKABLE bool doRemoveAllPairs();
 
         QVariantList getBluetoothAdapterList();
 
@@ -38,24 +59,21 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         int getActiveDeviceIndex() const;
 
-        Enum::BluetoothConnectionStatus::Value getBluetoothConnectionStatus() const;
+        common::Enum::BluetoothConnectionStatus::Value getBluetoothConnectionStatus() const;
 
-        void setBluetoothConnectionStatus(Enum::BluetoothConnectionStatus::Value value);
+        void setBluetoothConnectionStatus(common::Enum::BluetoothConnectionStatus::Value value);
 
         QVariantList getPairedDeviceList();
 
         QVariantList getUnpairedDeviceList();
 
-        QObject* getAgent() const { return m_agent; }
-
-    public slots:
-        Q_INVOKABLE bool doConnectToPairedDevice(const QString &address);
-
-        Q_INVOKABLE bool doRemovePair(const QString &address);
-
-        Q_INVOKABLE bool doRemoveAllPairs();
-
-        Q_INVOKABLE bool doScanDevicesForPairing();
+        QObject *getAgent() const {
+#ifdef Q_OS_LINUX
+            return m_agent;
+#else
+            return nullptr;
+#endif
+        }
 
     signals:
         void bluetoothAdapterListChanged();
@@ -73,20 +91,30 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         void activeDeviceIndexChanged();
 
     private slots:
-        void onInterfacesAdded(const QDBusObjectPath &objectPath, const QVariantMap &interfacesAndProperties);
-        void onDeviceFound(const QDBusObjectPath &objectPath, const QVariantMap &interfacesAndProperties);
-        void onDeviceConnected(const QDBusObjectPath &path);
-        void onDeviceDisconnected(const QDBusObjectPath &path);
+        void onDeviceDiscovered(const QBluetoothDeviceInfo &info);
+
+        void onScanFinished();
+
+        void onPairingFinished(const QBluetoothAddress &address, QBluetoothLocalDevice::Pairing pairing);
+
+        // Linux Agent Slot
+#ifdef Q_OS_LINUX
+        void onAgentPinRequested(const QString &pin, const QString &deviceAddress);
+#endif
 
     private:
         bool disconnectCurrentDevice();
+
         bool connectToDevice(const Model::BluetoothDevice &device);
+
         bool doConnectToPairedDevice(Model::BluetoothDevice device);
+
         bool doRemovePair(const Model::BluetoothDevice &device);
+#ifdef Q_OS_LINUX
+        QString getBluezAdapterPath();
+#endif
 
-        f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration_;
-
-        QDBusInterface m_manager;
+        configuration::IConfiguration::Pointer configuration_;
         QList<Model::BluetoothAdapter> m_adapters;
         int m_activeAdapterIndex = -1;
 
@@ -94,8 +122,14 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         int m_activeDeviceIndex = -1;
 
         int m_connectedDeviceCount = 0;
-        Enum::BluetoothConnectionStatus::Value m_bluetoothConnectionStatus;
+        common::Enum::BluetoothConnectionStatus::Value m_bluetoothConnectionStatus;
 
-        BluetoothAgent* m_agent;
+        std::unique_ptr<QBluetoothLocalDevice> localDevice_;
+        QBluetoothDeviceDiscoveryAgent *discoveryAgent_;
+
+#if defined(__LINUX__)
+        QDBusInterface m_manager;
+        BluetoothAgent *m_agent;
+#endif
     };
 }

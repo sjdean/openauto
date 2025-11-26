@@ -3,6 +3,10 @@
 #include <string>
 
 namespace f1x::openauto::autoapp::UI::Monitor  {
+  /**
+   *  Handles Pulse Audio through the IAudioHandler interface for Mac
+   *  TODO: These are just stubs at the moment.
+   */
   CoreAudioHandler::CoreAudioHandler() {
 
   }

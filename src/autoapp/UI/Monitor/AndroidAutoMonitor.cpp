@@ -1,4 +1,6 @@
 #include "f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp"
+#include "f1x/openauto/Common/Enum/AndroidAutoConnectivityMethod.hpp"
+#include "f1x/openauto/Common/Enum/AndroidAutoConnectivityState.hpp"
 
 namespace f1x::openauto::autoapp::UI::Monitor {
     /**
@@ -7,16 +9,16 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      */
     AndroidAutoMonitor::AndroidAutoMonitor(QObject *parent) : QObject(parent),
                                                               m_connectivityMethod(
-                                                                  Enum::AndroidAutoConnectivityMethod::AA_INDETERMINATE),
+                                                                  common::Enum::AndroidAutoConnectivityMethod::AA_INDETERMINATE),
                                                               m_connectivityState(
-                                                                  Enum::AndroidAutoConnectivityState::AA_DISCONNECTED) {
+                                                                  common::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED) {
     }
 
     /**
      * Updates the Android Auto connectivity method.
      * @param method The new connectivity method to be updated.
      */
-    void AndroidAutoMonitor::onConnectionMethodUpdate(const Enum::AndroidAutoConnectivityMethod::Value method) {
+    void AndroidAutoMonitor::onConnectionMethodUpdate(const common::Enum::AndroidAutoConnectivityMethod::Value method) {
         if (m_connectivityMethod != method) {
             m_connectivityMethod = method;
             emit connectivityMethodChanged(method);
@@ -27,7 +29,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      * Updates the Android Auto connectivity state.
      * @param state The new connectivity state to be updated.
      */
-    void AndroidAutoMonitor::onConnectionStateUpdate(const Enum::AndroidAutoConnectivityState::Value state) {
+    void AndroidAutoMonitor::onConnectionStateUpdate(const common::Enum::AndroidAutoConnectivityState::Value state) {
         if (m_connectivityState != state) {
             m_connectivityState = state;
             emit connectivityStateChanged(state);
@@ -38,7 +40,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      * Retrieves the current Android Auto connectivity state.
      * @return The current connectivity state of type Enum::AndroidAutoConnectivityState::Value.
      */
-    Enum::AndroidAutoConnectivityState::Value AndroidAutoMonitor::getState() const {
+    common::Enum::AndroidAutoConnectivityState::Value AndroidAutoMonitor::getState() const {
         return m_connectivityState;
     }
 
@@ -46,7 +48,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      * Retrieves the current Android Auto connectivity method.
      * @return The current connectivity method of type Enum::AndroidAutoConnectivityMethod::Value.
      */
-    Enum::AndroidAutoConnectivityMethod::Value AndroidAutoMonitor::getMethod() const {
+    common::Enum::AndroidAutoConnectivityMethod::Value AndroidAutoMonitor::getMethod() const {
         return m_connectivityMethod;
     }
 
@@ -54,7 +56,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      * Sets the new Android Auto connectivity state.
      * @param value The new value for the connectivity state of type Enum::AndroidAutoConnectivityState::Value.
      */
-    void AndroidAutoMonitor::setState(const Enum::AndroidAutoConnectivityState::Value value) {
+    void AndroidAutoMonitor::setState(const common::Enum::AndroidAutoConnectivityState::Value value) {
         if (m_connectivityState != value) {
             m_connectivityState = value;
             emit connectivityStateChanged(value);
@@ -65,7 +67,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      * Sets the Android Auto connectivity method.
      * @param value The new connectivity method of type Enum::AndroidAutoConnectivityMethod::Value.
      */
-    void AndroidAutoMonitor::setMethod(const Enum::AndroidAutoConnectivityMethod::Value value) {
+    void AndroidAutoMonitor::setMethod(const common::Enum::AndroidAutoConnectivityMethod::Value value) {
         if (m_connectivityMethod != value) {
             m_connectivityMethod = value;
             emit connectivityMethodChanged(value);

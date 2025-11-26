@@ -3,9 +3,10 @@
 #include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Projection/LocalBluetoothDevice.hpp>
 
-// TODO: Check Overlap with BluetoothHandler
+// TODO: This isn't really Projection
 namespace f1x::openauto::autoapp::projection {
-
+  // TODO: Ensure we're passing in the adapter address correctly.
+  // TODO: We may need to rename this to a LinuxBluetoothAdapter so we can abstract and create models for Windows and Mac
   LocalBluetoothDevice::LocalBluetoothDevice(const QString &adapterAddress, QObject *parent) : QObject(parent) {
     qRegisterMetaType<IBluetoothDevice::PairingPromise::Pointer>("PairingPromise::Pointer");
 
@@ -22,8 +23,11 @@ namespace f1x::openauto::autoapp::projection {
     QBluetoothAddress address(adapterAddress);
     localDevice_ = std::make_unique<QBluetoothLocalDevice>(address);
 
-    // Pairing signals are being handled by btservice
+    // Turn Bluetooth on
+    localDevice_->powerOn();
 
+    // Make it visible to others
+    localDevice_->setHostMode(QBluetoothLocalDevice::HostDiscoverable);
   }
 
   void LocalBluetoothDevice::stop() {

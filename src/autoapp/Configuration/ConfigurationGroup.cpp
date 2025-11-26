@@ -1,7 +1,6 @@
 #include <QString>
 #include <f1x/openauto/autoapp/Configuration/ConfigurationGroup.hpp>
 
-// TODO: DIisplayOnTab - Mirror HPP?
 namespace f1x::openauto::autoapp::configuration {
   ConfigurationGroup::ConfigurationGroup(const QString& name, bool displayOnTab)
   : m_name(name), m_displayOnTab(displayOnTab)

@@ -26,13 +26,13 @@ namespace f1x::openauto::autoapp::service::inputsource {
   }
 
   void InputSourceService::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[InputSourceService] pause()";
     });
   }
 
   void InputSourceService::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[InputSourceService] resume()";
     });
   }

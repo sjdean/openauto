@@ -10,7 +10,8 @@ namespace f1x::openauto::autoapp::UI::Combo {
     populateComboBoxItems();
   }
 
-  bool isBlueZRunning() {
+  // TODO: isBlueZRunning is duplicated between this and BluetoothDeviceModel - consider stripping this to its own file to be shared between these two classes
+  bool isBlueZRunning2() {
     QProcess process;
     process.start("systemctl", QStringList() << "is-active" << "bluetooth.service");
     process.waitForFinished();
@@ -20,7 +21,7 @@ namespace f1x::openauto::autoapp::UI::Combo {
 
   void BluetoothAdapterModel::populateComboBoxItems() {
     m_comboBoxItems.clear();
-    if (isBlueZRunning()) {
+    if (isBlueZRunning2()) {
 
 
       QList<QBluetoothHostInfo> adapters = QBluetoothLocalDevice::allDevices();

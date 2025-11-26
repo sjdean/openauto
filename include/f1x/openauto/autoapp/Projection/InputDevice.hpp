@@ -6,44 +6,40 @@
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 
 namespace f1x::openauto::autoapp::projection {
+    class InputDevice : public QObject, public IInputDevice, boost::noncopyable {
+        Q_OBJECT
 
-  class InputDevice : public QObject, public IInputDevice, boost::noncopyable {
-  Q_OBJECT
+    public:
+        InputDevice(QObject &parent, configuration::IConfiguration::Pointer configuration,
+                    const QRect &touchscreenGeometry,
+                    const QRect &videoGeometry);
 
-  public:
-    InputDevice(QObject &parent, configuration::IConfiguration::Pointer configuration, const QRect &touchscreenGeometry,
-                const QRect &videoGeometry);
+        void start(IInputDeviceEventHandler &eventHandler) override;
 
-    void start(IInputDeviceEventHandler &eventHandler) override;
+        void stop() override;
 
-    void stop() override;
+        ButtonCodes getSupportedButtonCodes() const override;
 
-    ButtonCodes getSupportedButtonCodes() const override;
+        bool eventFilter(QObject *obj, QEvent *event) override;
 
-    bool eventFilter(QObject *obj, QEvent *event) override;
+        bool hasTouchscreen() const override;
 
-    bool hasTouchscreen() const override;
+        QRect getTouchscreenGeometry() const override;
 
-    QRect getTouchscreenGeometry() const override;
+    private:
+        void setVideoGeometry();
 
-  private:
-    void setVideoGeometry();
+        bool handleKeyEvent(QEvent *event, QKeyEvent *key);
 
-    bool handleKeyEvent(QEvent *event, QKeyEvent *key);
+        void dispatchKeyEvent(ButtonEvent event);
 
-    void dispatchKeyEvent(ButtonEvent event);
+        bool handleTouchEvent(QEvent *event);
 
-    bool handleTouchEvent(QEvent *event);
-
-    QObject &parent_;
-    configuration::IConfiguration::Pointer configuration_;
-    QRect touchscreenGeometry_;
-    QRect displayGeometry_;
-    IInputDeviceEventHandler *eventHandler_;
-    std::mutex mutex_;
-  };
-
+        QObject &parent_;
+        configuration::IConfiguration::Pointer configuration_;
+        QRect touchscreenGeometry_;
+        QRect displayGeometry_;
+        IInputDeviceEventHandler *eventHandler_;
+        std::mutex mutex_;
+    };
 }
-
-
-

@@ -2,8 +2,7 @@
 #include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Configuration/RecentAddressesList.hpp>
 
-namespace f1x::openauto::autoapp::configuration
-{
+namespace f1x::openauto::autoapp::configuration {
 
 const std::string RecentAddressesList::cConfigFileName = "openauto_wifi_recent.ini";
 const std::string RecentAddressesList::cRecentEntiresCount = "Recent.EntiresCount";

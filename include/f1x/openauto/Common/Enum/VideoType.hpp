@@ -3,7 +3,7 @@
 
 #include <QtCore/QObject>
 
-namespace f1x::openauto::autoapp::UI::Enum  {
+namespace f1x::openauto::common::Enum {
   class VideoType : public QObject {
   Q_OBJECT
 

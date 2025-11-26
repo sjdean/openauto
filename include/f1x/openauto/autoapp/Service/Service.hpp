@@ -4,25 +4,22 @@
 #include <f1x/openauto/autoapp/Service/IService.hpp>
 
 namespace f1x::openauto::autoapp::service {
+    class Service
+            : public IService {
+    public:
+        Service(boost::asio::io_service &ioService);
 
-  class Service
-      : public IService {
-  public:
-    Service(boost::asio::io_service &ioService);
+        void start() override;
 
-    void start() override;
+        void stop() override;
 
-    void stop() override;
+        void pause() override;
 
-    void pause() override;
+        void resume() override;
 
-    void resume() override;
+        void fillFeatures(aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) override;
 
-    void fillFeatures(aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) override;
-
-  private:
-
-    boost::asio::io_service::strand strand_;
-
-  };
+    private:
+        boost::asio::io_service::strand strand_;
+    };
 }

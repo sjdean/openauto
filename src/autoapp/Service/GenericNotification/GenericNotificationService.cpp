@@ -14,25 +14,25 @@ namespace f1x::openauto::autoapp::service::genericnotification {
   }
 
   void GenericNotificationService::start() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[GenericNotificationService] start()";
     });
   }
 
   void GenericNotificationService::stop() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[GenericNotificationService] stop()";
     });
   }
 
   void GenericNotificationService::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[GenericNotificationService] pause()";
     });
   }
 
   void GenericNotificationService::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[GenericNotificationService] resume()";
     });
   }

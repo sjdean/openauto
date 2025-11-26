@@ -7,39 +7,39 @@ namespace f1x::openauto::autoapp::service::vendorextension {
 
   VendorExtensionService::VendorExtensionService(boost::asio::io_service &ioService,
                                                  aasdk::messenger::IMessenger::Pointer messenger)
-      : strand_(ioService),
-        timer_(ioService),
-        channel_(
-            std::make_shared<aasdk::channel::vendorextension::VendorExtensionService>(strand_, std::move(messenger))) {
+    : timer_(ioService),
+      strand_(ioService),
+      channel_(
+        std::make_shared<aasdk::channel::vendorextension::VendorExtensionService>(strand_, std::move(messenger))) {
 
   }
 
   void VendorExtensionService::start() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[VendorExtensionService] start()";
     });
   }
 
   void VendorExtensionService::stop() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[VendorExtensionService] stop()";
     });
   }
 
   void VendorExtensionService::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[VendorExtensionService] pause()";
     });
   }
 
   void VendorExtensionService::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[VendorExtensionService] resume()";
     });
   }
 
   void VendorExtensionService::fillFeatures(
-      aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
+    aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
     OPENAUTO_LOG(info) << "[VendorExtensionService] fillFeatures()";
 
     auto *service = response.add_channels();
@@ -48,12 +48,8 @@ namespace f1x::openauto::autoapp::service::vendorextension {
     auto *vendorExtension = service->mutable_vendor_extension_service();
   }
 
-  void VendorExtensionService::onChannelError(const aasdk::error::Error &e) {
-    OPENAUTO_LOG(error) << "[VendorExtensionService] onChannelError(): " << e.what();
-  }
-
   void VendorExtensionService::onChannelOpenRequest(
-      const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
+    const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
     OPENAUTO_LOG(info) << "[VendorExtensionService] onChannelOpenRequest()";
     OPENAUTO_LOG(info) << "[VendorExtensionService] Channel Id: " << request.service_id() << ", Priority: "
                        << request.priority();
@@ -67,6 +63,10 @@ namespace f1x::openauto::autoapp::service::vendorextension {
                                      std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));
     channel_->receive(this->shared_from_this());
+  }
+
+  void VendorExtensionService::onChannelError(const aasdk::error::Error &e) {
+    OPENAUTO_LOG(error) << "[VendorExtensionService] onChannelError(): " << e.what();
   }
 }
 

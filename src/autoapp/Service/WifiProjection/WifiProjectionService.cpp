@@ -1,7 +1,6 @@
 #include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/WifiProjection/WifiProjectionService.hpp>
 #include <fstream>
-#include <QString>
 #include <QNetworkInterface>
 #include <utility>
 
@@ -49,6 +48,7 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
     service->set_id(static_cast<uint32_t>(channel_->getId()));
 
     auto *wifiChannel = service->mutable_wifi_projection_service();
+    // TODO: Make Interface Name Dynamic
     wifiChannel->set_car_wifi_bssid(QNetworkInterface::interfaceFromName("wlan0").hardwareAddress().toStdString());
   }
 
@@ -60,8 +60,8 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
     aap_protobuf::service::wifiprojection::message::WifiCredentialsResponse response;
 
     response.set_access_point_type(aap_protobuf::service::wifiprojection::message::AccessPointType::STATIC);
-    response.set_car_wifi_ssid(configuration_->getSettingByName<QString>("WiFi", "SSID").toStdString());
-    response.set_car_wifi_password(configuration_->getSettingByName<QString>("WiFi", "Password").toStdString());
+    response.set_car_wifi_ssid(configuration_->getSettingByName<QString>("Wireless", "HotspotSSID").toStdString());
+    response.set_car_wifi_password(configuration_->getSettingByName<QString>("Wireless", "HotspotPassword").toStdString());
     response.set_car_wifi_security_mode(
         aap_protobuf::service::wifiprojection::message::WifiSecurityMode::WPA2_PERSONAL);
 

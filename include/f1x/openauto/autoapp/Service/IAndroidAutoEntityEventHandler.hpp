@@ -1,23 +1,11 @@
 #pragma once
 #include <aasdk/Error/Error.hpp>
 
-namespace f1x
-{
-namespace openauto
-{
-namespace autoapp
-{
-namespace service
-{
+namespace f1x::openauto::autoapp::service {
+    class IAndroidAutoEntityEventHandler {
+    public:
+        virtual ~IAndroidAutoEntityEventHandler() = default;
 
-class IAndroidAutoEntityEventHandler
-{
-public:
-    virtual ~IAndroidAutoEntityEventHandler() = default;
-    virtual void onAndroidAutoQuit() = 0;
-};
-
-}
-}
-}
+        virtual void onAndroidAutoQuit() = 0;
+    };
 }

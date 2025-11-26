@@ -7,33 +7,33 @@ namespace f1x::openauto::autoapp::service::mediaplaybackstatus {
 
   MediaPlaybackStatusService::MediaPlaybackStatusService(boost::asio::io_service &ioService,
                                                          aasdk::messenger::IMessenger::Pointer messenger)
-      : strand_(ioService),
-        timer_(ioService),
+      : timer_(ioService),
+        strand_(ioService),
         channel_(std::make_shared<aasdk::channel::mediaplaybackstatus::MediaPlaybackStatusService>(strand_, std::move(
-            messenger))) {
+          messenger))) {
 
   }
 
   void MediaPlaybackStatusService::start() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[MediaPlaybackStatusService] start()";
     });
   }
 
   void MediaPlaybackStatusService::stop() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[MediaPlaybackStatusService] stop()";
     });
   }
 
   void MediaPlaybackStatusService::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[MediaPlaybackStatusService] pause()";
     });
   }
 
   void MediaPlaybackStatusService::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[MediaPlaybackStatusService] resume()";
     });
   }

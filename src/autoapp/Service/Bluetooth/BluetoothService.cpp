@@ -3,7 +3,7 @@
 
 namespace f1x::openauto::autoapp::service::bluetooth {
 
-  /// This Service is just a Handler to Negotiate Bluetooth Connectivity Information
+  /// AndroidAuto channel to advise bluetooth avaulability and to manage HFP/A2DP pairing requests.
   /// \param ioService
   /// \param messenger
   /// \param bluetoothDevice
@@ -58,7 +58,7 @@ namespace f1x::openauto::autoapp::service::bluetooth {
       // If the HU wants the MD to skip the Bluetooth Pairing and Connection process, the HU can declare its address as SKIP_THIS_BLUETOOTH
       bluetooth->set_car_address(bluetoothDevice_->getAdapterAddress());
 
-      // AAP supports bth PIN and Numeric Comparison as pairing methods.
+      // AAP supports both PIN and Numeric Comparison as pairing methods.
       bluetooth->add_supported_pairing_methods(
           aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_PIN);
       bluetooth->add_supported_pairing_methods(
@@ -102,11 +102,12 @@ namespace f1x::openauto::autoapp::service::bluetooth {
     }
 
     /*
-     * The HU must always sent a STATUS_SUCCESS response,
-     * or STATUS_BLUETOOTH_PAIRING_DELAYED if:
+     * The HU must always send a STATUS_SUCCESS response, or STATUS_BLUETOOTH_PAIRING_DELAYED if:
      *    there's a delay in allowing bluetooth
      *    the HU is already engaged in a bluetooth call
      */
+
+    // TODO: Consider when we need to send STATUS_BLUETOOTH_PAIRING_DELAYED
     response.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
     response.set_already_paired(isPaired);
 
@@ -122,7 +123,7 @@ namespace f1x::openauto::autoapp::service::bluetooth {
     OPENAUTO_LOG(info) << "[BluetoothService] sendBluetoothAuthenticationData()";
 
     aap_protobuf::service::bluetooth::message::BluetoothAuthenticationData data;
-    // TODO: Bluetooth Authentication Data
+    // TODO: Do we need to generate a random pin, or is 123456 sufficient?
     data.set_auth_data("123456");
     data.set_pairing_method(aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_PIN);
     auto promise = aasdk::channel::SendPromise::defer(strand_);

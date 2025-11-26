@@ -3,7 +3,7 @@
 
 #include <QSettings>
 #include <QString>
-#include "ConfigurationSetting.hpp"
+#include <f1x/openauto/autoapp/Configuration/ConfigurationSetting.hpp>
 
 namespace f1x::openauto::autoapp::configuration {
   using SettingType = std::variant<bool, int, QString>;

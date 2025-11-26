@@ -1,5 +1,4 @@
 #include <QApplication>
-#include <QScreen>
 #include <aasdk/Channel/MediaSink/Audio/Channel/MediaAudioChannel.hpp>
 #include <f1x/openauto/autoapp/Service/ServiceFactory.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSink/VideoService.hpp>
@@ -8,7 +7,6 @@
 #include <f1x/openauto/autoapp/Service/MediaSink/SystemAudioService.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSource/MicrophoneMediaSourceService.hpp>
 #include <f1x/openauto/autoapp/Service/Sensor/SensorService.hpp>
-#include <f1x/openauto/autoapp/Service/Bluetooth/BluetoothService.hpp>
 #include <f1x/openauto/autoapp/Service/InputSource/InputSourceService.hpp>
 #include <f1x/openauto/autoapp/Service/WifiProjection/WifiProjectionService.hpp>
 #include <f1x/openauto/autoapp/Projection/QtVideoOutput.hpp>
@@ -20,7 +18,10 @@
 #include <f1x/openauto/autoapp/Projection/LocalBluetoothDevice.hpp>
 #include <f1x/openauto/autoapp/Projection/DummyBluetoothDevice.hpp>
 
-#include "f1x/openauto/autoapp/UI/Enum/AudioOutputType.hpp"
+#include "f1x/openauto/autoapp/Service/Bluetooth/BluetoothService.hpp"
+#include "f1x/openauto/autoapp/Service/MediaSink/TelephonyAudioService.hpp"
+#include "f1x/openauto/autoapp/UI/Monitor/BluetoothHandler.hpp"
+#include "f1x/openauto/Common/Enum/AudioOutputType.hpp"
 
 namespace f1x::openauto::autoapp::service {
   /**
@@ -65,29 +66,28 @@ namespace f1x::openauto::autoapp::service {
     this->createMediaSinkServices(serviceList, messenger);
     this->createMediaSourceServices(serviceList, messenger);
     serviceList.emplace_back(this->createSensorService(messenger));
+
+    // TODO: as noted elsewhere, this just indiscriminately tries to create a bluetooth service even if we have no device.
+    // TODO: This probably is a little crude and should probably be conditional
     serviceList.emplace_back(this->createBluetoothService(messenger));
     serviceList.emplace_back(this->createInputService(messenger));
-
-    /*
-     * WiFi Projection Service does not seem to work despite being populated in the service.
-     * However WiFi connectivity does seem to be working through the Bluetooth Service
-     * and Bluetooth Handler
-     */
-    // TODO: What is WiFi Projection Service?
-    //serviceList.emplace_back(this->createWifiProjectionService(messenger));
+    serviceList.emplace_back(this->createWifiProjectionService(messenger));
 
     return serviceList;
   }
 
   IService::Pointer ServiceFactory::createBluetoothService(aasdk::messenger::IMessenger::Pointer messenger) {
     OPENAUTO_LOG(info) << "[ServiceFactory] createBluetoothService()";
+
     projection::IBluetoothDevice::Pointer bluetoothDevice;
+    // TODO: This is possibly a little messy. I mean, we fundamentally don't want to create a bluetooth service if we don't have a bluetooth device
     if (configuration_->getSettingByName<QString>("Bluetooth", "BluetoothAdapterAddress") == "") {
       OPENAUTO_LOG(debug) << "[ServiceFactory] Using Dummy Bluetooth";
       bluetoothDevice = std::make_shared<projection::DummyBluetoothDevice>();
     } else {
       OPENAUTO_LOG(info) << "[ServiceFactory] Using Local Bluetooth Adapter";
-      bluetoothDevice = projection::IBluetoothDevice::Pointer(new projection::LocalBluetoothDevice(),
+
+      bluetoothDevice = projection::IBluetoothDevice::Pointer(new projection::LocalBluetoothDevice(configuration_->getSettingByName<QString>("Bluetooth", "BluetoothAdapterAddress")),
                                                               std::bind(&QObject::deleteLater,
                                                                         std::placeholders::_1));
     }
@@ -128,7 +128,7 @@ namespace f1x::openauto::autoapp::service {
     if (configuration_->getSettingByName<bool>("AndroidAuto", "Media")) {
       OPENAUTO_LOG(info) << "[ServiceFactory] Media Audio Channel enabled";
       auto mediaAudioOutput =
-          static_cast<UI::Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>("Audio", "Type")) == UI::Enum::AudioOutputType::RTAUDIO ?
+          static_cast<f1x::openauto::common::Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>("Audio", "Type")) == f1x::openauto::common::Enum::AudioOutputType::RTAUDIO ?
           std::make_shared<projection::RtAudioOutput>(2, 16, 48000) :
           projection::IAudioOutput::Pointer(new projection::QtAudioOutput(2, 16, 48000),
                                             std::bind(&QObject::deleteLater, std::placeholders::_1));
@@ -140,7 +140,7 @@ namespace f1x::openauto::autoapp::service {
     if (configuration_->getSettingByName<bool>("AndroidAuto", "Guidance")) {
       OPENAUTO_LOG(info) << "[ServiceFactory] Guidance Audio Channel enabled";
       auto guidanceAudioOutput =
-          static_cast<UI::Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>("Audio", "Type")) == UI::Enum::AudioOutputType::RTAUDIO ?
+          static_cast<f1x::openauto::common::Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>("Audio", "Type")) == f1x::openauto::common::Enum::AudioOutputType::RTAUDIO ?
           std::make_shared<projection::RtAudioOutput>(1, 16, 16000) :
           projection::IAudioOutput::Pointer(new projection::QtAudioOutput(1, 16, 16000),
                                             std::bind(&QObject::deleteLater, std::placeholders::_1));
@@ -150,11 +150,10 @@ namespace f1x::openauto::autoapp::service {
                                                             std::move(guidanceAudioOutput)));
     }
 
-    /*
-    if (configuration_->getChannelTelephony()) {
+    if (configuration_->getSettingByName<bool>("AndroidAuto", "Telephony")) {
       OPENAUTO_LOG(info) << "[ServiceFactory] Telephony Audio Channel enabled";
       auto telephonyAudioOutput =
-          configuration_->getAudioOutputBackendType() == configuration::AudioOutputBackendType::RTAUDIO ?
+          static_cast<f1x::openauto::common::Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>("Audio", "Type")) == f1x::openauto::common::Enum::AudioOutputType::RTAUDIO ?
           std::make_shared<projection::RtAudioOutput>(1, 16, 16000) :
           projection::IAudioOutput::Pointer(new projection::QtAudioOutput(1, 16, 16000),
                                             std::bind(&QObject::deleteLater, std::placeholders::_1));
@@ -163,14 +162,14 @@ namespace f1x::openauto::autoapp::service {
           std::make_shared<mediasink::TelephonyAudioService>(ioService_, messenger,
                                                              std::move(telephonyAudioOutput)));
     }
-*/
+
     /*
      * No Need to Check for systemAudioChannelEnabled - MUST be enabled by default.
      */
 
     OPENAUTO_LOG(info) << "[ServiceFactory] System Audio Channel enabled";
     auto systemAudioOutput =
-        static_cast<UI::Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>("Audio", "Type")) == UI::Enum::AudioOutputType::RTAUDIO ?
+        static_cast<f1x::openauto::common::Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>("Audio", "Type")) == f1x::openauto::common::Enum::AudioOutputType::RTAUDIO ?
         std::make_shared<projection::RtAudioOutput>(1, 16, 16000) :
         projection::IAudioOutput::Pointer(new projection::QtAudioOutput(1, 16, 16000),
                                           std::bind(&QObject::deleteLater, std::placeholders::_1));
@@ -178,7 +177,7 @@ namespace f1x::openauto::autoapp::service {
     serviceList.emplace_back(
         std::make_shared<mediasink::SystemAudioService>(ioService_, messenger, std::move(systemAudioOutput)));
 
-    // TODO: What is OMX???
+    // TODO: What is OMX??? ensure we're cross compiled to allow Mac, Windows and Linux. Happy for stub for Windows for now.
 #ifdef USE_OMX
     auto videoOutput(std::make_shared<projection::OMXVideoOutput>(configuration_));
 #else

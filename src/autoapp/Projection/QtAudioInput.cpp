@@ -54,14 +54,12 @@ namespace f1x::openauto::autoapp::projection {
     }
   }
 
-  // TODO: Errors here with emit.  Local variable 'startRecording' is never used, but may have side-effects in its destructor
   void QtAudioInput::start(IAudioInput::StartPromise::Pointer promise) {
-    emit startRecording(std::move(promise));
+    Q_EMIT startRecording(std::move(promise));
   }
 
-  // TODO: Resolve Error - emit not found???
   void QtAudioInput::stop() {
-    emit stopRecording();
+    Q_EMIT stopRecording();
   }
 
   uint32_t QtAudioInput::getSampleSize() const {

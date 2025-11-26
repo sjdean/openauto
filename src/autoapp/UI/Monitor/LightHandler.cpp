@@ -11,7 +11,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      * @return A new instance of the LightHandler class initialized with the provided configuration.
      */
     LightHandler::LightHandler(
-        f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration) : configuration_(
+        configuration::IConfiguration::Pointer configuration) : configuration_(
         std::move(configuration)), m_isDay(true), m_isLightsOn(false) {
     }
 

@@ -14,25 +14,25 @@ namespace f1x::openauto::autoapp::service::mediabrowser {
   }
 
   void MediaBrowserService::start() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[MediaBrowserService] start()";
     });
   }
 
   void MediaBrowserService::stop() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[MediaBrowserService] stop()";
     });
   }
 
   void MediaBrowserService::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[MediaBrowserService] pause()";
     });
   }
 
   void MediaBrowserService::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[MediaBrowserService] resume()";
     });
   }

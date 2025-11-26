@@ -1,8 +1,7 @@
 #pragma once
 
-#include <QObject>
-#include <QDBusConnection>
 #include <QDBusMessage>
+#include <QObject>
 #include <QDBusObjectPath>
 #include <QDebug>
 #include <QLoggingCategory>

@@ -2,15 +2,14 @@
 #define OPENAUTO_SETTINGSVIEW_HPP
 
 #include <QtCore/QObject>
-#include <f1x/openauto/autoapp/UI/Enum/WirelessType.hpp>
-#include <f1x/openauto/autoapp/UI/Enum/VideoType.hpp>
-#include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 #include <service/control/message/DriverPosition.pb.h>
 #include <service/media/sink/message/VideoFrameRateType.pb.h>
 #include <service/sensorsource/message/EvConnectorType.pb.h>
 #include <service/sensorsource/message/FuelType.pb.h>
-
-#include "Enum/AudioOutputType.hpp"
+#include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
+#include "f1x/openauto/Common/Enum/AudioOutputType.hpp"
+#include "f1x/openauto/Common/Enum/VideoType.hpp"
+#include "f1x/openauto/Common/Enum/WirelessType.hpp"
 
 namespace f1x::openauto::autoapp::UI {
 
@@ -41,7 +40,7 @@ namespace f1x::openauto::autoapp::UI {
         int videoMarginHeight READ getVideoMarginHeight WRITE setVideoMarginHeight NOTIFY videoMarginHeightChanged)
     Q_PROPERTY(int videoMarginWidth READ getVideoMarginWidth WRITE setVideoMarginWidth NOTIFY videoMarginWidthChanged)
     Q_PROPERTY(int videoOMXLayer READ getVideoOMXLayer WRITE setVideoOMXLayer NOTIFY videoOMXLayerChanged)
-    Q_PROPERTY(Enum::VideoType::Value videoType READ getVideoType WRITE setVideoType NOTIFY videoTypeChanged)
+    Q_PROPERTY(common::Enum::VideoType::Value videoType READ getVideoType WRITE setVideoType NOTIFY videoTypeChanged)
     Q_PROPERTY(
         bool videoRotateDisplay READ getVideoRotateDisplay WRITE setVideoRotateDisplay NOTIFY videoRotateDisplayChanged)
 
@@ -68,7 +67,7 @@ namespace f1x::openauto::autoapp::UI {
         int audioVolumePlayback READ getAudioVolumePlayback WRITE setAudioVolumePlayback NOTIFY audioVolumePlaybackChanged)
     Q_PROPERTY(
         int audioVolumeCapture READ getAudioVolumeCapture WRITE setAudioVolumeCapture NOTIFY audioVolumeCaptureChanged)
-    Q_PROPERTY(UI::Enum::AudioOutputType::Value audioType READ getAudioType WRITE setAudioType NOTIFY audioTypeChanged)
+    Q_PROPERTY(f1x::openauto::common::Enum::AudioOutputType::Value audioType READ getAudioType WRITE setAudioType NOTIFY audioTypeChanged)
     Q_PROPERTY(
         QString audioPlaybackDevice READ getAudioPlaybackDevice WRITE setAudioPlaybackDevice NOTIFY audioPlaybackDeviceChanged)
     Q_PROPERTY(
@@ -81,12 +80,12 @@ namespace f1x::openauto::autoapp::UI {
         QString wirelessHotspotSSID READ getWirelessHotspotSSID WRITE setWirelessHotspotSSID NOTIFY wirelessHotspotSSIDChanged)
     Q_PROPERTY (
         QString wirelessHotspotPassword READ getWirelessHotspotPassword WRITE setWirelessHotspotPassword NOTIFY wirelessHotspotPasswordChanged)
-    Q_PROPERTY(Enum::WirelessType::Value wirelessType READ getWirelessType WRITE setWirelessType NOTIFY wirelessTypeChanged)
+    Q_PROPERTY(common::Enum::WirelessType::Value wirelessType READ getWirelessType WRITE setWirelessType NOTIFY wirelessTypeChanged)
     Q_PROPERTY(bool wirelessEnabled READ getWirelessEnabled WRITE setWirelessEnabled NOTIFY wirelessEnabledChanged)
 
     Q_PROPERTY(QString hwBluetoothAdapter READ getHwBluetoothAdapter WRITE setHwBluetoothAdapter NOTIFY hwBluetoothAdapterChanged)
   public:
-    explicit SettingsView(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration,
+    explicit SettingsView(configuration::IConfiguration::Pointer configuration,
                           QObject *parent = nullptr);
 
   signals:
@@ -121,7 +120,7 @@ namespace f1x::openauto::autoapp::UI {
 
     void videoOMXLayerChanged();
 
-    void videoTypeChanged(Enum::VideoType::Value type);
+    void videoTypeChanged(common::Enum::VideoType::Value type);
 
     void videoRotateDisplayChanged();
 
@@ -153,7 +152,7 @@ namespace f1x::openauto::autoapp::UI {
 
     void audioVolumeCaptureMaxChanged();
 
-    void audioTypeChanged(Enum::AudioOutputType::Value type);
+    void audioTypeChanged(common::Enum::AudioOutputType::Value type);
 
     void audioPlaybackDeviceChanged();
     void audioCaptureDeviceChanged();
@@ -169,7 +168,7 @@ namespace f1x::openauto::autoapp::UI {
     void hwBluetoothAdapterChanged();
 
   private:
-    f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration_;
+    configuration::IConfiguration::Pointer configuration_;
 
     // Car Settings
     QString m_carId;
@@ -239,7 +238,7 @@ namespace f1x::openauto::autoapp::UI {
     int m_videoMarginHeight;
     int m_videoMarginWidth;
     int m_videoOMXLayer;
-    Enum::VideoType::Value m_videoType;
+    common::Enum::VideoType::Value m_videoType;
     bool m_videoRotateDisplay;
 
     int getVideoMarginHeight() const;
@@ -248,7 +247,7 @@ namespace f1x::openauto::autoapp::UI {
 
     int getVideoOMXLayer() const;
 
-    Enum::VideoType::Value getVideoType() const;
+    common::Enum::VideoType::Value getVideoType() const;
 
     bool getVideoRotateDisplay() const;
 
@@ -258,7 +257,7 @@ namespace f1x::openauto::autoapp::UI {
 
     void setVideoOMXLayer(int value);
 
-    void setVideoType(Enum::VideoType::Value value);
+    void setVideoType(common::Enum::VideoType::Value value);
 
     void setVideoRotateDisplay(bool value);
 
@@ -310,7 +309,7 @@ namespace f1x::openauto::autoapp::UI {
     QString m_audioCaptureDeviceValue;
     QString m_audioPlaybackDeviceValue;
 
-    Enum::AudioOutputType::Value m_audioType;
+    common::Enum::AudioOutputType::Value m_audioType;
 
     int getAudioVolumePlaybackMin() const;
 
@@ -324,7 +323,7 @@ namespace f1x::openauto::autoapp::UI {
 
     int getAudioVolumeCapture() const;
 
-    Enum::AudioOutputType::Value getAudioType() const;
+    common::Enum::AudioOutputType::Value getAudioType() const;
 
     QString getAudioPlaybackDevice() const;
     QString getAudioCaptureDevice() const;
@@ -341,7 +340,7 @@ namespace f1x::openauto::autoapp::UI {
 
     void setAudioVolumeCapture(int value);
 
-    void setAudioType(Enum::AudioOutputType::Value value);
+    void setAudioType(common::Enum::AudioOutputType::Value value);
 
     void setAudioPlaybackDevice(QString value);
     void setAudioCaptureDevice(QString value);
@@ -352,14 +351,14 @@ namespace f1x::openauto::autoapp::UI {
     QString m_wirelessHotspotSSID;
     QString m_wirelessHotspotPassword;
 
-    Enum::WirelessType::Value m_wirelessType;
+    common::Enum::WirelessType::Value m_wirelessType;
     bool m_wirelessEnabled;
 
     void setWirelessClientSSID(QString value);
     void setWirelessClientPassword(QString value);
     void setWirelessHotspotSSID(QString value);
     void setWirelessHotspotPassword(QString value);
-    void setWirelessType(Enum::WirelessType::Value value);
+    void setWirelessType(common::Enum::WirelessType::Value value);
     void setWirelessEnabled(bool value);
 
 
@@ -367,7 +366,8 @@ namespace f1x::openauto::autoapp::UI {
     QString getWirelessClientPassword();
     QString getWirelessHotspotSSID();
     QString getWirelessHotspotPassword();
-    Enum::WirelessType::Value getWirelessType();
+
+    common::Enum::WirelessType::Value getWirelessType();
     bool getWirelessEnabled();
 
     QString m_hwBluetoothAdapter;

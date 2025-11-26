@@ -8,60 +8,55 @@
 #include <stdio.h>
 
 namespace f1x::openauto::autoapp::configuration {
+    using SettingType = std::variant<bool, int, QString>;
 
-  using SettingType = std::variant<bool, int, QString>;
+    class IConfiguration {
+    public:
+        typedef std::shared_ptr<IConfiguration> Pointer;
+        typedef std::vector<aap_protobuf::service::media::sink::message::KeyCode> ButtonCodes;
 
-  class IConfiguration {
+        virtual ~IConfiguration() = default;
 
-  public:
+        template<typename T>
+        T getSettingByName(QString groupName, QString settingName) {
+            // Find the group
+            auto groupIt = std::find_if(m_configurationGroups.begin(), m_configurationGroups.end(),
+                                        [&groupName](const ConfigurationGroup &group) {
+                                            return group.getName() == groupName;
+                                        });
 
-    typedef std::shared_ptr<IConfiguration> Pointer;
-    typedef std::vector<aap_protobuf::service::media::sink::message::KeyCode> ButtonCodes;
+            if (groupIt != m_configurationGroups.end()) {
+                return (*groupIt).template getValueForSetting<T>(settingName);
+            } else {
+                // Group not found
+                fprintf(stderr, "Unable to find group 1 %s and setting %s\n", groupName.toStdString().c_str(),
+                        settingName.toStdString().c_str());
+                //throw std::runtime_error("Group not found: " + groupName.toStdString());
+            }
+        }
 
-    virtual ~IConfiguration() = default;
+        template<typename T>
+        void updateSettingByName(QString groupName, QString settingName, T value) {
+            fprintf(stderr, "updateSettingByName\n");
+            auto groupIt = std::find_if(m_configurationGroups.begin(), m_configurationGroups.end(),
+                                        [&groupName](const ConfigurationGroup &group) {
+                                            return group.getName() == groupName;
+                                        });
 
-    template<typename T>
-    T getSettingByName(QString groupName, QString settingName) {
-      // Find the group
-      auto groupIt = std::find_if(m_configurationGroups.begin(), m_configurationGroups.end(),
-                                  [&groupName](const ConfigurationGroup& group) {
-                                    return group.getName() == groupName;
-                                  });
+            if (groupIt != m_configurationGroups.end()) {
+                fprintf(stderr, "Found Setting\n");
+                (*groupIt).setValueForSetting(settingName, value);
+            } else {
+                // Group not found
+                fprintf(stderr, "Unable to find group 2 %s\n", groupName.toStdString().c_str());
+                //throw std::runtime_error("Group not found: " + groupName.toStdString());
+            }
+        }
 
-      if (groupIt != m_configurationGroups.end()) {
-        return (*groupIt).template getValueForSetting<T>(settingName);
-      } else {
-        // Group not found
-        fprintf(stderr, "Unable to find group 1 %s and setting %s\n", groupName.toStdString().c_str(), settingName.toStdString().c_str());
-        //throw std::runtime_error("Group not found: " + groupName.toStdString());
-      }
-    }
+        virtual bool hasTouchScreen() const = 0;
 
-    template<typename T>
-    void updateSettingByName(QString groupName, QString settingName, T value) {
-      fprintf(stderr, "updateSettingByName\n");
-      auto groupIt = std::find_if(m_configurationGroups.begin(), m_configurationGroups.end(),
-                                  [&groupName](const ConfigurationGroup& group) {
-                                    return group.getName() == groupName;
-                                  });
+        virtual void save() const = 0;
 
-      if (groupIt != m_configurationGroups.end()) {
-        fprintf(stderr, "Found Setting\n");
-        (*groupIt).setValueForSetting(settingName, value);
-      } else {
-        // Group not found
-        fprintf(stderr, "Unable to find group 2 %s\n", groupName.toStdString().c_str());
-        //throw std::runtime_error("Group not found: " + groupName.toStdString());
-      }
-    }
-
-    virtual bool hasTouchScreen() const = 0;
-    virtual void save() const = 0;
-    QList<ConfigurationGroup> m_configurationGroups;
-
-
-  };
+        QList<ConfigurationGroup> m_configurationGroups;
+    };
 }
-
-
-

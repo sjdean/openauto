@@ -92,21 +92,6 @@ Sink #76
 20250101 - 5.0.0 - Journey Rebrand
 * Introduce new GUI
 
-TODO - Wireless Modal Popup / Status, Connection Details
-TODO - Bluetooth Modal Popup / Status, Connection Details / Pin
-TODO - Add PIN display for authentication to bluetooth
-TODO - Update ComboBox Settings / Test
-TODO - BrightnessHandler - Pass a Light`Handler to switch between day and night
-TODO - Settings Layout
-TODO - Add Virtual Keyboards
-TODO - Audio Output Format support
-TODO - Bluetooth QDBus Monitoring
-TODO - Recent Address List of WiFi/Bluetooth Devices
-FIXME - DisplayOnTab Mirror HPP
-TODO - LocalBluetoothDevice and BluetoothHandler - check overlap
-TODO - Work out WiFi Projection Service
-
-
 20241124 - 4.1.0 - Bluetooth Updates
 * Rename BluetootAdapterType to BluetoothAdapterType, and change from NONE, LOCAL, REMOTE to NONE, LOCAL, EXTERNAL to better match available settings
 * getLocalAddress() on Dummy, Local and Remote bluetooth changed to getAdapterAddress()

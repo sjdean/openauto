@@ -9,9 +9,9 @@
 #include <service/sensorsource/message/EvConnectorType.pb.h>
 #include <service/sensorsource/message/FuelType.pb.h>
 
-#include "f1x/openauto/autoapp/UI/Enum/AudioOutputType.hpp"
-#include "f1x/openauto/autoapp/UI/Enum/VideoType.hpp"
-#include "f1x/openauto/autoapp/UI/Enum/WirelessType.hpp"
+#include "f1x/openauto/Common/Enum/AudioOutputType.hpp"
+#include "f1x/openauto/Common/Enum/VideoType.hpp"
+#include "f1x/openauto/Common/Enum/WirelessType.hpp"
 
 namespace f1x::openauto::autoapp::configuration {
 
@@ -46,7 +46,7 @@ namespace f1x::openauto::autoapp::configuration {
     videoGroup.addSetting<int>("Width", 0);
     videoGroup.addSetting<int>("OMXLayer", 2);
     videoGroup.addSetting<bool>("Rotate", false);
-    videoGroup.addSetting<UI::Enum::VideoType::Value>("Type", UI::Enum::VideoType::Value::EGL);
+    videoGroup.addSetting<f1x::openauto::common::Enum::VideoType::Value>("Type", f1x::openauto::common::Enum::VideoType::Value::EGL);
     videoGroup.load(m_settings);
     m_configurationGroups.append(videoGroup);
 
@@ -57,7 +57,7 @@ namespace f1x::openauto::autoapp::configuration {
     audioGroup.addSetting<int>("CaptureMax", 255);
     audioGroup.addSetting<int>("PlaybackVolume", 150);
     audioGroup.addSetting<int>("CaptureVolume", 150);
-    audioGroup.addSetting<int>("Type", static_cast<const int>(UI::Enum::AudioOutputType::RTAUDIO));
+    audioGroup.addSetting<int>("Type", static_cast<const int>(f1x::openauto::common::Enum::AudioOutputType::RTAUDIO));
     audioGroup.addSetting<QString>("PlaybackDevice", "");
     audioGroup.addSetting<QString>("CaptureDevice", "");
     audioGroup.load(m_settings);
@@ -84,7 +84,6 @@ namespace f1x::openauto::autoapp::configuration {
     bluetoothGroup.addSetting<QString>("PairedDeviceAddress", "");
     bluetoothGroup.load(m_settings);
     m_configurationGroups.append(bluetoothGroup);
-
     ConfigurationGroup wirelessGroup("Wireless");
     wirelessGroup.addSetting<bool>("Enabled", true);
     wirelessGroup.addSetting<QString>("HotspotSSID", "JourneyOS");
@@ -92,7 +91,7 @@ namespace f1x::openauto::autoapp::configuration {
     wirelessGroup.addSetting<QString>("ClientSSID", "");
     wirelessGroup.addSetting<QString>("ClientPassword", "");
 
-    wirelessGroup.addSetting<UI::Enum::WirelessType::Value>("Type", UI::Enum::WirelessType::WIRELESS_HOTSPOT);
+    wirelessGroup.addSetting<common::Enum::WirelessType::Value>("Type", f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT);
     wirelessGroup.load(m_settings);
     m_configurationGroups.append(wirelessGroup);
   }

@@ -7,39 +7,39 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
 
   NavigationStatusService::NavigationStatusService(boost::asio::io_service &ioService,
                                                    aasdk::messenger::IMessenger::Pointer messenger)
-      : strand_(ioService),
-        timer_(ioService),
-        channel_(std::make_shared<aasdk::channel::navigationstatus::NavigationStatusService>(strand_,
-                                                                                             std::move(messenger))) {
+    : timer_(ioService),
+      strand_(ioService),
+      channel_(std::make_shared<aasdk::channel::navigationstatus::NavigationStatusService>(strand_,
+        std::move(messenger))) {
 
   }
 
   void NavigationStatusService::start() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[NavigationStatusService] start()";
     });
   }
 
   void NavigationStatusService::stop() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[NavigationStatusService] stop()";
     });
   }
 
   void NavigationStatusService::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[NavigationStatusService] pause()";
     });
   }
 
   void NavigationStatusService::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    strand_.dispatch([self = this->shared_from_this()]() {
       OPENAUTO_LOG(info) << "[NavigationStatusService] resume()";
     });
   }
 
   void NavigationStatusService::fillFeatures(
-      aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
+    aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
     OPENAUTO_LOG(info) << "[NavigationStatusService] fillFeatures()";
 
     auto *service = response.add_channels();
@@ -49,7 +49,7 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
   }
 
   void NavigationStatusService::onChannelOpenRequest(
-      const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
+    const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
     OPENAUTO_LOG(info) << "[NavigationStatusService] onChannelOpenRequest()";
     OPENAUTO_LOG(info) << "[NavigationStatusService] Channel Id: " << request.service_id() << ", Priority: "
                        << request.priority();
@@ -66,25 +66,25 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
     channel_->receive(this->shared_from_this());
   }
 
-  void NavigationStatusService::onStatusUpdate(
-      const aap_protobuf::service::navigationstatus::message::NavigationStatus &navStatus) {
-    channel_->receive(this->shared_from_this());
-  }
-
-
-  void NavigationStatusService::onTurnEvent(
-      const aap_protobuf::service::navigationstatus::message::NavigationNextTurnEvent &turnEvent) {
-    channel_->receive(this->shared_from_this());
-  }
-
-  void NavigationStatusService::onDistanceEvent(
-      const aap_protobuf::service::navigationstatus::message::NavigationNextTurnDistanceEvent &distanceEvent) {
-    channel_->receive(this->shared_from_this());
-  }
-
-
   void NavigationStatusService::onChannelError(const aasdk::error::Error &e) {
     OPENAUTO_LOG(error) << "[NavigationStatusService] onChannelError(): " << e.what();
+  }
+
+
+  void NavigationStatusService::onStatusUpdate(
+    const aap_protobuf::service::navigationstatus::message::NavigationStatus &navStatus) {
+    channel_->receive(this->shared_from_this());
+  }
+
+  void NavigationStatusService::onTurnEvent(
+    const aap_protobuf::service::navigationstatus::message::NavigationNextTurnEvent &turnEvent) {
+    channel_->receive(this->shared_from_this());
+  }
+
+
+  void NavigationStatusService::onDistanceEvent(
+    const aap_protobuf::service::navigationstatus::message::NavigationNextTurnDistanceEvent &distanceEvent) {
+    channel_->receive(this->shared_from_this());
   }
 }
 

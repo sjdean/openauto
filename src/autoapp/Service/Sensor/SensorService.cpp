@@ -15,7 +15,9 @@ namespace f1x::openauto::autoapp::service::sensor {
   }
 
   void SensorService::start() {
+
     strand_.dispatch([this, self = this->shared_from_this()]() {
+#if defined(__LINUX__)
       if (gps_open("127.0.0.1", "2947", &this->gpsData_)) {
         OPENAUTO_LOG(warning) << "[SensorService] can't connect to GPSD.";
       } else {
@@ -28,7 +30,7 @@ namespace f1x::openauto::autoapp::service::sensor {
         this->isNight = true;
       }
       this->sensorPolling();
-
+#endif
       OPENAUTO_LOG(info) << "[SensorService] start()";
       channel_->receive(this->shared_from_this());
     });
@@ -39,12 +41,13 @@ namespace f1x::openauto::autoapp::service::sensor {
     this->stopPolling = true;
 
     strand_.dispatch([this, self = this->shared_from_this()]() {
+#if defined(__LINUX__)
       if (this->gpsEnabled_) {
         gps_stream(&this->gpsData_, WATCH_DISABLE, NULL);
         gps_close(&this->gpsData_);
         this->gpsEnabled_ = false;
       }
-
+#endif
       OPENAUTO_LOG(info) << "[SensorService] stop()";
     });
   }
@@ -155,6 +158,7 @@ namespace f1x::openauto::autoapp::service::sensor {
 
   void SensorService::sendGPSLocationData() {
     OPENAUTO_LOG(info) << "[SensorService] sendGPSLocationData()";
+#if defined(__LINUX__)
     aap_protobuf::service::sensorsource::message::SensorBatch indication;
 
     auto *locInd = indication.add_location_data();
@@ -180,11 +184,12 @@ namespace f1x::openauto::autoapp::service::sensor {
       // degrees
       locInd->set_bearing_e6(this->gpsData_.fix.track * 1e6);
     }
-
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {},
                   std::bind(&SensorService::onChannelError, this->shared_from_this(), std::placeholders::_1));
     channel_->sendSensorEventIndication(indication, std::move(promise));
+#endif
+
   }
 
   void SensorService::sensorPolling() {
@@ -196,7 +201,7 @@ namespace f1x::openauto::autoapp::service::sensor {
           this->previous = this->isNight;
           this->sendNightData();
         }
-
+#if defined(__LINUX__)
         if ((this->gpsEnabled_) &&
             (gps_waiting(&this->gpsData_, 0)) &&
 #if GPSD_API_MAJOR_VERSION >= 11
@@ -210,6 +215,7 @@ namespace f1x::openauto::autoapp::service::sensor {
             (this->gpsData_.set & LATLON_SET)) {
           this->sendGPSLocationData();
         }
+#endif
 
         timer_.expires_from_now(boost::posix_time::milliseconds(250));
         timer_.async_wait(strand_.wrap(std::bind(&SensorService::sensorPolling, this->shared_from_this())));

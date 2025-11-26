@@ -54,6 +54,6 @@ namespace f1x::openauto::autoapp::UI::Model {
     bool paired;
     bool connected;
 
-    ~BluetoothDevice();
+    ~BluetoothDevice() = default;
   };
 }

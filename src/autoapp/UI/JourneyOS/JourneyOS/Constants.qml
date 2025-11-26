@@ -42,6 +42,13 @@ QtObject {
     readonly property color buttonColor: "#ffffff"                      // Button / Up - Text/Icon Color
     readonly property color buttonPressedColor: "#80ffffff"             // Button / Down - Text/Icon Color
 
+    // 2. REPLACE StudioApplication WITH QtObject
+    //property QtObject application: QtObject {
+        // We keep the property name 'fontPath' so other files don't break.
+        // We keep the logic valid (resolving the URL).
+      //  property string fontPath: Qt.resolvedUrl("../JourneyOSContent/" + relativeFontDirectory)
+    //}
+
     property StudioApplication application: StudioApplication {
         fontPath: Qt.resolvedUrl("../JourneyOSContent/" + relativeFontDirectory)
     }

@@ -51,6 +51,7 @@ endif ()
 find_package(aap_protobuf REQUIRED CONFIG) # Finds config, provides AAPProto::aap_protobuf
 find_package(aasdk REQUIRED CONFIG)        # Finds config, provides AASDK::aasdk
 find_package(Boost REQUIRED COMPONENTS system log)
+find_package(libusb-1.0 REQUIRED)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Bluetooth DBus Network Multimedia MultimediaWidgets)
 if(APPLE)
     message(STATUS "Patching Qt6::Gui to remove deprecated AGL framework dependency...")
@@ -82,32 +83,36 @@ if (WIN32)
 endif ()
 
 # --- QML Configuration ---
+#set(UI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/autoapp/UI/JourneyOS")
+#add_subdirectory(${UI_DIR})
+
 set(UI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/autoapp/UI/JourneyOS")
-add_subdirectory(${UI_DIR})
-set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml)
-set(QML_IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
-        CACHE STRING "Import paths for Qt Creator's code model" FORCE
-)
 
-# --- Define Source Files (Warning: GLOB is not ideal) ---
-# ... (file GLOB commands are unchanged) ...
-
+# Set Main Source Folders
 set(sources_directory ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(include_directory ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+# Set common source
+set(common_include_directory ${include_directory}/f1x/openauto/Common)
+set(config_include_directory ${include_directory}/f1x/openauto/Configuration)
+set(config_sources_directory ${sources_directory}/Configuration)
+
+# Set autoapp sources
 set(autoapp_sources_directory ${sources_directory}/autoapp)
 set(autoapp_include_directory ${include_directory}/f1x/openauto/autoapp)
 
-set(common_include_directory ${include_directory}/f1x/openauto/Common)
-
-file(GLOB_RECURSE autoapp_source_files ${autoapp_sources_directory}/*.ui ${autoapp_sources_directory}/*.cpp ${autoapp_include_directory}/*.hpp ${autoapp_include_directory}/*.h ${common_include_directory}/*.hpp)
-
-set(btservice_sources_directory ${sources_directory}/btservice)
-set(btservice_include_directory ${include_directory}/f1x/openauto/btservice)
-file(GLOB_RECURSE btservice_source_files ${btservice_sources_directory}/*.cpp ${btservice_include_directory}/*.hpp ${autoapp_sources_directory}/Configuration/*.cpp ${autoapp_includes_directory}/Configuration/*.hpp ${common_include_directory}/*.hpp)
+file(GLOB_RECURSE autoapp_source_files
+        ${autoapp_sources_directory}/*.ui   # <-- MUST keep for AUTOUIC
+        ${autoapp_sources_directory}/*.cpp
+        ${autoapp_include_directory}/*.hpp # <-- MUST keep for AUTOMOC
+        ${autoapp_include_directory}/*.h   # <-- MUST keep for AUTOMOC
+        ${config_sources_directory}/*.cpp
+        ${config_include_directory}/*.hpp # <-- MUST keep for AUTOMOC
+        ${common_include_directory}/*.hpp) # <-- MUST keep for AUTOMOC
 
 # --- Target: autoapp ---
-add_executable(autoapp ${autoapp_source_files})
+qt_add_executable(autoapp ${autoapp_source_files})
+
 target_compile_features(autoapp PRIVATE cxx_std_17)
 target_compile_options(autoapp PRIVATE -Wall -pedantic)
 target_compile_definitions(autoapp PRIVATE BOOST_ALL_DYN_LINK)
@@ -115,8 +120,40 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_definitions(autoapp PRIVATE NDEBUG)
 endif ()
 
-# --- Simplified Includes (Modern) ---
-# All aasdk/aap_protobuf/boost/openssl includes are handled by the targets
+# ==============================================================
+# JourneyOS UI – Qt Design Studio integration (this is the only part you needed)
+# ==============================================================
+
+set(UI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/autoapp/UI/JourneyOS")
+
+# Build the two QDS plugins
+add_subdirectory(${UI_DIR}/JourneyOSContent)
+add_subdirectory(${UI_DIR}/JourneyOS)
+
+
+# This single line silences the Qt6CoreMacros error forever
+set_source_files_properties("${UI_DIR}/qtquickcontrols2.conf"
+        PROPERTIES QT_RESOURCE_ALIAS "/qtquickcontrols2.conf"
+)
+
+# The trick: use an absolute path BUT tell Qt explicitly that it's intentional
+qt_add_resources(autoapp "configuration"
+        PREFIX "/"
+        FILES ${UI_DIR}/qtquickcontrols2.conf)
+
+
+# Link the two plugins (you can list them once here – no need to repeat later)
+target_link_libraries(autoapp PRIVATE
+        JourneyOSplugin
+        JourneyOSContentplugin
+)
+
+include(qmlcomponents)
+
+# ==============================================================
+# Rest of your original linking (unchanged, just without the duplicate plugin lines)
+# ==============================================================
+
 target_include_directories(autoapp PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -126,15 +163,14 @@ target_include_directories(autoapp PRIVATE
         ${ILCLIENT_INCLUDE_DIRS}
 )
 
-# --- Simplified Linking (Modern) ---
 target_link_libraries(autoapp PUBLIC
-        AASDK::aasdk              # Modern target, handles ALL its dependencies
-        AAPProto::aap_protobuf    # Modern target, handles its dependencies
-        JourneyOSplugin
-        JourneyOSContentplugin
+        AASDK::aasdk
+        AAPProto::aap_protobuf
         Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml Qt6::DBus
         Qt6::Bluetooth Qt6::Multimedia Qt6::MultimediaWidgets Qt6::Network
+        libusb
         PRIVATE
+        Boost::log
         ${RTAUDIO_LIBRARIES}
         ${TAGLIB_LIBRARIES}
         ${BCM_HOST_LIBRARIES}
@@ -160,30 +196,7 @@ set_target_properties(autoapp PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
 )
 
-# --- Target: btservice ---
-add_executable(btservice ${btservice_source_files})
-target_compile_features(btservice PRIVATE cxx_std_17)
-target_compile_options(btservice PRIVATE -Wall -pedantic)
-target_compile_definitions(btservice PRIVATE BOOST_ALL_DYN_LINK)
-
-# --- Simplified btservice Linking ---
-target_link_libraries(btservice PUBLIC
-        AAPProto::aap_protobuf    # Handles its own protobuf dependency
-        Qt6::Core Qt6::Gui Qt6::Bluetooth
-        Qt6::Network Qt6::Multimedia Qt6::MultimediaWidgets
-        PRIVATE
-        Boost::system
-        Boost::log
-)
-
-set_target_properties(btservice PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
-)
-
 # --- Install Rules ---
-install(TARGETS autoapp btservice
+install(TARGETS autoapp
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-install(DIRECTORY ${QT_QML_OUTPUT_DIRECTORY}/
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/qml
 )

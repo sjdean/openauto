@@ -6,12 +6,8 @@
 #include <QVariant>
 #include <utility>
 
-#include <execinfo.h>
-#include <cxxabi.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <dlfcn.h>
-#include <unistd.h>
 
 namespace f1x::openauto::autoapp::configuration {
   class ConfigurationSetting {

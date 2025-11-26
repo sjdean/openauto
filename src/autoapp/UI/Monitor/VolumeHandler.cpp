@@ -1,8 +1,10 @@
 #include "f1x/openauto/autoapp/UI/Monitor/VolumeHandler.hpp"
 #include <utility>
 
+#include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
+
 namespace f1x::openauto::autoapp::UI::Monitor  {
-  VolumeHandler::VolumeHandler(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration, std::shared_ptr<IAudioHandler> audioHandler) :
+  VolumeHandler::VolumeHandler(configuration::IConfiguration::Pointer configuration, std::shared_ptr<IAudioHandler> audioHandler) :
   configuration_(std::move(configuration)),
   m_audioHandler(std::move(audioHandler)) {
 

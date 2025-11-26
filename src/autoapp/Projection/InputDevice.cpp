@@ -189,7 +189,7 @@ namespace f1x::openauto::autoapp::projection {
   }
 
   IInputDevice::ButtonCodes InputDevice::getSupportedButtonCodes() const {
-    // TODO: Button Codes
+    // TODO: Restore BUtton Codes
     // return configuration_->getButtonCodes();
   }
 

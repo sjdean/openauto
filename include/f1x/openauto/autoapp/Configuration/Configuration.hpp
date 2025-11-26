@@ -3,20 +3,17 @@
 #include <fstream>
 
 namespace f1x::openauto::autoapp::configuration {
+    class Configuration : public IConfiguration {
+    public:
+        Configuration();
 
-  class Configuration : public IConfiguration {
-  public:
-    Configuration();
+        bool hasTouchScreen() const override;
 
-    bool hasTouchScreen() const override;
-    void save() const override;
+        void save() const override;
 
-  private:
-    static QString generateRandomString(size_t length);
-    QSettings m_settings;
-  };
+    private:
+        static QString generateRandomString(size_t length);
 
+        QSettings m_settings;
+    };
 }
-
-
-

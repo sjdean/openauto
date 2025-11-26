@@ -3,6 +3,10 @@
 #include <string>
 
 namespace f1x::openauto::autoapp::UI::Monitor  {
+  /**
+   * Handles Pulse Audio through the IAudioHandler interface for Linux
+   * @return
+   */
   PulseAudioHandler::PulseAudioHandler() {
     m_mainloop = pa_mainloop_new();
     m_mainloop_api = pa_mainloop_get_api(m_mainloop);
