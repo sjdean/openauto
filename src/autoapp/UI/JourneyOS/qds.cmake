@@ -3,6 +3,7 @@
 
 add_subdirectory(JourneyOSContent)
 add_subdirectory(JourneyOS)
+add_subdirectory(App)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
     JourneyOSContentplugin

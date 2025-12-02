@@ -82,6 +82,7 @@ namespace f1x::openauto::autoapp::UI {
         QString wirelessHotspotPassword READ getWirelessHotspotPassword WRITE setWirelessHotspotPassword NOTIFY wirelessHotspotPasswordChanged)
     Q_PROPERTY(common::Enum::WirelessType::Value wirelessType READ getWirelessType WRITE setWirelessType NOTIFY wirelessTypeChanged)
     Q_PROPERTY(bool wirelessEnabled READ getWirelessEnabled WRITE setWirelessEnabled NOTIFY wirelessEnabledChanged)
+      Q_PROPERTY(QString wirelessHotspotInterface READ getWirelessHotspotInterface WRITE setWirelessHotspotInterface NOTIFY wirelessHotspotInterfaceChanged)
 
     Q_PROPERTY(QString hwBluetoothAdapter READ getHwBluetoothAdapter WRITE setHwBluetoothAdapter NOTIFY hwBluetoothAdapterChanged)
   public:
@@ -164,6 +165,7 @@ namespace f1x::openauto::autoapp::UI {
 
     void wirelessTypeChanged();
     void wirelessEnabledChanged();
+      void wirelessHotspotInterfaceChanged();
 
     void hwBluetoothAdapterChanged();
 
@@ -350,6 +352,8 @@ namespace f1x::openauto::autoapp::UI {
     QString m_wirelessClientPassword;
     QString m_wirelessHotspotSSID;
     QString m_wirelessHotspotPassword;
+    QString m_wirelessHotspotInterface;
+
 
     common::Enum::WirelessType::Value m_wirelessType;
     bool m_wirelessEnabled;
@@ -358,6 +362,7 @@ namespace f1x::openauto::autoapp::UI {
     void setWirelessClientPassword(QString value);
     void setWirelessHotspotSSID(QString value);
     void setWirelessHotspotPassword(QString value);
+      void setWirelessHotspotInterface(QString value);
     void setWirelessType(common::Enum::WirelessType::Value value);
     void setWirelessEnabled(bool value);
 
@@ -366,6 +371,7 @@ namespace f1x::openauto::autoapp::UI {
     QString getWirelessClientPassword();
     QString getWirelessHotspotSSID();
     QString getWirelessHotspotPassword();
+      QString getWirelessHotspotInterface();
 
     common::Enum::WirelessType::Value getWirelessType();
     bool getWirelessEnabled();
@@ -374,8 +380,6 @@ namespace f1x::openauto::autoapp::UI {
     QString getHwBluetoothAdapter();
     void setHwBluetoothAdapter(QString value);
 
-  private:
-    void activateWireless();
   };
 }
 #endif //OPENAUTO_SETTINGSVIEW_HPP

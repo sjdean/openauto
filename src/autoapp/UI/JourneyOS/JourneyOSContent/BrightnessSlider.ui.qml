@@ -24,7 +24,6 @@ Slider {
         y: brightnessSlider.topPadding
         implicitWidth: 20
         implicitHeight: 200
-        parent: brightnessSlider.background
         width: implicitWidth
         height: brightnessSlider.availableHeight
         radius: 10

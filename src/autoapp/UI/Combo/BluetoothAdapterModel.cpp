@@ -5,67 +5,54 @@
 
 
 namespace f1x::openauto::autoapp::UI::Combo {
-  // TODO: Bring in Bluetooth Monitor
-  BluetoothAdapterModel::BluetoothAdapterModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
-    populateComboBoxItems();
-  }
+    // TODO: Bring in Bluetooth Monitor
+    BluetoothAdapterModel::BluetoothAdapterModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {
+        populateComboBoxItems();
+    }
 
-  // TODO: isBlueZRunning is duplicated between this and BluetoothDeviceModel - consider stripping this to its own file to be shared between these two classes
-  bool isBlueZRunning2() {
-    QProcess process;
-    process.start("systemctl", QStringList() << "is-active" << "bluetooth.service");
-    process.waitForFinished();
-    QString output = process.readAllStandardOutput();
-    return output.trimmed() == "active";
-  }
-
-  void BluetoothAdapterModel::populateComboBoxItems() {
-    m_comboBoxItems.clear();
-    if (isBlueZRunning2()) {
-
-
-      QList<QBluetoothHostInfo> adapters = QBluetoothLocalDevice::allDevices();
-      if (!adapters.isEmpty()) {
-        for (const QBluetoothHostInfo &adapter: adapters) {
-          QString adapterAddress = adapter.address().toString();
-
-          addComboBoxItem(QString("%1 (%2)").arg(adapter.name()).arg(
-                              adapterAddress).toUtf8().constData(),
-                          adapterAddress);
+    void BluetoothAdapterModel::populateComboBoxItems() {
+        m_comboBoxItems.clear();
+        qDebug() << "Emptying Combo box...";
+        QList<QBluetoothHostInfo> adapters = QBluetoothLocalDevice::allDevices();
+        qDebug() << "Queried Device List";
+        if (!adapters.isEmpty()) {
+            for (const QBluetoothHostInfo &adapter: adapters) {
+                QString adapterAddress = adapter.address().toString();
+                qDebug() << "Processing adapter " << adapter.name();
+                addComboBoxItem(QString("%1 (%2)").arg(adapter.name()).arg(
+                                    adapterAddress).toUtf8().constData(),
+                                adapterAddress);
+            }
+        } else {
+            addComboBoxItem("SettingsWindow", "none");
         }
-      } else {
-        addComboBoxItem("SettingsWindow", "none");
-      }
-    } else {
-      addComboBoxItem("SettingsWindow", "none");
     }
-  }
 
-  QList<QObject *> BluetoothAdapterModel::getComboBoxItems() const {
-    QList<QObject *> list;
-    for (BluetoothAdapterModelItem *item: m_comboBoxItems) {
-      list.append(item);
+    QList<QObject *> BluetoothAdapterModel::getComboBoxItems() const {
+        QList<QObject *> list;
+        for (BluetoothAdapterModelItem *item: m_comboBoxItems) {
+            list.append(item);
+        }
+        return list;
     }
-    return list;
-  }
 
-  BluetoothAdapterModelItem* BluetoothAdapterModel::getCurrentComboBoxItem() {
-    if (!m_currentComboBoxItem && !m_comboBoxItems.isEmpty()) {
-      m_currentComboBoxItem = m_comboBoxItems.first(); // Select the first item by default
+    BluetoothAdapterModelItem *BluetoothAdapterModel::getCurrentComboBoxItem() {
+        if (!m_currentComboBoxItem && !m_comboBoxItems.isEmpty()) {
+            m_currentComboBoxItem = m_comboBoxItems.first(); // Select the first item by default
+        }
+        return m_currentComboBoxItem;
     }
-    return m_currentComboBoxItem;
-  }
 
-  void BluetoothAdapterModel::setCurrentComboBoxItem(BluetoothAdapterModelItem* value) {
-    if (m_currentComboBoxItem != value) {
-      m_currentComboBoxItem = value;
-      emit currentComboBoxItemChanged();
+    void BluetoothAdapterModel::setCurrentComboBoxItem(BluetoothAdapterModelItem *value) {
+        if (m_currentComboBoxItem != value) {
+            m_currentComboBoxItem = value;
+            emit currentComboBoxItemChanged();
+        }
     }
-  }
 
-  void BluetoothAdapterModel::addComboBoxItem(const QString &display,
-                                        QString value) {
-    auto item = new BluetoothAdapterModelItem(display, value);
-    m_comboBoxItems.emplace_back(item);
-  }
+    void BluetoothAdapterModel::addComboBoxItem(const QString &display,
+                                                QString value) {
+        auto item = new BluetoothAdapterModelItem(display, value);
+        m_comboBoxItems.emplace_back(item);
+    }
 }

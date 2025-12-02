@@ -15,8 +15,8 @@ qt6_add_qml_module(JourneyOS
     RESOURCE_PREFIX "/qt/qml"
     QML_FILES
         "Constants.qml"
-        "EventListSimulator.qml"
         "EventListModel.qml"
+        "EventListSimulator.qml"
 )
 
 

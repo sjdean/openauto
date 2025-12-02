@@ -1,360 +1,296 @@
 #include "f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp"
-#include <QDBusReply>
-#include <QUuid>
+#include <QDebug>
+#include <qloggingcategory.h>
+#include <QRegularExpression>
+#include <QProcess>
 
-#include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
-
-// Define our logging category
-Q_LOGGING_CATEGORY(logWifi, "autoapp.wifi")
-
-// D-Bus constants for NetworkManager
-const QString NM_SERVICE = "org.freedesktop.NetworkManager";
-const QString NM_PATH = "/org/freedesktop/NetworkManager";
-const QString NM_INTERFACE = "org.freedesktop.NetworkManager";
-const QString NM_DEVICE_IFACE = "org.freedesktop.NetworkManager.Device";
-const QString NM_WIRELESS_IFACE = "org.freedesktop.NetworkManager.Device.Wireless";
-const QString NM_AP_IFACE = "org.freedesktop.NetworkManager.AccessPoint";
-const QString NM_ACTIVE_CONN_IFACE = "org.freedesktop.NetworkManager.Connection.Active";
-const QString NM_SETTINGS_IFACE = "org.freedesktop.NetworkManager.Settings";
+Q_LOGGING_CATEGORY(logWifiMon, "wifi.monitor")
 
 namespace f1x::openauto::autoapp::UI::Monitor {
-    /**
-     * Constructor: Connect to D-Bus and set up initial signal monitoring.
-     */
-    WifiMonitor::WifiMonitor(f1x::openauto::autoapp::configuration::IConfiguration::Pointer configuration, QObject *parent)
-        : QObject(parent),
-          m_systemBus(QDBusConnection::systemBus()),
-          m_nm(nullptr),
-          m_currentMode(f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT),
-          m_connected(false),
-          m_signalStrength(0),
-          configuration_(std::move(configuration)) {
+    using namespace f1x::openauto::common::Enum;
 
-        m_hotspotSsid = configuration_->getSettingByName<QString>("Wireless", "HotspotSSID");
-        m_currentMode = configuration_->getSettingByName<f1x::openauto::common::Enum::WirelessType::Value>("Wireless", "Type");
-        m_hotspotPassword = configuration_->getSettingByName<QString>("Wireless", "HotspotPassword");
+    WifiMonitor::WifiMonitor(configuration::IConfiguration::Pointer config, QObject* parent)
+        : QObject(parent)
+        , m_config(std::move(config))
+        , m_refreshTimer(new QTimer(this))
+    {
+        // === 1. Find current Wi-Fi interface (cross-platform) ===
+        QString macAddress = m_config->getSettingByName<QString>("Wireless", "Interface");
 
-        if (!m_systemBus.isConnected()) {
-            qCritical(logWifi) << "Cannot connect to the D-Bus system bus.";
-            return;
-        }
-
-        // 1. Connect to the main NetworkManager StateChanged signal
-        m_systemBus.connect(NM_SERVICE, NM_PATH, NM_INTERFACE, "StateChanged",
-                            this, SLOT(onNmStateChanged(quint32)));
-
-        // 2. Create an interface to call methods on NetworkManager
-        m_nm = new QDBusInterface(NM_SERVICE, NM_PATH, NM_INTERFACE, m_systemBus, this);
-        if (!m_nm->isValid()) {
-            qCritical(logWifi) << "Failed to create D-Bus interface for NetworkManager.";
-            return;
-        }
-
-        // 3. Find our wlan0 device
-        findWifiDevice();
-
-        // 4. Do an initial poll of the current state
-        onNmStateChanged(m_nm->property("State").toUInt());
-    }
-
-    WifiMonitor::~WifiMonitor() {
-        // Clean up D-Bus connections
-    }
-
-    /**
-     * Finds the D-Bus path for the 'wlan0' device and connects to its signals.
-     */
-    void WifiMonitor::findWifiDevice() {
-        const QDBusReply<QDBusObjectPath> reply = m_nm->call("GetDeviceByIpIface", "wlan0");
-        if (reply.isValid()) {
-            m_wifiDevicePath = reply.value().path();
-            qInfo(logWifi) << "Found Wi-Fi device at path:" << m_wifiDevicePath;
-
-            // Connect to this device's StateChanged signal
-            m_systemBus.connect(NM_SERVICE, m_wifiDevicePath, NM_DEVICE_IFACE, "StateChanged",
-                                this, SLOT(onDeviceStateChanged(quint32,quint32,quint32)));
-
-            // Connect to this device's "ActiveConnection" property changing
-            m_systemBus.connect(NM_SERVICE, m_wifiDevicePath, "org.freedesktop.DBus.Properties", "PropertiesChanged",
-                                this, SLOT(onActiveConnectionChanged(QVariantMap)));
-
-            m_systemBus.connect(NM_SERVICE, m_wifiDevicePath, NM_WIRELESS_IFACE, "ScanDone",
-                                this, SLOT(onScanDone()));
-
-        } else {
-            qWarning(logWifi) << "Could not find D-Bus path for 'wlan0'.";
-        }
-    }
-
-    // --- Property READ functions ---
-
-    f1x::openauto::common::Enum::WirelessType::Value WifiMonitor::getCurrentMode() const { return m_currentMode; }
-    bool WifiMonitor::isConnected() const { return m_connected; }
-    QString WifiMonitor::getCurrentSsid() const { return m_currentSsid; }
-    QVariantList WifiMonitor::getAccessPoints() const { return m_accessPoints; }
-    QString WifiMonitor::getHotspotSsid() const { return m_hotspotSsid; } // TODO: Read from config
-    QString WifiMonitor::getHotspotPassword() const { return m_hotspotPassword; } // TODO: Read from config
-    int WifiMonitor::getSignalStrength() const {
-        // You would get this from the ActiveConnection or AccessPoint properties
-        return m_signalStrength;
-    }
-
-
-    // --- Q_INVOKABLE Method Implementations ---
-
-    /**
-     * Q_INVOKABLE: Sets the Wi-Fi mode to Client or Hotspot.
-     */
-    void WifiMonitor::setMode(const f1x::openauto::common::Enum::WirelessType::Value mode) const {
-        if (mode == m_currentMode) return;
-
-        // Disconnect any active connection first
-        disconnect();
-
-        if (mode == f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT) {
-            qInfo(logWifi) << "Setting mode to Hotspot (AP)...";
-
-            // This is a complex D-Bus call to create a new AP connection
-            // See NetworkManager D-Bus docs for "AddAndActivateConnection"
-            // You need to build a QVariantMap describing the AP connection.
-
-            // --- Simplified Example ---
-            QVariantMap connectionSettings;
-            connectionSettings.insert("connection.type", "802-11-wireless");
-            connectionSettings.insert("connection.id", m_hotspotSsid);
-            connectionSettings.insert("connection.uuid", QUuid::createUuid().toString());
-            connectionSettings.insert("802-11-wireless.mode", "ap");
-            connectionSettings.insert("802-11-wireless.ssid", m_hotspotSsid.toUtf8());
-            connectionSettings.insert("802-11-wireless-security.key-mgmt", "wpa-psk");
-            connectionSettings.insert("802-11-wireless-security.psk", m_hotspotPassword);
-
-            m_nm->call("AddAndActivateConnection", QVariant::fromValue(connectionSettings),
-                       QVariant::fromValue(QDBusObjectPath(m_wifiDevicePath)),
-                       QVariant::fromValue(QDBusObjectPath("/")));
-
-            // The onDeviceStateChanged slot will update our properties
-
-        } else if (mode == f1x::openauto::common::Enum::WirelessType::WIRELESS_CLIENT) {
-            qInfo(logWifi) << "Setting mode to Client (Station)...";
-            // No action needed here, disconnecting the AP
-            // will automatically put the device back in Client mode.
-            // We can trigger a scan for the UI.
-            scanForNetworks();
-        }
-    }
-
-    /**
-     * Q_INVOKABLE: Scans for available Wi-Fi networks.
-     */
-    void WifiMonitor::scanForNetworks() const {
-        if (m_wifiDevicePath.isEmpty() || m_currentMode == f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT) {
-            qWarning(logWifi) << "Cannot scan while in Hotspot mode or if device is missing.";
-            return;
-        }
-
-        QDBusInterface wirelessIface(NM_SERVICE, m_wifiDevicePath, NM_WIRELESS_IFACE, m_systemBus);
-        wirelessIface.call("RequestScan", QVariantMap());
-
-    }
-
-    /**
-     * Q_INVOKABLE: Connects to a specific Wi-Fi network.
-     */
-    void WifiMonitor::connectToSsid(const QString &ssid, const QString &password) const {
-        if (m_wifiDevicePath.isEmpty() || m_currentMode == f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT) {
-            qWarning(logWifi) << "Cannot connect while in Hotspot mode.";
-            return;
-        }
-
-        qInfo(logWifi) << "Attempting to connect to SSID:" << ssid;
-
-        // This is a simplified connection. For a real implementation, you would
-        // find the AccessPoint's D-Bus path from your m_accessPoints list
-        // and pass that to AddAndActivateConnection.
-
-        // --- Simplified Example ---
-        QVariantMap connectionSettings;
-        connectionSettings.insert("connection.type", "802-11-wireless");
-        connectionSettings.insert("connection.id", ssid);
-        connectionSettings.insert("connection.uuid", QUuid::createUuid().toString());
-        connectionSettings.insert("802-11-wireless.ssid", ssid.toUtf8());
-        connectionSettings.insert("802-11-wireless-security.key-mgmt", "wpa-psk");
-        connectionSettings.insert("802-11-wireless-security.psk", password);
-
-        m_nm->call("AddAndActivateConnection", QVariant::fromValue(connectionSettings),
-                       QVariant::fromValue(QDBusObjectPath(m_wifiDevicePath)),
-                       QVariant::fromValue(QDBusObjectPath("/")));
-    }
-
-    /**
-     * Q_INVOKABLE: Disconnects from the current network (Client or Hotspot).
-     */
-    void WifiMonitor::disconnect() const {
-        if (!m_connected || m_wifiDevicePath.isEmpty()) return;
-
-        qInfo(logWifi) << "Disconnecting active connection...";
-
-        QDBusInterface deviceIface(NM_SERVICE, m_wifiDevicePath, NM_DEVICE_IFACE, m_systemBus);
-        deviceIface.call("Disconnect");
-    }
-
-
-    // --- Private D-Bus Signal Handlers ---
-
-    /**
-     * SLOT: Called when the *master* NetworkManager state changes.
-     */
-    void WifiMonitor::onNmStateChanged(const quint32 state) {
-        // 70 = Connected, 60 = Connecting, 20 = Disconnected, 10 = Asleep
-        qDebug(logWifi) << "NetworkManager state changed:" << state;
-
-        if (state < 70) {
-            if (m_connected) {
-                m_connected = false;
-                m_currentSsid = "";
-                m_signalStrength = 0;
-                emit connectionChanged();
+        if (!macAddress.isEmpty()) {
+            // Find interface by MAC (most reliable)
+            for (const QNetworkInterface& i : QNetworkInterface::allInterfaces()) {
+                if (i.type() == QNetworkInterface::Wifi &&
+                    i.hardwareAddress().compare(macAddress, Qt::CaseInsensitive) == 0) {
+                    m_currentInterface = i;
+                    break;
+                    }
             }
         }
-    }
 
-    /**
-     * SLOT: Called when the *wlan0 device* state changes.
-     */
-    void WifiMonitor::onDeviceStateChanged(const quint32 newState, quint32 oldState, quint32 reason) {
-        qDebug(logWifi) << "Wi-Fi device (" << m_wifiDevicePath << ") state changed to" << newState;
-
-        // 100 = Connected, 80 = Activating, 30 = Disconnected
-        if (newState == 100) {
-            // Device is active, find out what connection it's using
-            const QDBusInterface deviceIface(NM_SERVICE, m_wifiDevicePath, NM_DEVICE_IFACE, m_systemBus);
-            updateActiveConnection(deviceIface.property("ActiveConnection").value<QDBusObjectPath>());
-
-        } else if (newState <= 30) {
-            // Device is disconnected
-            if (m_connected) {
-                m_connected = false;
-                m_currentSsid = "";
-                m_signalStrength = 0;
-                m_currentMode = (m_currentMode == f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT) ? f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT : f1x::openauto::common::Enum::WirelessType::WIRELESS_CLIENT; // Guess
-                if (m_currentMode == f1x::openauto::common::Enum::WirelessType::WIRELESS_CLIENT) m_currentMode = f1x::openauto::common::Enum::WirelessType::WIRELESS_CLIENT;
-
-                emit connectionChanged();
-                emit currentModeChanged();
+        // Fallback: if no MAC saved, auto-detect first Wi-Fi adapter
+        if (!m_currentInterface.isValid()) {
+            for (const QNetworkInterface& i : QNetworkInterface::allInterfaces()) {
+                if (i.type() == QNetworkInterface::Wifi &&
+                    (i.flags() & QNetworkInterface::IsUp) &&
+                    !i.hardwareAddress().isEmpty()) {
+                    m_currentInterface = i;
+                    break;
+                    }
             }
         }
-    }
 
-    /**
-     * SLOT: Called when the wlan0 device's ActiveConnection property changes.
-     */
-    void WifiMonitor::onActiveConnectionChanged(const QVariantMap &properties) {
-        if (properties.contains("ActiveConnection")) {
-            updateActiveConnection(properties.value("ActiveConnection").value<QDBusObjectPath>());
-        }
-    }
-
-    /**
-     * Helper: Gets details for the currently active connection.
-     */
-    void WifiMonitor::updateActiveConnection(const QDBusObjectPath &activeConnPath) {
-        if (activeConnPath.path().isEmpty() || activeConnPath.path() == "/") {
-            if (m_connected) { // We just got disconnected
-                m_connected = false;
-                m_currentSsid = "";
-                emit connectionChanged();
+        // Save MAC forever if we have a valid adapter
+        if (m_currentInterface.isValid()) {
+            QString currentMac = m_currentInterface.hardwareAddress();
+            if (macAddress.isEmpty() || macAddress != currentMac) {
+                m_config->updateSettingByName<QString>("Wireless", "Interface", currentMac);
+                m_config->save();
             }
+        }
+
+
+#ifdef Q_OS_LINUX
+        m_nm = new QDBusInterface("org.freedesktop.NetworkManager",
+                                  "/org/freedesktop/NetworkManager",
+                                  "org.freedesktop.NetworkManager",
+                                  m_bus, this);
+
+        if (m_currentInterface.isValid()) {
+            findWifiDevice(m_currentInterface.name());  // Still need name for D-Bus
+        }
+#endif
+
+        // === 2. Start refresh timer (all platforms) ===
+        connect(m_refreshTimer, &QTimer::timeout, this, &WifiMonitor::refreshCrossPlatformInfo);
+        m_refreshTimer->start(5000);
+
+        // Initial refresh
+        refreshCrossPlatformInfo();
+        updateInterfaceList();
+
+        emit interfaceChanged(m_currentInterface.hardwareAddress());
+    }
+
+    WifiMonitor::~WifiMonitor()
+    {
+#ifdef Q_OS_LINUX
+        delete m_nm;
+#endif
+    }
+
+    void WifiMonitor::refreshCrossPlatformInfo()
+    {
+        if (!m_currentInterface.isValid()) {
+            emit currentSsidChanged(tr("No Wi-Fi adapter"));
+            emit signalStrengthChanged(0);
+            emit connectedChanged(false);
+            emit interfaceUpChanged(false);
+            emit currentIpChanged("");
             return;
         }
 
-        const QDBusInterface activeConnIface(NM_SERVICE, activeConnPath.path(), NM_ACTIVE_CONN_IFACE, m_systemBus);
+        // These work perfectly on Linux, macOS, and Windows
+        bool isUp = m_currentInterface.flags() & QNetworkInterface::IsUp;
+        emit interfaceUpChanged(isUp);
+        emit connectedChanged(isUp);  // Good enough for now
 
-        // Get the actual "Connection" object path
-        const QDBusObjectPath connPath = activeConnIface.property("Connection").value<QDBusObjectPath>();
-        QDBusInterface connIface(NM_SERVICE, connPath.path(), NM_SETTINGS_IFACE, m_systemBus);
+        updateCurrentIp();            // Shows real IP on all platforms
+        updateInterfaceList();        // Shows real interface list + MAC
 
-        const QDBusReply<QVariantMap> reply = connIface.call("GetSettings");
-        if (!reply.isValid()) return;
+#ifdef Q_OS_LINUX
+        // Linux: Full SSID + signal from NetworkManager D-Bus (your existing code)
+        // → Do nothing here, your D-Bus slots already emit currentSsidChanged/signalStrengthChanged
 
-        QVariantMap settings = reply.value();
-        const QString type = settings["connection"].toMap()["type"].toString();
+#else
+        // macOS + Windows: We don't have SSID/signal yet → show honest placeholder
+        emit currentSsidChanged(tr("Not available"));
+        emit signalStrengthChanged(0);
+#endif
+    }
 
-        if (type == "802-11-wireless") {
-            m_currentMode = f1x::openauto::common::Enum::WirelessType::WIRELESS_CLIENT;
-            m_currentSsid = QString::fromUtf8(settings["802-11-wireless"].toMap()["ssid"].toByteArray());
-        } else if (type == "ap" || (type == "802-11-wireless" && settings["802-11-wireless"].toMap()["mode"].toString() == "ap")) {
-            m_currentMode = f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT;
-            m_currentSsid = QString::fromUtf8(settings["802-11-wireless"].toMap()["ssid"].toByteArray());
+    void WifiMonitor::updateCurrentIp()
+    {
+        QString ip;
+        for (const auto& entry : m_currentInterface.addressEntries()) {
+            if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) {
+                ip = entry.ip().toString();
+                break;
+            }
+        }
+        emit currentIpChanged(ip);
+    }
+
+    void WifiMonitor::updateInterfaceList()
+    {
+        QVariantList list;
+
+        for (const QNetworkInterface& i : QNetworkInterface::allInterfaces()) {
+            if (i.type() != QNetworkInterface::Wifi || i.hardwareAddress().isEmpty()) {
+                continue;
+            }
+
+            QVariantMap map;
+            map["name"] = i.name();
+            map["mac"]  = i.hardwareAddress();
+            map["displayName"] = QString("%1 (%2)").arg(i.name(), i.hardwareAddress());
+            map["up"]   = i.flags().testFlag(QNetworkInterface::IsUp);  // Fixed line
+            map["running"] = i.flags().testFlag(QNetworkInterface::IsRunning);
+
+            // Optional: add current IP
+            QString ip;
+            for (const QNetworkAddressEntry& entry : i.addressEntries()) {
+                if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol) {
+                    ip = entry.ip().toString();
+                    break;
+                }
+            }
+            map["ip"] = ip;
+
+            list.append(map);
         }
 
-        m_connected = true;
-        emit connectionChanged();
-        emit currentModeChanged();
+        emit availableInterfacesChanged(list);
     }
 
-    /**
-     * SLOT: Called after a scan finishes. We now fetch the results.
-     */
-    void WifiMonitor::onScanDone() {
-        qDebug(logWifi) << "Scan done. Fetching results...";
-        m_systemBus.disconnect(NM_SERVICE, m_wifiDevicePath, NM_WIRELESS_IFACE, "ScanDone",
-                               this, SLOT(onScanDone()));
+    // ————————————————————
+    // Linux-only D-Bus code (unchanged from your working version)
+    // ————————————————————
 
-        updateAccessPoints();
-    }
+#ifdef Q_OS_LINUX
 
-    /**
-     * Helper: Fetches all APs from NetworkManager
-     */
-    void WifiMonitor::updateAccessPoints() {
-        QDBusInterface wirelessIface(NM_SERVICE, m_wifiDevicePath, NM_WIRELESS_IFACE, m_systemBus);
-        const QDBusPendingCall asyncCall = wirelessIface.asyncCall("GetAccessPoints");
+void WifiMonitor::findWifiDevice(const QString& ifaceName)
+{
+    if (ifaceName.isEmpty()) return;
 
-        QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(asyncCall, this);
+    QDBusInterface nm("org.freedesktop.NetworkManager",
+                      "/org/freedesktop/NetworkManager",
+                      "org.freedesktop.NetworkManager", m_bus);
 
-        connect(watcher, &QDBusPendingCallWatcher::finished, this, &WifiMonitor::onAccessPointsReply);
-    }
+    QDBusPendingReply<QDBusObjectPath> reply = nm.asyncCall("GetDeviceByIpIface", ifaceName);
+    auto* watcher = new QDBusPendingCallWatcher(reply, this);
 
-    /**
-     * SLOT: Called when the list of Access Points is received.
-     */
-    void WifiMonitor::onAccessPointsReply() {
-        // 1. Get the watcher that sent the signal
-        auto *watcher = qobject_cast<QDBusPendingCallWatcher *>(sender());
-        if (!watcher) {
-            qWarning(logWifi) << "Got access points reply from unknown sender";
+    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher* w) {
+        QDBusPendingReply<QDBusObjectPath> r = *w;
+        if (r.isError()) {
+            qWarning(logWifiMon) << "Wi-Fi device not found:" << r.error().message();
+            w->deleteLater();
             return;
         }
 
-        // 2. Get the reply data from the watcher
-        QDBusPendingReply<QList<QDBusObjectPath>> reply = *watcher;
+        m_wifiDevicePath = r.value().path();
+        qInfo(logWifiMon) << "Monitoring Wi-Fi device:" << m_wifiDevicePath;
 
-        // 3. Process the reply
-        if (reply.isError()) {
-            qWarning(logWifi) << "Failed to get access points:" << reply.error().message();
-        } else {
-            m_accessPoints.clear();
-            QList<QDBusObjectPath> apPaths = reply.value();
+        // Watch state changes (connected/disconnected)
+        m_bus.connect("org.freedesktop.NetworkManager",
+                      m_wifiDevicePath,
+                      "org.freedesktop.NetworkManager.Device",
+                      "StateChanged",
+                      this, SLOT(onDeviceStateChanged(quint32,quint32,quint32)));
 
-            for (const QDBusObjectPath &apPath : apPaths) {
-                QDBusInterface apIface(NM_SERVICE, apPath.path(), NM_AP_IFACE, m_systemBus);
-                QVariantMap apData;
-                apData.insert("ssid", QString::fromUtf8(apIface.property("Ssid").toByteArray()));
-                apData.insert("strength", apIface.property("Strength").toUInt());
-                m_accessPoints.append(apData);
-            }
+        // Watch active connection changes (SSID, AP mode, etc.)
+        m_bus.connect("org.freedesktop.NetworkManager",
+                      m_wifiDevicePath,
+                      "org.freedesktop.DBus.Properties",
+                      "PropertiesChanged",
+                      this, SLOT(onPropertiesChanged(QString,QVariantMap,QStringList)));
 
-            emit accessPointsChanged();
-        }
+        // Initial state
+        refreshLinuxStatus();
 
-        // 4. --- THE FIX ---
-        // This is the crucial part. Mark the watcher for deletion.
-        watcher->deleteLater();
+        w->deleteLater();
+    });
+}
+
+void WifiMonitor::onDeviceStateChanged(quint32 newState, quint32 /*oldState*/, quint32 /*reason*/)
+{
+    // NetworkManager state codes: https://networkmanager.dev/docs/api/latest/nm-dbus-types.html#NMDeviceState
+    const bool connected = (newState >= 100); // 100 = NM_DEVICE_STATE_ACTIVATED
+    emit connectedChanged(connected);
+
+    if (connected) {
+        refreshLinuxStatus(); // Get SSID, signal, mode
+    } else {
+        emit currentSsidChanged("");
+        emit signalStrengthChanged(0);
+        emit modeChanged(WirelessType::WIRELESS_CLIENT);
     }
 }
 
-// You still have these stubs from your code, which you can now remove
-// void WifiMonitor::onStaConnected(const QString &address, const QString &interface) {}
-// void WifiMonitor::onStaDisconnected(const QString &address, const QString &interface) {}
-// void WifiMonitor::onStateChanged(int newState, const QString &interface) {}
-// void WifiMonitor::updateIcon(const QString &interface, const QString &color) {}
+void WifiMonitor::onPropertiesChanged(const QString& interfaceName,
+                                      const QVariantMap& changed,
+                                      const QStringList& /*invalidated*/)
+{
+    if (interfaceName != "org.freedesktop.NetworkManager.Device") return;
+
+    if (changed.contains("ActiveConnection") || changed.contains("State")) {
+        refreshLinuxStatus();
+    }
+}
+
+void WifiMonitor::refreshLinuxStatus()
+{
+    if (m_wifiDevicePath.isEmpty()) return;
+
+    QDBusInterface device("org.freedesktop.NetworkManager",
+                          m_wifiDevicePath,
+                          "org.freedesktop.NetworkManager.Device",
+                          m_bus);
+
+    QDBusObjectPath activeConnPath = device.property("ActiveConnection").value<QDBusObjectPath>();
+    if (activeConnPath.path() == "/" || activeConnPath.path().isEmpty()) {
+        emit currentSsidChanged("");
+        emit modeChanged(WirelessType::WIRELESS_CLIENT);
+        return;
+    }
+
+    QDBusInterface activeConn("org.freedesktop.NetworkManager",
+                              activeConnPath.path(),
+                              "org.freedesktop.NetworkManager.Connection.Active",
+                              m_bus);
+
+    QDBusObjectPath connSettingsPath = activeConn.property("Connection").value<QDBusObjectPath>();
+    QDBusObjectPath specificObject = activeConn.property("SpecificObject").value<QDBusObjectPath>();
+
+    // Get connection settings (SSID, mode)
+    QDBusInterface settings("org.freedesktop.NetworkManager",
+                            connSettingsPath.path(),
+                            "org.freedesktop.NetworkManager.Settings.Connection",
+                            m_bus);
+
+    QDBusPendingReply<QVariantMap> reply = settings.asyncCall("GetSettings");
+    auto* watcher = new QDBusPendingCallWatcher(reply, this);
+    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, specificObject](QDBusPendingCallWatcher* w) {
+        if (w->isError()) {
+            qWarning(logWifiMon) << "Failed to get connection settings:" << w->error().message();
+            w->deleteLater();
+            return;
+        }
+
+        QVariantMap settings = w->reply().arguments().first().toMap();
+        QVariantMap wireless = settings.value("802-11-wireless").toMap();
+        QByteArray ssidBytes = wireless.value("ssid").toByteArray();
+        QString ssid = QString::fromUtf8(ssidBytes);
+        QString mode = wireless.value("mode").toString(); // "infrastructure" or "ap"
+
+        emit currentSsidChanged(ssid);
+        emit modeChanged(mode == "ap" ? WirelessType::WIRELESS_HOTSPOT : WirelessType::WIRELESS_CLIENT);
+
+        // Signal strength from current AccessPoint
+        if (!specificObject.path().isEmpty() && specificObject.path() != "/") {
+            QDBusInterface ap("org.freedesktop.NetworkManager",
+                              specificObject.path(),
+                              "org.freedesktop.NetworkManager.AccessPoint",
+                              m_bus);
+            quint8 strength = ap.property("Strength").value<quint8>();
+            emit signalStrengthChanged(static_cast<int>(strength));
+        } else {
+            emit signalStrengthChanged(0);
+        }
+
+        w->deleteLater();
+    });
+}
+
+#endif // Q_OS_LINUX
+}

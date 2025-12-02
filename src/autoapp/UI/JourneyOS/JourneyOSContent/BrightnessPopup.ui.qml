@@ -15,17 +15,14 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: 10
         anchors.horizontalCenter: parent.horizontalCenter
-
+        spacing: 5
 
         BrightnessSlider {
             id: brightnessSlider
-            height: brightnessPopup.height - 24
-            anchors.top: parent.top
-            anchors.topMargin: 0
+            height: parent.height
+            width: parent.width
             alternateColor: "#ab381353"
-            anchors.horizontalCenter: parent.horizontalCenter
             onValueChanged: brightnessPopupHandler.brightness = value
         }
     }
-
 }

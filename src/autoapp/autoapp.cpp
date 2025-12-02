@@ -37,10 +37,14 @@
 #include <f1x/openauto/autoapp/UI/Monitor/BrightnessHandler.hpp>
 #include <f1x/openauto/autoapp/UI/Monitor/LightHandler.hpp>
 
+#include <f1x/openauto/autoapp/UI/Combo/NetworkAdapterModel.hpp>
+#include <f1x/openauto/autoapp/UI/Combo/NetworkAdapterModelItem.hpp>
+
 #include <f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp>
 
 #include "f1x/openauto/autoapp/Configuration/Configuration.hpp"
 #include "f1x/openauto/autoapp/UI/Combo/AudioDeviceModel.hpp"
+#include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
 
 #include "f1x/openauto/autoapp/UI/Monitor/VolumeHandler.hpp"
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityMethod.hpp"
@@ -144,13 +148,16 @@ int main(int argc, char *argv[]) {
   QQmlApplicationEngine engine;
   QQuickView oj;
 
-  // Type Registration
+// Type Registration - Use fully qualified names for safety with Signals/Slots
   qmlRegisterType<f1x::openauto::common::Enum::AndroidAutoConnectivityState>("AndroidAutoMonitor",1,0,"AndroidAutoConnectivityState");
   qmlRegisterType<f1x::openauto::common::Enum::AndroidAutoConnectivityMethod>("AndroidAutoMonitor",1,0,"AndroidAutoConnectivityMethod");
-  qRegisterMetaType<f1x::openauto::common::Enum::AndroidAutoConnectivityState::Value>("AndroidAutoConnectivityState::Value");
-  qRegisterMetaType<f1x::openauto::common::Enum::AndroidAutoConnectivityMethod::Value>("AndroidAutoConnectivityMethod::Value");
-  qRegisterMetaType<f1x::openauto::common::Enum::BluetoothConnectionStatus::Value>("BluetoothConnectionStatus::Value");
-  qRegisterMetaType<f1x::openauto::common::Enum::WirelessType::Value>("WirelessType::Value");
+  qmlRegisterType<f1x::openauto::common::Enum::BluetoothConnectionStatus>("AndroidAutoMonitor",1,0,"BluetoothConnectionStatus");
+  qmlRegisterType<f1x::openauto::common::Enum::WirelessType>("AndroidAutoMonitor",1,0,"WirelessType");
+
+  qRegisterMetaType<f1x::openauto::common::Enum::AndroidAutoConnectivityState::Value>("common::Enum::AndroidAutoConnectivityState::Value");
+  qRegisterMetaType<f1x::openauto::common::Enum::AndroidAutoConnectivityMethod::Value>("f1x::openauto::common::Enum::AndroidAutoConnectivityMethod::Value");
+  qRegisterMetaType<f1x::openauto::common::Enum::BluetoothConnectionStatus::Value>("f1x::openauto::common::Enum::BluetoothConnectionStatus::Value");
+  qRegisterMetaType<f1x::openauto::common::Enum::WirelessType::Value>("f1x::openauto::common::Enum::WirelessType::Value");
 
   // Initialise ComboBox Items - Backed by AA Enum's
   autoapp::UI::Combo::DriverPositionModel driverPositionModel;
@@ -172,6 +179,9 @@ int main(int argc, char *argv[]) {
   engine.rootContext()->setContextProperty("pulseAudioDeviceModelOutput", &pulseAudioDeviceModelOutput);
   engine.rootContext()->setContextProperty("pulseAudioDeviceModelInput", &pulseAudioDeviceModelInput);
 
+  autoapp::UI::Combo::NetworkAdapterModel networkAdapterModel;
+  engine.rootContext()->setContextProperty("networkAdapterModel", &networkAdapterModel);
+
   // Connect to Bluetooth
   autoapp::UI::Monitor::BluetoothHandler bluetoothHandler(configuration);
 
@@ -181,25 +191,28 @@ int main(int argc, char *argv[]) {
 
   // Bluetooth Devices
   autoapp::UI::Combo::BluetoothDeviceModel bluetoothDeviceModel(&bluetoothHandler);
-  engine.rootContext()->setContextProperty("bluetoothAdapterModel", &bluetoothDeviceModel);
+  engine.rootContext()->setContextProperty("bluetoothDeviceModel", &bluetoothDeviceModel);
+
+  engine.rootContext()->setContextProperty("bluetoothHandler", &bluetoothHandler);
+  engine.rootContext()->setContextProperty("bluetoothViewModel", &bluetoothHandler);
+  engine.rootContext()->setContextProperty("bluetoothMonitor", &bluetoothHandler);
+  engine.rootContext()->setContextProperty("bluetoothPopupHandler", &bluetoothHandler);
 
   // Setting Handlers
   autoapp::UI::Monitor::LightHandler lightHandler(configuration);
   autoapp::UI::Monitor::VolumeHandler volumeHandler(configuration, audioHandler);
-
   autoapp::UI::Monitor::BrightnessHandler brightnessHandler(configuration, lightHandler);
 
   autoapp::UI::SettingsView settingsView(configuration);
 
   engine.rootContext()->setContextProperty("settingsViewHandler", &settingsView);
-
   engine.rootContext()->setContextProperty("volumePopupHandler", &volumeHandler);
-
   engine.rootContext()->setContextProperty("brightnessPopupHandler", &brightnessHandler);
 
-  // Monitors
+// Monitors
   auto androidAutoMonitor = std::make_shared<autoapp::UI::Monitor::AndroidAutoMonitor>();
   auto wifiMonitor = std::make_shared<autoapp::UI::Monitor::WifiMonitor>(configuration);
+
   engine.rootContext()->setContextProperty("androidAutoMonitor", androidAutoMonitor.get());
   engine.rootContext()->setContextProperty("wifiMonitor", wifiMonitor.get());
 
@@ -218,7 +231,6 @@ int main(int argc, char *argv[]) {
   engine.addImportPath(QCoreApplication::applicationDirPath() + "/qml");
   engine.addImportPath(":/");
   engine.load(url);
-
 
   // Screen Configuration
   int width = 0;

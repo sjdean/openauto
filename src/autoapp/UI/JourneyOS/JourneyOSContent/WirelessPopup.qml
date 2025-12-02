@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import JourneyOS
+
 Item {
     id: wirelessPopup
 
@@ -24,18 +25,38 @@ Item {
             onCheckedChanged: settingsViewHandler.wirelessEnabled = checked
         }
 
+        Text { text: "Interface" }
+        ComboBox {
+            id: interfaceCombo
+            width: parent.width
+            model: networkAdapterModel.comboBoxItems
+            textRole: "displayName"
+
+            // Set initial value
+            Component.onCompleted: {
+                var idx = networkAdapterModel.indexOf(wifiMonitor.interfaceName)
+                if (idx >= 0) currentIndex = idx
+            }
+
+            onCurrentIndexChanged: {
+                var item = model[currentIndex]
+                // Tell the monitor to switch interfaces
+                if(item) wifiMonitor.interfaceName = item.interfaceName
+            }
+        }
+
         TextField {
             id: textWirelessHotspotSSID
             placeholderText: qsTr("SSID")
             text: settingsViewHandler.wirelessHotspotSSID
-            onTextChanged: settingsViewHandler.wirelessHotspotSSID = text
+            onTextEdited: settingsViewHandler.wirelessHotspotSSID = text
         }
 
         TextField {
             id: textWirelessHotspotPassword
             placeholderText: qsTr("Password")
             text: settingsViewHandler.wirelessHotspotPassword
-            onTextChanged: settingsViewHandler.wirelessHotspotPassword = text
+            onTextEdited: settingsViewHandler.wirelessHotspotPassword = text
         }
 
         ButtonGroup {

@@ -47,7 +47,7 @@ Item {
         height: 200
         modal: true
         focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
             color: "#FFFFFF"
             border.color: "transparent"
@@ -64,7 +64,7 @@ Item {
             height: 200
             modal: true
             focus: true
-            closePolicy: Popup.CloseOnEscape
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
             // We will create this QML file next
             contentItem: BluetoothPinPopup {
@@ -84,7 +84,7 @@ Item {
         height: 200
         modal: true
         focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
             color: "#FFFFFF"
             border.color: "transparent"
@@ -103,7 +103,7 @@ Item {
         height: 380
         modal: true
         focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
             color: Constants.sliderPopupBackgroundColor // or whatever background color you prefer
             border.color: "transparent"
@@ -111,6 +111,22 @@ Item {
         }
         contentItem: VolumePopup {
 
+        }
+        // Auto-close Timer
+        Timer {
+            id: volTimer
+            interval: 10000 // 10 Seconds
+            running: volumePopup.opened
+            repeat: false
+            onTriggered: volumePopup.close()
+        }
+
+        // Restart timer if user is dragging the slider (value changing)
+        Connections {
+            target: volumePopupHandler
+            function onVolumeSinkChanged() {
+                if (volumePopup.opened) volTimer.restart()
+            }
         }
     }
 
@@ -130,6 +146,22 @@ Item {
         }
         contentItem: BrightnessPopup {
 
+        }
+        // Auto-close Timer
+        Timer {
+            id: brightnessTimer
+            interval: 10000 // 10 Seconds
+            running: brightnessPopup.opened
+            repeat: false
+            onTriggered: brightnessPopup.close()
+        }
+
+        // Restart timer if user is dragging the slider
+        Connections {
+            target: brightnessPopupHandler
+            function onBrightnessChanged() {
+                if (brightnessPopup.opened) brightTimer.restart()
+            }
         }
     }
 

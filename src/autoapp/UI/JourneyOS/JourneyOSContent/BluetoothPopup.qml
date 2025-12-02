@@ -8,13 +8,13 @@ Item {
     height: 480
 
     signal close
-
+/*
     property string bluetoothButtonText:
         bluetoothMonitor.bluetoothStatus = BluetoothConnectionStatus.BC_NOT_CONFIGURED ? "Pair" :
         bluetoothMonitor.bluetoothStatus = BluetoothConnectionStatus.BC_DISCONNECTED ? "Connect" :
         bluetoothMonitor.bluetoothStatus = BluetoothConnectionStatus.BC_CONNECTING ? "Cancel" :
         "Disconnect"
-
+*/
     
     /*
       

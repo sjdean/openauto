@@ -26,8 +26,8 @@ Button {
     leftPadding: buttonPadding
     rightPadding: buttonPadding
 
-    width: (control.textIsStatus ? horizontalButton.width : itemButton.width) + buttonPadding
-    height: (control.textIsStatus ? horizontalButton.height : itemButton.height) + buttonPadding
+    implicitWidth: (control.textIsStatus ? horizontalButton.width : itemButton.width) + (buttonPadding * 2)
+    implicitHeight: (control.textIsStatus ? horizontalButton.height : itemButton.height) + (buttonPadding * 2)
 
     text: "Button"
     font.pointSize: textIsStatus ? iconSize / 1.3 : (iconSize / 10) * 3
@@ -57,10 +57,9 @@ Button {
 
     Item {
         id: itemButton
-        x: control.buttonPadding
-        y: control.buttonPadding
-        width: control.icon.width * 2 - (control.buttonPadding * 2)
-        height: control.icon.width * 2 - (control.buttonPadding * 2)
+        anchors.centerIn: parent
+        width: control.icon.width * 2
+        height: control.icon.width * 2
         visible: !control.textIsStatus
 
         Column {
@@ -108,16 +107,14 @@ Button {
 
     Item {
         id: horizontalButton
-        x: control.buttonPadding
-        y: control.buttonPadding
-        height: control.icon.height * 2 - (control.buttonPadding * 2)
+        anchors.centerIn: parent
+        height: control.icon.height * 2
         width: childrenRect.width
         visible: control.textIsStatus
 
         Row {
             id: horizontalButtonRow
             height: parent.height
-            width: childrenRect.width
             spacing: control.buttonPadding
 
             Item {
@@ -166,10 +163,7 @@ Button {
                     visible: control.text.length > 0
                 }
             }
-
-
         }
-
     }
 
     states: [
@@ -179,7 +173,7 @@ Button {
 
             PropertyChanges {
                 target: rectangleBackground
-                color: control.textColor
+                color: Constants.buttonBackgroundColor
             }
 
             PropertyChanges {
@@ -210,6 +204,5 @@ Button {
                 color: Constants.buttonPressedBackgroundColor
             }
         }
-
     ]
 }

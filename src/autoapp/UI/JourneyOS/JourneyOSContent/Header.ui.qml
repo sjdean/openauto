@@ -9,7 +9,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import JourneyOS
-//import AndroidAutoMonitor 1.0
+import AndroidAutoMonitor 1.0
 
 Item {
     id: headerItem
@@ -27,10 +27,12 @@ Item {
     property bool hasBluetooth: true
     property bool hasWifi: true
 
-    property string bluetoothStatusText: bluetoothPopupHandler.statusText
-    property bool bluetoothPaired: bluetoothPopupHandler.bluetoothStatus = !BluetoothConnectionStatus.BC_NOT_CONFIGURED
-    property bool bluetoothConnected: bluetoothPopupHandler.bluetoothStatus = BluetoothConnectionStatus.BC_CONNECTED
-    property bool bluetoothConnecting: bluetoothPopupHandler.bluetoothStatus = BluetoothConnectionStatus.BC_CONNECTING
+    property string bluetoothStatusText: bluetoothHandler.statusText
+
+    property bool bluetoothPaired: bluetoothHandler.bluetoothConnectionStatus !== BluetoothConnectionStatus.BC_NOT_CONFIGURED
+    property bool bluetoothConnected: bluetoothHandler.bluetoothConnectionStatus === BluetoothConnectionStatus.BC_CONNECTED
+    property bool bluetoothConnecting: bluetoothHandler.bluetoothConnectionStatus === BluetoothConnectionStatus.BC_CONNECTING
+
     //TODO: Wifi Connectivity Settings
     property bool wifiPaired: false
     property bool wifiConnected: false
@@ -49,10 +51,7 @@ Item {
 
     Item {
         anchors.fill: parent
-        anchors.leftMargin: 10
-        anchors.rightMargin: 10
-        anchors.topMargin: 10
-        anchors.bottomMargin: 10
+        anchors.margins: 10
 
         Row {
             id: row

@@ -1,96 +1,75 @@
+// f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp
 #pragma once
 
 #include <QObject>
+#include <QTimer>
+#include <QNetworkInterface>
 #include <QVariantList>
-#include <QDBusInterface>
-#include <QLoggingCategory>
+
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 
-// Define a logging category for this class
-Q_DECLARE_LOGGING_CATEGORY(logWifi)
+#ifdef Q_OS_LINUX
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusObjectPath>
+#include <QDBusPendingCallWatcher>
+#endif
+
+//#ifdef Q_OS_MACOS
+//#include <CoreWLAN/CoreWLAN.h>
+//#endif
+
 namespace f1x::openauto::autoapp::UI::Monitor {
-    class WifiMonitor : public QObject {
+
+    class WifiMonitor : public QObject
+    {
         Q_OBJECT
 
-        // 1. Define your QML-accessible properties
-        //----------------------------------------------------
-        Q_ENUMS(WifiMode)
-
-        Q_PROPERTY(f1x::openauto::common::Enum::WirelessType::Value currentMode READ getCurrentMode NOTIFY currentModeChanged)
-        Q_PROPERTY(bool connected READ isConnected NOTIFY connectionChanged)
-        Q_PROPERTY(QString currentSsid READ getCurrentSsid NOTIFY connectionChanged)
-        Q_PROPERTY(int signalStrength READ getSignalStrength NOTIFY signalStrengthChanged) // 0-100
-        Q_PROPERTY(QVariantList accessPoints READ getAccessPoints NOTIFY accessPointsChanged)
-
-        // Properties for Hotspot Mode
-        Q_PROPERTY(QString hotspotSsid READ getHotspotSsid NOTIFY hotspotConfigChanged)
-        Q_PROPERTY(QString hotspotPassword READ getHotspotPassword NOTIFY hotspotConfigChanged)
-
     public:
-
-        explicit WifiMonitor(configuration::IConfiguration::Pointer configuration, QObject *parent = nullptr);
-        virtual ~WifiMonitor();
-
-        // 2. Add READ functions for your properties
-        //----------------------------------------------------
-        f1x::openauto::common::Enum::WirelessType::Value getCurrentMode() const;
-        bool isConnected() const;
-        QString getCurrentSsid() const;
-        int getSignalStrength() const;
-        QVariantList getAccessPoints() const;
-
-        QString getHotspotSsid() const;
-        QString getHotspotPassword() const;
-
-    public slots:
-        // 3. Add Q_INVOKABLE methods for QML to call
-        //----------------------------------------------------
-        Q_INVOKABLE void setMode(f1x::openauto::common::Enum::WirelessType ::Value mode) const;
-        Q_INVOKABLE void scanForNetworks() const;
-        Q_INVOKABLE void connectToSsid(const QString &ssid, const QString &password) const;
-        Q_INVOKABLE void disconnect() const;
+        explicit WifiMonitor(configuration::IConfiguration::Pointer config, QObject* parent = nullptr);
+        ~WifiMonitor() override;
 
         signals:
-            // 4. Add NOTIFY signals for your properties
-            //----------------------------------------------------
-            void currentModeChanged();
-        void connectionChanged();
-        void signalStrengthChanged();
-        void accessPointsChanged();
-        void hotspotConfigChanged();
-        void connectionError(const QString &error); // For QML to show errors
+            // Real-time status
+            void currentSsidChanged(const QString& ssid);
+        void signalStrengthChanged(int strength);        // 0–100
+        void connectedChanged(bool connected);
+        void modeChanged(common::Enum::WirelessType::Value mode);
+
+        // Interface info
+        void interfaceChanged(const QString& macAddress);
+        void interfaceUpChanged(bool up);
+        void currentIpChanged(const QString& ip);
+        void availableInterfacesChanged(const QVariantList& interfaces);
+
+        // Scan results (Linux only for now)
+        void accessPointsChanged(const QVariantList& aps);
 
     private slots:
-        // 5. Private slots to handle D-Bus signals
-        //----------------------------------------------------
-        void onNmStateChanged(quint32 state);
+        void refreshCrossPlatformInfo();
+
+#ifdef Q_OS_LINUX
+        void findWifiDevice(const QString& ifaceName);
         void onDeviceStateChanged(quint32 newState, quint32 oldState, quint32 reason);
-        void onScanDone();
-        void onAccessPointsReply();
-        void onActiveConnectionChanged(const QVariantMap &properties);
+        void onActiveConnectionChanged(const QVariantMap& changed);
+        void updateActiveConnection(const QDBusObjectPath& path);
+#endif
 
     private:
-        void findWifiDevice();
-        void updateActiveConnection(const QDBusObjectPath &activeConnPath);
-        void updateAccessPoints();
+        void updateInterfaceList();
+        void updateCurrentIp();
 
-        // 6. Member variables
-        //----------------------------------------------------
-        QDBusConnection m_systemBus;
-        QDBusInterface *m_nm; // Main NetworkManager interface
-        QString m_wifiDevicePath; // e.g., /org/freedesktop/NetworkManager/Devices/3
+        configuration::IConfiguration::Pointer m_config;
 
-        // Property storage
-        f1x::openauto::common::Enum::WirelessType::Value m_currentMode;
-        bool m_connected;
-        QString m_currentSsid;
-        int m_signalStrength;
-        QVariantList m_accessPoints;
+        QTimer* m_refreshTimer = nullptr;
+        QNetworkInterface m_currentInterface;
 
-        QString m_hotspotSsid = "JourneyOS-Hotspot";
-        QString m_hotspotPassword = "password123";
-
-        configuration::IConfiguration::Pointer configuration_;
+#ifdef Q_OS_LINUX
+        QDBusConnection m_bus = QDBusConnection::systemBus();
+        QDBusInterface* m_nm = nullptr;
+        QString m_wifiDevicePath;
+#endif
     };
-}
+
+} // namespace

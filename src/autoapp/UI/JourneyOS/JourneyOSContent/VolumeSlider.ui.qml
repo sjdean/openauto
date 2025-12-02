@@ -23,7 +23,6 @@ Slider {
         y: volumeSlider.topPadding
         implicitWidth: 20
         implicitHeight: 200
-        parent: volumeSlider.background
         width: implicitWidth
         height: volumeSlider.availableHeight
         radius: 10

@@ -20,26 +20,22 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: 10
         anchors.horizontalCenter: parent.horizontalCenter
+        spacing: 5
 
 
         VolumeSlider {
             id: volumeSlider
-            height: volumePopup.height - 89
-            anchors.top: parent.top
-            anchors.topMargin: 0
+            height: parent.height - muteButton.height - parent.spacing
+            width: parent.width
             alternateColor: Constants.sliderAlternateColor
-            anchors.horizontalCenter: parent.horizontalCenter
             onValueChanged: volumePopupHandler.volumeSink = value
 
         }
 
         JourneyButton {
             id: muteButton
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 0
             iconSize: 24
             icon.source: "images/volume-mute.svg"
-            anchors.horizontalCenter: parent.horizontalCenter
             height: parent.width
             text: "Mute"
             width: parent.width
