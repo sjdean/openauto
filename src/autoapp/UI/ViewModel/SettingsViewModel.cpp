@@ -1,6 +1,6 @@
 #include <QtCore/QObject>
 #include <QProcess>
-#include <f1x/openauto/autoapp/UI/SettingsView.hpp>
+#include <f1x/openauto/autoapp/UI/ViewModel/SettingsViewModel.hpp>
 #include <service/control/message/DriverPosition.pb.h>
 #include <service/media/sink/message/VideoFrameRateType.pb.h>
 #include <service/sensorsource/message/EvConnectorType.pb.h>
@@ -10,8 +10,8 @@
 #include "f1x/openauto/Common/Enum/VideoType.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 
-namespace f1x::openauto::autoapp::UI {
-  SettingsView::SettingsView(configuration::IConfiguration::Pointer configuration,
+namespace f1x::openauto::autoapp::UI::ViewModel {
+  SettingsViewModel::SettingsViewModel(configuration::IConfiguration::Pointer configuration,
                              QObject *parent) :
       QObject(parent),
       configuration_(std::move(configuration)),
@@ -73,44 +73,44 @@ namespace f1x::openauto::autoapp::UI {
 
   }
 
-  QString SettingsView::getCarMake() const {
+  QString SettingsViewModel::getCarMake() const {
     return m_carMake;
   }
 
-  QString SettingsView::getCarId() const {
+  QString SettingsViewModel::getCarId() const {
     return QString();
 
   }
 
-  void SettingsView::setCarId(QString value) {
+  void SettingsViewModel::setCarId(QString value) {
     // TODO: Populate
   }
 
-  aap_protobuf::service::media::sink::message::VideoFrameRateType SettingsView::getAAFrameRate() const {
+  aap_protobuf::service::media::sink::message::VideoFrameRateType SettingsViewModel::getAAFrameRate() const {
     return aap_protobuf::service::media::sink::message::VIDEO_FPS_60;
   }
 
-  aap_protobuf::service::media::sink::message::VideoCodecResolutionType SettingsView::getAAResolution() const {
+  aap_protobuf::service::media::sink::message::VideoCodecResolutionType SettingsViewModel::getAAResolution() const {
     return aap_protobuf::service::media::sink::message::VIDEO_2160x3840;
   }
 
-  void SettingsView::setAAFrameRate(aap_protobuf::service::media::sink::message::VideoFrameRateType value) {
+  void SettingsViewModel::setAAFrameRate(aap_protobuf::service::media::sink::message::VideoFrameRateType value) {
     // TODO: Populate
   }
 
-  void SettingsView::setAAResolution(aap_protobuf::service::media::sink::message::VideoCodecResolutionType value) {
+  void SettingsViewModel::setAAResolution(aap_protobuf::service::media::sink::message::VideoCodecResolutionType value) {
     // TODO: Populate
   }
 
-  QString SettingsView::getAudioPlaybackDevice() const {
+  QString SettingsViewModel::getAudioPlaybackDevice() const {
     return m_audioPlaybackDeviceValue;
   }
 
-  QString SettingsView::getAudioCaptureDevice() const {
+  QString SettingsViewModel::getAudioCaptureDevice() const {
     return m_audioCaptureDeviceValue;
   }
 
-  void SettingsView::setAudioPlaybackDevice(QString value) {
+  void SettingsViewModel::setAudioPlaybackDevice(QString value) {
     if (m_audioPlaybackDeviceValue != value) {
       configuration_->updateSettingByName<QString>("Car", "Model", value);
       configuration_->save();
@@ -119,7 +119,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setAudioCaptureDevice(QString value) {
+  void SettingsViewModel::setAudioCaptureDevice(QString value) {
     if (m_audioCaptureDeviceValue != value) {
       configuration_->updateSettingByName<QString>("Car", "Model", value);
       configuration_->save();
@@ -128,11 +128,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  QString SettingsView::getHwBluetoothAdapter() {
+  QString SettingsViewModel::getHwBluetoothAdapter() {
     return m_hwBluetoothAdapter;
   }
 
-  void SettingsView::setHwBluetoothAdapter(QString value) {
+  void SettingsViewModel::setHwBluetoothAdapter(QString value) {
     if (m_hwBluetoothAdapter != value) {
       configuration_->updateSettingByName<QString>("Car", "Model", value);
       configuration_->save();
@@ -141,8 +141,8 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setCarMake(QString value) {
-    fprintf(stderr, "SettingsView::setCarMake %s\n", value.toStdString().c_str());
+  void SettingsViewModel::setCarMake(QString value) {
+    fprintf(stderr, "SettingsViewModel::setCarMake %s\n", value.toStdString().c_str());
     if (m_carMake != value) {
       configuration_->updateSettingByName<QString>("Car", "Make", value);
       configuration_->save();
@@ -151,11 +151,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  QString SettingsView::getCarModel() const {
+  QString SettingsViewModel::getCarModel() const {
     return m_carModel;
   }
 
-  void SettingsView::setCarModel(QString value) {
+  void SettingsViewModel::setCarModel(QString value) {
     if (m_carModel != value) {
       configuration_->updateSettingByName<QString>("Car", "Model", value);
       configuration_->save();
@@ -164,11 +164,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  bool SettingsView::getMediaAutoPlayback() const {
+  bool SettingsViewModel::getMediaAutoPlayback() const {
     return m_mediaAutoPlayback;
   }
 
-  void SettingsView::setMediaAutoPlayback(bool value) {
+  void SettingsViewModel::setMediaAutoPlayback(bool value) {
     if (m_mediaAutoPlayback != value) {
       configuration_->updateSettingByName<bool>("Media", "AutoPlayback", value);
       configuration_->save();
@@ -177,11 +177,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  bool SettingsView::getMediaAutoStart() const {
+  bool SettingsViewModel::getMediaAutoStart() const {
     return m_mediaAutoStart;
   }
 
-  void SettingsView::setMediaAutoStart(bool value) {
+  void SettingsViewModel::setMediaAutoStart(bool value) {
     if (m_mediaAutoStart != value) {
       configuration_->updateSettingByName<bool>("Media", "AutoStart", value);
       configuration_->save();
@@ -190,11 +190,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  bool SettingsView::getAAChannelMedia() const {
+  bool SettingsViewModel::getAAChannelMedia() const {
     return m_aaChannelMedia;
   }
 
-  void SettingsView::setAAChannelMedia(bool value) {
+  void SettingsViewModel::setAAChannelMedia(bool value) {
     if (m_aaChannelMedia != value) {
       configuration_->updateSettingByName<bool>("AndroidAuto", "Media", value);
       configuration_->save();
@@ -203,11 +203,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  bool SettingsView::getAAChannelGuidance() const {
+  bool SettingsViewModel::getAAChannelGuidance() const {
     return m_aaChannelGuidance;
   }
 
-  void SettingsView::setAAChannelGuidance(bool value) {
+  void SettingsViewModel::setAAChannelGuidance(bool value) {
     if (m_aaChannelGuidance != value) {
       configuration_->updateSettingByName<bool>("AndroidAuto", "Guidance", value);
       configuration_->save();
@@ -216,11 +216,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  bool SettingsView::getAAChannelTelephony() const {
+  bool SettingsViewModel::getAAChannelTelephony() const {
     return m_aaChannelTelephony;
   }
 
-  void SettingsView::setAAChannelTelephony(bool value) {
+  void SettingsViewModel::setAAChannelTelephony(bool value) {
     if (m_aaChannelTelephony != value) {
       configuration_->updateSettingByName<bool>("AndroidAuto", "Telephony", value);
       configuration_->save();
@@ -229,11 +229,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  int SettingsView::getVideoOMXLayer() const {
+  int SettingsViewModel::getVideoOMXLayer() const {
     return m_videoOMXLayer;
   }
 
-  void SettingsView::setVideoOMXLayer(int value) {
+  void SettingsViewModel::setVideoOMXLayer(int value) {
     if (value != m_videoOMXLayer) {
       configuration_->updateSettingByName<int>("Video", "OMXLayer", value);
       configuration_->save();
@@ -242,11 +242,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  int SettingsView::getVideoMarginHeight() const {
+  int SettingsViewModel::getVideoMarginHeight() const {
     return m_videoMarginHeight;
   }
 
-  void SettingsView::setVideoMarginHeight(int value) {
+  void SettingsViewModel::setVideoMarginHeight(int value) {
     if (value != m_videoMarginHeight) {
       configuration_->updateSettingByName<int>("Video", "Height", value);
       configuration_->save();
@@ -255,11 +255,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  int SettingsView::getVideoMarginWidth() const {
+  int SettingsViewModel::getVideoMarginWidth() const {
     return m_videoMarginWidth;
   }
 
-  void SettingsView::setVideoMarginWidth(int value) {
+  void SettingsViewModel::setVideoMarginWidth(int value) {
     if (value != m_videoMarginWidth) {
       configuration_->updateSettingByName<int>("Video", "Width", value);
       configuration_->save();
@@ -268,11 +268,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  int SettingsView::getAudioVolumePlayback() const {
+  int SettingsViewModel::getAudioVolumePlayback() const {
     return m_audioVolumePlayback;
   }
 
-  void SettingsView::setAudioVolumePlayback(int value) {
+  void SettingsViewModel::setAudioVolumePlayback(int value) {
     if (value != m_audioVolumePlayback) {
       configuration_->updateSettingByName<int>("Audio", "PlaybackVolume", value);
       configuration_->save();
@@ -281,11 +281,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  int SettingsView::getAudioVolumeCapture() const {
+  int SettingsViewModel::getAudioVolumeCapture() const {
     return m_audioVolumeCapture;
   }
 
-  void SettingsView::setAudioVolumeCapture(int value) {
+  void SettingsViewModel::setAudioVolumeCapture(int value) {
     if (value != m_audioVolumeCapture) {
       configuration_->updateSettingByName<int>("Car", "CaptureVolume", value);
       configuration_->save();
@@ -294,11 +294,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  int SettingsView::getScreenBrightnessDayMin() const {
+  int SettingsViewModel::getScreenBrightnessDayMin() const {
     return m_screenBrightnessDayMin;
   }
 
-  void SettingsView::setScreenBrightnessDayMin(int value) {
+  void SettingsViewModel::setScreenBrightnessDayMin(int value) {
     if (value != m_screenBrightnessDayMin) {
       configuration_->updateSettingByName<int>("Screen", "DayMin", value);
       configuration_->save();
@@ -307,11 +307,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  int SettingsView::getScreenBrightnessDayMax() const {
+  int SettingsViewModel::getScreenBrightnessDayMax() const {
     return m_screenBrightnessDayMax;
   }
 
-  void SettingsView::setScreenBrightnessDayMax(int value) {
+  void SettingsViewModel::setScreenBrightnessDayMax(int value) {
     if (value != m_screenBrightnessDayMax) {
       configuration_->updateSettingByName<int>("Screen", "DayMax", value);
       configuration_->save();
@@ -320,11 +320,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  int SettingsView::getScreenBrightnessNightMin() const {
+  int SettingsViewModel::getScreenBrightnessNightMin() const {
     return m_screenBrightnessNightMin;
   }
 
-  void SettingsView::setScreenBrightnessNightMin(int value) {
+  void SettingsViewModel::setScreenBrightnessNightMin(int value) {
     if (value != m_screenBrightnessNightMin) {
       configuration_->updateSettingByName<int>("Screen", "NightMin", value);
       m_screenBrightnessNightMin = value;
@@ -332,11 +332,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  int SettingsView::getScreenBrightnessNightMax() const {
+  int SettingsViewModel::getScreenBrightnessNightMax() const {
     return m_screenBrightnessNightMax;
   }
 
-  void SettingsView::setScreenBrightnessNightMax(int value) {
+  void SettingsViewModel::setScreenBrightnessNightMax(int value) {
     if (value != m_screenBrightnessNightMax) {
       configuration_->updateSettingByName<int>("Screen", "NightMax", value);
       configuration_->save();
@@ -345,11 +345,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  bool SettingsView::getVideoRotateDisplay() const {
+  bool SettingsViewModel::getVideoRotateDisplay() const {
     return m_videoRotateDisplay;
   }
 
-  void SettingsView::setVideoRotateDisplay(bool value) {
+  void SettingsViewModel::setVideoRotateDisplay(bool value) {
     if (m_videoRotateDisplay != value) {
       configuration_->updateSettingByName<bool>("Video", "Rotate", value);
       configuration_->save();
@@ -358,11 +358,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  int SettingsView::getScreenDPI() const {
+  int SettingsViewModel::getScreenDPI() const {
     return m_screenDPI;
   }
 
-  void SettingsView::setScreenDPI(int value) {
+  void SettingsViewModel::setScreenDPI(int value) {
     if (value != m_screenDPI) {
       configuration_->updateSettingByName<int>("Screen", "DPI", value);
       configuration_->save();
@@ -371,7 +371,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setAudioType(common::Enum::AudioOutputType::Value value) {
+  void SettingsViewModel::setAudioType(common::Enum::AudioOutputType::Value value) {
     if (value != m_audioType) {
       configuration_->updateSettingByName<int>("Audio", "Type", static_cast<int>(value));
       configuration_->save();
@@ -380,7 +380,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setAudioVolumeCaptureMax(int value) {
+  void SettingsViewModel::setAudioVolumeCaptureMax(int value) {
     if (value != m_audioVolumeCaptureMax) {
       configuration_->updateSettingByName<int>("Audio", "CaptureMax", value);
       configuration_->save();
@@ -389,7 +389,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setAudioVolumeCaptureMin(int value) {
+  void SettingsViewModel::setAudioVolumeCaptureMin(int value) {
     if (value != m_audioVolumeCaptureMin) {
       configuration_->updateSettingByName<int>("Audio", "CaptureMin", value);
       configuration_->save();
@@ -398,7 +398,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setAudioVolumePlaybackMax(int value) {
+  void SettingsViewModel::setAudioVolumePlaybackMax(int value) {
     if (value != m_audioVolumePlaybackMax) {
       configuration_->updateSettingByName<int>("Audio", "PlaybackMax", value);
       configuration_->save();
@@ -407,7 +407,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setAudioVolumePlaybackMin(int value) {
+  void SettingsViewModel::setAudioVolumePlaybackMin(int value) {
     if (value != m_audioVolumePlaybackMin) {
       configuration_->updateSettingByName<int>("Audio", "PlaybackMin", value);
       configuration_->save();
@@ -416,27 +416,27 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  common::Enum::AudioOutputType::Value SettingsView::getAudioType() const {
+  common::Enum::AudioOutputType::Value SettingsViewModel::getAudioType() const {
     return m_audioType;
   }
 
-  int SettingsView::getAudioVolumeCaptureMax() const {
+  int SettingsViewModel::getAudioVolumeCaptureMax() const {
     return m_audioVolumeCaptureMax;
   }
 
-  int SettingsView::getAudioVolumeCaptureMin() const {
+  int SettingsViewModel::getAudioVolumeCaptureMin() const {
     return m_audioVolumeCaptureMin;
   }
 
-  int SettingsView::getAudioVolumePlaybackMax() const {
+  int SettingsViewModel::getAudioVolumePlaybackMax() const {
     return m_audioVolumePlaybackMax;
   }
 
-  int SettingsView::getAudioVolumePlaybackMin() const {
+  int SettingsViewModel::getAudioVolumePlaybackMin() const {
     return m_audioVolumePlaybackMin;
   }
 
-  void SettingsView::setVideoType(common::Enum::VideoType::Value value) {
+  void SettingsViewModel::setVideoType(common::Enum::VideoType::Value value) {
     if (value != m_videoType) {
       configuration_->updateSettingByName<common::Enum::VideoType::Value>("Video", "Type", value);
       configuration_->save();
@@ -445,11 +445,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  common::Enum::VideoType::Value SettingsView::getVideoType() const {
+  common::Enum::VideoType::Value SettingsViewModel::getVideoType() const {
     return m_videoType;
   }
 
-  void SettingsView::setScreenBrightness(int value) {
+  void SettingsViewModel::setScreenBrightness(int value) {
     if (value != m_screenBrightness) {
       configuration_->updateSettingByName<int>("Screen", "Brightness", value);
       configuration_->save();
@@ -458,11 +458,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  int SettingsView::getScreenBrightness() const {
+  int SettingsViewModel::getScreenBrightness() const {
     return m_screenBrightness;
   }
 
-  void SettingsView::setCarDriverPosition(aap_protobuf::service::control::message::DriverPosition value) {
+  void SettingsViewModel::setCarDriverPosition(aap_protobuf::service::control::message::DriverPosition value) {
     if (value != m_carDriverPosition) {
       configuration_->updateSettingByName<aap_protobuf::service::control::message::DriverPosition>("Car", "DriverPosition", value);
       configuration_->save();
@@ -471,7 +471,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setCarEvConnectorType(aap_protobuf::service::sensorsource::message::EvConnectorType value) {
+  void SettingsViewModel::setCarEvConnectorType(aap_protobuf::service::sensorsource::message::EvConnectorType value) {
     if (value != m_carEvConnectorType) {
       configuration_->updateSettingByName<aap_protobuf::service::sensorsource::message::EvConnectorType>("Car", "EvConnectorType", value);
       configuration_->save();
@@ -480,7 +480,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setCarFuelType(aap_protobuf::service::sensorsource::message::FuelType value) {
+  void SettingsViewModel::setCarFuelType(aap_protobuf::service::sensorsource::message::FuelType value) {
     if (value != m_carFuelType) {
       configuration_->updateSettingByName<aap_protobuf::service::sensorsource::message::FuelType>("Car", "FuelType", value);
       configuration_->save();
@@ -489,19 +489,19 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  aap_protobuf::service::control::message::DriverPosition SettingsView::getCarDriverPosition() const {
+  aap_protobuf::service::control::message::DriverPosition SettingsViewModel::getCarDriverPosition() const {
     return m_carDriverPosition;
   }
 
-  aap_protobuf::service::sensorsource::message::EvConnectorType SettingsView::getCarEvConnectorType() const {
+  aap_protobuf::service::sensorsource::message::EvConnectorType SettingsViewModel::getCarEvConnectorType() const {
     return m_carEvConnectorType;
   }
 
-  aap_protobuf::service::sensorsource::message::FuelType SettingsView::getCarFuelType() const {
+  aap_protobuf::service::sensorsource::message::FuelType SettingsViewModel::getCarFuelType() const {
     return m_carFuelType;
   }
 
-  void SettingsView::setWirelessClientSSID(QString value) {
+  void SettingsViewModel::setWirelessClientSSID(QString value) {
     if (m_wirelessClientSSID != value) {
       configuration_->updateSettingByName<QString>("Wireless", "SSID", value);
       configuration_->save();
@@ -525,7 +525,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setWirelessClientPassword(QString value) {
+  void SettingsViewModel::setWirelessClientPassword(QString value) {
     if (m_wirelessClientPassword != value) {
       configuration_->updateSettingByName<QString>("Wireless", "ClientPassword", value);
       configuration_->save();
@@ -548,15 +548,15 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  QString SettingsView::getWirelessClientSSID() {
+  QString SettingsViewModel::getWirelessClientSSID() {
     return m_wirelessClientSSID;
   }
 
-  QString SettingsView::getWirelessClientPassword() {
+  QString SettingsViewModel::getWirelessClientPassword() {
     return m_wirelessClientPassword;
   }
 
-  void SettingsView::setWirelessHotspotSSID(QString value) {
+  void SettingsViewModel::setWirelessHotspotSSID(QString value) {
     if (m_wirelessHotspotSSID != value) {
       configuration_->updateSettingByName<QString>("Wireless", "HotspotSSID", value);
       configuration_->save();
@@ -577,7 +577,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setWirelessHotspotPassword(QString value) {
+  void SettingsViewModel::setWirelessHotspotPassword(QString value) {
     if (m_wirelessHotspotPassword != value) {
       configuration_->updateSettingByName<QString>("Wireless", "HotspotPassword", value);
       configuration_->save();
@@ -597,23 +597,23 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  QString SettingsView::getWirelessHotspotSSID() {
+  QString SettingsViewModel::getWirelessHotspotSSID() {
     return m_wirelessHotspotSSID;
   }
 
-  QString SettingsView::getWirelessHotspotPassword() {
+  QString SettingsViewModel::getWirelessHotspotPassword() {
     return m_wirelessHotspotPassword;
   }
 
-  bool SettingsView::getWirelessEnabled() {
+  bool SettingsViewModel::getWirelessEnabled() {
     return m_wirelessEnabled;
   }
 
-  common::Enum::WirelessType::Value SettingsView::getWirelessType() {
+  common::Enum::WirelessType::Value SettingsViewModel::getWirelessType() {
     return m_wirelessType;
   }
 
-  void SettingsView::setWirelessHotspotInterface(QString value) {
+  void SettingsViewModel::setWirelessHotspotInterface(QString value) {
     if (m_wirelessHotspotInterface != value) {
       configuration_->updateSettingByName<QString>("Wireless", "HotspotPassword", value);
       configuration_->save();
@@ -635,11 +635,11 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  QString SettingsView::getWirelessHotspotInterface() {
+  QString SettingsViewModel::getWirelessHotspotInterface() {
     return m_wirelessHotspotInterface;
   }
 
-  void SettingsView::setWirelessEnabled(bool value) {
+  void SettingsViewModel::setWirelessEnabled(bool value) {
     if (value != m_wirelessEnabled) {
       configuration_->updateSettingByName<int>("Wireless", "Enabled", value);
       configuration_->save();
@@ -649,7 +649,7 @@ namespace f1x::openauto::autoapp::UI {
     }
   }
 
-  void SettingsView::setWirelessType(common::Enum::WirelessType::Value value) {
+  void SettingsViewModel::setWirelessType(common::Enum::WirelessType::Value value) {
     if (value != m_wirelessType) {
       configuration_->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", value);
       configuration_->save();

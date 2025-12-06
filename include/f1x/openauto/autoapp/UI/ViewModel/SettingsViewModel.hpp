@@ -1,5 +1,4 @@
-#ifndef OPENAUTO_SETTINGSVIEW_HPP
-#define OPENAUTO_SETTINGSVIEW_HPP
+#pragma once
 
 #include <QtCore/QObject>
 #include <service/control/message/DriverPosition.pb.h>
@@ -11,9 +10,9 @@
 #include "f1x/openauto/Common/Enum/VideoType.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 
-namespace f1x::openauto::autoapp::UI {
+namespace f1x::openauto::autoapp::UI::ViewModel {
 
-  class SettingsView : public QObject {
+  class SettingsViewModel : public QObject {
     Q_OBJECT
 
     Q_PROPERTY(QString carId READ getCarId WRITE setCarId NOTIFY carIdChanged)
@@ -86,7 +85,7 @@ namespace f1x::openauto::autoapp::UI {
 
     Q_PROPERTY(QString hwBluetoothAdapter READ getHwBluetoothAdapter WRITE setHwBluetoothAdapter NOTIFY hwBluetoothAdapterChanged)
   public:
-    explicit SettingsView(configuration::IConfiguration::Pointer configuration,
+    explicit SettingsViewModel(configuration::IConfiguration::Pointer configuration,
                           QObject *parent = nullptr);
 
   signals:
@@ -382,4 +381,3 @@ namespace f1x::openauto::autoapp::UI {
 
   };
 }
-#endif //OPENAUTO_SETTINGSVIEW_HPP

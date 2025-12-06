@@ -18,8 +18,6 @@
 #include <f1x/openauto/autoapp/Service/ServiceFactory.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
-#include <f1x/openauto/autoapp/UI/SettingsView.hpp>
-
 // AASDK Backed Enum's
 #include <f1x/openauto/autoapp/UI/Combo/DriverPositionModel.hpp>
 #include <f1x/openauto/autoapp/UI/Combo/EvConnectorTypeModel.hpp>
@@ -47,6 +45,7 @@
 #include "f1x/openauto/autoapp/UI/Controller/LightController.hpp"
 #include "f1x/openauto/autoapp/UI/Monitor/VolumeHandler.hpp"
 #include "f1x/openauto/autoapp/UI/ViewModel/BrightnessViewModel.hpp"
+#include "f1x/openauto/autoapp/UI/ViewModel/SettingsViewModel.hpp"
 
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityMethod.hpp"
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityState.hpp"
@@ -208,9 +207,9 @@ int main(int argc, char *argv[]) {
   autoapp::UI::Monitor::VolumeHandler volumeHandler(configuration, audioHandler);
   autoapp::UI::ViewModel::BrightnessViewModel brightnessHandler(configuration, lightHandler);
 
-  autoapp::UI::SettingsView settingsView(configuration);
+  autoapp::UI::ViewModel::SettingsViewModel settingsViewModel(configuration);
 
-  context->setContextProperty("settingsViewHandler", &settingsView);
+  context->setContextProperty("settingsViewHandler", &settingsViewModel);
   context->setContextProperty("volumePopupHandler", &volumeHandler);
   context->setContextProperty("brightnessPopupHandler", &brightnessHandler);
   engine.rootContext()->setContextProperty("wifiViewModel", wifiViewModel);
