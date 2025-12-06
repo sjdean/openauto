@@ -21,8 +21,6 @@ void WifiController::applyAllSettings()
 
     setInterface(iface);
     setMode(mode);
-#else
-    emit statusChanged(tr("Wi-Fi control not available on this platform"));
 #endif
 }
 
@@ -46,8 +44,6 @@ void WifiController::setInterface(const QString& ifaceName)
         }
         w->deleteLater();
     });
-#else
-    Q_UNUSED(ifaceName)
 #endif
 }
 
@@ -61,13 +57,10 @@ void WifiController::setMode(common::Enum::WirelessType::Value mode)
     } else {
         disconnect(); // fall back to client mode
     }
-#else
-    Q_UNUSED(mode)
-    emit statusChanged(tr("Hotspot mode not supported on this OS"));
 #endif
 }
 
-void WifiController::setHotspot(const QString& ssid, const QString& password)
+void WifiController::setHotspotCredentials(const QString& ssid, const QString& password)
 {
 #ifdef Q_OS_LINUX
     if (m_currentIface.isEmpty()) return;
@@ -77,18 +70,13 @@ void WifiController::setHotspot(const QString& ssid, const QString& password)
     m_config->save();
 
     enableHotspotImpl(ssid, password);
-#else
-    Q_UNUSED(ssid); Q_UNUSED(password)
 #endif
 }
 
-void WifiController::connectToWifi(const QString& ssid, const QString& password)
+void WifiController::setWirelessCredentials(const QString& ssid, const QString& password)
 {
 #ifdef Q_OS_LINUX
     connectToWifiImpl(ssid, password);
-#else
-    Q_UNUSED(ssid); Q_UNUSED(password)
-    emit statusChanged(tr("Wi-Fi connection not supported on this OS"));
 #endif
 }
 
@@ -156,8 +144,6 @@ void WifiController::scan()
             emit statusChanged(tr("Scan complete"));
         w->deleteLater();
     });
-#else
-    emit statusChanged(tr("Wi-Fi scan not supported on this platform"));
 #endif
 }
 
@@ -180,8 +166,6 @@ void WifiController::disconnect()
             qInfo(logWifiCtrl) << "Disconnected from Wi-Fi";
         w->deleteLater();
     });
-#else
-    emit statusChanged(tr("Disconnect not supported on this platform"));
 #endif
 }
 

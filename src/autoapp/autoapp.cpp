@@ -33,20 +33,21 @@
 
 //
 #include <f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp>
-#include <f1x/openauto/autoapp/UI/Monitor/BluetoothHandler.hpp>
-#include <f1x/openauto/autoapp/UI/Monitor/BrightnessHandler.hpp>
-#include <f1x/openauto/autoapp/UI/Monitor/LightHandler.hpp>
 
 #include <f1x/openauto/autoapp/UI/Combo/NetworkAdapterModel.hpp>
 #include <f1x/openauto/autoapp/UI/Combo/NetworkAdapterModelItem.hpp>
 
-#include <f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp>
+#include <f1x/openauto/autoapp/UI/Monitor/BluetoothHandler.hpp>
+#include "f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp"
+#include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
+#include "f1x/openauto/autoapp/UI/ViewModel/WifiViewModel.hpp"
 
 #include "f1x/openauto/autoapp/Configuration/Configuration.hpp"
 #include "f1x/openauto/autoapp/UI/Combo/AudioDeviceModel.hpp"
-#include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
-
+#include "f1x/openauto/autoapp/UI/Controller/LightController.hpp"
 #include "f1x/openauto/autoapp/UI/Monitor/VolumeHandler.hpp"
+#include "f1x/openauto/autoapp/UI/ViewModel/BrightnessViewModel.hpp"
+
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityMethod.hpp"
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityState.hpp"
 #include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"
@@ -89,7 +90,7 @@ inline void set_qt_environment() {
 
 void startUSBWorkers(boost::asio::io_service &ioService, libusb_context *usbContext, ThreadPool &threadPool) {
   auto usbWorker = [&ioService, usbContext]() {
-    timeval libusbEventTimeout{180, 0};
+    timeval libusbEventTimeout{5, 0};
 
     while (!ioService.stopped()) {
       libusb_handle_events_timeout_completed(usbContext, &libusbEventTimeout, nullptr);
@@ -139,13 +140,13 @@ int main(int argc, char *argv[]) {
   audioHandler = std::make_shared<autoapp::UI::Monitor::CoreAudioHandler>();
 #endif
 
+  auto configuration = std::make_shared<autoapp::configuration::Configuration>();
   set_qt_environment();
 
-  auto configuration = std::make_shared<autoapp::configuration::Configuration>();
-
   // GUI
-  QGuiApplication qApplication(argc, argv);
+  QGuiApplication app(argc, argv);
   QQmlApplicationEngine engine;
+  QQmlContext* context = engine.rootContext();
   QQuickView oj;
 
 // Type Registration - Use fully qualified names for safety with Signals/Slots
@@ -166,55 +167,58 @@ int main(int argc, char *argv[]) {
   autoapp::UI::Combo::FuelTypeModel fuelTypeModel;
   autoapp::UI::Combo::ResolutionModel resolutionModel;
 
-  engine.rootContext()->setContextProperty("driverPositionModel", &driverPositionModel);
-  engine.rootContext()->setContextProperty("evConnectorTypeModel", &evConnectorTypeModel);
-  engine.rootContext()->setContextProperty("frameRateModel", &frameRateModel);
-  engine.rootContext()->setContextProperty("fuelTypeModel", &fuelTypeModel);
-  engine.rootContext()->setContextProperty("resolutionModel", &resolutionModel);
+  context->setContextProperty("driverPositionModel", &driverPositionModel);
+  context->setContextProperty("evConnectorTypeModel", &evConnectorTypeModel);
+  context->setContextProperty("frameRateModel", &frameRateModel);
+  context->setContextProperty("fuelTypeModel", &fuelTypeModel);
+  context->setContextProperty("resolutionModel", &resolutionModel);
 
   // Pulse Audio Input/Output (Sound) Devices
 
   autoapp::UI::Combo::AudioDeviceModel pulseAudioDeviceModelOutput(audioHandler, autoapp::UI::Combo::AudioDeviceDirection::Output);
   autoapp::UI::Combo::AudioDeviceModel pulseAudioDeviceModelInput(audioHandler, autoapp::UI::Combo::AudioDeviceDirection::Input);
-  engine.rootContext()->setContextProperty("pulseAudioDeviceModelOutput", &pulseAudioDeviceModelOutput);
-  engine.rootContext()->setContextProperty("pulseAudioDeviceModelInput", &pulseAudioDeviceModelInput);
+  context->setContextProperty("pulseAudioDeviceModelOutput", &pulseAudioDeviceModelOutput);
+  context->setContextProperty("pulseAudioDeviceModelInput", &pulseAudioDeviceModelInput);
+
+  auto wifiMonitor = new autoapp::UI::Monitor::WifiMonitor(configuration, &app);
+  auto wifiController = new f1x::openauto::autoapp::UI::Controller::WifiController(configuration, &app);
+  auto wifiViewModel = new f1x::openauto::autoapp::UI::ViewModel::WifiViewModel(configuration, wifiController, &app);
 
   autoapp::UI::Combo::NetworkAdapterModel networkAdapterModel;
-  engine.rootContext()->setContextProperty("networkAdapterModel", &networkAdapterModel);
+  context->setContextProperty("networkAdapterModel", &networkAdapterModel);
 
   // Connect to Bluetooth
   autoapp::UI::Monitor::BluetoothHandler bluetoothHandler(configuration);
 
   // Bluetooth Adapters on Host
   autoapp::UI::Combo::BluetoothAdapterModel bluetoothAdapterModel;
-  engine.rootContext()->setContextProperty("bluetoothAdapterModel", &bluetoothAdapterModel);
+  context->setContextProperty("bluetoothAdapterModel", &bluetoothAdapterModel);
 
   // Bluetooth Devices
   autoapp::UI::Combo::BluetoothDeviceModel bluetoothDeviceModel(&bluetoothHandler);
-  engine.rootContext()->setContextProperty("bluetoothDeviceModel", &bluetoothDeviceModel);
+  context->setContextProperty("bluetoothDeviceModel", &bluetoothDeviceModel);
 
-  engine.rootContext()->setContextProperty("bluetoothHandler", &bluetoothHandler);
-  engine.rootContext()->setContextProperty("bluetoothViewModel", &bluetoothHandler);
-  engine.rootContext()->setContextProperty("bluetoothMonitor", &bluetoothHandler);
-  engine.rootContext()->setContextProperty("bluetoothPopupHandler", &bluetoothHandler);
+  context->setContextProperty("bluetoothHandler", &bluetoothHandler);
+  context->setContextProperty("bluetoothViewModel", &bluetoothHandler);
+  context->setContextProperty("bluetoothMonitor", &bluetoothHandler);
+  context->setContextProperty("bluetoothPopupHandler", &bluetoothHandler);
 
   // Setting Handlers
-  autoapp::UI::Monitor::LightHandler lightHandler(configuration);
+  autoapp::UI::Controller::LightController lightHandler(configuration);
   autoapp::UI::Monitor::VolumeHandler volumeHandler(configuration, audioHandler);
-  autoapp::UI::Monitor::BrightnessHandler brightnessHandler(configuration, lightHandler);
+  autoapp::UI::ViewModel::BrightnessViewModel brightnessHandler(configuration, lightHandler);
 
   autoapp::UI::SettingsView settingsView(configuration);
 
-  engine.rootContext()->setContextProperty("settingsViewHandler", &settingsView);
-  engine.rootContext()->setContextProperty("volumePopupHandler", &volumeHandler);
-  engine.rootContext()->setContextProperty("brightnessPopupHandler", &brightnessHandler);
+  context->setContextProperty("settingsViewHandler", &settingsView);
+  context->setContextProperty("volumePopupHandler", &volumeHandler);
+  context->setContextProperty("brightnessPopupHandler", &brightnessHandler);
+  engine.rootContext()->setContextProperty("wifiViewModel", wifiViewModel);
 
 // Monitors
   auto androidAutoMonitor = std::make_shared<autoapp::UI::Monitor::AndroidAutoMonitor>();
-  auto wifiMonitor = std::make_shared<autoapp::UI::Monitor::WifiMonitor>(configuration);
-
-  engine.rootContext()->setContextProperty("androidAutoMonitor", androidAutoMonitor.get());
-  engine.rootContext()->setContextProperty("wifiMonitor", wifiMonitor.get());
+  context->setContextProperty("wifiMonitor", wifiMonitor);
+  context->setContextProperty("androidAutoMonitor", androidAutoMonitor.get());
 
   // Bluetooth Status and Connectivity // DBus/BlueZ
   // Wifi Status // Other
@@ -222,7 +226,7 @@ int main(int argc, char *argv[]) {
 
   const QUrl url(mainQmlFile);
   QObject::connect(
-      &engine, &QQmlApplicationEngine::objectCreated, &qApplication,
+      &engine, &QQmlApplicationEngine::objectCreated, &app,
       [url](QObject *obj, const QUrl &objUrl) {
         if (!obj && url == objUrl)
           QCoreApplication::exit(-1);
@@ -236,7 +240,7 @@ int main(int argc, char *argv[]) {
   int width = 0;
   int height = 0;
 
-  for (QScreen *screen: qApplication.screens()) {
+  for (QScreen *screen: app.screens()) {
     OPENAUTO_LOG(info) << "[AutoApp] Screen name: " << screen->name().toStdString();
     OPENAUTO_LOG(info) << "[AutoApp] Screen geometry: "
                        << screen->geometry().width(); // This includes position and size
@@ -273,12 +277,21 @@ int main(int argc, char *argv[]) {
   auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, ioService, queryChainFactory));
   auto connectedAccessoriesEnumerator(
       std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));
-  auto app = std::make_shared<autoapp::App>(configuration, ioService, usbWrapper, tcpWrapper, androidAutoEntityFactory,
+  auto oa = std::make_shared<autoapp::App>(configuration, ioService, usbWrapper, tcpWrapper, androidAutoEntityFactory,
                                             std::move(usbHub), std::move(connectedAccessoriesEnumerator), androidAutoMonitor);
 
-  app->waitForUSBDevice();
+  oa->waitForUSBDevice();
 
-  auto result = qApplication.exec();
+  // FIX: Stop the background services when the GUI shuts down
+  QObject::connect(&app, &QGuiApplication::aboutToQuit, [&ioService]() {
+      OPENAUTO_LOG(info) << "[AutoApp] Stopping IO Service...";
+      ioService.stop();
+  });
+
+  // Explicitly ensure the app quits when the last window closes
+  app.setQuitOnLastWindowClosed(true);
+
+  auto result = app.exec();
 
   std::for_each(threadPool.begin(), threadPool.end(), std::bind(&std::thread::join, std::placeholders::_1));
 

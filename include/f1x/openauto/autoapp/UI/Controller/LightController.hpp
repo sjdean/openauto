@@ -4,15 +4,15 @@
 #include <QObject>
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 
-namespace f1x::openauto::autoapp::UI::Monitor {
-  class LightHandler final : public QObject {
+namespace f1x::openauto::autoapp::UI::Controller {
+  class LightController final : public QObject {
     Q_OBJECT
 
     Q_PROPERTY(bool day READ getDay WRITE setDay NOTIFY dayChanged)
     Q_PROPERTY(bool lightsOn READ getLightsOn WRITE setLightsOn NOTIFY lightsOnChanged)
 
   public:
-    explicit LightHandler(configuration::IConfiguration::Pointer configuration);
+    explicit LightController(configuration::IConfiguration::Pointer configuration);
 
     void setDay(bool day);
     void setLightsOn(bool lightsOn);

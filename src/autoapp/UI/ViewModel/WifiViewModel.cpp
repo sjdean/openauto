@@ -3,13 +3,14 @@
 #include <QDebug>
 
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
+#include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 
 namespace f1x::openauto::autoapp::UI::ViewModel {
 
-
-    WifiViewModel::WifiViewModel(configuration::IConfiguration::Pointer config, QObject* parent)
-        : QObject(parent), m_config(std::move(config))
+    // 1. Accept Pointer in Constructor
+    WifiViewModel::WifiViewModel(configuration::IConfiguration::Pointer config, UI::Controller::WifiController* controller, QObject *parent)
+        : QObject(parent), m_config(std::move(config)), m_wifiController(controller)
     {
         // Load from config
         m_selectedInterface = m_config->getSettingByName<QString>("Wireless", "Interface");
@@ -17,44 +18,56 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         m_hotspotPassword   = m_config->getSettingByName<QString>("Wireless", "HotspotPassword");
         m_clientSsid        = m_config->getSettingByName<QString>("Wireless", "ClientSSID");
         m_clientPassword    = m_config->getSettingByName<QString>("Wireless", "ClientPassword");
+        m_isEnabled         = m_config->getSettingByName<bool>("Wireless", "Enabled");
         auto modeVal        = m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type");
-        updateMode(modeVal); // sets internal + emits
+        updateMode(modeVal);
     }
 
-    QString WifiViewModel::selectedInterface() const { return m_selectedInterface; }
-    common::Enum::WirelessType::Value WifiViewModel::mode() const { return m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type"); }
-    bool WifiViewModel::isHotspot() const { return mode() == common::Enum::WirelessType::WIRELESS_HOTSPOT; }
+    bool WifiViewModel::getIsEnabled() const { return m_isEnabled; }
 
-    QString WifiViewModel::hotspotSsid() const {
+    void WifiViewModel::setIsEnabled(bool enabled) {
+        if (enabled != m_isEnabled) {
+            m_config->updateSettingByName<bool>("Wireless", "Enabled", enabled);
+            m_config->save();
+            emit isEnabledChanged();
+        }
+    }
+
+    QString WifiViewModel::getSelectedInterface() const { return m_selectedInterface; }
+
+    common::Enum::WirelessType::Value WifiViewModel::getMode() const { return m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type"); }
+
+    bool WifiViewModel::getIsHotspot() const { return m_mode == common::Enum::WirelessType::WIRELESS_HOTSPOT; }
+
+    QString WifiViewModel::getHotspotSsid() const {
         return m_hotspotSsid;
     }
 
-
-    QString WifiViewModel::hotspotPassword() const {
+    QString WifiViewModel::getHotspotPassword() const {
         return m_hotspotPassword;
     }
 
-    QString WifiViewModel::clientSsid() const {
+    QString WifiViewModel::getClientSsid() const {
         return m_clientSsid;
     }
 
-    QString WifiViewModel::clientPassword() const {
+    QString WifiViewModel::getClientPassword() const {
         return m_clientPassword;
     }
 
-    QString WifiViewModel::currentSsid() const {
+    QString WifiViewModel::getCurrentSsid() const {
         return m_currentSsid;
     }
 
-    int WifiViewModel::signalStrength() const {
+    int WifiViewModel::getSignalStrength() const {
         return m_signalStrength;
     }
 
-    bool WifiViewModel::connected() const {
+    bool WifiViewModel::getConnected() const {
         return m_connected;
     }
 
-    QVariantList WifiViewModel::accessPoints() const {
+    QVariantList WifiViewModel::getAccessPoints() const {
         return m_accessPoints;
     }
 
@@ -64,56 +77,63 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
             m_selectedInterface = iface;
             m_config->updateSettingByName<QString>("Wireless", "Interface", iface);
             m_config->save();
+            m_wifiController->setInterface(iface);
             emit selectedInterfaceChanged();
         }
     }
 
     void WifiViewModel::setMode(common::Enum::WirelessType::Value mode) {
-        if (mode != this->mode()) {
+        if (mode != this->m_mode) {
             m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", mode);
             m_config->save();
+            m_wifiController->setMode(mode);
             emit modeChanged();
         }
     }
 
-    void WifiViewModel::setHotspotSsid(const QString& ssid) {
+    void WifiViewModel::setHotspotSsid(const QString &ssid) {
         if (ssid != m_hotspotSsid) {
             m_hotspotSsid = ssid;
             m_config->updateSettingByName<QString>("Wireless", "HotspotSSID", ssid);
             m_config->save();
+            m_wifiController->setHotspotCredentials(m_hotspotSsid, m_hotspotPassword);
             emit hotspotSsidChanged();
         }
     }
 
-    void WifiViewModel::setHotspotPassword(const QString& pass) {
+    void WifiViewModel::setHotspotPassword(const QString &pass) {
         if (pass != m_hotspotPassword) {
             m_hotspotPassword = pass;
             m_config->updateSettingByName<QString>("Wireless", "HotspotPassword", pass);
             m_config->save();
+            m_wifiController->setHotspotCredentials(m_hotspotSsid, m_hotspotPassword);
             emit hotspotPasswordChanged();
         }
     }
 
-    void WifiViewModel::setClientSsid(const QString& ssid) {
+    void WifiViewModel::setClientSsid(const QString &ssid) {
         if (ssid != m_clientSsid) {
             m_clientSsid = ssid;
             m_config->updateSettingByName<QString>("Wireless", "ClientSSID", ssid);
             m_config->save();
+            m_wifiController->setWirelessCredentials(m_clientSsid, m_clientPassword);
             emit clientSsidChanged();
         }
     }
 
-    void WifiViewModel::setClientPassword(const QString& pass) {
+    void WifiViewModel::setClientPassword(const QString &pass) {
         if (pass != m_clientPassword) {
             m_clientPassword = pass;
             m_config->updateSettingByName<QString>("Wireless", "ClientPassword", pass);
             m_config->save();
+            m_wifiController->setWirelessCredentials(m_clientSsid, m_clientPassword);
             emit clientPasswordChanged();
         }
     }
 
-    void WifiViewModel::requestScan() { emit scanRequested(); }
-    void WifiViewModel::connectToAp(const QString& ssid) { emit connectRequested(ssid); }
+    void WifiViewModel::doWirelessNetworkScan() {
+        m_wifiController->scan();
+    }
 
     // Called by WifiMonitor
     void WifiViewModel::updateCurrentSsid(const QString& ssid) {
@@ -126,13 +146,13 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         if (c != m_connected) { m_connected = c; emit connectedChanged(); }
     }
     void WifiViewModel::updateMode(common::Enum::WirelessType::Value m) {
-        auto current = mode();
-        if (m != current) {
+        if (m != m_mode) {
             m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", m);
             m_config->save();
             emit modeChanged();
         }
     }
+
     void WifiViewModel::updateAccessPoints(const QVariantList& aps) {
         m_accessPoints = aps;
         emit accessPointsChanged();
