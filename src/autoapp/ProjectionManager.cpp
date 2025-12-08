@@ -139,7 +139,6 @@ namespace f1x::openauto::autoapp {
     }
 
     void ProjectionManager::onAndroidAutoQuit() {
-        // TODO Emit Disconnected Status
         strand_.dispatch([this, self = this->shared_from_this()]() {
             qInfo(lcProjectionManager) << "Attempting to stop active session.";
 
