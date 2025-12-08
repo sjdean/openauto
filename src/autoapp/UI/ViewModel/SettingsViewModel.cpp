@@ -5,9 +5,7 @@
 #include <service/media/sink/message/VideoFrameRateType.pb.h>
 #include <service/sensorsource/message/EvConnectorType.pb.h>
 #include <service/sensorsource/message/FuelType.pb.h>
-
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
-#include "f1x/openauto/Common/Enum/VideoType.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcVmSettings, "journeyos.settings")
@@ -40,8 +38,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
       m_videoMarginHeight(configuration_->getSettingByName<int>("Video", "Height")),
       m_videoMarginWidth(configuration_->getSettingByName<int>("Video", "Width")),
-      m_videoOMXLayer(configuration_->getSettingByName<int>("Video", "OMXLayer")),
-      m_videoType(configuration_->getSettingByName<common::Enum::VideoType::Value>("Video", "Type")),
+
       m_videoRotateDisplay(configuration_->getSettingByName<bool>("Video", "Rotate")),
 
       m_mediaAutoPlayback(configuration_->getSettingByName<bool>("Media", "AutoPlayback")),
@@ -62,9 +59,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
       m_audioCaptureDeviceValue(configuration_->getSettingByName<QString>("Audio", "CaptureDevice")),
       m_audioPlaybackDeviceValue(configuration_->getSettingByName<QString>("Audio", "PlaybackDevice")),
 
-      m_audioType(
-          static_cast<common::Enum::AudioOutputType::Value>(configuration_->getSettingByName<int>(
-              "Audio", "Type"))),
       m_wirelessClientSSID(configuration_->getSettingByName<QString>("Wireless", "ClientSSID")),
       m_wirelessClientPassword(configuration_->getSettingByName<QString>("Wireless", "ClientPassword")),
       m_wirelessHotspotSSID(configuration_->getSettingByName<QString>("Wireless", "HotspotSSID")),
@@ -231,19 +225,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     }
   }
 
-  int SettingsViewModel::getVideoOMXLayer() const {
-    return m_videoOMXLayer;
-  }
-
-  void SettingsViewModel::setVideoOMXLayer(int value) {
-    if (value != m_videoOMXLayer) {
-      configuration_->updateSettingByName<int>("Video", "OMXLayer", value);
-      configuration_->save();
-      m_videoOMXLayer = value;
-      emit videoOMXLayerChanged();
-    }
-  }
-
   int SettingsViewModel::getVideoMarginHeight() const {
     return m_videoMarginHeight;
   }
@@ -373,15 +354,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     }
   }
 
-  void SettingsViewModel::setAudioType(common::Enum::AudioOutputType::Value value) {
-    if (value != m_audioType) {
-      configuration_->updateSettingByName<int>("Audio", "Type", static_cast<int>(value));
-      configuration_->save();
-      m_audioType = value;
-      emit audioTypeChanged(value);
-    }
-  }
-
   void SettingsViewModel::setAudioVolumeCaptureMax(int value) {
     if (value != m_audioVolumeCaptureMax) {
       configuration_->updateSettingByName<int>("Audio", "CaptureMax", value);
@@ -418,10 +390,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     }
   }
 
-  common::Enum::AudioOutputType::Value SettingsViewModel::getAudioType() const {
-    return m_audioType;
-  }
-
   int SettingsViewModel::getAudioVolumeCaptureMax() const {
     return m_audioVolumeCaptureMax;
   }
@@ -436,19 +404,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
   int SettingsViewModel::getAudioVolumePlaybackMin() const {
     return m_audioVolumePlaybackMin;
-  }
-
-  void SettingsViewModel::setVideoType(common::Enum::VideoType::Value value) {
-    if (value != m_videoType) {
-      configuration_->updateSettingByName<common::Enum::VideoType::Value>("Video", "Type", value);
-      configuration_->save();
-      m_videoType = value;
-      emit videoTypeChanged(value);
-    }
-  }
-
-  common::Enum::VideoType::Value SettingsViewModel::getVideoType() const {
-    return m_videoType;
   }
 
   void SettingsViewModel::setScreenBrightness(int value) {

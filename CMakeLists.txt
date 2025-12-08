@@ -28,15 +28,6 @@ if (NOT CMAKE_BUILD_TYPE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif ()
 
-# --- Raspberry Pi (RPi) Configuration ---
-# To build for RPi, use a toolchain file that defines BCM_HOST_LIBRARIES
-if (DEFINED BCM_HOST_LIBRARIES)
-    message(STATUS "Configuring for Raspberry Pi (via toolchain file)")
-    add_definitions(-DUSE_OMX -DOMX_SKIP64BIT -DRASPBERRYPI3)
-else ()
-    message(STATUS "Configuring for Non-Raspberry Pi")
-endif ()
-
 # --- macOS Specifics ---
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")  # macOS
     message(STATUS "MacOS System Detected")
@@ -66,7 +57,6 @@ if(APPLE)
     set_property(TARGET Qt6::Gui PROPERTY INTERFACE_LINK_LIBRARIES "${QT_GUI_LIBS}")
 endif()
 find_package(OpenSSL REQUIRED)
-find_package(rtaudio REQUIRED)
 find_package(taglib REQUIRED)
 
 # --- Linux-Only Dependencies ---
@@ -159,9 +149,7 @@ include(qmlcomponents)
 target_include_directories(autoapp PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${RTAUDIO_INCLUDE_DIRS}
         ${TAGLIB_INCLUDE_DIRS}
-        ${BCM_HOST_INCLUDE_DIRS}
         ${ILCLIENT_INCLUDE_DIRS}
 )
 
@@ -173,9 +161,7 @@ target_link_libraries(autoapp PUBLIC
         libusb
         PRIVATE
         Boost::log
-        ${RTAUDIO_LIBRARIES}
         ${TAGLIB_LIBRARIES}
-        ${BCM_HOST_LIBRARIES}
         ${ILCLIENT_LIBRARIES}
         ${WINSOCK2_LIBRARIES}
 )

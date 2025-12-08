@@ -252,23 +252,6 @@ Item {
                     font.styleName: "Bold"
                     font.bold: true
                 }
-                Row {
-                    spacing: 10
-                    // TODO Enum
-                    RadioButton {
-                        id: audioRt
-                        text: qsTr("RT Audio")
-                        checked: settingsViewHandler.audioType == 1
-                        onCheckedChanged: settingsViewHandler.audioType = 1
-                    }
-
-                    RadioButton {
-                        id: audioQt
-                        text: qsTr("Qt")
-                        checked: settingsViewHandler.audioType == 2
-                        onCheckedChanged: settingsViewHandler.audioType = 2
-                    }
-                }
 
                 Row {
                     Text {
@@ -317,18 +300,6 @@ Item {
                     }
                 }
 
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "OMX Layer"
-                        font.pixelSize: 15
-                    }
-                    SpinBox {
-                        id: omxLayer
-                        value: settingsViewHandler.videoOMXLayer
-                        onValueChanged: settingsViewHandler.videoOMXLayer = value
-                    }
-                }
                 Text {
                     text: qsTr("Margin")
                     font.pixelSize: 12
@@ -535,25 +506,6 @@ Item {
                     font.pixelSize: 12
                     font.weight: Font.Bold
                 }
-
-                Row {
-                    spacing: 10
-                    RadioButton {
-                        id: videoEgl
-
-                        text: qsTr("EGL")
-                        checked: settingsViewHandler.videoType == 1
-                        onCheckedChanged: settingsViewHandler.videoType = 1
-                    }
-
-                    RadioButton {
-                        id: videoX11
-                        text: qsTr("X11")
-                        checked: settingsViewHandler.videoType == 2
-                        onCheckedChanged: settingsViewHandler.videoType = 2
-                    }
-                }
-
 
                 Text {
                     id: _text3

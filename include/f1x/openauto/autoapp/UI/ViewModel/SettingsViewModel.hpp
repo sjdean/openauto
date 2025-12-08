@@ -7,7 +7,6 @@
 #include <service/sensorsource/message/FuelType.pb.h>
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "f1x/openauto/Common/Enum/AudioOutputType.hpp"
-#include "f1x/openauto/Common/Enum/VideoType.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 
 namespace f1x::openauto::autoapp::UI::ViewModel {
@@ -38,8 +37,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     Q_PROPERTY(
         int videoMarginHeight READ getVideoMarginHeight WRITE setVideoMarginHeight NOTIFY videoMarginHeightChanged)
     Q_PROPERTY(int videoMarginWidth READ getVideoMarginWidth WRITE setVideoMarginWidth NOTIFY videoMarginWidthChanged)
-    Q_PROPERTY(int videoOMXLayer READ getVideoOMXLayer WRITE setVideoOMXLayer NOTIFY videoOMXLayerChanged)
-    Q_PROPERTY(common::Enum::VideoType::Value videoType READ getVideoType WRITE setVideoType NOTIFY videoTypeChanged)
+
     Q_PROPERTY(
         bool videoRotateDisplay READ getVideoRotateDisplay WRITE setVideoRotateDisplay NOTIFY videoRotateDisplayChanged)
 
@@ -66,7 +64,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         int audioVolumePlayback READ getAudioVolumePlayback WRITE setAudioVolumePlayback NOTIFY audioVolumePlaybackChanged)
     Q_PROPERTY(
         int audioVolumeCapture READ getAudioVolumeCapture WRITE setAudioVolumeCapture NOTIFY audioVolumeCaptureChanged)
-    Q_PROPERTY(f1x::openauto::common::Enum::AudioOutputType::Value audioType READ getAudioType WRITE setAudioType NOTIFY audioTypeChanged)
     Q_PROPERTY(
         QString audioPlaybackDevice READ getAudioPlaybackDevice WRITE setAudioPlaybackDevice NOTIFY audioPlaybackDeviceChanged)
     Q_PROPERTY(
@@ -118,10 +115,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void videoMarginWidthChanged();
 
-    void videoOMXLayerChanged();
-
-    void videoTypeChanged(common::Enum::VideoType::Value type);
-
     void videoRotateDisplayChanged();
 
     void mediaAutoPlaybackChanged();
@@ -151,8 +144,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void audioVolumeCaptureMinChanged();
 
     void audioVolumeCaptureMaxChanged();
-
-    void audioTypeChanged(common::Enum::AudioOutputType::Value type);
 
     void audioPlaybackDeviceChanged();
     void audioCaptureDeviceChanged();
@@ -238,27 +229,18 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     // Video
     int m_videoMarginHeight;
     int m_videoMarginWidth;
-    int m_videoOMXLayer;
-    common::Enum::VideoType::Value m_videoType;
+
     bool m_videoRotateDisplay;
 
     int getVideoMarginHeight() const;
 
     int getVideoMarginWidth() const;
 
-    int getVideoOMXLayer() const;
-
-    common::Enum::VideoType::Value getVideoType() const;
-
     bool getVideoRotateDisplay() const;
 
     void setVideoMarginHeight(int value);
 
     void setVideoMarginWidth(int value);
-
-    void setVideoOMXLayer(int value);
-
-    void setVideoType(common::Enum::VideoType::Value value);
 
     void setVideoRotateDisplay(bool value);
 
@@ -310,8 +292,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     QString m_audioCaptureDeviceValue;
     QString m_audioPlaybackDeviceValue;
 
-    common::Enum::AudioOutputType::Value m_audioType;
-
     int getAudioVolumePlaybackMin() const;
 
     int getAudioVolumePlaybackMax() const;
@@ -323,8 +303,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     int getAudioVolumePlayback() const;
 
     int getAudioVolumeCapture() const;
-
-    common::Enum::AudioOutputType::Value getAudioType() const;
 
     QString getAudioPlaybackDevice() const;
     QString getAudioCaptureDevice() const;
@@ -340,8 +318,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void setAudioVolumePlayback(int value);
 
     void setAudioVolumeCapture(int value);
-
-    void setAudioType(common::Enum::AudioOutputType::Value value);
 
     void setAudioPlaybackDevice(QString value);
     void setAudioCaptureDevice(QString value);

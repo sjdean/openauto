@@ -7,9 +7,6 @@
 #include <service/media/sink/message/VideoFrameRateType.pb.h>
 #include <service/sensorsource/message/EvConnectorType.pb.h>
 #include <service/sensorsource/message/FuelType.pb.h>
-
-#include "f1x/openauto/Common/Enum/AudioOutputType.hpp"
-#include "f1x/openauto/Common/Enum/VideoType.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 
 #include <qloggingcategory.h>
@@ -47,9 +44,7 @@ namespace f1x::openauto::autoapp::configuration {
     ConfigurationGroup videoGroup("Video");
     videoGroup.addSetting<int>("Height", 0);
     videoGroup.addSetting<int>("Width", 0);
-    videoGroup.addSetting<int>("OMXLayer", 2);
     videoGroup.addSetting<bool>("Rotate", false);
-    videoGroup.addSetting<f1x::openauto::common::Enum::VideoType::Value>("Type", f1x::openauto::common::Enum::VideoType::Value::EGL);
     videoGroup.load(m_settings);
     m_configurationGroups.append(videoGroup);
 
@@ -60,7 +55,6 @@ namespace f1x::openauto::autoapp::configuration {
     audioGroup.addSetting<int>("CaptureMax", 255);
     audioGroup.addSetting<int>("PlaybackVolume", 150);
     audioGroup.addSetting<int>("CaptureVolume", 150);
-    audioGroup.addSetting<int>("Type", static_cast<const int>(f1x::openauto::common::Enum::AudioOutputType::RTAUDIO));
     audioGroup.addSetting<QString>("PlaybackDevice", "");
     audioGroup.addSetting<QString>("CaptureDevice", "");
     audioGroup.load(m_settings);

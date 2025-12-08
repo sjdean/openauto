@@ -3,8 +3,6 @@
 #include <qloggingcategory.h>
 #include <service/control/message/AudioFocusNotification.pb.h>
 #include <service/inputsource/message/KeyEvent.pb.h>
-#include <service/media/shared/message/Setup.pb.h>
-#include <shared/MessageStatus.pb.h>
 Q_LOGGING_CATEGORY(lcInput, "journeyos.input")
 
 namespace f1x::openauto::autoapp::projection {

@@ -5,10 +5,7 @@
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcBtLocal, "journeyos.bluetooth.local")
 
-// TODO: This isn't really Projection
 namespace f1x::openauto::autoapp::projection {
-  // TODO: Ensure we're passing in the adapter address correctly.
-  // TODO: We may need to rename this to a LinuxBluetoothAdapter so we can abstract and create models for Windows and Mac
   LocalBluetoothDevice::LocalBluetoothDevice(const QString &adapterAddress, QObject *parent) : QObject(parent) {
     qRegisterMetaType<IBluetoothDevice::PairingPromise::Pointer>("PairingPromise::Pointer");
 
