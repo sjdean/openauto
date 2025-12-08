@@ -2,22 +2,20 @@
 #include "f1x/openauto/autoapp/UI/Combo/NetworkAdapterModel.hpp"
 
 #include <qloggingcategory.h>
-
-Q_LOGGING_CATEGORY(logCombo, "combo.networkadapter", QtInfoMsg);
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcComboNetAdapter, "journeyos.network.adapter.list")
 
 namespace f1x::openauto::autoapp::UI::Combo {
 
     NetworkAdapterModel::NetworkAdapterModel(QObject *parent) : QObject(parent) {
-        qDebug(logCombo) << "NetworkAdapterModel Initiated";
+        qDebug(lcComboNetAdapter) << "NetworkAdapterModel Initiated";
         populateComboBoxItems();
 
     }
 
     void NetworkAdapterModel::populateComboBoxItems() {
         m_comboBoxItems.clear();
-        qWarning(logCombo) << "Clear existing list";
         addComboBoxItem("None", "No Device Selected", "00:00:00:00:00:00"); // Default
-        qWarning(logCombo) << "Add unknown placeholder";
         const auto interfaces = QNetworkInterface::allInterfaces();
         for (const QNetworkInterface &interface : interfaces) {
             // Basic filtering to remove loopback or obviously inactive ones

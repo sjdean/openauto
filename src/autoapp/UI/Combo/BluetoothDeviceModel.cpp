@@ -1,6 +1,7 @@
 #include "f1x/openauto/autoapp/UI/Combo/BluetoothDeviceModel.hpp"
 #include <QProcess>
-
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcComboBtDevice, "journeyos.bluetooth.client.list")
 
 namespace f1x::openauto::autoapp::UI::Combo {
     BluetoothDeviceModel::BluetoothDeviceModel(Monitor::BluetoothHandler *bluetoothHandler,

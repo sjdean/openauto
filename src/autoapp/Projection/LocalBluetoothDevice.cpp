@@ -1,7 +1,9 @@
 #include <QtBluetooth>
 #include <QGuiApplication>
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Projection/LocalBluetoothDevice.hpp>
+
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcBtLocal, "journeyos.bluetooth.local")
 
 // TODO: This isn't really Projection
 namespace f1x::openauto::autoapp::projection {
@@ -18,7 +20,7 @@ namespace f1x::openauto::autoapp::projection {
   }
 
   void LocalBluetoothDevice::createBluetoothLocalDevice(const QString &adapterAddress) {
-    OPENAUTO_LOG(info) << "[LocalBluetoothDevice] create.";
+    qInfo(lcBtLocal) << "[LocalBluetoothDevice] create.";
 
     QBluetoothAddress address(adapterAddress);
     localDevice_ = std::make_unique<QBluetoothLocalDevice>(address);

@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/Service/MediaSink/MediaAudioService.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcServiceSinkMedia, "journeyos.service.mediasink.media")
 
 namespace f1x::openauto::autoapp::service::mediasink {
   MediaAudioService::MediaAudioService(boost::asio::io_service &ioService,

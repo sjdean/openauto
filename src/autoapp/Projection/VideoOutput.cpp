@@ -1,6 +1,6 @@
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Projection/VideoOutput.hpp>
-
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcVideoOut, "journeyos.video.output")
 namespace f1x::openauto::autoapp::projection {
 
   VideoOutput::VideoOutput(configuration::IConfiguration::Pointer configuration)

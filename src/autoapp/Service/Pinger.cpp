@@ -1,5 +1,6 @@
 #include <f1x/openauto/autoapp/Service/Pinger.hpp>
-#include <f1x/openauto/Common/Log.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcPinger, "journeyos.pinger")
 
 namespace f1x::openauto::autoapp::service {
 
@@ -16,7 +17,7 @@ namespace f1x::openauto::autoapp::service {
         promise_->reject(aasdk::error::Error(aasdk::error::ErrorCode::OPERATION_IN_PROGRESS));
       } else {
         ++pingsCount_;
-        OPENAUTO_LOG(debug) << "[Pinger] Ping counter: " << pingsCount_;
+        qDebug(lcPinger) << "[Pinger] Ping counter: " << pingsCount_;
 
         promise_ = std::move(promise);
         timer_.expires_from_now(boost::posix_time::milliseconds(duration_));
@@ -29,7 +30,7 @@ namespace f1x::openauto::autoapp::service {
   void Pinger::pong() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
       ++pongsCount_;
-      OPENAUTO_LOG(debug) << "[Pinger] Pong counter: " << pongsCount_;
+      qDebug(lcPinger) << "[Pinger] Pong counter: " << pongsCount_;
     });
   }
 

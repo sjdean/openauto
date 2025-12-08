@@ -1,8 +1,10 @@
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/WifiProjection/WifiProjectionService.hpp>
 #include <fstream>
 #include <QNetworkInterface>
 #include <utility>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcServiceWifi, "journeyos.service.wifi")
+
 
 namespace f1x::openauto::autoapp::service::wifiprojection {
   WifiProjectionService::WifiProjectionService(boost::asio::io_service &ioService,
@@ -18,31 +20,31 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
 
   void WifiProjectionService::start() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[WifiProjectionService] start()";
+      qInfo(lcServiceWifi) << "[WifiProjectionService] start()";
     });
   }
 
   void WifiProjectionService::stop() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[WifiProjectionService] stop()";
+      qInfo(lcServiceWifi) << "[WifiProjectionService] stop()";
     });
   }
 
   void WifiProjectionService::pause() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[WifiProjectionService] pause()";
+      qInfo(lcServiceWifi) << "[WifiProjectionService] pause()";
     });
   }
 
   void WifiProjectionService::resume() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[WifiProjectionService] resume()";
+      qInfo(lcServiceWifi) << "[WifiProjectionService] resume()";
     });
   }
 
   void WifiProjectionService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    OPENAUTO_LOG(info) << "[WifiProjectionService] fillFeatures()";
+    qInfo(lcServiceWifi) << "[WifiProjectionService] fillFeatures()";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -55,7 +57,7 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
   void WifiProjectionService::onWifiCredentialsRequest(
       const aap_protobuf::service::wifiprojection::message::WifiCredentialsRequest &request) {
 
-    OPENAUTO_LOG(info) << "[WifiProjectionService] onWifiCredentialsRequest()";
+    qInfo(lcServiceWifi) << "[WifiProjectionService] onWifiCredentialsRequest()";
 
     aap_protobuf::service::wifiprojection::message::WifiCredentialsResponse response;
 
@@ -75,8 +77,8 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
 
   void WifiProjectionService::onChannelOpenRequest(
       const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    OPENAUTO_LOG(info) << "[WifiProjectionService] onChannelOpenRequest()";
-    OPENAUTO_LOG(debug) << "[WifiProjectionService] Channel Id: " << request.service_id() << ", Priority: "
+    qInfo(lcServiceWifi) << "[WifiProjectionService] onChannelOpenRequest()";
+    qDebug(lcServiceWifi) << "[WifiProjectionService] Channel Id: " << request.service_id() << ", Priority: "
                         << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
@@ -92,7 +94,7 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
   }
 
   void WifiProjectionService::onChannelError(const aasdk::error::Error &e) {
-    OPENAUTO_LOG(error) << "[WifiProjectionService] onChannelError(): " << e.what();
+    qCritical(lcServiceWifi) << "[WifiProjectionService] onChannelError(): " << e.what();
   }
 
 

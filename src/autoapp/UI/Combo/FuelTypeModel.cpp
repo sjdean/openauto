@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/UI/Combo/FuelTypeModel.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcCombFuel, "journeyos.fueltype.list")
 
 namespace f1x::openauto::autoapp::UI::Combo {
   FuelTypeModel::FuelTypeModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {

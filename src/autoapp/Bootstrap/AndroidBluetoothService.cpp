@@ -1,12 +1,13 @@
 #include <f1x/openauto/autoapp/Bootstrap/AndroidBluetoothService.hpp>
-#include <f1x/openauto/Common/Log.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcBsBtService, "journeyos.bluetooth.boottrap.service")
 
 namespace f1x::openauto::autoapp::bootstrap {
   /**
    * Stage 1 Bootstrap - Handle iinitial RFCOMM connection to exchange WiFi credentials for Wireless AndroidAuto
    */
   AndroidBluetoothService::AndroidBluetoothService() {
-    OPENAUTO_LOG(info) << "[AndroidBluetoothService::AndroidBluetoothService] Initialising";
+    qInfo(lcBsBtService) << "[AndroidBluetoothService::AndroidBluetoothService] Initialising";
     const QBluetoothUuid serviceUuid(QLatin1String("4de17a00-52cb-11e6-bdf4-0800200c9a66"));
 
     QBluetoothServiceInfo::Sequence classId;
@@ -35,7 +36,7 @@ namespace f1x::openauto::autoapp::bootstrap {
   }
 
   bool AndroidBluetoothService::registerService(int16_t portNumber, const QBluetoothAddress &bluetoothAddress) {
-    OPENAUTO_LOG(info) << "[AndroidBluetoothService::registerService] Registering Service";
+    qInfo(lcBsBtService) << "[AndroidBluetoothService::registerService] Registering Service";
 
     QBluetoothServiceInfo::Sequence protocolDescriptorList;
     QBluetoothServiceInfo::Sequence protocol;
@@ -62,7 +63,7 @@ namespace f1x::openauto::autoapp::bootstrap {
   }
 
   bool AndroidBluetoothService::unregisterService() {
-    OPENAUTO_LOG(info) << "[AndroidBluetoothService::unregisterService] Unregistering";
+    qInfo(lcBsBtService) << "[AndroidBluetoothService::unregisterService] Unregistering";
     return serviceInfo_.unregisterService();
   }
 

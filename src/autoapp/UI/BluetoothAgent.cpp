@@ -4,7 +4,9 @@
 #include <QDBusError>
 #include <QRandomGenerator>
 
-Q_LOGGING_CATEGORY(logAgent, "autoapp.agent")
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcBtAgent, "journeyos.bluetoth.agent")
+
 
 /**
  * @brief BluetoothAgent for QT/BlueZ/Dbus - Handles Pairing
@@ -16,9 +18,9 @@ BluetoothAgent::BluetoothAgent(const QString &dbusPath, QObject *parent) :
     // Register this object on the D-Bus system bus
     QDBusConnection systemBus = QDBusConnection::systemBus();
     if (!systemBus.registerObject(m_dbusPath, this)) {
-        qWarning(logAgent) << "Failed to register BluetoothAgent on D-Bus path:" << m_dbusPath;
+        qWarning(lcBtAgent) << "Failed to register BluetoothAgent on D-Bus path:" << m_dbusPath;
     } else {
-        qInfo(logAgent) << "BluetoothAgent registered at" << m_dbusPath;
+        qInfo(lcBtAgent) << "BluetoothAgent registered at" << m_dbusPath;
     }
 }
 
@@ -30,7 +32,7 @@ BluetoothAgent::~BluetoothAgent() {
 // --- D-Bus Slots (Called by BlueZ) ---
 // TODO: I presume we don't need to explicitly connect to the slots as we have these here registered on the agent?
 QString BluetoothAgent::RequestPinCode(const QDBusObjectPath &device) {
-    qInfo(logAgent) << "Requesting PIN for device" << device.path();
+    qInfo(lcBtAgent) << "Requesting PIN for device" << device.path();
 
     // For legacy pairing, just use "0000" or "1234"
     // For modern, we'd generate a 6-digit number.
@@ -44,7 +46,7 @@ QString BluetoothAgent::RequestPinCode(const QDBusObjectPath &device) {
 }
 
 void BluetoothAgent::RequestConfirmation(const QDBusMessage &message, const QDBusObjectPath &device, quint32 passkey) {
-    qInfo(logAgent) << "Requesting confirmation for passkey:" << passkey << "for device" << device.path();
+    qInfo(lcBtAgent) << "Requesting confirmation for passkey:" << passkey << "for device" << device.path();
 
     // 1. Store the message so we can reply later
     m_pendingMessage = message;
@@ -54,30 +56,30 @@ void BluetoothAgent::RequestConfirmation(const QDBusMessage &message, const QDBu
 }
 
 void BluetoothAgent::Release() {
-    qInfo(logAgent) << "Agent released.";
+    qInfo(lcBtAgent) << "Agent released.";
     emit pairingComplete(); // Tell QML to close the popup
 }
 
 void BluetoothAgent::AuthorizeService(const QDBusObjectPath &device, const QString &uuid) {
-    qInfo(logAgent) << "Authorizing service" << uuid << "for device" << device.path();
+    qInfo(lcBtAgent) << "Authorizing service" << uuid << "for device" << device.path();
     // Auto-accept service authorization (e.g., phone book)
 }
 
 void BluetoothAgent::Cancel() {
-    qInfo(logAgent) << "Pairing canceled.";
+    qInfo(lcBtAgent) << "Pairing canceled.";
     emit pairingComplete(); // Tell QML to close the popup
 }
 
 // --- QML-Callable Slots (Called by your UI) ---
 
 void BluetoothAgent::accept() {
-    qInfo(logAgent) << "User accepted pairing.";
+    qInfo(lcBtAgent) << "User accepted pairing.";
     replyToMessage(true);
     emit pairingComplete();
 }
 
 void BluetoothAgent::reject() {
-    qInfo(logAgent) << "User rejected pairing.";
+    qInfo(lcBtAgent) << "User rejected pairing.";
     replyToMessage(false);
     emit pairingComplete();
 }
@@ -86,7 +88,7 @@ void BluetoothAgent::reject() {
 
 void BluetoothAgent::replyToMessage(bool confirmed) {
     if (!m_pendingMessage.service().isEmpty()) {
-        qWarning(logAgent) << "No pending message to reply to!";
+        qWarning(lcBtAgent) << "No pending message to reply to!";
         return;
     }
 

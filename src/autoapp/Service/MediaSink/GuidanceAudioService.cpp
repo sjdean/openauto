@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/Service/MediaSink/GuidanceAudioService.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcServiceSinkGuidance, "journeyos.service.mediasink.guidance")
 
 namespace f1x::openauto::autoapp::service::mediasink {
   using f1x::openauto::autoapp::service::mediasink::GuidanceAudioService;

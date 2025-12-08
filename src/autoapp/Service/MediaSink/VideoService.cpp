@@ -1,5 +1,7 @@
 #include <aasdk/Channel/MediaSink/Video/Channel/VideoChannel.hpp>
 #include <f1x/openauto/autoapp/Service/MediaSink/VideoService.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcServiceSinkVideo, "journeyos.service.mediasink.video")
 
 namespace f1x::openauto::autoapp::service::mediasink {
   VideoService::VideoService(boost::asio::io_service &ioService,

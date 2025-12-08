@@ -1,6 +1,8 @@
 #include "f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp"
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityMethod.hpp"
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityState.hpp"
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcAA, "journeyos.aa.monitor")
 
 namespace f1x::openauto::autoapp::UI::Monitor {
     /**

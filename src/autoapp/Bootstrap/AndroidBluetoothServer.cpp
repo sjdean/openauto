@@ -1,6 +1,5 @@
 
 #include <boost/algorithm/hex.hpp>
-#include <f1x/openauto/Common/Log.hpp>
 #include <QNetworkInterface>
 #include <iostream>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
@@ -25,6 +24,8 @@ using namespace google::protobuf;
 using namespace google::protobuf::io;
 
 // 39171FDJG002WHhandleWifiVersionRequest
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcBsBtServer, "journeyos.bluetooth.bootstrap.server")
 
 namespace f1x::openauto::autoapp::bootstrap {
 
@@ -35,7 +36,7 @@ namespace f1x::openauto::autoapp::bootstrap {
   AndroidBluetoothServer::AndroidBluetoothServer(configuration::IConfiguration::Pointer configuration)
       : rfcommServer_(std::make_unique<QBluetoothServer>(QBluetoothServiceInfo::RfcommProtocol, this)),
         configuration_(std::move(configuration)) {
-    OPENAUTO_LOG(info) << "[AndroidBluetoothServer::AndroidBluetoothServer] Initialising";
+    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::AndroidBluetoothServer] Initialising";
 
     connect(rfcommServer_.get(), &QBluetoothServer::newConnection, this,
             &AndroidBluetoothServer::onClientConnected);
@@ -44,7 +45,7 @@ namespace f1x::openauto::autoapp::bootstrap {
 
   /// Start Server listening on Address
   uint16_t AndroidBluetoothServer::start(const QBluetoothAddress &address) {
-    OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::start]";
+    qDebug(lcBsBtServer) << "[AndroidBluetoothServer::start]";
     if (rfcommServer_->listen(address)) {
 
       return rfcommServer_->serverPort();
@@ -53,12 +54,38 @@ namespace f1x::openauto::autoapp::bootstrap {
   }
 
   void AndroidBluetoothServer::onError(QBluetoothServer::Error error) {
-    OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::onError]";
+    qDebug(lcBsBtServer) << "[AndroidBluetoothServer::onError]";
+  }
+
+// ---------------------------------------------------------
+  // HELPER: Find the Network Interface based on Configured MAC
+  // ---------------------------------------------------------
+  QNetworkInterface AndroidBluetoothServer::findConfiguredInterface() const {
+      // 1. Get the target MAC address from settings
+      // Assuming the key in settings is "Interface" under "Wireless" (e.g., "B8:27:EB:...")
+      QString targetMac = configuration_->getSettingByName<QString>("Wireless", "Interface");
+
+      // Normalize config MAC (remove dashes/colons, make uppercase) for safer comparison
+      QString normalizedTarget = targetMac.toUpper();
+
+      // 2. Iterate all system interfaces
+      const auto interfaces = QNetworkInterface::allInterfaces();
+      for (const auto &interface : interfaces) {
+          // 3. Compare Hardware Address
+          if (interface.hardwareAddress().toUpper() == normalizedTarget) {
+              qCDebug(lcBsBtServer) << "Found configured interface:" << interface.name() << "MAC:" << normalizedTarget;
+              return interface;
+          }
+      }
+
+      // 4. Fallback (if config is empty or device missing, try wlan0 or lo)
+      qCWarning(lcBsBtServer) << "Configured MAC" << targetMac << "not found. Falling back to 'wlan0'";
+      return QNetworkInterface::interfaceFromName("wlan0");
   }
 
   /// Call-Back for when Client Connected
   void AndroidBluetoothServer::onClientConnected() {
-    OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::onClientConnected]";
+    qDebug(lcBsBtServer) << "[AndroidBluetoothServer::onClientConnected]";
     if (socket != nullptr) {
       socket->deleteLater();
     }
@@ -66,7 +93,7 @@ namespace f1x::openauto::autoapp::bootstrap {
     socket = rfcommServer_->nextPendingConnection();
 
     if (socket != nullptr) {
-      OPENAUTO_LOG(debug) << "[AndroidBluetoothServer] rfcomm client connected, peer name: "
+      qDebug(lcBsBtServer) << "[AndroidBluetoothServer] rfcomm client connected, peer name: "
                          << socket->peerName().toStdString();
 
       connect(socket, &QBluetoothSocket::readyRead, this, &AndroidBluetoothServer::readSocket);
@@ -74,14 +101,32 @@ namespace f1x::openauto::autoapp::bootstrap {
       aap_protobuf::service::control::message::AudioFocusRequestType afrt;
       aap_protobuf::aaw::WifiVersionRequest versionRequest;
       aap_protobuf::aaw::WifiStartRequest startRequest;
-      // TODO: No Hardcoding - this needs to be pulled from settings by MAc and converted to Interface Name
-      startRequest.set_ip_address(getIP4_("wlan0"));
+
+      QNetworkInterface wifiInterface = findConfiguredInterface();
+      std::string ipAddress = "";
+
+      // Loop through address entries to find IPv4
+      for (const QNetworkAddressEntry &entry : wifiInterface.addressEntries()) {
+          if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol && !entry.ip().isLoopback()) {
+              ipAddress = entry.ip().toString().toStdString();
+              break;
+          }
+      }
+
+      if (ipAddress.empty()) {
+        qCCritical(lcBsBtServer) << "Could not find IPv4 address for interface:" << wifiInterface.name();
+        // Fallback or error handling here?
+      } else {
+        qCInfo(lcBsBtServer) << "Advertising WiFi IP:" << ipAddress.c_str();
+      }
+
+      startRequest.set_ip_address(ipAddress);
       startRequest.set_port(5000);
 
       sendMessage(versionRequest, aap_protobuf::aaw::MessageId::WIFI_VERSION_REQUEST);
       sendMessage(startRequest, aap_protobuf::aaw::MessageId::WIFI_START_REQUEST);
     } else {
-      OPENAUTO_LOG(error) << "[AndroidBluetoothServer] received null socket during client connection.";
+      qCritical(lcBsBtServer) << "[AndroidBluetoothServer] received null socket during client connection.";
     }
   }
 
@@ -89,10 +134,10 @@ namespace f1x::openauto::autoapp::bootstrap {
   void AndroidBluetoothServer::readSocket() {
     buffer += socket->readAll();
 
-    OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::readSocket] Reading from socket.";
+    qDebug(lcBsBtServer) << "[AndroidBluetoothServer::readSocket] Reading from socket.";
 
     if (buffer.length() < 4) {
-      OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::readSocket] Not enough data, waiting for more.";
+      qDebug(lcBsBtServer) << "[AndroidBluetoothServer::readSocket] Not enough data, waiting for more.";
       return;
     }
 
@@ -101,7 +146,7 @@ namespace f1x::openauto::autoapp::bootstrap {
     stream >> length;
 
     if (buffer.length() < length + 4) {
-      OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::readSocket] Not enough data, waiting for more: " << buffer.length();
+      qDebug(lcBsBtServer) << "[AndroidBluetoothServer::readSocket] Not enough data, waiting for more: " << buffer.length();
       return;
     }
 
@@ -111,7 +156,7 @@ namespace f1x::openauto::autoapp::bootstrap {
     aap_protobuf::aaw::MessageId messageId;
     messageId = static_cast<aap_protobuf::aaw::MessageId>(rawMessageId);
 
-    OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::readSocket] Message length: " << length << " MessageId: " << messageId;
+    qDebug(lcBsBtServer) << "[AndroidBluetoothServer::readSocket] Message length: " << length << " MessageId: " << messageId;
 
     switch (messageId) {
 
@@ -144,8 +189,8 @@ namespace f1x::openauto::autoapp::bootstrap {
         for (auto &&val: buffer) {
           ss << std::setw(2) << static_cast<unsigned>(val);
         }
-        OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::readSocket] Unknown message: " << messageId;
-        OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::readSocket] Data " << ss.str();
+        qDebug(lcBsBtServer) << "[AndroidBluetoothServer::readSocket] Unknown message: " << messageId;
+        qDebug(lcBsBtServer) << "[AndroidBluetoothServer::readSocket] Data " << ss.str();
 
         break;
     }
@@ -157,16 +202,23 @@ namespace f1x::openauto::autoapp::bootstrap {
   /// \param buffer
   /// \param length
   void AndroidBluetoothServer::handleWifiInfoRequest(QByteArray &buffer, uint16_t length) {
-    OPENAUTO_LOG(info) << "[AndroidBluetoothServer::handleWifiInfoRequest] Handling wifi info request";
+    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiInfoRequest] Handling wifi info request";
 
     aap_protobuf::aaw::WifiInfoResponse response;
 
     response.set_ssid(configuration_->getSettingByName<QString>("Wireless", "HotspotSSID").toStdString());
     response.set_password(configuration_->getSettingByName<QString>("Wireless", "HotspotPassword").toStdString());
 
-    // TODO: Make Interface Name Dynamic
-    response.set_bssid(QNetworkInterface::interfaceFromName("wlan0").hardwareAddress().toStdString());
+    QNetworkInterface wifiInterface = findConfiguredInterface();
 
+    // BSSID is essentially the MAC address of the AP
+    std::string bssid = wifiInterface.hardwareAddress().toStdString();
+
+    if(bssid.empty()) {
+      qCWarning(lcBsBtServer) << "Failed to resolve BSSID (MAC) for interface:" << wifiInterface.name();
+    }
+
+    response.set_bssid(bssid);
     response.set_security_mode(
         aap_protobuf::service::wifiprojection::message::WifiSecurityMode::WPA2_ENTERPRISE);
     response.set_access_point_type(aap_protobuf::service::wifiprojection::message::AccessPointType::STATIC);
@@ -178,19 +230,19 @@ namespace f1x::openauto::autoapp::bootstrap {
   /// \param buffer
   /// \param length
   void AndroidBluetoothServer::handleWifiVersionResponse(QByteArray &buffer, uint16_t length) {
-    OPENAUTO_LOG(info) << "[AndroidBluetoothServer::handleWifiVersionResponse] Handling wifi version response";
+    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiVersionResponse] Handling wifi version response";
     aap_protobuf::aaw::WifiVersionResponse response;
-    response.ParseFromArray(buffer.data() + 4, length);OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::handleWifiVersionResponse] Unknown Param 1: " << response.major_version() << " Unknown Param 2: " << response.minor_version();
+    response.ParseFromArray(buffer.data() + 4, length);qDebug(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiVersionResponse] Unknown Param 1: " << response.major_version() << " Unknown Param 2: " << response.minor_version();
   }
 
   /// Listens for WifiStartResponse from MD - usually just a notification with a status
   /// \param buffer
   /// \param length
   void AndroidBluetoothServer::handleWifiStartResponse(QByteArray &buffer, uint16_t length) {
-    OPENAUTO_LOG(info) << "[AndroidBluetoothServer::handleWifiStartResponse] Handling wifi start response";
+    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiStartResponse] Handling wifi start response";
     aap_protobuf::aaw::WifiStartResponse response;
     response.ParseFromArray(buffer.data() + 4, length);
-    OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::handleWifiStartResponse] " << response.ip_address() << " port " << response.port() << " status " << Status_Name(response.status());
+    qDebug(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiStartResponse] " << response.ip_address() << " port " << response.port() << " status " << Status_Name(response.status());
   }
 
   /// Handles request for WifiStartRequest by sending a WifiStartResponse
@@ -199,11 +251,11 @@ namespace f1x::openauto::autoapp::bootstrap {
   void AndroidBluetoothServer::handleWifiConnectionStatus(QByteArray &buffer, uint16_t length) {
     aap_protobuf::aaw::WifiConnectionStatus status;
     status.ParseFromArray(buffer.data() + 4, length);
-    OPENAUTO_LOG(info) << "[AndroidBluetoothServer::handleWifiConnectionStatus] Handle wifi connection status, received: " << Status_Name(status.status());
+    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiConnectionStatus] Handle wifi connection status, received: " << Status_Name(status.status());
   }
 
   void AndroidBluetoothServer::sendMessage(const google::protobuf::Message &message, uint16_t type) {
-    OPENAUTO_LOG(info) << "[AndroidBluetoothServer::sendMessage] Sending message to connected device";
+    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::sendMessage] Sending message to connected device";
 
     int byteSize = message.ByteSizeLong();
     QByteArray out(byteSize + 4, 0);
@@ -218,13 +270,13 @@ namespace f1x::openauto::autoapp::bootstrap {
       ss << std::setw(2) << static_cast<unsigned>(val);
     }
 
-    OPENAUTO_LOG(debug) << message.GetTypeName() << " - " + message.DebugString();
+    qDebug(lcBsBtServer) << message.GetTypeName() << " - " + message.DebugString();
 
     auto written = socket->write(out);
     if (written > -1) {
-      OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::sendMessage] Bytes written: " << written;
+      qDebug(lcBsBtServer) << "[AndroidBluetoothServer::sendMessage] Bytes written: " << written;
     } else {
-      OPENAUTO_LOG(debug) << "[AndroidBluetoothServer::sendMessage] Could not write data";
+      qDebug(lcBsBtServer) << "[AndroidBluetoothServer::sendMessage] Could not write data";
     }
   }
 

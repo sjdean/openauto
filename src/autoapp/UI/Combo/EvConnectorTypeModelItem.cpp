@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/UI/Combo/EvConnectorTypeModelItem.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcComboEvItem, "journeyos.evconnector.list.item")
 
 namespace f1x::openauto::autoapp::UI::Combo {
   EvConnectorTypeModelItem::EvConnectorTypeModelItem(QString display,

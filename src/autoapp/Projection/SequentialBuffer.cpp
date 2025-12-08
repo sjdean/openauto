@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/Projection/SequentialBuffer.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcBuffer, "journeyos.buffer")
 
 namespace f1x::openauto::autoapp::projection {
 

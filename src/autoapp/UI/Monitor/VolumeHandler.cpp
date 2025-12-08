@@ -2,6 +2,8 @@
 #include <utility>
 
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcVolume, "journeyos.volume")
 
 namespace f1x::openauto::autoapp::UI::Monitor  {
   VolumeHandler::VolumeHandler(configuration::IConfiguration::Pointer configuration, std::shared_ptr<IAudioHandler> audioHandler) :

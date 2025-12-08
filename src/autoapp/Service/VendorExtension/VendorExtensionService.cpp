@@ -1,7 +1,8 @@
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/VendorExtension/VendorExtensionService.hpp>
 #include <fstream>
 #include <QString>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcServiceVendor, "journeyos.service.vendor")
 
 namespace f1x::openauto::autoapp::service::vendorextension {
 
@@ -16,31 +17,31 @@ namespace f1x::openauto::autoapp::service::vendorextension {
 
   void VendorExtensionService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[VendorExtensionService] start()";
+      qInfo(lcServiceVendor) << "[VendorExtensionService] start()";
     });
   }
 
   void VendorExtensionService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[VendorExtensionService] stop()";
+      qInfo(lcServiceVendor) << "[VendorExtensionService] stop()";
     });
   }
 
   void VendorExtensionService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[VendorExtensionService] pause()";
+      qInfo(lcServiceVendor) << "[VendorExtensionService] pause()";
     });
   }
 
   void VendorExtensionService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[VendorExtensionService] resume()";
+      qInfo(lcServiceVendor) << "[VendorExtensionService] resume()";
     });
   }
 
   void VendorExtensionService::fillFeatures(
     aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    OPENAUTO_LOG(info) << "[VendorExtensionService] fillFeatures()";
+    qInfo(lcServiceVendor) << "[VendorExtensionService] fillFeatures()";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -50,8 +51,8 @@ namespace f1x::openauto::autoapp::service::vendorextension {
 
   void VendorExtensionService::onChannelOpenRequest(
     const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    OPENAUTO_LOG(info) << "[VendorExtensionService] onChannelOpenRequest()";
-    OPENAUTO_LOG(info) << "[VendorExtensionService] Channel Id: " << request.service_id() << ", Priority: "
+    qInfo(lcServiceVendor) << "[VendorExtensionService] onChannelOpenRequest()";
+    qInfo(lcServiceVendor) << "[VendorExtensionService] Channel Id: " << request.service_id() << ", Priority: "
                        << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
@@ -66,7 +67,7 @@ namespace f1x::openauto::autoapp::service::vendorextension {
   }
 
   void VendorExtensionService::onChannelError(const aasdk::error::Error &e) {
-    OPENAUTO_LOG(error) << "[VendorExtensionService] onChannelError(): " << e.what();
+    qCritical(lcServiceVendor) << "[VendorExtensionService] onChannelError(): " << e.what();
   }
 }
 

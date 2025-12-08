@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/Configuration/ConfigurationGroup.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcConfigSetting, "journeyos.configuration.setting")
 
 namespace f1x::openauto::autoapp::configuration {
 

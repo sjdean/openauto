@@ -2,6 +2,8 @@
 #include <f1x/openauto/autoapp/UI/Monitor/PulseAudioHandler.hpp>
 #include <string>
 
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcAudioPulse, "journeyos.audio.pulse")
 namespace f1x::openauto::autoapp::UI::Monitor  {
   /**
    * Handles Pulse Audio through the IAudioHandler interface for Linux

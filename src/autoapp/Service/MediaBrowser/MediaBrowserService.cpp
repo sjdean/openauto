@@ -1,7 +1,9 @@
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/MediaBrowser/MediaBrowserService.hpp>
 #include <fstream>
 #include <QString>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcServiceBrowser, "journeyos.service.mediabrowser")
+
 
 namespace f1x::openauto::autoapp::service::mediabrowser {
 
@@ -15,31 +17,31 @@ namespace f1x::openauto::autoapp::service::mediabrowser {
 
   void MediaBrowserService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[MediaBrowserService] start()";
+      qInfo(lcServiceBrowser) << "[MediaBrowserService] start()";
     });
   }
 
   void MediaBrowserService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[MediaBrowserService] stop()";
+      qInfo(lcServiceBrowser) << "[MediaBrowserService] stop()";
     });
   }
 
   void MediaBrowserService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[MediaBrowserService] pause()";
+      qInfo(lcServiceBrowser) << "[MediaBrowserService] pause()";
     });
   }
 
   void MediaBrowserService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[MediaBrowserService] resume()";
+      qInfo(lcServiceBrowser) << "[MediaBrowserService] resume()";
     });
   }
 
   void MediaBrowserService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    OPENAUTO_LOG(info) << "[MediaBrowserService] fillFeatures()";
+    qInfo(lcServiceBrowser) << "[MediaBrowserService] fillFeatures()";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -49,8 +51,8 @@ namespace f1x::openauto::autoapp::service::mediabrowser {
 
   void MediaBrowserService::onChannelOpenRequest(
       const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    OPENAUTO_LOG(info) << "[MediaBrowserService] onChannelOpenRequest()";
-    OPENAUTO_LOG(info) << "[MediaBrowserService] Channel Id: " << request.service_id() << ", Priority: "
+    qInfo(lcServiceBrowser) << "[MediaBrowserService] onChannelOpenRequest()";
+    qInfo(lcServiceBrowser) << "[MediaBrowserService] Channel Id: " << request.service_id() << ", Priority: "
                        << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
@@ -66,7 +68,7 @@ namespace f1x::openauto::autoapp::service::mediabrowser {
   }
 
   void MediaBrowserService::onChannelError(const aasdk::error::Error &e) {
-    OPENAUTO_LOG(error) << "[MediaBrowserService] onChannelError(): " << e.what();
+    qCritical(lcServiceBrowser) << "[MediaBrowserService] onChannelError(): " << e.what();
   }
 }
 

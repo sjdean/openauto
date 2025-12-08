@@ -5,6 +5,8 @@
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcVmWifi, "journeyos.wifi")
 
 namespace f1x::openauto::autoapp::UI::ViewModel {
 

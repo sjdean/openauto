@@ -2,9 +2,9 @@
 #include <aasdk/Error/Error.hpp>
 
 namespace f1x::openauto::autoapp::service {
-    class IAndroidAutoEntityEventHandler {
+    class IAndroidAutoSessionEventHandler {
     public:
-        virtual ~IAndroidAutoEntityEventHandler() = default;
+        virtual ~IAndroidAutoSessionEventHandler() = default;
 
         virtual void onAndroidAutoQuit() = 0;
     };

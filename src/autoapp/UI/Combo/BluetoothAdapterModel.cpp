@@ -1,7 +1,8 @@
 #include "f1x/openauto/autoapp/UI/Combo/BluetoothAdapterModel.hpp"
-#include <QBluetoothHostInfo>
 #include <QBluetoothLocalDevice>
 #include <QProcess>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcComboBtAdapter, "journeyos.bluetooth.adapter.list")
 
 
 namespace f1x::openauto::autoapp::UI::Combo {
@@ -11,19 +12,22 @@ namespace f1x::openauto::autoapp::UI::Combo {
     }
 
     void BluetoothAdapterModel::populateComboBoxItems() {
+        qDebug(lcComboBtAdapter) << "Clear existing list";
         m_comboBoxItems.clear();
-        qDebug() << "Emptying Combo box...";
+        qDebug(lcComboBtAdapter) << "Get device list";
         QList<QBluetoothHostInfo> adapters = QBluetoothLocalDevice::allDevices();
-        qDebug() << "Queried Device List";
+
         if (!adapters.isEmpty()) {
+            qInfo(lcComboBtAdapter) << adapters.count() << " Bluetooth Adapters Found.";
             for (const QBluetoothHostInfo &adapter: adapters) {
                 QString adapterAddress = adapter.address().toString();
-                qDebug() << "Processing adapter " << adapter.name();
+                qDebug(lcComboBtAdapter) << "Processing adapter " << adapter.name();
                 addComboBoxItem(QString("%1 (%2)").arg(adapter.name()).arg(
                                     adapterAddress).toUtf8().constData(),
                                 adapterAddress);
             }
         } else {
+            qInfo(lcComboBtAdapter) << "No Bluetooth Adapters Found.";
             addComboBoxItem("SettingsWindow", "none");
         }
     }

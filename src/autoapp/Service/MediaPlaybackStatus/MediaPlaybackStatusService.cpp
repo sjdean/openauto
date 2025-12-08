@@ -1,7 +1,9 @@
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/MediaPlaybackStatus/MediaPlaybackStatusService.hpp>
 #include <fstream>
 #include <QString>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcServicePlayback, "journeyos.service.mediaplayback")
+
 
 namespace f1x::openauto::autoapp::service::mediaplaybackstatus {
 
@@ -16,31 +18,31 @@ namespace f1x::openauto::autoapp::service::mediaplaybackstatus {
 
   void MediaPlaybackStatusService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[MediaPlaybackStatusService] start()";
+      qInfo(lcServicePlayback) << "[MediaPlaybackStatusService] start()";
     });
   }
 
   void MediaPlaybackStatusService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[MediaPlaybackStatusService] stop()";
+      qInfo(lcServicePlayback) << "[MediaPlaybackStatusService] stop()";
     });
   }
 
   void MediaPlaybackStatusService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[MediaPlaybackStatusService] pause()";
+      qInfo(lcServicePlayback) << "[MediaPlaybackStatusService] pause()";
     });
   }
 
   void MediaPlaybackStatusService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[MediaPlaybackStatusService] resume()";
+      qInfo(lcServicePlayback) << "[MediaPlaybackStatusService] resume()";
     });
   }
 
   void MediaPlaybackStatusService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    OPENAUTO_LOG(info) << "[MediaPlaybackStatusService] fillFeatures()";
+    qInfo(lcServicePlayback) << "[MediaPlaybackStatusService] fillFeatures()";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -50,8 +52,8 @@ namespace f1x::openauto::autoapp::service::mediaplaybackstatus {
 
   void MediaPlaybackStatusService::onChannelOpenRequest(
       const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    OPENAUTO_LOG(info) << "[MediaPlaybackStatusService] onChannelOpenRequest()";
-    OPENAUTO_LOG(info) << "[MediaPlaybackStatusService] Channel Id: " << request.service_id() << ", Priority: "
+    qInfo(lcServicePlayback) << "[MediaPlaybackStatusService] onChannelOpenRequest()";
+    qInfo(lcServicePlayback) << "[MediaPlaybackStatusService] Channel Id: " << request.service_id() << ", Priority: "
                        << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
@@ -68,7 +70,7 @@ namespace f1x::openauto::autoapp::service::mediaplaybackstatus {
 
 
   void MediaPlaybackStatusService::onChannelError(const aasdk::error::Error &e) {
-    OPENAUTO_LOG(error) << "[MediaPlaybackStatusService] onChannelError(): " << e.what();
+    qCritical(lcServicePlayback) << "[MediaPlaybackStatusService] onChannelError(): " << e.what();
   }
 }
 

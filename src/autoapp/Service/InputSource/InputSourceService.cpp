@@ -1,5 +1,7 @@
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/InputSource/InputSourceService.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcServiceInput, "journeyos.service.input")
+
 
 namespace f1x::openauto::autoapp::service::inputsource {
   InputSourceService::InputSourceService(boost::asio::io_service &ioService,
@@ -13,33 +15,33 @@ namespace f1x::openauto::autoapp::service::inputsource {
 
   void InputSourceService::start() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[InputSourceService] start()";
+      qInfo(lcServiceInput) << "[InputSourceService] start()";
       channel_->receive(this->shared_from_this());
     });
   }
 
   void InputSourceService::stop() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[InputSourceService] stop()";
+      qInfo(lcServiceInput) << "[InputSourceService] stop()";
       inputDevice_->stop();
     });
   }
 
   void InputSourceService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[InputSourceService] pause()";
+      qInfo(lcServiceInput) << "[InputSourceService] pause()";
     });
   }
 
   void InputSourceService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[InputSourceService] resume()";
+      qInfo(lcServiceInput) << "[InputSourceService] resume()";
     });
   }
 
   void InputSourceService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    OPENAUTO_LOG(info) << "[InputSourceService] fillFeatures()";
+    qInfo(lcServiceInput) << "[InputSourceService] fillFeatures()";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -63,8 +65,8 @@ namespace f1x::openauto::autoapp::service::inputsource {
 
   void
   InputSourceService::onChannelOpenRequest(const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    OPENAUTO_LOG(info) << "[InputSourceService] onChannelOpenRequest()";
-    OPENAUTO_LOG(debug) << "[InputSourceService] Channel Id: " << request.service_id() << ", Priority: "
+    qInfo(lcServiceInput) << "[InputSourceService] onChannelOpenRequest()";
+    qDebug(lcServiceInput) << "[InputSourceService] Channel Id: " << request.service_id() << ", Priority: "
                         << request.priority();
 
 
@@ -81,8 +83,8 @@ namespace f1x::openauto::autoapp::service::inputsource {
 
   void InputSourceService::onKeyBindingRequest(
       const aap_protobuf::service::media::sink::message::KeyBindingRequest &request) {
-    OPENAUTO_LOG(debug) << "[InputSourceService] onKeyBindingRequest()";
-    OPENAUTO_LOG(debug) << "[InputSourceService] KeyCodes Count: " << request.keycodes_size();
+    qDebug(lcServiceInput) << "[InputSourceService] onKeyBindingRequest()";
+    qDebug(lcServiceInput) << "[InputSourceService] KeyCodes Count: " << request.keycodes_size();
 
     aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
     const auto &supportedButtonCodes = inputDevice_->getSupportedButtonCodes();
@@ -90,7 +92,7 @@ namespace f1x::openauto::autoapp::service::inputsource {
     for (int i = 0; i < request.keycodes_size(); ++i) {
       if (std::find(supportedButtonCodes.begin(), supportedButtonCodes.end(), request.keycodes(i)) ==
           supportedButtonCodes.end()) {
-        OPENAUTO_LOG(error) << "[InputSourceService] onKeyBindingRequest is not supported for KeyCode: "
+        qCritical(lcServiceInput) << "[InputSourceService] onKeyBindingRequest is not supported for KeyCode: "
                             << request.keycodes(i);
         status = aap_protobuf::shared::MessageStatus::STATUS_KEYCODE_NOT_BOUND;
         break;
@@ -104,7 +106,7 @@ namespace f1x::openauto::autoapp::service::inputsource {
       inputDevice_->start(*this);
     }
 
-    OPENAUTO_LOG(debug) << "[InputSourceService] Sending KeyBindingResponse with Status: " << status;
+    qDebug(lcServiceInput) << "[InputSourceService] Sending KeyBindingResponse with Status: " << status;
 
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {},
@@ -114,11 +116,11 @@ namespace f1x::openauto::autoapp::service::inputsource {
   }
 
   void InputSourceService::onChannelError(const aasdk::error::Error &e) {
-    OPENAUTO_LOG(error) << "[InputSourceService] onChannelError(): " << e.what();
+    qCritical(lcServiceInput) << "[InputSourceService] onChannelError(): " << e.what();
   }
 
   void InputSourceService::onButtonEvent(const projection::ButtonEvent &event) {
-    OPENAUTO_LOG(error) << "[InputSourceService] onButtonEvent()";
+    qCritical(lcServiceInput) << "[InputSourceService] onButtonEvent()";
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::high_resolution_clock::now().time_since_epoch());
 
@@ -147,7 +149,7 @@ namespace f1x::openauto::autoapp::service::inputsource {
   }
 
   void InputSourceService::onTouchEvent(const projection::TouchEvent &event) {
-    OPENAUTO_LOG(error) << "[InputSourceService] onTouchEvent()";
+    qCritical(lcServiceInput) << "[InputSourceService] onTouchEvent()";
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::high_resolution_clock::now().time_since_epoch());
 

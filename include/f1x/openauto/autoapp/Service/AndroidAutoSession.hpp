@@ -5,17 +5,17 @@
 #include <aasdk/Channel/Control/IControlServiceChannelEventHandler.hpp>
 #include <aasdk/Channel/MediaSink/Video/Channel/VideoChannel.hpp>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
-#include <f1x/openauto/autoapp/Service/IAndroidAutoEntity.hpp>
+#include <f1x/openauto/autoapp/Service/IAndroidAutoSession.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
 #include <f1x/openauto/autoapp/Service/IPinger.hpp>
 #include <f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp>
 
 namespace f1x::openauto::autoapp::service {
-    class AndroidAutoEntity : public IAndroidAutoEntity,
+    class AndroidAutoSession : public IAndroidAutoSession,
                               public aasdk::channel::control::IControlServiceChannelEventHandler,
-                              public std::enable_shared_from_this<AndroidAutoEntity> {
+                              public std::enable_shared_from_this<AndroidAutoSession> {
     public:
-        AndroidAutoEntity(boost::asio::io_service &ioService,
+        AndroidAutoSession(boost::asio::io_service &ioService,
                           aasdk::messenger::ICryptor::Pointer cryptor,
                           aasdk::transport::ITransport::Pointer transport,
                           aasdk::messenger::IMessenger::Pointer messenger,
@@ -24,9 +24,9 @@ namespace f1x::openauto::autoapp::service {
                           IPinger::Pointer pinger,
                           std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor);
 
-        ~AndroidAutoEntity() override;
+        ~AndroidAutoSession() override;
 
-        void start(IAndroidAutoEntityEventHandler &eventHandler) override;
+        void start(IAndroidAutoSessionEventHandler &eventHandler) override;
 
         void stop() override;
 
@@ -64,7 +64,7 @@ namespace f1x::openauto::autoapp::service {
         void onChannelError(const aasdk::error::Error &e) override;
 
     private:
-        using std::enable_shared_from_this<AndroidAutoEntity>::shared_from_this;
+        using std::enable_shared_from_this<AndroidAutoSession>::shared_from_this;
 
         void triggerQuit();
 
@@ -80,7 +80,7 @@ namespace f1x::openauto::autoapp::service {
         configuration::IConfiguration::Pointer configuration_;
         ServiceList serviceList_;
         IPinger::Pointer pinger_;
-        IAndroidAutoEntityEventHandler *eventHandler_;
+        IAndroidAutoSessionEventHandler *eventHandler_;
         std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor_;
     };
 }

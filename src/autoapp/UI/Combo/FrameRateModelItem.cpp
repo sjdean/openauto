@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/UI/Combo/FrameRateModelItem.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcComboFRItem, "journeyos.framerate.list")
 
 namespace f1x::openauto::autoapp::UI::Combo {
 

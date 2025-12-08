@@ -2,6 +2,9 @@
 
 #include <utility>
 
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcVmBrightness, "journeyos.brightness")
+
 namespace f1x::openauto::autoapp::UI::ViewModel {
   /**
    * Adjusts screen brightness or or backlight in response to light events

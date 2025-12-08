@@ -1,7 +1,8 @@
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/PhoneStatus/PhoneStatusService.hpp>
 #include <fstream>
 #include <QString>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcServicePhoneStatus, "journeyos.service.phonestatus")
 
 namespace f1x::openauto::autoapp::service::phonestatus {
 
@@ -15,31 +16,31 @@ namespace f1x::openauto::autoapp::service::phonestatus {
 
   void PhoneStatusService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[PhoneStatusService] start()";
+      qInfo(lcServicePhoneStatus) << "[PhoneStatusService] start()";
     });
   }
 
   void PhoneStatusService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[PhoneStatusService] stop()";
+      qInfo(lcServicePhoneStatus) << "[PhoneStatusService] stop()";
     });
   }
 
   void PhoneStatusService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[PhoneStatusService] pause()";
+      qInfo(lcServicePhoneStatus) << "[PhoneStatusService] pause()";
     });
   }
 
   void PhoneStatusService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[PhoneStatusService] resume()";
+      qInfo(lcServicePhoneStatus) << "[PhoneStatusService] resume()";
     });
   }
 
   void PhoneStatusService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    OPENAUTO_LOG(info) << "[PhoneStatusService] fillFeatures()";
+    qInfo(lcServicePhoneStatus) << "[PhoneStatusService] fillFeatures()";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -49,8 +50,8 @@ namespace f1x::openauto::autoapp::service::phonestatus {
 
   void
   PhoneStatusService::onChannelOpenRequest(const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    OPENAUTO_LOG(info) << "[PhoneStatusService] onChannelOpenRequest()";
-    OPENAUTO_LOG(debug) << "[PhoneStatusService] Channel Id: " << request.service_id() << ", Priority: "
+    qInfo(lcServicePhoneStatus) << "[PhoneStatusService] onChannelOpenRequest()";
+    qDebug(lcServicePhoneStatus) << "[PhoneStatusService] Channel Id: " << request.service_id() << ", Priority: "
                         << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
@@ -67,7 +68,7 @@ namespace f1x::openauto::autoapp::service::phonestatus {
 
 
   void PhoneStatusService::onChannelError(const aasdk::error::Error &e) {
-    OPENAUTO_LOG(error) << "[PhoneStatusService] onChannelError(): " << e.what();
+    qCritical(lcServicePhoneStatus) << "[PhoneStatusService] onChannelError(): " << e.what();
   }
 }
 

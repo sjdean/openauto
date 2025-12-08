@@ -1,5 +1,6 @@
 #include <f1x/openauto/autoapp/Projection/RtAudioOutput.hpp>
-#include <f1x/openauto/Common/Log.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcRtAudioOut, "journeyos.audio.output.rt")
 
 namespace f1x::openauto::autoapp::projection {
 
@@ -15,7 +16,7 @@ namespace f1x::openauto::autoapp::projection {
     dac_->setErrorCallback([](RtAudioErrorType type, const std::string &errorText) {
       switch (type) {
         case RTAUDIO_WARNING:
-          OPENAUTO_LOG(warning) << "[RtAudioOutput] Warning: " << errorText;
+          qWarning(lcRtAudioOut) << "[RtAudioOutput] Warning: " << errorText;
           break;
         case RTAUDIO_NO_DEVICES_FOUND:
         case RTAUDIO_INVALID_DEVICE:
@@ -28,7 +29,7 @@ namespace f1x::openauto::autoapp::projection {
         case RTAUDIO_UNKNOWN_ERROR:
         case RTAUDIO_DEVICE_DISCONNECT:
         case RTAUDIO_INVALID_USE:
-          OPENAUTO_LOG(error) << "[RtAudioOutput] Error: " << errorText;
+          qCritical(lcRtAudioOut) << "[RtAudioOutput] Error: " << errorText;
           break;
       }
     });
@@ -56,7 +57,7 @@ namespace f1x::openauto::autoapp::projection {
       uint32_t bufferFrames = sampleRate_ == 16000 ? 1024 : 2048; //according to the observation of audio packets
       dac_->openStream(&parameters, nullptr, RTAUDIO_SINT16, sampleRate_, &bufferFrames,
                        &RtAudioOutput::audioBufferReadHandler, static_cast<void *>(this), &streamOptions);
-      OPENAUTO_LOG(info) << "[RtAudioOutput] Sample Rate: " << sampleRate_;
+      qInfo(lcRtAudioOut) << "[RtAudioOutput] Sample Rate: " << sampleRate_;
       return audioBuffer_.open(QIODevice::ReadWrite);
 #if RTAUDIO_VERSION_MAJOR >= 6
 
@@ -65,11 +66,11 @@ namespace f1x::openauto::autoapp::projection {
         catch(const RtAudioError& e)
         {
             // TODO: Later version of RtAudio uses a different mechanism - FIXME - support new versions
-            OPENAUTO_LOG(error) << "[RtAudioOutput] Failed to open audio output, what: " << e.what();
+            qCritical(lcRtAudioOut) << "[RtAudioOutput] Failed to open audio output, what: " << e.what();
         }
 #endif
     } else {
-      OPENAUTO_LOG(error) << "[RtAudioOutput] No output devices found.";
+      qCritical(lcRtAudioOut) << "[RtAudioOutput] No output devices found.";
     }
 
     return false;
@@ -97,7 +98,7 @@ namespace f1x::openauto::autoapp::projection {
       }
         catch(const RtAudioError& e)
         {
-            OPENAUTO_LOG(error) << "[RtAudioOutput] Failed to start audio output, what: " << e.what();
+            qCritical(lcRtAudioOut) << "[RtAudioOutput] Failed to start audio output, what: " << e.what();
         }
 #endif
     }
@@ -145,7 +146,7 @@ namespace f1x::openauto::autoapp::projection {
       }
             catch(const RtAudioError& e)
             {
-                OPENAUTO_LOG(error) << "[RtAudioOutput] Failed to suspend audio output, what: " << e.what();
+                qCritical(lcRtAudioOut) << "[RtAudioOutput] Failed to suspend audio output, what: " << e.what();
             }
 #endif
     }

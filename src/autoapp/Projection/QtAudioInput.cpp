@@ -1,8 +1,8 @@
 #include "f1x/openauto/autoapp/Projection/QtAudioInput.hpp"
-
 #include <QGuiApplication>
 #include <QMediaDevices>
-#include <f1x/openauto/Common/Log.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcQtAudioIn, "journeyos.audio.input.qt")
 
 namespace f1x::openauto::autoapp::projection {
 
@@ -28,7 +28,7 @@ namespace f1x::openauto::autoapp::projection {
   }
 
   void QtAudioInput::createAudioInput() {
-    OPENAUTO_LOG(info) << "[AudioInput::createAudioInput]";
+    qInfo(lcQtAudioIn) << "[AudioInput::createAudioInput]";
     audioInput_ = (std::make_unique<QAudioSource>(QMediaDevices::defaultAudioInput(), audioFormat_));
   }
 
@@ -104,7 +104,6 @@ namespace f1x::openauto::autoapp::projection {
       readPromise_.reset();
     }
 
-    // TODO: Potential issue here - disconnect result is never used.
     if (ioDevice_ != nullptr) {
       ioDevice_->reset();
       ioDevice_->disconnect();

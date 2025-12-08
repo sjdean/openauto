@@ -1,5 +1,9 @@
 #include "f1x/openauto/autoapp/UI/Controller/LightController.hpp"
+
+#include <qdatetime.h>
 #include <utility>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcLight, "journeyos.light.controller")
 
 namespace f1x::openauto::autoapp::UI::Controller {
     /**
@@ -16,7 +20,16 @@ namespace f1x::openauto::autoapp::UI::Controller {
     }
 
     bool LightController::getDay() const {
-        // TODO: Get Time of Day as Necessary
+        const bool useClock = configuration_->getSettingByName<int>("Screen","UseClockDayNight");
+        if (useClock) {
+            //QDateTime local = QDateTime::currentDateTime();
+            /** TODO - Establish Day/Night
+             * Get Date/Time from Local Clock if Present, RTC, GPS, or Phone
+             * Get Location from GPS or Phone or user defined location
+             * If Internet Access is available, lookup Dawn/Dusk/Day/Night information
+             * This is not the same as Light/Dark Mode - only for use in screen dimming
+             */
+        }
         return m_isDay;
     }
 

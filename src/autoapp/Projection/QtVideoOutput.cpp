@@ -1,6 +1,7 @@
 #include <QGuiApplication>
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Projection/QtVideoOutput.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcQtVideoOut, "journeyos.video.output.qt")
 
 namespace f1x::openauto::autoapp::projection {
 
@@ -15,7 +16,7 @@ namespace f1x::openauto::autoapp::projection {
   }
 
   void QtVideoOutput::createVideoOutput() {
-    OPENAUTO_LOG(info) << "[QtVideoOutput] createVideoOutput()";
+    qInfo(lcQtVideoOut) << "[QtVideoOutput] createVideoOutput()";
     videoWidget_ = std::make_unique<QVideoWidget>();
 
     // In Qt6, StreamPlayback is not used in the constructor but rather you set the source type explicitly
@@ -61,7 +62,7 @@ namespace f1x::openauto::autoapp::projection {
     mediaPlayer_->play();
 
     // TODO: This only outputs a line if there's an error - FIXME - Output a proper status instead
-    OPENAUTO_LOG(debug) << "Player error state -> " << mediaPlayer_->errorString().toStdString();
+    qDebug(lcQtVideoOut) << "Player error state -> " << mediaPlayer_->errorString().toStdString();
   }
 
   void QtVideoOutput::onStopPlayback() const {

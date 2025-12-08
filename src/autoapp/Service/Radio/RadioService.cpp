@@ -1,7 +1,8 @@
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/Radio/RadioService.hpp>
 #include <fstream>
 #include <QString>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcServiceRadio, "journeyos.service.radio")
 
 namespace f1x::openauto::autoapp::service::radio {
 
@@ -15,31 +16,31 @@ namespace f1x::openauto::autoapp::service::radio {
 
   void RadioService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(debug) << "[RadioService] start()";
+      qDebug(lcServiceRadio) << "[RadioService] start()";
     });
   }
 
   void RadioService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(debug) << "[RadioService] stop()";
+      qDebug(lcServiceRadio) << "[RadioService] stop()";
     });
   }
 
   void RadioService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(debug) << "[RadioService] pause()";
+      qDebug(lcServiceRadio) << "[RadioService] pause()";
     });
   }
 
   void RadioService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(debug) << "[RadioService] resume()";
+      qDebug(lcServiceRadio) << "[RadioService] resume()";
     });
   }
 
   void RadioService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    OPENAUTO_LOG(info) << "[RadioService] fillFeatures()";
+    qInfo(lcServiceRadio) << "[RadioService] fillFeatures()";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -48,8 +49,8 @@ namespace f1x::openauto::autoapp::service::radio {
   }
 
   void RadioService::onChannelOpenRequest(const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    OPENAUTO_LOG(info) << "[RadioService] onChannelOpenRequest()";
-    OPENAUTO_LOG(debug) << "[RadioService] Channel Id: " << request.service_id() << ", Priority: "
+    qInfo(lcServiceRadio) << "[RadioService] onChannelOpenRequest()";
+    qDebug(lcServiceRadio) << "[RadioService] Channel Id: " << request.service_id() << ", Priority: "
                         << request.priority();
 
 
@@ -66,7 +67,7 @@ namespace f1x::openauto::autoapp::service::radio {
   }
 
   void RadioService::onChannelError(const aasdk::error::Error &e) {
-    OPENAUTO_LOG(error) << "[RadioService] onChannelError(): " << e.what();
+    qCritical(lcServiceRadio) << "[RadioService] onChannelError(): " << e.what();
   }
 
 

@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/UI/Combo/FuelTypeModelItem.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcCombFuelItem, "journeyos.fueltype.list.item")
 
 namespace f1x::openauto::autoapp::UI::Combo {
 FuelTypeModelItem::FuelTypeModelItem(QString display, aap_protobuf::service::sensorsource::message::FuelType value,

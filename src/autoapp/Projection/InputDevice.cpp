@@ -1,6 +1,7 @@
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Projection/IInputDeviceEventHandler.hpp>
 #include <f1x/openauto/autoapp/Projection/InputDevice.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcInput, "journeyos.input")
 
 namespace f1x::openauto::autoapp::projection {
     InputDevice::InputDevice(QObject &parent, configuration::IConfiguration::Pointer configuration,
@@ -13,7 +14,7 @@ namespace f1x::openauto::autoapp::projection {
   void InputDevice::start(IInputDeviceEventHandler &eventHandler) {
     std::lock_guard<decltype(mutex_)> lock(mutex_);
 
-    OPENAUTO_LOG(info) << "[InputDevice] start()";
+    qInfo(lcInput) << "[InputDevice] start()";
     eventHandler_ = &eventHandler;
     parent_.installEventFilter(this);
   }
@@ -21,7 +22,7 @@ namespace f1x::openauto::autoapp::projection {
   void InputDevice::stop() {
     std::lock_guard<decltype(mutex_)> lock(mutex_);
 
-    OPENAUTO_LOG(info) << "[InputDevice] stop()";
+    qInfo(lcInput) << "[InputDevice] stop()";
     parent_.removeEventFilter(this);
     eventHandler_ = nullptr;
   }

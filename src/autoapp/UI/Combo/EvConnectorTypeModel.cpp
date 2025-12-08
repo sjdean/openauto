@@ -1,4 +1,6 @@
 #include "f1x/openauto/autoapp/UI/Combo/EvConnectorTypeModel.hpp"
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcComboEv, "journeyos.evconnector.list")
 
 namespace f1x::openauto::autoapp::UI::Combo {
     EvConnectorTypeModel::EvConnectorTypeModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {

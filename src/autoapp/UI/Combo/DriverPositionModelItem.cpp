@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/UI/Combo/DriverPositionModelItem.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcComboDriverPosItem, "journeyos.driverposition.list.item")
 
 namespace f1x::openauto::autoapp::UI::Combo {
   DriverPositionModelItem::DriverPositionModelItem(QString display,

@@ -6,6 +6,8 @@
 
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcBtHandler, "journeyos.bluetooth")
 
 namespace f1x::openauto::autoapp::UI::Monitor {
     /**
@@ -31,10 +33,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             connect(localDevice_.get(), &QBluetoothLocalDevice::pairingFinished,
                     this, &BluetoothHandler::onPairingFinished);
 
-            qInfo() << "System Bluetooth Initialized. Address: "
+            qInfo(lcBtHandler) << "System Bluetooth Initialized. Address: "
                     << localDevice_->address().toString().toStdString();
         } else {
-            qCritical() << "Bluetooth Adapter is not valid.";
+            qCritical(lcBtHandler) << "Bluetooth Adapter is not valid.";
         }
 
         // 2. Cross-Platform Scanning (Replaces manual D-Bus scanning)
@@ -65,7 +67,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     }
 
     void BluetoothHandler::startScan() {
-        qInfo() << "Starting Bluetooth Scan...";
+        qInfo(lcBtHandler) << "Starting Bluetooth Scan...";
         m_devices.clear(); // Clear internal list
         Q_EMIT unpairedDeviceListChanged(); // Notify UI to clear list
 
@@ -73,7 +75,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     }
 
     void BluetoothHandler::pair(const QString &address) {
-        qInfo() << "Initiating pair with: " << address.toStdString();
+        qInfo(lcBtHandler) << "Initiating pair with: " << address.toStdString();
 
         // Cross-platform pairing request.
         // Mac: Triggers system dialog.
@@ -130,7 +132,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                 Q_EMIT pairedDeviceListChanged();
             }
         } else {
-            qWarning() << "Pairing Failed for: " << address.toString().toStdString();
+            qWarning(lcBtHandler) << "Pairing Failed for: " << address.toString().toStdString();
         }
     }
 
@@ -293,7 +295,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                                [&address](const Model::BluetoothDevice &d) { return d.address == address; });
 
         if (it == m_devices.end()) {
-            qWarning() << "doRemovePair: No device found with address" << address;
+            qWarning(lcBtHandler) << "doRemovePair: No device found with address" << address;
             return false;
         }
 

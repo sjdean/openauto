@@ -1,7 +1,8 @@
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/NavigationStatus/NavigationStatusService.hpp>
 #include <fstream>
 #include <QString>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcServiceNavigation, "journeyos.service.navigation")
 
 namespace f1x::openauto::autoapp::service::navigationstatus {
 
@@ -16,31 +17,31 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
 
   void NavigationStatusService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[NavigationStatusService] start()";
+      qInfo(lcServiceNavigation) << "[NavigationStatusService] start()";
     });
   }
 
   void NavigationStatusService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[NavigationStatusService] stop()";
+      qInfo(lcServiceNavigation) << "[NavigationStatusService] stop()";
     });
   }
 
   void NavigationStatusService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[NavigationStatusService] pause()";
+      qInfo(lcServiceNavigation) << "[NavigationStatusService] pause()";
     });
   }
 
   void NavigationStatusService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      OPENAUTO_LOG(info) << "[NavigationStatusService] resume()";
+      qInfo(lcServiceNavigation) << "[NavigationStatusService] resume()";
     });
   }
 
   void NavigationStatusService::fillFeatures(
     aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    OPENAUTO_LOG(info) << "[NavigationStatusService] fillFeatures()";
+    qInfo(lcServiceNavigation) << "[NavigationStatusService] fillFeatures()";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -50,8 +51,8 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
 
   void NavigationStatusService::onChannelOpenRequest(
     const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    OPENAUTO_LOG(info) << "[NavigationStatusService] onChannelOpenRequest()";
-    OPENAUTO_LOG(info) << "[NavigationStatusService] Channel Id: " << request.service_id() << ", Priority: "
+    qInfo(lcServiceNavigation) << "[NavigationStatusService] onChannelOpenRequest()";
+    qInfo(lcServiceNavigation) << "[NavigationStatusService] Channel Id: " << request.service_id() << ", Priority: "
                        << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
@@ -67,7 +68,7 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
   }
 
   void NavigationStatusService::onChannelError(const aasdk::error::Error &e) {
-    OPENAUTO_LOG(error) << "[NavigationStatusService] onChannelError(): " << e.what();
+    qCritical(lcServiceNavigation) << "[NavigationStatusService] onChannelError(): " << e.what();
   }
 
 

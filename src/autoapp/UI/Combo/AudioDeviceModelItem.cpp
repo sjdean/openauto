@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/UI/Combo/AudioDeviceModelItem.hpp> // Renamed
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcComboAudioItem, "journeyos.audio.device.list.item")
 
 namespace f1x::openauto::autoapp::UI::Combo {
     // Renamed constructor

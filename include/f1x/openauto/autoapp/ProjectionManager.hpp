@@ -5,8 +5,8 @@
 #include <aasdk/USB/USBWrapper.hpp>
 #include <aasdk/TCP/ITCPWrapper.hpp>
 #include <aasdk/TCP/ITCPEndpoint.hpp>
-#include <f1x/openauto/autoapp/Service/IAndroidAutoEntityEventHandler.hpp>
-#include <f1x/openauto/autoapp/Service/IAndroidAutoEntityFactory.hpp>
+#include <f1x/openauto/autoapp/Service/IAndroidAutoSessionEventHandler.hpp>
+#include <f1x/openauto/autoapp/Service/ISessionFactory.hpp>
 #include <f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp>
 
 #include "Bootstrap/AndroidBluetoothService.hpp"
@@ -15,17 +15,17 @@
 #include "Configuration/IConfiguration.hpp"
 
 namespace f1x::openauto::autoapp {
-    class App :
-            public service::IAndroidAutoEntityEventHandler,
-            public std::enable_shared_from_this<App> {
+    class ProjectionManager :
+            public service::IAndroidAutoSessionEventHandler,
+            public std::enable_shared_from_this<ProjectionManager> {
     public:
-        typedef std::shared_ptr<App> Pointer;
+        typedef std::shared_ptr<ProjectionManager> Pointer;
 
-        App(configuration::IConfiguration::Pointer configuration,
+        ProjectionManager(configuration::IConfiguration::Pointer configuration,
             boost::asio::io_service &ioService,
             aasdk::usb::USBWrapper &usbWrapper,
             aasdk::tcp::ITCPWrapper &tcpWrapper,
-            service::IAndroidAutoEntityFactory &androidAutoEntityFactory,
+            service::ISessionFactory &androidAutoEntityFactory,
             aasdk::usb::IUSBHub::Pointer usbHub,
             aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator,
             std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor
@@ -46,7 +46,7 @@ namespace f1x::openauto::autoapp {
         bool disableAutostartEntity = false;
 
     private:
-        using std::enable_shared_from_this<App>::shared_from_this;
+        using std::enable_shared_from_this<ProjectionManager>::shared_from_this;
 
         void enumerateDevices();
 
@@ -61,10 +61,10 @@ namespace f1x::openauto::autoapp {
         aasdk::tcp::ITCPWrapper &tcpWrapper_;
         boost::asio::ip::tcp::acceptor acceptor_;
         boost::asio::io_service::strand strand_;
-        service::IAndroidAutoEntityFactory &androidAutoEntityFactory_;
+        service::ISessionFactory &sessionFactory_;
         aasdk::usb::IUSBHub::Pointer usbHub_;
         aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator_;
-        service::IAndroidAutoEntity::Pointer androidAutoEntity_;
+        service::IAndroidAutoSession::Pointer activeSession_;
         std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor_;
         bootstrap::IAndroidBluetoothServer::Pointer androidBluetoothServer_;
         bootstrap::IAndroidBluetoothService::Pointer androidBluetoothService_;

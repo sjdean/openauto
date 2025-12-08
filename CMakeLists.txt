@@ -110,6 +110,8 @@ file(GLOB_RECURSE autoapp_source_files
         ${config_include_directory}/*.hpp # <-- MUST keep for AUTOMOC
         ${common_include_directory}/*.hpp) # <-- MUST keep for AUTOMOC
 
+add_compile_definitions(QT_MESSAGELOGCONTEXT)
+
 # --- Target: autoapp ---
 qt_add_executable(autoapp ${autoapp_source_files})
 

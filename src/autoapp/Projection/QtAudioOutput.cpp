@@ -1,8 +1,9 @@
 #include <QGuiApplication>
 #include <QMediaDevices>
 #include <QThread>
-#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Projection/QtAudioOutput.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcQtAudioOut, "journeyos.audio.output.qt")
 
 namespace f1x::openauto::autoapp::projection {
 
@@ -34,7 +35,7 @@ namespace f1x::openauto::autoapp::projection {
   }
 
   void QtAudioOutput::createAudioOutput() {
-    OPENAUTO_LOG(info) << "[QtAudioOutput] createAudioOutput()";
+    qInfo(lcQtAudioOut) << "[QtAudioOutput] createAudioOutput()";
     audioOutput_ = std::make_unique<QAudioSink>(QMediaDevices::defaultAudioOutput(), audioFormat_);
   }
 

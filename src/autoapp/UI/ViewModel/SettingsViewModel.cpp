@@ -9,6 +9,8 @@
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "f1x/openauto/Common/Enum/VideoType.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcVmSettings, "journeyos.settings")
 
 namespace f1x::openauto::autoapp::UI::ViewModel {
   SettingsViewModel::SettingsViewModel(configuration::IConfiguration::Pointer configuration,

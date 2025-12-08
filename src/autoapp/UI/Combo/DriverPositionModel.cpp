@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/UI/Combo/DriverPositionModel.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcComboDriverPos, "journeyos.driverposition.list")
 
 namespace f1x::openauto::autoapp::UI::Combo {
   DriverPositionModel::DriverPositionModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {

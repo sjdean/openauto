@@ -1,8 +1,7 @@
 #include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
-#include <QLoggingCategory>
 #include <QTimer>
-
-Q_LOGGING_CATEGORY(logWifiCtrl, "wifi.controller", QtInfoMsg)
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcWifi, "journeyos.wifi.controller")
 
 namespace f1x::openauto::autoapp::UI::Controller {
 
@@ -37,10 +36,10 @@ void WifiController::setInterface(const QString& ifaceName)
     auto* watcher = new QDBusPendingCallWatcher(nm.asyncCall("GetDeviceByIpIface", ifaceName), this);
     connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher* w) {
         if (w->isError()) {
-            qWarning(logWifiCtrl) << "Interface not found:" << w->error().message();
+            qWarning(lcWifi) << "Interface not found:" << w->error().message();
         } else {
             m_wifiDevicePath = w->reply().argumentAt<0>().value<QDBusObjectPath>().path();
-            qInfo(logWifiCtrl) << "Wi-Fi device path resolved:" << m_wifiDevicePath;
+            qInfo(lcWifi) << "Wi-Fi device path resolved:" << m_wifiDevicePath;
         }
         w->deleteLater();
     });
@@ -117,9 +116,9 @@ void WifiController::enableHotspotImpl(const QString& ssid, const QString& pass)
     auto* w = new QDBusPendingCallWatcher(m_bus.asyncCall(msg), this);
     connect(w, &QDBusPendingCallWatcher::finished, this, [ssid](QDBusPendingCallWatcher* call){
         if (call->isError())
-            qCritical(logWifiCtrl) << "Hotspot failed:" << call->error().message();
+            qCritical(lcWifi) << "Hotspot failed:" << call->error().message();
         else
-            qInfo(logWifiCtrl) << "Hotspot started:" << ssid;
+            qInfo(lcWifi) << "Hotspot started:" << ssid;
         call->deleteLater();
     });
 }

@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/UI/Combo/ResolutionModel.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcComboResolution, "journeyos.resolution.list")
 
 namespace f1x::openauto::autoapp::UI::Combo {
   ResolutionModel::ResolutionModel(QObject *parent) : QObject(parent), m_currentComboBoxItem(nullptr) {

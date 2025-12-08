@@ -1,10 +1,10 @@
 #include "f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp"
 #include <QDebug>
-#include <qloggingcategory.h>
 #include <QRegularExpression>
 #include <QProcess>
 
-Q_LOGGING_CATEGORY(logWifiMon, "wifi.monitor")
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcWifiMonitor, "journeyos.wifi.monitor")
 
 namespace f1x::openauto::autoapp::UI::Monitor {
     using namespace f1x::openauto::common::Enum;
@@ -167,13 +167,13 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *w) {
             QDBusPendingReply<QDBusObjectPath> r = *w;
             if (r.isError()) {
-                qWarning(logWifiMon) << "Wi-Fi device not found:" << r.error().message();
+                qWarning(lcWifiMonitor) << "Wi-Fi device not found:" << r.error().message();
                 w->deleteLater();
                 return;
             }
 
             m_wifiDevicePath = r.value().path();
-            qInfo(logWifiMon) << "Monitoring Wi-Fi device:" << m_wifiDevicePath;
+            qInfo(lcWifiMonitor) << "Monitoring Wi-Fi device:" << m_wifiDevicePath;
 
             // Watch state changes (connected/disconnected)
             m_bus.connect("org.freedesktop.NetworkManager",
@@ -253,7 +253,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         auto *watcher = new QDBusPendingCallWatcher(reply, this);
         connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, specificObject](QDBusPendingCallWatcher *w) {
             if (w->isError()) {
-                qWarning(logWifiMon) << "Failed to get connection settings:" << w->error().message();
+                qWarning(lcWifiMonitor) << "Failed to get connection settings:" << w->error().message();
                 w->deleteLater();
                 return;
             }

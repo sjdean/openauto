@@ -1,5 +1,7 @@
 #include <QString>
 #include <f1x/openauto/autoapp/Configuration/ConfigurationGroup.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcConfigGroup, "journeyos.configuration.group")
 
 namespace f1x::openauto::autoapp::configuration {
   ConfigurationGroup::ConfigurationGroup(const QString& name, bool displayOnTab)

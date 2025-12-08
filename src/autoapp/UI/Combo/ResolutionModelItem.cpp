@@ -1,4 +1,6 @@
 #include <f1x/openauto/autoapp/UI/Combo/ResolutionModelItem.hpp>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcComboResolutionItem, "journeyos.resolution.list.item")
 
 namespace f1x::openauto::autoapp::UI::Combo {
   ResolutionModelItem::ResolutionModelItem(QString display,

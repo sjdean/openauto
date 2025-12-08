@@ -1,6 +1,8 @@
 #if defined(__APPLE__)
 #include <f1x/openauto/autoapp/UI/Monitor/CoreAudioHandler.hpp>
 #include <string>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcAudioCore, "journeyos.audio.core")
 
 namespace f1x::openauto::autoapp::UI::Monitor  {
   /**

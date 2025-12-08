@@ -1,10 +1,8 @@
 #pragma once
 #include <vector>
 #include <memory>
-#include <f1x/openauto/Common/Log.hpp>
 #include <aap_protobuf/service/control/message/ServiceDiscoveryResponse.pb.h>
 #include <aap_protobuf/shared/MessageStatus.pb.h>
-
 
 namespace f1x::openauto::autoapp::service {
     class IService {

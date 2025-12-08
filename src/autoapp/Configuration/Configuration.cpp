@@ -1,6 +1,5 @@
 #include <f1x/openauto/autoapp/Configuration/Configuration.hpp>
 #include <f1x/openauto/autoapp/Configuration/ConfigurationGroup.hpp>
-#include <f1x/openauto/Common/Log.hpp>
 #include <QInputDevice>
 #include <QSettings>
 #include <QRandomGenerator>
@@ -12,6 +11,9 @@
 #include "f1x/openauto/Common/Enum/AudioOutputType.hpp"
 #include "f1x/openauto/Common/Enum/VideoType.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
+
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcConfig, "journeyos.configuration")
 
 namespace f1x::openauto::autoapp::configuration {
 
@@ -38,6 +40,7 @@ namespace f1x::openauto::autoapp::configuration {
     screenGroup.addSetting<int>("NightMax", 150);
     screenGroup.addSetting<int>("Brightness", 150);
     screenGroup.addSetting<int>("DPI", 140);
+    screenGroup.addSetting<bool>("UseClockDayNight", false);
     screenGroup.load(m_settings);
     m_configurationGroups.append(screenGroup);
 
@@ -84,6 +87,7 @@ namespace f1x::openauto::autoapp::configuration {
     bluetoothGroup.addSetting<QString>("PairedDeviceAddress", "");
     bluetoothGroup.load(m_settings);
     m_configurationGroups.append(bluetoothGroup);
+
     ConfigurationGroup wirelessGroup("Wireless");
     wirelessGroup.addSetting<bool>("Enabled", true);
     wirelessGroup.addSetting<QString>("HotspotSSID", "JourneyOS");
@@ -95,6 +99,7 @@ namespace f1x::openauto::autoapp::configuration {
     wirelessGroup.addSetting<common::Enum::WirelessType::Value>("Type", f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT);
     wirelessGroup.load(m_settings);
     m_configurationGroups.append(wirelessGroup);
+
   }
 
   void Configuration::save() const {
@@ -127,12 +132,12 @@ namespace f1x::openauto::autoapp::configuration {
   bool Configuration::hasTouchScreen() const {
     auto touchdevs = QInputDevice::devices();
 
-    OPENAUTO_LOG(info) << "[Configuration::hasTouchScreen] " << "Querying available touch devices ["
+    qInfo(lcConfig) << "[Configuration::hasTouchScreen] " << "Querying available touch devices ["
                        << touchdevs.length() << " available]";
 
     for (int i = 0; i < touchdevs.length(); i++) {
       if (touchdevs[i]->type() == QInputDevice::DeviceType::TouchScreen) {
-        OPENAUTO_LOG(info) << "[Configuration::hasTouchScreen] Device " << i << ": "
+        qInfo(lcConfig) << "[Configuration::hasTouchScreen] Device " << i << ": "
                            << touchdevs[i]->name().toStdString();
         return true;
       }
