@@ -19,10 +19,10 @@ namespace f1x::openauto::autoapp::UI::Combo {
      */
     void BluetoothDeviceModel::populateComboBoxItems() {
         m_comboBoxItems.clear();
-        qDebug() << "Emptying Combo box...";
+        qDebug(lcComboBtDevice) << "Emptying Combo box...";
 
         auto pairedDevices = m_bluetoothHandler->getPairedDeviceList();
-        qDebug() << "Queried QT Device List";
+        qDebug(lcComboBtDevice) << "Queried QT Device List";
         if (!pairedDevices.empty()) {
             for (auto pairedDevice: pairedDevices) {
                 QVariantMap properties = pairedDevice.toMap();

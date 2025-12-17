@@ -50,7 +50,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         // 3. LINUX AGENT (Strictly for Linux Pairing Popups)
 #ifdef Q_OS_LINUX
-        qInfo() << "Registering Custom BlueZ Agent...";
+        qInfo(lcBtHandler) << "Registering Custom BlueZ Agent...";
         m_agent = new BluetoothAgent("/uk/co/cubeone/journeyos/agent", this);
 
         QDBusInterface agentManager("org.bluez", "/org/bluez", "org.bluez.AgentManager1", QDBusConnection::systemBus());
@@ -108,17 +108,17 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             m_devices.append(device);
 
             Q_EMIT unpairedDeviceListChanged();
-            qDebug() << "Found device: " << name.toStdString();
+            qDebug(lcBtHandler) << "Found device: " << name.toStdString();
         }
     }
 
     void BluetoothHandler::onScanFinished() {
-        qInfo() << "Scan Finished. Found " << m_devices.size() << " devices.";
+        qInfo(lcBtHandler) << "Scan Finished. Found " << m_devices.size() << " devices.";
     }
 
     void BluetoothHandler::onPairingFinished(const QBluetoothAddress &address, QBluetoothLocalDevice::Pairing pairing) {
         if (pairing == QBluetoothLocalDevice::Paired || pairing == QBluetoothLocalDevice::AuthorizedPaired) {
-            qInfo() << "Pairing Successful: " << address.toString().toStdString();
+            qInfo(lcBtHandler) << "Pairing Successful: " << address.toString().toStdString();
 
             configuration_->updateSettingByName("Bluetooth", "PairedDeviceAddress", address.toString());
 
@@ -140,7 +140,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
 #ifdef Q_OS_LINUX
     void BluetoothHandler::onAgentPinRequested(const QString &pin, const QString &deviceAddress) {
-        qInfo() << "PIN Confirmation Required: " << pin.toStdString();
+        qInfo(lcBtHandler) << "PIN Confirmation Required: " << pin.toStdString();
         Q_EMIT pairingPinConfirmation(pin, deviceAddress);
     }
 #endif
