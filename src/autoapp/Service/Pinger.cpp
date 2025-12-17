@@ -17,7 +17,7 @@ namespace f1x::openauto::autoapp::service {
         promise_->reject(aasdk::error::Error(aasdk::error::ErrorCode::OPERATION_IN_PROGRESS));
       } else {
         ++pingsCount_;
-        qDebug(lcPinger) << "[Pinger] Ping counter: " << pingsCount_;
+        qDebug(lcPinger) << "Ping counter: " << pingsCount_;
 
         promise_ = std::move(promise);
         timer_.expires_from_now(boost::posix_time::milliseconds(duration_));
