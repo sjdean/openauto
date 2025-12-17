@@ -198,6 +198,9 @@ namespace f1x::openauto::autoapp::service {
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {},
                   std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(), std::placeholders::_1));
+
+    androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_CONNECTED);
+
     controlServiceChannel_->sendServiceDiscoveryResponse(serviceDiscoveryResponse, std::move(promise));
     controlServiceChannel_->receive(this->shared_from_this());
   }
