@@ -11,6 +11,8 @@ namespace f1x::openauto::autoapp::projection {
         using ReadPromise = aasdk::io::Promise<aasdk::common::Data, void>;
         using Pointer = std::shared_ptr<IAudioInput>;
 
+        IAudioInput() = default;
+
         virtual ~IAudioInput() = default;
 
         virtual bool open() = 0;

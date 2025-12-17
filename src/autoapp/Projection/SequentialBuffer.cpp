@@ -1,42 +1,56 @@
+#include <QApplication>
 #include <f1x/openauto/autoapp/Projection/SequentialBuffer.hpp>
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcBuffer, "journeyos.buffer")
 
 namespace f1x::openauto::autoapp::projection {
 
-  SequentialBuffer::SequentialBuffer()
-      : data_(aasdk::common::cStaticDataSize) {
+  SequentialBuffer::SequentialBuffer(QObject *parent)
+      : QIODevice(parent)
+      , m_buffer(MAX_BUFFER_SIZE)
+  {
   }
 
+  // Override QIODevice to indicate this is a sequential buffer
   bool SequentialBuffer::isSequential() const {
     return true;
   }
 
-  bool SequentialBuffer::open(OpenMode mode) {
-    std::lock_guard<decltype(mutex_)> lock(mutex_);
+  // Override QIODevice to indicate that this stream is continuous
+  bool SequentialBuffer::atEnd() const {
+    return false;
+  }
 
+  bool SequentialBuffer::open(OpenMode mode) {
+    QMutexLocker locker(&m_mutex);
+    qInfo(lcBuffer) << "Opening buffer mode:" << mode;
+
+    // Ensure buffer is clear for this open
+    m_buffer.clear();
+
+    // Open Device in mode required
     return QIODevice::open(mode);
   }
 
+  // readData (Internal pass through from QIODevice)
   qint64 SequentialBuffer::readData(char *data, qint64 maxlen) {
-    std::lock_guard<decltype(mutex_)> lock(mutex_);
+    QMutexLocker locker(&m_mutex);
 
-    if (data_.empty()) {
+    // Return 0 if Buffer is Empty
+    if (m_buffer.empty()) {
       return 0;
     }
 
-    const auto len = std::min<size_t>(maxlen, data_.size());
-    std::copy(data_.begin(), data_.begin() + len, data);
-    data_.erase_begin(len);
+    // Otherwise get length of buffer
+    qint64 len = qMin(maxlen, (qint64)m_buffer.size());
 
-    return len;
-  }
+    // Copy Buffer to Data
+    std::copy(m_buffer.begin(), m_buffer.begin() + len, data);
 
-  qint64 SequentialBuffer::writeData(const char *data, qint64 len) {
-    std::lock_guard<decltype(mutex_)> lock(mutex_);
+    // Erase Buffer
+    m_buffer.erase_begin(len);
 
-    data_.insert(data_.end(), data, data + len);
-    emit readyRead();
+    // Return Length
     return len;
   }
 
@@ -44,34 +58,43 @@ namespace f1x::openauto::autoapp::projection {
     return this->bytesAvailable();
   }
 
+  // writeData (Internal pass through to QIODevice
+  qint64 SequentialBuffer::writeData(const char *data, qint64 len) {
+    QMutexLocker locker(&m_mutex);
+
+    // Check space available in the buffer
+    qint64 space = m_buffer.capacity() - m_buffer.size();
+    if (len > space) {
+      // Drop oldest data if full (optional: log warning)
+      qWarning(lcBuffer) << "Video buffer overflow! Dropping" << (len - space) << "bytes";
+      size_t toDrop = len - space;
+      m_buffer.erase_begin(std::min(toDrop, m_buffer.size()));
+    }
+
+    // Insert data into Buffer
+    m_buffer.insert(m_buffer.end(), data, data + len);
+
+    // Notify we have data
+    emit readyRead();
+    emit bytesWritten(len);
+
+    // Report Length
+    return len; // Always report success (or return actual written)
+  }
+
   qint64 SequentialBuffer::pos() const {
     return 0;
   }
 
-
-  bool SequentialBuffer::seek(qint64) {
-    return false;
-  }
-
-  bool SequentialBuffer::atEnd() const {
-    return false;
-  }
-
-  bool SequentialBuffer::reset() {
-    data_.clear();
-    return true;
-  }
-
+  // bytesAvailable
   qint64 SequentialBuffer::bytesAvailable() const {
-    std::lock_guard<decltype(mutex_)> lock(mutex_);
+    QMutexLocker locker(&m_mutex);
 
-    return QIODevice::bytesAvailable() + std::max<qint64>(1, data_.size());
+    // QIODevice::bytesAvailable() is always null, so all we care about is the size of our internal buffer
+    return std::max<qint64>(1, m_buffer.size());
   }
 
   bool SequentialBuffer::canReadLine() const {
-    return true;
+    return false;
   }
 }
-
-
-

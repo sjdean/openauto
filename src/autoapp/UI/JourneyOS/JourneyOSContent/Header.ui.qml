@@ -9,7 +9,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import JourneyOS
-import AndroidAutoMonitor 1.0
+import AndroidAutoMonitor
 
 Item {
     id: headerItem

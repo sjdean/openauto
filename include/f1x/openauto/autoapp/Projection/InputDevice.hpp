@@ -26,6 +26,9 @@ namespace f1x::openauto::autoapp::projection {
 
         QRect getTouchscreenGeometry() const override;
 
+        Q_INVOKABLE bool handleTouchEvent(int type, float x, float y);
+        Q_INVOKABLE bool handleMouseEvent(int type, float x, float y);
+
     private:
         void setVideoGeometry();
 
@@ -33,13 +36,12 @@ namespace f1x::openauto::autoapp::projection {
 
         void dispatchKeyEvent(ButtonEvent event);
 
-        bool handleTouchEvent(QEvent *event);
-
         QObject &parent_;
         configuration::IConfiguration::Pointer configuration_;
         QRect touchscreenGeometry_;
         QRect displayGeometry_;
         IInputDeviceEventHandler *eventHandler_;
         std::mutex mutex_;
+        bool hasTouchScreen_;
     };
 }

@@ -3,10 +3,24 @@
 #include <f1x/openauto/autoapp/Service/IServiceFactory.hpp>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 
+#include "f1x/openauto/autoapp/Configuration/Configuration.hpp"
+#include "f1x/openauto/autoapp/Projection/InputDevice.hpp"
+#include "f1x/openauto/autoapp/Projection/QtAudioInput.hpp"
+#include "f1x/openauto/autoapp/Projection/QtAudioOutput.hpp"
+#include "f1x/openauto/autoapp/Projection/QtVideoOutput.hpp"
+
 namespace f1x::openauto::autoapp::service {
     class ServiceFactory : public IServiceFactory {
     public:
-        ServiceFactory(boost::asio::io_service &ioService, configuration::IConfiguration::Pointer configuration);
+        ServiceFactory(boost::asio::io_service &ioService, configuration::IConfiguration::Pointer configuration,
+            projection::InputDevice::Pointer inputDevice,
+            projection::IVideoOutput::Pointer videoOutput,
+            projection::IAudioInput::Pointer audioInput,
+            projection::IAudioOutput::Pointer audioOutputSystem,
+            projection::IAudioOutput::Pointer audioOutputMedia,
+            projection::IAudioOutput::Pointer audioOutputGuidance,
+            projection::IAudioOutput::Pointer audioOutputTelephony
+            );
 
         ServiceList create(aasdk::messenger::IMessenger::Pointer messenger) override;
 
@@ -39,5 +53,12 @@ namespace f1x::openauto::autoapp::service {
 
         boost::asio::io_service &ioService_;
         configuration::IConfiguration::Pointer configuration_;
+        projection::InputDevice::Pointer inputDevice_;
+        projection::IVideoOutput::Pointer videoOutput_;
+        projection::IAudioOutput::Pointer audioOutputSystem_;
+        projection::IAudioOutput::Pointer audioOutputGuidance_;
+        projection::IAudioOutput::Pointer audioOutputTelephony_;
+        projection::IAudioOutput::Pointer audioOutputMedia_;
+        projection::IAudioInput::Pointer audioInput_;
     };
 }

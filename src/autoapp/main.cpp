@@ -1,6 +1,6 @@
 #include <thread>
 #include <QScreen>
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickView>
 #include <QQmlContext>
@@ -38,6 +38,8 @@
 #include "f1x/openauto/autoapp/UI/ViewModel/WifiViewModel.hpp"
 
 #include "f1x/openauto/autoapp/Configuration/Configuration.hpp"
+#include "f1x/openauto/autoapp/Projection/IInputDevice.hpp"
+#include "f1x/openauto/autoapp/Projection/InputDevice.hpp"
 #include "f1x/openauto/autoapp/UI/Combo/AudioDeviceModel.hpp"
 #include "f1x/openauto/autoapp/UI/Controller/LightController.hpp"
 #include "f1x/openauto/autoapp/UI/Monitor/VolumeHandler.hpp"
@@ -144,7 +146,7 @@ int main(int argc, char *argv[]) {
     set_qt_environment();
 
     // GUI
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
 
     // Only set pattern if the user hasn't overridden it externally
     if (qEnvironmentVariableIsEmpty("QT_MESSAGE_PATTERN")) {
@@ -164,24 +166,23 @@ int main(int argc, char *argv[]) {
     QQuickView oj;
 
     qInfo(lcAutoapp) << "Initialising GUI";
+    qmlRegisterUncreatableType<f1x::openauto::common::Enum::AndroidAutoConnectivityState>(
+            "AndroidAutoMonitor", 1, 0, "AndroidAutoConnectivityState", "Enum");
 
-    // Type Registration - Use fully qualified names for safety with Signals/Slots
-    qmlRegisterType<f1x::openauto::common::Enum::AndroidAutoConnectivityState>(
-        "AndroidAutoMonitor", 1, 0, "AndroidAutoConnectivityState");
-    qmlRegisterType<f1x::openauto::common::Enum::AndroidAutoConnectivityMethod>(
-        "AndroidAutoMonitor", 1, 0, "AndroidAutoConnectivityMethod");
-    qmlRegisterType<f1x::openauto::common::Enum::BluetoothConnectionStatus>(
-        "AndroidAutoMonitor", 1, 0, "BluetoothConnectionStatus");
-    qmlRegisterType<f1x::openauto::common::Enum::WirelessType>("AndroidAutoMonitor", 1, 0, "WirelessType");
+    qmlRegisterUncreatableType<f1x::openauto::common::Enum::AndroidAutoConnectivityMethod>(
+        "AndroidAutoMonitor", 1, 0, "AndroidAutoConnectivityMethod", "Enum");
+
+    qmlRegisterUncreatableType<f1x::openauto::common::Enum::BluetoothConnectionStatus::Value>(
+        "AndroidAutoMonitor", 1, 0, "BluetoothConnectionStatus", "Enum");
 
     qRegisterMetaType<f1x::openauto::common::Enum::AndroidAutoConnectivityState::Value>(
         "common::Enum::AndroidAutoConnectivityState::Value");
     qRegisterMetaType<f1x::openauto::common::Enum::AndroidAutoConnectivityMethod::Value>(
-        "f1x::openauto::common::Enum::AndroidAutoConnectivityMethod::Value");
+        "common::Enum::AndroidAutoConnectivityMethod::Value");
     qRegisterMetaType<f1x::openauto::common::Enum::BluetoothConnectionStatus::Value>(
         "f1x::openauto::common::Enum::BluetoothConnectionStatus::Value");
     qRegisterMetaType<f1x::openauto::common::Enum::WirelessType::Value>(
-        "f1x::openauto::common::Enum::WirelessType::Value");
+        "common::Enum::WirelessType::Value");
 
     // Initialise ComboBox Items - Backed by AA Enum's
     autoapp::UI::Combo::DriverPositionModel driverPositionModel;
@@ -289,13 +290,68 @@ int main(int argc, char *argv[]) {
         qInfo(lcAutoapp) << "Unable to find primary screen, using default values.";
     }
 
+    qInfo(lcAutoapp) << "Initializing Media Infrastructure...";
+
+    autoapp::projection::IVideoOutput::Pointer videoOutput;
+    videoOutput = std::make_shared<autoapp::projection::QtVideoOutput>(configuration);
+qInfo(lcAutoapp) << "Video Output: ";
+    autoapp::projection::IAudioInput::Pointer audioInput;
+    audioInput = std::make_shared<autoapp::projection::QtAudioInput>(1, 16, 16000, configuration);
+
+    autoapp::projection::IAudioOutput::Pointer audioOutputMedia;
+    autoapp::projection::IAudioOutput::Pointer audioOutputGuidance;
+    autoapp::projection::IAudioOutput::Pointer audioOutputTelephony;
+    autoapp::projection::IAudioOutput::Pointer audioOutputSystem;
+
+    if (configuration->getSettingByName<bool>("AndroidAuto", "Guidance")) {
+        audioOutputMedia = std::make_shared<autoapp::projection::QtAudioOutput>(2, 16, 48000, configuration);
+    }
+
+    if (configuration->getSettingByName<bool>("AndroidAuto", "Guidance")) {
+        audioOutputGuidance = std::make_shared<autoapp::projection::QtAudioOutput>(1, 16, 16000, configuration);
+    }
+
+    if (configuration->getSettingByName<bool>("AndroidAuto", "Telephony")) {
+        audioOutputTelephony = std::make_shared<autoapp::projection::QtAudioOutput>(1, 16, 16000, configuration);
+    }
+    audioOutputSystem = std::make_shared<autoapp::projection::QtAudioOutput>(1, 16, 16000, configuration);
+
+    QRect videoGeometry;
+    switch (configuration->getSettingByName<int>("AndroidAuto", "Resolution")) {
+        case aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_1280x720:
+            qInfo(lcAutoapp) << "...Resolution 1280x720";
+            videoGeometry = QRect(0, 0, 1280, 720);
+            break;
+        case aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_1920x1080:
+            qInfo(lcAutoapp) << "...Resolution 1920x1080";
+            videoGeometry = QRect(0, 0, 1920, 1080);
+            break;
+        default:
+            qInfo(lcAutoapp) << "...Resolution 800x480";
+            videoGeometry = QRect(0, 0, 800, 480);
+            break;
+    }
+
+    QScreen *screen = QGuiApplication::primaryScreen();
+    QRect screenGeometry = screen == nullptr ? QRect(0, 0, 1, 1) : screen->geometry();
+    autoapp::projection::IInputDevice::Pointer inputDevice(
+        std::make_shared<autoapp::projection::InputDevice>(*QApplication::instance(), configuration,
+                                                           std::move(screenGeometry), std::move(videoGeometry)));
+
+       context->setContextProperty("inputMapper", dynamic_cast<QObject*>(inputDevice.get()));
+
+    context->setContextProperty("videoBackend", dynamic_cast<QObject*>(videoOutput.get()));
+    context->setContextProperty("audioBackendMedia", audioOutputMedia ? dynamic_cast<QObject*>(audioOutputMedia.get()) : nullptr);
+    context->setContextProperty("audioBackendGuidance", audioOutputGuidance ? dynamic_cast<QObject*>(audioOutputGuidance.get()) : nullptr);
+    context->setContextProperty("audioBackendTelephony", audioOutputTelephony ? dynamic_cast<QObject*>(audioOutputTelephony.get()) : nullptr);
+    context->setContextProperty("audioBackendSystem", dynamic_cast<QObject*>(audioOutputSystem.get()));
+
     aasdk::tcp::TCPWrapper tcpWrapper;
     aasdk::usb::USBWrapper usbWrapper(usbContext);
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
     aasdk::usb::AccessoryModeQueryChainFactory queryChainFactory(usbWrapper, ioService, queryFactory);
-    autoapp::service::ServiceFactory serviceFactory(ioService, configuration);
-    autoapp::service::SessionFactory sessionFactory(ioService, configuration, serviceFactory,
-                                                                        androidAutoMonitor);
+    autoapp::service::ServiceFactory serviceFactory(ioService, configuration, inputDevice, videoOutput, audioInput, audioOutputSystem, audioOutputMedia, audioOutputGuidance, audioOutputTelephony);
+    autoapp::service::SessionFactory sessionFactory(ioService, configuration, serviceFactory, androidAutoMonitor);
 
     auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, ioService, queryChainFactory));
     auto connectedAccessoriesEnumerator(

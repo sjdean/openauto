@@ -42,6 +42,7 @@
 <file>JourneyOSContent/images/volume-mute.svg</file>
 <file>JourneyOSContent/images/volume.svg</file>
 <file>JourneyOSContent/Journey.qml</file>
+    <file>JourneyOSContent/AndroidAutoView.qml</file>
 <file>JourneyOSContent/JourneyButton.ui.qml</file>
 <file>JourneyOSContent/MainMenu.ui.qml</file>
 <file>JourneyOSContent/MainView.qml</file>

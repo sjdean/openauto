@@ -14,6 +14,7 @@ qt6_add_qml_module(JourneyOSContent
         "BluetoothPopup.qml"
         "SettingsView.qml"
         "MainView.qml"
+        "AndroidAutoView.qml"
         "BrightnessPopup.ui.qml"
         "Header.ui.qml"
         "WirelessPopup.qml"

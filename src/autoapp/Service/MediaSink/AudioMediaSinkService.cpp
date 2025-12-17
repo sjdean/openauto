@@ -191,9 +191,9 @@ namespace f1x::openauto::autoapp::service::mediasink {
 
   void AudioMediaSinkService::onMediaWithTimestampIndication(aasdk::messenger::Timestamp::ValueType timestamp,
                                                              const aasdk::common::DataConstBuffer &buffer) {
-    qDebug(lcServiceSinkMediaAudio) << "[AudioMediaSinkService] onMediaWithTimestampIndication()";
-    qDebug(lcServiceSinkMediaAudio) << "[AudioMediaSinkService] Channel Id: "
-                        << aasdk::messenger::channelIdToString(channel_->getId()) << ", session: " << session_;
+    //qDebug(lcServiceSinkMediaAudio) << "[AudioMediaSinkService] onMediaWithTimestampIndication()";
+    //qDebug(lcServiceSinkMediaAudio) << "[AudioMediaSinkService] Channel Id: "
+//                        << aasdk::messenger::channelIdToString(channel_->getId()) << ", session: " << session_;
 
     audioOutput_->write(timestamp, buffer);
 
@@ -209,7 +209,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
   }
 
   void AudioMediaSinkService::onMediaIndication(const aasdk::common::DataConstBuffer &buffer) {
-    qInfo(lcServiceSinkMediaAudio) << "[AudioMediaSinkService] onMediaIndication()";
+    //qDebug(lcServiceSinkMediaAudio) << "[AudioMediaSinkService] onMediaIndication()";
 
     this->onMediaWithTimestampIndication(0, buffer);
   }

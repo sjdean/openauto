@@ -9,7 +9,7 @@
 namespace f1x::openauto::autoapp::projection {
     class IVideoOutput {
     public:
-        typedef std::shared_ptr<IVideoOutput> Pointer;
+        using Pointer = std::shared_ptr<IVideoOutput>;
 
         IVideoOutput() = default;
 

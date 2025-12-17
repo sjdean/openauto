@@ -1,4 +1,3 @@
-// SettingsView.qml
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -9,526 +8,465 @@ Item {
     width: 800
     height: 480
 
+    // -- THEME CONSTANTS --
+    readonly property color cTextMain:   "#2C3E50"
+    readonly property color cTextDim:    "#7F8C8D"
+    readonly property color cAccent:     "#2980B9"
+    readonly property color cSurface:    "#FFFFFF"
+    readonly property color cBorder:     "#BDC3C7"
+
+    readonly property int paddingOuter: 30
+    readonly property int labelWidth: 280
+    readonly property int controlHeight: 40
+    readonly property int headerHeight: 70
+    readonly property int footerHeight: 70
+
     Rectangle {
-        id: displayRectangle
+        id: rootRect
         color: Constants.settingsBackgroundColor
         anchors.fill: parent
 
+        // ---------------------------------------------------------
+        // 1. TAB BAR
+        // ---------------------------------------------------------
         TabBar {
             id: tabBar
-            height: 60
-            currentIndex: 2
-            width: settingsView.width
+            width: parent.width
+            height: headerHeight
+            anchors.top: parent.top
+            currentIndex: 0
 
-            TabButton {
-                text: "Vehicle"
-                icon.source: "images/fi-br-car-alt.svg"
-                display: AbstractButton.TextUnderIcon
+            background: Rectangle {
+                color: Qt.rgba(255, 255, 255, 0.5)
             }
 
-            TabButton {
-                text: "Media Player"
-                icon.source: "images/fi-br-desktop-wallpaper.svg"
-                display: AbstractButton.TextUnderIcon
-            }
-
-
-            TabButton {
-                text: "AndroidAuto"
-                icon.source: "images/android-auto.svg"
-                display: AbstractButton.TextUnderIcon
-            }
-
-            TabButton {
-                text: "Audio"
-                icon.source: "images/fi-br-music-alt.svg"
-                display: AbstractButton.TextUnderIcon
-            }
-
-            TabButton {
-                text: "Video"
-                icon.source: "images/fi-br-screen.svg"
-                display: AbstractButton.TextUnderIcon
+            Repeater {
+                model: [
+                    { text: "Vehicle", icon: "images/fi-br-car-alt.svg" },
+                    { text: "Media",   icon: "images/fi-br-desktop-wallpaper.svg" },
+                    { text: "Auto",    icon: "images/android-auto.svg" },
+                    { text: "Audio",   icon: "images/fi-br-music-alt.svg" },
+                    { text: "Video",   icon: "images/fi-br-screen.svg" }
+                ]
+                TabButton {
+                    id: tabBtn
+                    width: Math.max(100, tabBar.width / 5)
+                    contentItem: ColumnLayout {
+                        spacing: 5
+                        Image {
+                            source: modelData.icon
+                            sourceSize.width: 24; sourceSize.height: 24
+                            Layout.alignment: Qt.AlignHCenter
+                            opacity: tabBtn.checked ? 1.0 : 0.4
+                        }
+                        Text {
+                            text: modelData.text
+                            font.pixelSize: 14
+                            font.bold: tabBtn.checked
+                            color: tabBtn.checked ? cAccent : cTextDim
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+                    }
+                    background: Rectangle { color: "transparent" }
+                }
             }
         }
 
+        // ---------------------------------------------------------
+        // 2. CONTENT AREA
+        // ---------------------------------------------------------
         StackLayout {
-            width: settingsView.width - 20
-            height: settingsView.height - tabBar.height
-            anchors.left: parent.left
+            id: contentStack
             anchors.top: tabBar.bottom
-            anchors.leftMargin: 10
-            anchors.topMargin: 0
-            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.left: parent.left
+            anchors.right: parent.right
             currentIndex: tabBar.currentIndex
 
-            Column {
-                id: vehicleTab
-                Layout.fillHeight: true
+            // --- TAB 0: VEHICLE ---
+            SettingsPage {
+                background: Rectangle {
+                    color: Qt.rgba(255, 0, 255, 0.5)
+                }
+                // THESE TWO LINES FIX THE "MIDWAY" ISSUE
                 Layout.fillWidth: true
-                spacing: 10
+                Layout.fillHeight: true
 
-                Row {
-                    spacing: 10
-
-                    Text {
-                        text: "Driving Position"
-                        font.pixelSize: 15
-                    }
-                    ComboBox {
-                        id: driverPosition
+                SectionHeader { text: "Car Configuration" }
+                SettingRow {
+                    label: "Driving Position"
+                    control: ModernComboBox {
                         model: driverPositionModel.comboBoxItems
-                        textRole: "display"
-                        currentIndex: {
-                            let index = driverPositionModel.comboBoxItems.findIndex(item => item.value === settingsViewHandler.carDriverPosition);
-                            return index !== -1 ? index : 0; // Default to first item if not found
-                        }
-                        onCurrentIndexChanged: {
-                            if (currentIndex >= 0 && currentIndex < driverPositionModel.comboBoxItems.length) {
-                                settingsViewHandler.carDriverPosition = driverPositionModel.comboBoxItems[currentIndex].value;
-                                driverPositionModel.currentComboBoxItem = driverPositionModel.comboBoxItems[currentIndex];
-                            }
-                        }
+                        currentIndex: findIndex(model, settingsViewHandler.carDriverPosition)
+                        onActivated: settingsViewHandler.carDriverPosition = model[currentIndex].value
                     }
-
                 }
-
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "Fuel Type"
-                        font.pixelSize: 15
-                    }
-                    ComboBox {
-                        id: fuelType
+                SettingRow {
+                    label: "Fuel Type"
+                    control: ModernComboBox {
                         model: fuelTypeModel.comboBoxItems
-                        textRole: "display"
-                        currentIndex: {
-                            let index = fuelTypeModel.comboBoxItems.findIndex(item => item.value === settingsViewHandler.carFuelType);
-                            return index !== -1 ? index : 0; // Default to first item if not found
-                        }
-                        onCurrentIndexChanged: {
-                            if (currentIndex >= 0 && currentIndex < fuelTypeModel.comboBoxItems.length) {
-                                settingsViewHandler.carFuelType = fuelTypeModel.comboBoxItems[currentIndex].value;
-                                fuelTypeModel.currentComboBoxItem = fuelTypeModel.comboBoxItems[currentIndex];
-                            }
-                        }
+                        currentIndex: findIndex(model, settingsViewHandler.carFuelType)
+                        onActivated: settingsViewHandler.carFuelType = model[currentIndex].value
                     }
                 }
-
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "Electric Charging Type"
-                        font.pixelSize: 15
-                    }
-                    ComboBox {
-                        id: evConnectorType
+                SettingRow {
+                    label: "Charging Type"
+                    control: ModernComboBox {
                         model: evConnectorTypeModel.comboBoxItems
-                        textRole: "display"
-                        currentIndex: {
-                            let index = evConnectorTypeModel.comboBoxItems.findIndex(item => item.value === settingsViewHandler.carEvConnectorType);
-                            return index !== -1 ? index : 0; // Default to first item if not found
-                        }
-                        onCurrentIndexChanged: {
-                            if (currentIndex >= 0 && currentIndex < evConnectorTypeModel.comboBoxItems.length) {
-                                settingsViewHandler.carEvConnectorType = evConnectorTypeModel.comboBoxItems[currentIndex].value;
-                                evConnectorTypeModel.currentComboBoxItem = evConnectorTypeModel.comboBoxItems[currentIndex];
-                            }
-                        }
+                        currentIndex: findIndex(model, settingsViewHandler.carEvConnectorType)
+                        onActivated: settingsViewHandler.carEvConnectorType = model[currentIndex].value
                     }
                 }
-
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "Car Make"
-                        font.pixelSize: 15
-                    }
-
-                    TextField {
-                        id: carMake
-                        placeholderText: qsTr("Car Make")
+                SectionHeader { text: "Identification" }
+                SettingRow {
+                    label: "Car Make"
+                    control: ModernTextField {
+                        placeholderText: "e.g. Ford"
                         text: settingsViewHandler.carMake
-                        onTextChanged: settingsViewHandler.carMake = text
+                        onEditingFinished: settingsViewHandler.carMake = text
                     }
-
                 }
-
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "Car Model"
-                        font.pixelSize: 15
-                    }
-
-                    TextField {
-                        id: carModel
-                        placeholderText: qsTr("Car Model")
+                SettingRow {
+                    label: "Car Model"
+                    control: ModernTextField {
+                        placeholderText: "e.g. Mustang"
                         text: settingsViewHandler.carModel
-                        onTextChanged: settingsViewHandler.carModel = text
+                        onEditingFinished: settingsViewHandler.carModel = text
                     }
+                }
+            }
 
+            // --- TAB 1: MEDIA ---
+            SettingsPage {
+                Layout.fillWidth: true; Layout.fillHeight: true
+                SectionHeader { text: "Playback Behavior" }
+                ModernCheckBox {
+                    checked: settingsViewHandler.mediaAutoPlayback
+                    onToggled: settingsViewHandler.mediaAutoPlayback = checked
+                    text: qsTr("Auto-play last song on startup")
+                }
+                ModernCheckBox {
+                    checked: settingsViewHandler.mediaAutoStart
+                    onToggled: settingsViewHandler.mediaAutoStart = checked
+                    text: qsTr("Instant playback on selection")
+                }
+            }
+
+            // --- TAB 2: ANDROID AUTO ---
+            SettingsPage {
+                Layout.fillWidth: true; Layout.fillHeight: true
+                SectionHeader { text: "Audio Channels" }
+                RowLayout {
+                    Layout.leftMargin: labelWidth + 20
+                    spacing: 30
+                    ModernCheckBox { text: "Media"; checked: settingsViewHandler.aaChannelMedia; onToggled: settingsViewHandler.aaChannelMedia = checked }
+                    ModernCheckBox { text: "Guidance"; checked: settingsViewHandler.aaChannelGuidance; onToggled: settingsViewHandler.aaChannelGuidance = checked }
+                    ModernCheckBox { text: "Telephony"; checked: settingsViewHandler.aaChannelTelephony; onToggled: settingsViewHandler.aaChannelTelephony = checked }
                 }
 
-                // Example of navigating back to the main view
+                SectionHeader { text: "Video Settings" }
+                SettingRow {
+                    label: "Frame Rate"
+                    control: ModernComboBox {
+                        model: frameRateModel.comboBoxItems
+                        currentIndex: findIndex(model, settingsViewHandler.aaFrameRate)
+                        onActivated: settingsViewHandler.aaFrameRate = model[currentIndex].value
+                    }
+                }
+                SettingRow {
+                    label: "Resolution"
+                    control: ModernComboBox {
+                        model: resolutionModel.comboBoxItems
+                        currentIndex: findIndex(model, settingsViewHandler.aaResolution)
+                        onActivated: settingsViewHandler.aaResolution = model[currentIndex].value
+                    }
+                }
+
+                SectionHeader { text: "Margins" }
+                SettingRow {
+                    label: "Video Margin (H/W)"
+                    control: RowLayout {
+                        spacing: 10
+                        ModernSpinBox { from: 0; to: 200; value: settingsViewHandler.videoMarginHeight; onValueModified: settingsViewHandler.videoMarginHeight = value }
+                        ModernSpinBox { from: 0; to: 200; value: settingsViewHandler.videoMarginWidth; onValueModified: settingsViewHandler.videoMarginWidth = value }
+                    }
+                }
+            }
+
+            // --- TAB 3: AUDIO ---
+            SettingsPage {
+                Layout.fillWidth: true; Layout.fillHeight: true
+                SectionHeader { text: "Output" }
+                SettingRow {
+                    label: "Device"
+                    control: ModernComboBox {
+                        model: pulseAudioDeviceModelOutput.comboBoxItems
+                        currentIndex: findIndex(model, settingsViewHandler.audioPlaybackDevice)
+                        onActivated: settingsViewHandler.audioPlaybackDevice = model[currentIndex].value
+                    }
+                }
+                SettingRow {
+                    label: "Volume Limit"
+                    control: RangeSlider {
+                        Layout.fillWidth: true
+                        from: 0; to: 255
+                        first.value: settingsViewHandler.audioVolumePlaybackMin
+                        second.value: settingsViewHandler.audioVolumePlaybackMax
+                        first.onMoved: settingsViewHandler.audioVolumePlaybackMin = first.value
+                        second.onMoved: settingsViewHandler.audioVolumePlaybackMax = second.value
+                    }
+                }
+
+                SectionHeader { text: "Input" }
+                SettingRow {
+                    label: "Microphone"
+                    control: ModernComboBox {
+                        model: pulseAudioDeviceModelInput.comboBoxItems
+                        currentIndex: findIndex(model, settingsViewHandler.audioCaptureDvice)
+                        onActivated: settingsViewHandler.audioCaptureDvice = model[currentIndex].value
+                    }
+                }
+            }
+
+            // --- TAB 4: VIDEO ---
+            SettingsPage {
+                Layout.fillWidth: true; Layout.fillHeight: true
+                SectionHeader { text: "Screen" }
+                SettingRow {
+                    label: "Rotate 180°"
+                    control: Switch {
+                        checked: settingsViewHandler.videoRotateDisplay
+                        onToggled: settingsViewHandler.videoRotateDisplay = checked
+                    }
+                }
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 3. FLOATING GLASS FOOTER
+        // ---------------------------------------------------------
+        Rectangle {
+            id: footerBar
+            height: footerHeight
+            width: parent.width
+            anchors.bottom: parent.bottom
+            color: "#D9FFFFFF"
+            z: 10 // Ensure it stays on top of the ScrollView
+
+            Rectangle { width: parent.width; height: 1; color: "#E0E0E0"; anchors.top: parent.top }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 15
+                spacing: 20
+
                 Button {
-                    text: "Back to Main"
+                    text: "Back"
+                    Layout.preferredWidth: 120
+                    Layout.fillHeight: true
+                    background: Rectangle {
+                        color: parent.down ? "#EEE" : "transparent"
+                        radius: 8
+                        border.color: "#CCC"
+                        border.width: 1
+                    }
+                    contentItem: Text {
+                        text: parent.text
+                        font.pixelSize: 16
+                        color: cTextDim
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    onClicked: stackView.pop()
+                }
+
+                Item { Layout.fillWidth: true }
+
+                Button {
+                    text: "Save Changes"
+                    Layout.preferredWidth: 180
+                    Layout.fillHeight: true
+                    background: Rectangle {
+                        color: parent.down ? Qt.darker(cAccent, 1.2) : cAccent
+                        radius: 8
+                    }
+                    contentItem: Text {
+                        text: parent.text
+                        font.pixelSize: 16
+                        font.bold: true
+                        color: "white"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
                     onClicked: {
-                        // Assuming the parent window has a stackView named 'stackView'
+                        settingsViewHandler.save()
                         stackView.pop()
                     }
                 }
             }
-
-            Column {
-                id: mediaPlayerTab
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                spacing: 10
-
-                Row {
-                    spacing: 10
-                    CheckBox {
-                        id: autoPlayback
-                        checked: settingsViewHandler.mediaAutoPlayback
-                        onCheckedChanged: settingsViewHandler.mediaAutoPlayback = checked
-                        text: qsTr("Auto play last song on playback")
-                    }
-                }
-
-                Row {
-                    spacing: 10
-                    CheckBox {
-                        id: autoStart
-                        checked: settingsViewHandler.mediaAutoStart
-                        onCheckedChanged: settingsViewHandler.mediaAutoStart = checked
-                        text: qsTr("Instant playback on track/album select")
-                    }
-                }
-            }
-
-
-            Column {
-                id: androidAutoTab
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                spacing: 10
-
-                Text {
-                    text: qsTr("Enable Audio Channels")
-                    font.pixelSize: 12
-                    font.styleName: "Bold"
-                    font.bold: true
-                }
-                Row {
-                    spacing: 10
-
-                    CheckBox {
-                        id: channelMedia
-                        checked: settingsViewHandler.aaChannelMedia
-                        onCheckedChanged: settingsViewHandler.aaChannelMedia = checked
-                        text: qsTr("Media")
-                    }
-
-                    CheckBox {
-                        id: channelGuidance
-                        checked: settingsViewHandler.aaChannelGuidance
-                        onCheckedChanged: settingsViewHandler.aaChannelGuidance = checked
-                        text: qsTr("Guidance")
-                    }
-
-                    CheckBox {
-                        id: channelTelephony
-                        checked: settingsViewHandler.aaChannelTelephony
-                        onCheckedChanged: settingsViewHandler.aaChannelTelephony = checked
-                        text: qsTr("Telephony")
-                    }
-
-                }
-                Text {
-                    text: qsTr("Audio Output")
-                    font.pixelSize: 12
-                    font.styleName: "Bold"
-                    font.bold: true
-                }
-
-                Row {
-                    Text {
-                        text: "Frame Rate"
-                        font.pixelSize: 15
-                    }
-                    spacing: 10
-
-                    ComboBox {
-                        id: frameRate
-                        model: frameRateModel.comboBoxItems
-                        textRole: "display"
-                        currentIndex: {
-                            let index = frameRateModel.comboBoxItems.findIndex(item => item.value === settingsViewHandler.aaFrameRate);
-                            return index !== -1 ? index : 0; // Default to first item if not found
-                        }
-                        onCurrentIndexChanged: {
-                            if (currentIndex >= 0 && currentIndex < frameRateModel.comboBoxItems.length) {
-                                settingsViewHandler.aaFrameRate = frameRateModel.comboBoxItems[currentIndex].value;
-                                frameRateModel.currentComboBoxItem = frameRateModel.comboBoxItems[currentIndex];
-                            }
-                        }
-                    }
-
-                }
-                  Row {
-                    spacing: 10
-                    Text {
-                        text: "Resolution"
-                        font.pixelSize: 15
-                    }
-                    ComboBox {
-                        id: resolution
-                        model: resolutionModel.comboBoxItems
-                        textRole: "display"
-                        currentIndex: {
-                            let index = resolutionModel.comboBoxItems.findIndex(item => item.value === settingsViewHandler.aaResolution);
-                            return index !== -1 ? index : 0; // Default to first item if not found
-                        }
-                        onCurrentIndexChanged: {
-                            if (currentIndex >= 0 && currentIndex < resolutionModel.comboBoxItems.length) {
-                                settingsViewHandler.aaResolution = resolutionModel.comboBoxItems[currentIndex].value;
-                                resolutionModel.currentComboBoxItem = resolutionModel.comboBoxItems[currentIndex];
-                            }
-                        }
-                    }
-                }
-
-                Text {
-                    text: qsTr("Margin")
-                    font.pixelSize: 12
-                    font.styleName: "Bold"
-                    font.bold: true
-                }
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "Height"
-                        font.pixelSize: 15
-                    }
-                    SpinBox {
-                        id: marginHeight
-                        value: settingsViewHandler.videoMarginHeight
-                        onValueChanged: settingsViewHandler.videoMarginHeight = value
-                    }
-                    Text {
-                        text: "Length"
-                        font.pixelSize: 15
-                    }
-                    SpinBox {
-                        id: marginWidth
-                        value: settingsViewHandler.videoMarginWidth
-                        onValueChanged: settingsViewHandler.videoMarginWidth = value
-                    }
-                }
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "DPI"
-                        font.pixelSize: 15
-                    }
-                    Slider {
-                        id: dpi
-                        value: settingsViewHandler.screenDPI
-                        onValueChanged: settingsViewHandler.screenDPI = value
-                    }
-
-                }
-            }
-
-            Column {
-                id: audioTab
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                spacing: 10
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "Playback Volume"
-                        font.pixelSize: 15
-                    }
-                    RangeSlider {
-                        id: volumePlaybackRange
-                        from: 0
-                        to: 255
-                        first.value: settingsViewHandler.audioVolumePlaybackMin
-                        second.value: settingsViewHandler.audioVolumePlaybackMax
-
-                        first.onValueChanged: settingsViewHandler.audioVolumePlaybackMin = first.value
-                        second.onValueChanged: settingsViewHandler.audioVolumePlaybackMax = second.value
-                    }
-                }
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "Output Device"
-                        font.pixelSize: 15
-                    }
-
-                    ComboBox {
-                        id: pulseAudioDeviceOutput
-                        model: pulseAudioDeviceModelOutput.comboBoxItems
-                        textRole: "display"
-                        currentIndex: {
-                            let index = pulseAudioDeviceModelOutput.comboBoxItems.findIndex(item => item.value === settingsViewHandler.audioPlaybackDevice);
-                            return index !== -1 ? index : 0; // Default to first item if not found
-                        }
-                        onCurrentIndexChanged: {
-                            if (currentIndex >= 0 && currentIndex < pulseAudioDeviceModelOutput.comboBoxItems.length) {
-                                settingsViewHandler.audioPlaybackDevice = pulseAudioDeviceModelOutput.comboBoxItems[currentIndex].value;
-                                pulseAudioDeviceModelOutput.currentComboBoxItem = pulseAudioDeviceModelOutput.comboBoxItems[currentIndex];
-                            }
-                        }
-                    }
-                }
-
-
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "Capture Volume"
-                        font.pixelSize: 15
-                    }
-                    Slider {
-                        id: volumeCapture
-                        from: 0
-                        to: 255
-                        value: settingsViewHandler.audioVolumeCapture
-                        onValueChanged: settingsViewHandler.audioVolumeCapture = value
-                    }
-                }
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "Capture Range"
-                        font.pixelSize: 15
-                    }
-                    RangeSlider {
-                        id: volumeCaptureRange
-                        from: 0
-                        to: 255
-                        first.value: settingsViewHandler.audioVolumeCaptureMin
-                        second.value: settingsViewHandler.audioVolumeCaptureMax
-
-                        first.onValueChanged: settingsViewHandler.audioVolumeCaptureMin = first.value
-                        second.onValueChanged: settingsViewHandler.audioVolumeCaptureMax = second.value
-                    }
-                }
-                Row {
-                    spacing: 10
-                    Text {
-                        text: "Input Device"
-                        font.pixelSize: 15
-                    }
-                    ComboBox {
-                        id: pulseAudioDeviceInput
-                        model: pulseAudioDeviceModelInput.comboBoxItems
-                        textRole: "display"
-                        currentIndex: {
-                            let index = pulseAudioDeviceModelInput.comboBoxItems.findIndex(item => item.value === settingsViewHandler.audioCaptureDvice);
-                            return index !== -1 ? index : 0; // Default to first item if not found
-                        }
-                        onCurrentIndexChanged: {
-                            if (currentIndex >= 0 && currentIndex < pulseAudioDeviceModelInput.comboBoxItems.length) {
-                                settingsViewHandler.audioCaptureDvice = pulseAudioDeviceModelInput.comboBoxItems[currentIndex].value;
-                                pulseAudioDeviceModelInput.currentComboBoxItem = pulseAudioDeviceModelInput.comboBoxItems[currentIndex];
-                            }
-                        }
-                    }
-                }
-            }
-
-            Column {
-                id: videoTab
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                spacing: 10
-
-                Text {
-                    id: videoTabHader
-                    text: qsTr("Screen Brightness")
-                    font.pixelSize: 12
-                    font.styleName: "Bold"
-                    font.bold: true
-                }
-
-                Row {
-                    width: 800
-                    height: 40
-                    spacing: 10
-                    Text {
-                        text: "Day Min/Max"
-                        font.pixelSize: 15
-                    }
-                    RangeSlider {
-                        id: brightnessDayRange
-                        from: 0
-                        to: 255
-                        first.value: settingsViewHandler.screenBrightnessDayMin
-                        second.value: settingsViewHandler.screenBrightnessDayMax
-                        
-                        first.onValueChanged: settingsViewHandler.screenBrightnessDayMin = first.value
-                        second.onValueChanged: settingsViewHandler.screenBrightnessDayMax = second.value
-                    }
-                }
-
-
-                Row {
-                    width: 800
-                    height: 40
-                    spacing: 10
-                    Text {
-                        text: "Night Min/Max"
-                        font.pixelSize: 15
-                    }
-                    RangeSlider {
-                        id: brightnessNightRange
-                        from: 0
-                        to: 255
-                        first.value: settingsViewHandler.screenBrightnessNightMin
-                        second.value: settingsViewHandler.screenBrightnessNightMax
-                        
-                        first.onValueChanged: settingsViewHandler.screenBrightnessNightMin = first.value
-                        second.onValueChanged: settingsViewHandler.screenBrightnessNightMax = second.value
-                    }
-
-                }
-
-                Text {
-                    id: _text2
-                    text: qsTr("Graphics Render Mode")
-                    font.pixelSize: 12
-                    font.weight: Font.Bold
-                }
-
-                Text {
-                    id: _text3
-                    text: qsTr("Rotate Screen 180 degrees?")
-                    font.pixelSize: 12
-                    font.styleName: "Bold"
-                }
-
-                Row {
-                    spacing: 10
-                    Switch {
-                        id: rotateDisplay
-                        text: qsTr("Rotate Display")
-                        checked: settingsViewHandler.videoRotateDisplay
-                        onCheckedChanged: settingsViewHandler.videoRotateDisplay = checked
-                    }
-
-                }
-
-            }
-
         }
-
     }
 
+    // ---------------------------------------------------------
+    // 4. COMPONENTS
+    // ---------------------------------------------------------
+
+    component SettingsPage : ScrollView {
+        id: pageRoot
+        default property alias userContent: innerLayout.data
+
+        clip: true
+
+        ColumnLayout {
+            id: innerLayout
+            width: pageRoot.availableWidth - (paddingOuter * 2)
+            x: paddingOuter
+            y: paddingOuter
+            spacing: 20
+
+        }
+    }
+
+    component SectionHeader : Label {
+        font.pixelSize: 16
+        font.bold: true
+        font.capitalization: Font.AllUppercase
+        color: cTextMain
+        Layout.topMargin: 10
+        Layout.bottomMargin: 5
+        Rectangle {
+            width: parent.width; height: 1; color: cBorder
+            anchors.bottom: parent.bottom; anchors.bottomMargin: -5
+        }
+    }
+
+    component SettingRow : RowLayout {
+        property string label: "Setting"
+        property alias control: controlContainer.children
+
+        Label {
+            text: label
+            font.pixelSize: 15
+            color: cTextMain
+            Layout.preferredWidth: labelWidth
+            Layout.alignment: Qt.AlignVCenter
+        }
+        Item {
+            id: controlContainer
+            Layout.fillWidth: true
+            Layout.preferredHeight: controlHeight
+        }
+    }
+
+    component ModernComboBox : ComboBox {
+        id: control
+        Layout.fillWidth: true
+        Layout.preferredHeight: controlHeight
+        textRole: "display"
+
+        background: Rectangle {
+            color: parent.down ? "#EEE" : cSurface
+            border.color: parent.activeFocus ? cAccent : cBorder
+            border.width: 1
+            radius: 4
+        }
+        contentItem: Text {
+            leftPadding: 10
+            text: parent.displayText
+            color: cTextMain
+            font.pixelSize: 15
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+        }
+        popup: Popup {
+            y: control.height - 1
+            width: control.width
+            implicitHeight: Math.min(contentList.contentHeight, 300)
+            padding: 1
+            contentItem: ListView {
+                id: contentList
+                clip: true
+                implicitHeight: contentHeight
+                model: control.delegateModel
+                currentIndex: control.highlightedIndex
+                ScrollIndicator.vertical: ScrollIndicator { }
+            }
+            background: Rectangle { color: cSurface; border.color: cBorder }
+        }
+        delegate: ItemDelegate {
+            width: control.width
+            text: model.display
+            highlighted: ListView.isCurrentItem
+            background: Rectangle { color: highlighted ? "#E0F7FA" : cSurface }
+            contentItem: Text {
+                text: parent.text
+                color: highlighted ? cAccent : cTextMain
+                padding: 10
+            }
+            onClicked: {
+                control.currentIndex = index
+                control.popup.close()
+                control.activated(index)
+            }
+        }
+    }
+
+    component ModernTextField : TextField {
+        Layout.fillWidth: true
+        Layout.preferredHeight: controlHeight
+        color: cTextMain
+        font.pixelSize: 15
+        background: Rectangle {
+            color: parent.activeFocus ? "#FAFAFA" : cSurface
+            border.color: parent.activeFocus ? cAccent : cBorder
+            border.width: 1
+            radius: 4
+        }
+    }
+
+    component ModernCheckBox : CheckBox {
+        font.pixelSize: 15
+        indicator: Rectangle {
+            implicitWidth: 24; implicitHeight: 24
+            x: parent.leftPadding
+            y: parent.height / 2 - height / 2
+            radius: 4
+            color: cSurface
+            border.color: parent.checked ? cAccent : cBorder
+            Rectangle {
+                width: 14; height: 14
+                anchors.centerIn: parent
+                radius: 2
+                color: cAccent
+                visible: parent.parent.checked
+            }
+        }
+        contentItem: Text {
+            text: parent.text
+            font: parent.font
+            color: cTextMain
+            verticalAlignment: Text.AlignVCenter
+            leftPadding: parent.indicator.width + parent.spacing
+        }
+    }
+
+    component ModernSpinBox : SpinBox {
+        id: rootSpin
+        Layout.preferredHeight: controlHeight
+        font.pixelSize: 15
+        background: Rectangle {
+            implicitWidth: 140
+            border.color: cBorder
+            color: cSurface
+            radius: 4
+        }
+    }
+
+    function findIndex(model, currentValue) {
+        if (!model) return 0;
+        for (let i = 0; i < model.length; i++) {
+            if (model[i].value === currentValue) return i;
+        }
+        return 0;
+    }
 }
+

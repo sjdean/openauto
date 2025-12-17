@@ -38,24 +38,41 @@ else ()
     find_package(Protobuf REQUIRED) # Provides Protobuf::protobuf
 endif ()
 
+# --- QT 6 ---
+option(QT6_INSTALL_DIR "Specify the path to the root Qt 6 installation directory (e.g., /Users/user/Qt/6.x.x/macos)" "")
+if(NOT "${QT6_INSTALL_DIR}" STREQUAL "")
+    # Check if the path exists on the file system
+    if(EXISTS "${QT6_INSTALL_DIR}")
+        # Append the custom path to CMAKE_PREFIX_PATH
+        # CMake will then search this location for the Qt6Config.cmake files.
+        list(APPEND CMAKE_PREFIX_PATH "${QT6_INSTALL_DIR}")
+        message(STATUS "Adding custom Qt 6 installation directory to CMAKE_PREFIX_PATH: ${QT6_INSTALL_DIR}")
+    else()
+        # Warn the user if the provided path is invalid
+        message(WARNING "QT6_INSTALL_DIR set to non-existent path: ${QT6_INSTALL_DIR}")
+    endif()
+endif()
+
 # --- Find Dependencies (Modern CONFIG Mode) ---
 find_package(aap_protobuf REQUIRED CONFIG) # Finds config, provides AAPProto::aap_protobuf
 find_package(aasdk REQUIRED CONFIG)        # Finds config, provides AASDK::aasdk
 find_package(Boost REQUIRED COMPONENTS system log)
 find_package(libusb-1.0 REQUIRED)
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Bluetooth DBus Network Multimedia MultimediaWidgets)
-if(APPLE)
-    message(STATUS "Patching Qt6::Gui to remove deprecated AGL framework dependency...")
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Bluetooth DBus Network Multimedia MultimediaWidgets Widgets)
+find_package(FFMPEG REQUIRED)
 
-    # Get the list of libraries Qt::Gui thinks it needs
-    get_property(QT_GUI_LIBS TARGET Qt6::Gui PROPERTY INTERFACE_LINK_LIBRARIES)
-
-    # Remove AGL from that list
-    list(REMOVE_ITEM QT_GUI_LIBS "-framework AGL")
-
-    # Set the list back without AGL
-    set_property(TARGET Qt6::Gui PROPERTY INTERFACE_LINK_LIBRARIES "${QT_GUI_LIBS}")
-endif()
+#if(APPLE)
+#    message(STATUS "Patching Qt6::Gui to remove deprecated AGL framework dependency...")
+#
+#    # Get the list of libraries Qt::Gui thinks it needs
+#    get_property(QT_GUI_LIBS TARGET Qt6::Gui PROPERTY INTERFACE_LINK_LIBRARIES)
+#
+#    # Remove AGL from that list
+#    list(REMOVE_ITEM QT_GUI_LIBS "-framework AGL")
+#
+#    # Set the list back without AGL
+#    set_property(TARGET Qt6::Gui PROPERTY INTERFACE_LINK_LIBRARIES "${QT_GUI_LIBS}")
+#endif()
 find_package(OpenSSL REQUIRED)
 find_package(taglib REQUIRED)
 
@@ -151,14 +168,16 @@ target_include_directories(autoapp PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${TAGLIB_INCLUDE_DIRS}
         ${ILCLIENT_INCLUDE_DIRS}
+        ${FFMPEG_INCLUDE_DIRS}
 )
 
 target_link_libraries(autoapp PUBLIC
         AASDK::aasdk
         AAPProto::aap_protobuf
         Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml Qt6::DBus
-        Qt6::Bluetooth Qt6::Multimedia Qt6::MultimediaWidgets Qt6::Network
+        Qt6::Bluetooth Qt6::Multimedia Qt6::MultimediaWidgets Qt6::Network Qt6::Widgets
         libusb
+        ${FFMPEG_LIBRARIES}
         PRIVATE
         Boost::log
         ${TAGLIB_LIBRARIES}

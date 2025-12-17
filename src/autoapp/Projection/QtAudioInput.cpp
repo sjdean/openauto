@@ -32,16 +32,17 @@ namespace f1x::openauto::autoapp::projection {
     }
 
     // 2. Thread Safety
-    this->moveToThread(QGuiApplication::instance()->thread());
+   // this->moveToThread(QGuiApplication::instance()->thread());
 
     connect(this, &QtAudioInput::startRecording, this, &QtAudioInput::onStartRecording, Qt::QueuedConnection);
     connect(this, &QtAudioInput::stopRecording, this, &QtAudioInput::onStopRecording, Qt::QueuedConnection);
 
-    QMetaObject::invokeMethod(this, "createAudioInput", Qt::BlockingQueuedConnection);
+    //QMetaObject::invokeMethod(this, "createAudioInput", Qt::BlockingQueuedConnection);
+    createAudioInput();
   }
 
   void QtAudioInput::createAudioInput() {
-    qInfo(lcQtAudioIn) << "[QtAudioInput] Initializing Source. Rate:"
+    qInfo(lcQtAudioIn) << "Initializing Source. Rate:"
                        << audioFormat_.sampleRate()
                        << "Channels:" << audioFormat_.channelCount();
 
@@ -49,7 +50,7 @@ namespace f1x::openauto::autoapp::projection {
     QAudioDevice device = QMediaDevices::defaultAudioInput();
 
     // Check config for a specific microphone name
-    QString configDeviceName = configuration_->getSettingByName<QString>("Audio", "InputDevice");
+    QString configDeviceName = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
     if(!configDeviceName.isEmpty()) {
         const auto devices = QMediaDevices::audioInputs();
         for(const auto& d : devices) {

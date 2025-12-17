@@ -1,6 +1,3 @@
-// Copyright (C) 2021 The Qt Company Ltd.
-// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
-
 import QtQuick
 import QtQuick.Controls
 import JourneyOS
@@ -9,170 +6,35 @@ Item {
     id: mainView
     width: 800
     height: 480
+    objectName: "MainView" // Useful for debugging
 
-    visible: true
+    // Signals to tell Journey.qml what to do
+    signal viewSettings()
+    signal viewVolume()
+    signal viewBrightness()
+    signal viewBluetoothStatus()
+    signal viewWifiStatus()
+    signal viewAndroidAuto()
 
     property bool isMediaPlaying: false
-    signal viewSettings
 
     Header {
         id: header
         height: 100
-        Connections {
-            target: header
-            onViewVolume: volumePopup.open()
-        }
 
-        Connections {
-            target: header
-            onViewBrightness: brightnessPopup.open()
-        }
-
-        Connections {
-            target: header
-            onViewBluetoothStatus: bluetoothPopup.open()
-        }
-
-        Connections {
-            target: header
-            onViewWifiStatus: wifiPopup.open()
-        }
+        // Forward Header signals to MainView signals
+        onViewVolume: mainView.viewVolume()
+        onViewBrightness: mainView.viewBrightness()
+        onViewBluetoothStatus: mainView.viewBluetoothStatus()
+        onViewWifiStatus: mainView.viewWifiStatus()
     }
 
-    Popup {
-        id: bluetoothPopup
-        x: 100
-        y: 100
-        width: 300
-        height: 200
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        background: Rectangle {
-            color: "#FFFFFF"
-            border.color: "transparent"
-            border.width: 0
-        }
-        contentItem: BluetoothPopup {
-            onClose: bluetoothPopup.close()
-        }
-    }
-
-    Popup {
-            id: pinPopup
-            width: 300
-            height: 200
-            modal: true
-            focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-
-            // We will create this QML file next
-            contentItem: BluetoothPinPopup {
-                // We pass the agent from the C++ view model
-                agent: bluetoothViewModel.agent
-
-                onAccepted: pinPopup.close()
-                onRejected: pinPopup.close()
-            }
-        }
-
-    Popup {
-        id: wifiPopup
-        x: 100
-        y: 100
-        width: 300
-        height: 200
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        background: Rectangle {
-            color: "#FFFFFF"
-            border.color: "transparent"
-            border.width: 0
-        }
-        contentItem: WirelessPopup {
-
-        }
-    }
-
-    Popup {
-        id: volumePopup
-        x: mainView.width - width
-        y: 100
-        width: 75
-        height: 380
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        background: Rectangle {
-            color: Constants.sliderPopupBackgroundColor // or whatever background color you prefer
-            border.color: "transparent"
-            border.width: 0
-        }
-        contentItem: VolumePopup {
-
-        }
-        // Auto-close Timer
-        Timer {
-            id: volTimer
-            interval: 10000 // 10 Seconds
-            running: volumePopup.opened
-            repeat: false
-            onTriggered: volumePopup.close()
-        }
-
-        // Restart timer if user is dragging the slider (value changing)
-        Connections {
-            target: volumePopupHandler
-            function onVolumeSinkChanged() {
-                if (volumePopup.opened) volTimer.restart()
-            }
-        }
-    }
-
-    Popup {
-        id: brightnessPopup
-        x: mainView.width - width - volumePopup.width
-        y: 100
-        width: 75
-        height: 380
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
-        background: Rectangle {
-            color: Constants.sliderPopupBackgroundColor // or whatever background color you prefer
-            border.color: "transparent"
-            border.width: 0
-        }
-        contentItem: BrightnessPopup {
-
-        }
-        // Auto-close Timer
-        Timer {
-            id: brightnessTimer
-            interval: 10000 // 10 Seconds
-            running: brightnessPopup.opened
-            repeat: false
-            onTriggered: brightnessPopup.close()
-        }
-
-        // Restart timer if user is dragging the slider
-        Connections {
-            target: brightnessPopupHandler
-            function onBrightnessChanged() {
-                if (brightnessPopup.opened) brightTimer.restart()
-            }
-        }
-    }
-
-
-    // Container for menus to handle transitions
+    // Container for menus (Media/Main)
     Item {
         id: menuContainer
-        width: 800
-        height: 380
-        anchors.top: parent.top
-        anchors.topMargin: 100
+        anchors.top: header.bottom
+        anchors.bottom: parent.bottom
+        width: parent.width
 
         // Use states to control which menu is visible
         states: [
@@ -228,29 +90,4 @@ Item {
             }
         }
     }
-
-
-
-    Connections {
-            // We listen to the agent for pairing requests
-            target: bluetoothViewModel.agent
-
-            // When the agent emits, we open the PIN popup
-            function onShowConfirmation(passkey) {
-                pinPopup.contentItem.pinText = "Confirm passkey: " + passkey
-                pinPopup.open()
-            }
-
-            function onShowPinCode(pincode) {
-                pinPopup.contentItem.pinText = "Enter this PIN on your device: " + pincode
-                pinPopup.open()
-            }
-
-            function onPairingComplete() {
-                pinPopup.close()
-            }
-        }
-
 }
-
-
