@@ -57,9 +57,12 @@ namespace f1x::openauto::autoapp::service::inputsource {
     if (inputDevice_->hasTouchscreen()) {
       const auto &touchscreenSurface = inputDevice_->getTouchscreenGeometry();
       auto touchscreenConfig = inputChannel->add_touchscreen();
-
+      touchscreenConfig->set_type(aap_protobuf::service::inputsource::message::TouchScreenType::CAPACITIVE);
       touchscreenConfig->set_width(touchscreenSurface.width());
       touchscreenConfig->set_height(touchscreenSurface.height());
+      qInfo(lcServiceInput) << "[InputSourceService] Touchscreen Configured: " << touchscreenSurface.width();
+    } else {
+      qInfo(lcServiceInput) << "[InputSourceService] No Touchscreen Available";
     }
   }
 
