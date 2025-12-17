@@ -124,21 +124,25 @@ namespace f1x::openauto::autoapp::configuration {
   }
 
   bool Configuration::hasTouchScreen() const {
-    auto touchdevs = QInputDevice::devices();
+    // Return cached value if we already checked
+    if (hasTouchScreenCache_.has_value()) {
+      return hasTouchScreenCache_.value();
+    }
 
-    qInfo(lcConfig) << "[Configuration::hasTouchScreen] " << "Querying available touch devices ["
-                       << touchdevs.length() << " available]";
-
-    for (int i = 0; i < touchdevs.length(); i++) {
-      if (touchdevs[i]->type() == QInputDevice::DeviceType::TouchScreen) {
-        qInfo(lcConfig) << "[Configuration::hasTouchScreen] Device " << i << ": "
-                           << touchdevs[i]->name().toStdString();
-        return true;
+    // Actual Logic
+    const auto devices = QInputDevice::devices();
+    int touchCount = 0;
+    for (const auto &device : devices) {
+      if (device->type() == QInputDevice::DeviceType::TouchScreen) {
+        touchCount++;
       }
     }
-    return false;
 
+    // Only log THIS once
+    qInfo(lcConfig) << "Touchscreen check: Found" << touchCount << "devices.";
 
+    hasTouchScreenCache_ = (touchCount > 0);
+    return hasTouchScreenCache_.value();
   }
 
 }

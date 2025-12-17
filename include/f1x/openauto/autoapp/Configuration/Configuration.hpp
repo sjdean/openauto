@@ -15,5 +15,7 @@ namespace f1x::openauto::autoapp::configuration {
         static QString generateRandomString(size_t length);
 
         QSettings m_settings;
+
+        mutable std::optional<bool> hasTouchScreenCache_;
     };
 }
