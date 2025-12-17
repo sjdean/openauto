@@ -19,10 +19,10 @@ namespace f1x::openauto::autoapp::configuration {
   }
 
   void ConfigurationGroup::save(QSettings& settings) const {
-    fprintf(stderr, "Saving Grouo... %s\n", getName().toStdString().c_str());
+    qDebug(lcConfigGroup) << "Saving Group: " << getName();
     settings.beginGroup(m_name); // Use the group's name
     for (const auto& setting : m_configurationSettings) {
-      fprintf(stderr, "Saving Setting %s\n", setting.getName().toStdString().c_str());
+      qDebug(lcConfigGroup) << "Saving Setting: " << setting.getName();
       setting.save(settings);
     }
     settings.endGroup();
