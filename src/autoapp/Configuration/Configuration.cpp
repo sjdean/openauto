@@ -36,7 +36,7 @@ namespace f1x::openauto::autoapp::configuration {
     screenGroup.addSetting<int>("NightMin", 10);
     screenGroup.addSetting<int>("NightMax", 150);
     screenGroup.addSetting<int>("Brightness", 150);
-    screenGroup.addSetting<int>("DPI", 140);
+    screenGroup.addSetting<int>("DPI", 160);
     screenGroup.addSetting<bool>("UseClockDayNight", false);
     screenGroup.load(m_settings);
     m_configurationGroups.append(screenGroup);
