@@ -6,7 +6,6 @@
 #include <service/sensorsource/message/EvConnectorType.pb.h>
 #include <service/sensorsource/message/FuelType.pb.h>
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
-#include "f1x/openauto/Common/Enum/AudioOutputType.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 
 namespace f1x::openauto::autoapp::UI::ViewModel {
