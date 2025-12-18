@@ -1,3 +1,4 @@
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -9,7 +10,7 @@ Item {
     height: 480
 
     // -- THEME CONSTANTS --
-    readonly property color cTextMain:   "#2C3E50"
+    readonly property color cTextMain:   "#000000"
     readonly property color cTextDim:    "#7F8C8D"
     readonly property color cAccent:     "#2980B9"
     readonly property color cSurface:    "#FFFFFF"
@@ -32,7 +33,7 @@ Item {
         TabBar {
             id: tabBar
             width: parent.width
-            height: headerHeight
+            height: settingsView.headerHeight
             anchors.top: parent.top
             currentIndex: 0
 
@@ -85,13 +86,6 @@ Item {
 
             // --- TAB 0: VEHICLE ---
             SettingsPage {
-                background: Rectangle {
-                    color: Qt.rgba(255, 0, 255, 0.5)
-                }
-                // THESE TWO LINES FIX THE "MIDWAY" ISSUE
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
                 SectionHeader { text: "Car Configuration" }
                 SettingRow {
                     label: "Driving Position"
@@ -138,7 +132,6 @@ Item {
 
             // --- TAB 1: MEDIA ---
             SettingsPage {
-                Layout.fillWidth: true; Layout.fillHeight: true
                 SectionHeader { text: "Playback Behavior" }
                 ModernCheckBox {
                     checked: settingsViewHandler.mediaAutoPlayback
@@ -154,10 +147,9 @@ Item {
 
             // --- TAB 2: ANDROID AUTO ---
             SettingsPage {
-                Layout.fillWidth: true; Layout.fillHeight: true
                 SectionHeader { text: "Audio Channels" }
                 RowLayout {
-                    Layout.leftMargin: labelWidth + 20
+                    Layout.leftMargin: settingsView.labelWidth + 20
                     spacing: 30
                     ModernCheckBox { text: "Media"; checked: settingsViewHandler.aaChannelMedia; onToggled: settingsViewHandler.aaChannelMedia = checked }
                     ModernCheckBox { text: "Guidance"; checked: settingsViewHandler.aaChannelGuidance; onToggled: settingsViewHandler.aaChannelGuidance = checked }
@@ -195,7 +187,6 @@ Item {
 
             // --- TAB 3: AUDIO ---
             SettingsPage {
-                Layout.fillWidth: true; Layout.fillHeight: true
                 SectionHeader { text: "Output" }
                 SettingRow {
                     label: "Device"
@@ -230,7 +221,6 @@ Item {
 
             // --- TAB 4: VIDEO ---
             SettingsPage {
-                Layout.fillWidth: true; Layout.fillHeight: true
                 SectionHeader { text: "Screen" }
                 SettingRow {
                     label: "Rotate 180°"
@@ -247,7 +237,7 @@ Item {
         // ---------------------------------------------------------
         Rectangle {
             id: footerBar
-            height: footerHeight
+            height: settingsView.footerHeight
             width: parent.width
             anchors.bottom: parent.bottom
             color: "#D9FFFFFF"
@@ -313,24 +303,32 @@ Item {
 
     component SettingsPage : ScrollView {
         id: pageRoot
-        default property alias userContent: innerLayout.data
+        default property alias userContent: innerColumn.children
 
         clip: true
         anchors.fill: parent
-        // CRITICAL: Explicitly bind the contentHeight
-        contentHeight: innerLayout.height + (paddingOuter * 2)
 
-        ColumnLayout {
-            id: innerLayout
-            width: pageRoot.availableWidth - (paddingOuter * 2)
-            // Use anchors/margins instead of x/y for better height tracking
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: paddingOuter
-            spacing: 20
+        // No need to manually set contentHeight — Flickable does it automatically with Column
 
-            // This Spacer at the end ensures the last item has breathing room
-            Item { Layout.preferredHeight: paddingOuter }
+        Flickable {
+            id: flickable
+            contentWidth: innerColumn.width
+            contentHeight: innerColumn.height
+
+            Column {
+                id: innerColumn
+                width: flickable.availableWidth  // This uses the full available width correctly
+                leftPadding: settingsView.paddingOuter
+                rightPadding: settingsView.paddingOuter
+                topPadding: settingsView.paddingOuter
+                bottomPadding: settingsView.paddingOuter
+                spacing: 20
+
+                // Children (your SettingRow, SectionHeader, etc.) go here via default property
+            }
         }
+
+        ScrollBar.vertical: ScrollBar { }
     }
 
     component SectionHeader : Label {
@@ -340,42 +338,49 @@ Item {
         color: cTextMain
         Layout.topMargin: 10
         Layout.bottomMargin: 5
+        Layout.fillWidth: true
+
+        bottomPadding: 5
         Rectangle {
-            width: parent.width; height: 1; color: cBorder
-            anchors.bottom: parent.bottom; anchors.bottomMargin: -5
+            width: parent.width
+            height: 1
+            color: cBorder
+            anchors.bottom: parent.bottom
         }
     }
 
     component SettingRow : RowLayout {
-        property string label: "Setting"
+        id: rowRoot
+        property alias label: labelText.text
+        property alias labelItem: labelText
         property alias control: controlContainer.children
-
         spacing: 10
-        // Ensure the row takes full width of the ColumnLayout
         Layout.fillWidth: true
+        Layout.preferredHeight: settingsView.controlHeight
 
         Label {
-            text: label
+            id: labelText
+            text: rowRoot.label // Explicitly point to the property
             font.pixelSize: 15
             color: cTextMain
-            Layout.preferredWidth: labelWidth
+            Layout.preferredWidth: settingsView.labelWidth
             Layout.alignment: Qt.AlignVCenter
             elide: Text.ElideRight
+            height: 20
         }
 
         Item {
             id: controlContainer
-            Layout.fillWidth: true
-            // Instead of a fixed height, use a minimum to prevent cropping
-            Layout.preferredHeight: controlHeight
-            Layout.alignment: Qt.AlignVCenter
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: settingsView.controlHeight
+                    Layout.alignment: Qt.AlignVCenter
         }
     }
 
     component ModernComboBox : ComboBox {
         id: control
         Layout.fillWidth: true
-        Layout.preferredHeight: controlHeight
+        Layout.preferredHeight: settingsView.controlHeight
         textRole: "display"
 
         background: Rectangle {
@@ -427,7 +432,7 @@ Item {
 
     component ModernTextField : TextField {
         Layout.fillWidth: true
-        Layout.preferredHeight: controlHeight
+        Layout.preferredHeight: settingsView.controlHeight
         color: cTextMain
         font.pixelSize: 15
         background: Rectangle {
@@ -466,7 +471,7 @@ Item {
 
     component ModernSpinBox : SpinBox {
         id: rootSpin
-        Layout.preferredHeight: controlHeight
+        Layout.preferredHeight: settingsView.controlHeight
         font.pixelSize: 15
         background: Rectangle {
             implicitWidth: 140
