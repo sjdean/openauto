@@ -77,10 +77,11 @@ Item {
         // ---------------------------------------------------------
         StackLayout {
             id: contentStack
-            anchors.top: tabBar.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            currentIndex: tabBar.currentIndex
+                anchors.top: tabBar.bottom
+                anchors.bottom: footerBar.top // This is the crucial missing link
+                anchors.left: parent.left
+                anchors.right: parent.right
+                currentIndex: tabBar.currentIndex
 
             // --- TAB 0: VEHICLE ---
             SettingsPage {
@@ -315,14 +316,20 @@ Item {
         default property alias userContent: innerLayout.data
 
         clip: true
+        anchors.fill: parent
+        // CRITICAL: Explicitly bind the contentHeight
+        contentHeight: innerLayout.height + (paddingOuter * 2)
 
         ColumnLayout {
             id: innerLayout
             width: pageRoot.availableWidth - (paddingOuter * 2)
-            x: paddingOuter
+            // Use anchors/margins instead of x/y for better height tracking
+            anchors.horizontalCenter: parent.horizontalCenter
             y: paddingOuter
             spacing: 20
 
+            // This Spacer at the end ensures the last item has breathing room
+            Item { Layout.preferredHeight: paddingOuter }
         }
     }
 
@@ -343,17 +350,25 @@ Item {
         property string label: "Setting"
         property alias control: controlContainer.children
 
+        spacing: 10
+        // Ensure the row takes full width of the ColumnLayout
+        Layout.fillWidth: true
+
         Label {
             text: label
             font.pixelSize: 15
             color: cTextMain
             Layout.preferredWidth: labelWidth
             Layout.alignment: Qt.AlignVCenter
+            elide: Text.ElideRight
         }
+
         Item {
             id: controlContainer
             Layout.fillWidth: true
+            // Instead of a fixed height, use a minimum to prevent cropping
             Layout.preferredHeight: controlHeight
+            Layout.alignment: Qt.AlignVCenter
         }
     }
 
