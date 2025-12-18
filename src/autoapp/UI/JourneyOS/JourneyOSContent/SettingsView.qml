@@ -1,4 +1,3 @@
-
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -10,11 +9,12 @@ Item {
     height: 480
 
     // -- THEME CONSTANTS --
-    readonly property color cTextMain:   "#000000"
-    readonly property color cTextDim:    "#7F8C8D"
-    readonly property color cAccent:     "#2980B9"
-    readonly property color cSurface:    "#FFFFFF"
-    readonly property color cBorder:     "#BDC3C7"
+    readonly property color cTextMain: "#3a4856"
+    readonly property color cTextDim: "#9dadbc"
+    readonly property color cAccent: "#3a4856"
+    readonly property color cSurface: "#ebfbff"
+    readonly property color cBorder: "#3a4856"
+    readonly property color cBase: "#a3caed"
 
     readonly property int paddingOuter: 30
     readonly property int labelWidth: 280
@@ -24,7 +24,7 @@ Item {
 
     Rectangle {
         id: rootRect
-        color: Constants.settingsBackgroundColor
+        color: cBase
         anchors.fill: parent
 
         // ---------------------------------------------------------
@@ -43,11 +43,11 @@ Item {
 
             Repeater {
                 model: [
-                    { text: "Vehicle", icon: "images/fi-br-car-alt.svg" },
-                    { text: "Media",   icon: "images/fi-br-desktop-wallpaper.svg" },
-                    { text: "Auto",    icon: "images/android-auto.svg" },
-                    { text: "Audio",   icon: "images/fi-br-music-alt.svg" },
-                    { text: "Video",   icon: "images/fi-br-screen.svg" }
+                    {text: "Vehicle", icon: "images/fi-br-car-alt.svg"},
+                    {text: "Media", icon: "images/fi-br-desktop-wallpaper.svg"},
+                    {text: "Auto", icon: "images/android-auto.svg"},
+                    {text: "Audio", icon: "images/fi-br-music-alt.svg"},
+                    {text: "Video", icon: "images/fi-br-screen.svg"}
                 ]
                 TabButton {
                     id: tabBtn
@@ -68,7 +68,9 @@ Item {
                             Layout.alignment: Qt.AlignHCenter
                         }
                     }
-                    background: Rectangle { color: "transparent" }
+                    background: Rectangle {
+                        color: "transparent"
+                    }
                 }
             }
         }
@@ -78,15 +80,17 @@ Item {
         // ---------------------------------------------------------
         StackLayout {
             id: contentStack
-                anchors.top: tabBar.bottom
-                anchors.bottom: footerBar.top // This is the crucial missing link
-                anchors.left: parent.left
-                anchors.right: parent.right
-                currentIndex: tabBar.currentIndex
+            anchors.top: tabBar.bottom
+            anchors.bottom: footerBar.top // This is the crucial missing link
+            anchors.left: parent.left
+            anchors.right: parent.right
+            currentIndex: tabBar.currentIndex
 
             // --- TAB 0: VEHICLE ---
             SettingsPage {
-                SectionHeader { text: "Car Configuration" }
+                SectionHeader {
+                    text: "Car Configuration"
+                }
                 SettingRow {
                     label: "Driving Position"
                     control: ModernComboBox {
@@ -111,7 +115,9 @@ Item {
                         onActivated: settingsViewHandler.carEvConnectorType = model[currentIndex].value
                     }
                 }
-                SectionHeader { text: "Identification" }
+                SectionHeader {
+                    text: "Identification"
+                }
                 SettingRow {
                     label: "Car Make"
                     control: ModernTextField {
@@ -132,7 +138,9 @@ Item {
 
             // --- TAB 1: MEDIA ---
             SettingsPage {
-                SectionHeader { text: "Playback Behavior" }
+                SectionHeader {
+                    text: "Playback Behavior"
+                }
                 ModernCheckBox {
                     checked: settingsViewHandler.mediaAutoPlayback
                     onToggled: settingsViewHandler.mediaAutoPlayback = checked
@@ -147,16 +155,26 @@ Item {
 
             // --- TAB 2: ANDROID AUTO ---
             SettingsPage {
-                SectionHeader { text: "Audio Channels" }
+                SectionHeader {
+                    text: "Audio Channels"
+                }
                 RowLayout {
                     Layout.leftMargin: settingsView.labelWidth + 20
                     spacing: 30
-                    ModernCheckBox { text: "Media"; checked: settingsViewHandler.aaChannelMedia; onToggled: settingsViewHandler.aaChannelMedia = checked }
-                    ModernCheckBox { text: "Guidance"; checked: settingsViewHandler.aaChannelGuidance; onToggled: settingsViewHandler.aaChannelGuidance = checked }
-                    ModernCheckBox { text: "Telephony"; checked: settingsViewHandler.aaChannelTelephony; onToggled: settingsViewHandler.aaChannelTelephony = checked }
+                    ModernCheckBox {
+                        text: "Media"; checked: settingsViewHandler.aaChannelMedia; onToggled: settingsViewHandler.aaChannelMedia = checked
+                    }
+                    ModernCheckBox {
+                        text: "Guidance"; checked: settingsViewHandler.aaChannelGuidance; onToggled: settingsViewHandler.aaChannelGuidance = checked
+                    }
+                    ModernCheckBox {
+                        text: "Telephony"; checked: settingsViewHandler.aaChannelTelephony; onToggled: settingsViewHandler.aaChannelTelephony = checked
+                    }
                 }
 
-                SectionHeader { text: "Video Settings" }
+                SectionHeader {
+                    text: "Video Settings"
+                }
                 SettingRow {
                     label: "Frame Rate"
                     control: ModernComboBox {
@@ -174,20 +192,30 @@ Item {
                     }
                 }
 
-                SectionHeader { text: "Margins" }
+                SectionHeader {
+                    text: "Margins"
+                }
                 SettingRow {
                     label: "Video Margin (H/W)"
                     control: RowLayout {
                         spacing: 10
-                        ModernSpinBox { from: 0; to: 200; value: settingsViewHandler.videoMarginHeight; onValueModified: settingsViewHandler.videoMarginHeight = value }
-                        ModernSpinBox { from: 0; to: 200; value: settingsViewHandler.videoMarginWidth; onValueModified: settingsViewHandler.videoMarginWidth = value }
+                        ModernSpinBox {
+                            from: 0;
+                            to: 200; value: settingsViewHandler.videoMarginHeight; onValueModified: settingsViewHandler.videoMarginHeight = value
+                        }
+                        ModernSpinBox {
+                            from: 0;
+                            to: 200; value: settingsViewHandler.videoMarginWidth; onValueModified: settingsViewHandler.videoMarginWidth = value
+                        }
                     }
                 }
             }
 
             // --- TAB 3: AUDIO ---
             SettingsPage {
-                SectionHeader { text: "Output" }
+                SectionHeader {
+                    text: "Output"
+                }
                 SettingRow {
                     label: "Device"
                     control: ModernComboBox {
@@ -200,7 +228,8 @@ Item {
                     label: "Volume Limit"
                     control: RangeSlider {
                         Layout.fillWidth: true
-                        from: 0; to: 255
+                        from: 0;
+                        to: 255
                         first.value: settingsViewHandler.audioVolumePlaybackMin
                         second.value: settingsViewHandler.audioVolumePlaybackMax
                         first.onMoved: settingsViewHandler.audioVolumePlaybackMin = first.value
@@ -208,7 +237,9 @@ Item {
                     }
                 }
 
-                SectionHeader { text: "Input" }
+                SectionHeader {
+                    text: "Input"
+                }
                 SettingRow {
                     label: "Microphone"
                     control: ModernComboBox {
@@ -221,7 +252,9 @@ Item {
 
             // --- TAB 4: VIDEO ---
             SettingsPage {
-                SectionHeader { text: "Screen" }
+                SectionHeader {
+                    text: "Screen"
+                }
                 SettingRow {
                     label: "Rotate 180°"
                     control: Switch {
@@ -243,7 +276,9 @@ Item {
             color: "#D9FFFFFF"
             z: 10 // Ensure it stays on top of the ScrollView
 
-            Rectangle { width: parent.width; height: 1; color: "#E0E0E0"; anchors.top: parent.top }
+            Rectangle {
+                width: parent.width; height: 1; color: "#E0E0E0"; anchors.top: parent.top
+            }
 
             RowLayout {
                 anchors.fill: parent
@@ -270,7 +305,9 @@ Item {
                     onClicked: stackView.pop()
                 }
 
-                Item { Layout.fillWidth: true }
+                Item {
+                    Layout.fillWidth: true
+                }
 
                 Button {
                     text: "Save Changes"
@@ -328,7 +365,8 @@ Item {
             }
         }
 
-        ScrollBar.vertical: ScrollBar { }
+        ScrollBar.vertical: ScrollBar {
+        }
     }
 
     component SectionHeader : Label {
@@ -371,9 +409,9 @@ Item {
 
         Item {
             id: controlContainer
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: settingsView.controlHeight
-                    Layout.alignment: Qt.AlignVCenter
+            Layout.fillWidth: true
+            Layout.preferredHeight: settingsView.controlHeight
+            Layout.alignment: Qt.AlignVCenter
         }
     }
 
@@ -408,15 +446,20 @@ Item {
                 implicitHeight: contentHeight
                 model: control.delegateModel
                 currentIndex: control.highlightedIndex
-                ScrollIndicator.vertical: ScrollIndicator { }
+                ScrollIndicator.vertical: ScrollIndicator {
+                }
             }
-            background: Rectangle { color: cSurface; border.color: cBorder }
+            background: Rectangle {
+                color: cSurface; border.color: cBorder
+            }
         }
         delegate: ItemDelegate {
             width: control.width
             text: model.display
             highlighted: ListView.isCurrentItem
-            background: Rectangle { color: highlighted ? "#E0F7FA" : cSurface }
+            background: Rectangle {
+                color: highlighted ? "#E0F7FA" : cSurface
+            }
             contentItem: Text {
                 text: parent.text
                 color: highlighted ? cAccent : cTextMain
