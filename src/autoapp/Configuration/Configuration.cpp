@@ -83,6 +83,11 @@ namespace f1x::openauto::autoapp::configuration {
     bluetoothGroup.load(m_settings);
     m_configurationGroups.append(bluetoothGroup);
 
+    ConfigurationGroup systemGroup("System");
+    systemGroup.addSetting<bool>("HeadUnitMode", true);
+    systemGroup.load(m_settings);
+    m_configurationGroups.append(systemGroup);
+
     ConfigurationGroup wirelessGroup("Wireless");
     wirelessGroup.addSetting<bool>("Enabled", true);
     wirelessGroup.addSetting<QString>("HotspotSSID", "JourneyOS");

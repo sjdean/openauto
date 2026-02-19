@@ -42,16 +42,18 @@ Item {
             }
 
             Repeater {
+                id: tabRepeater
                 model: [
                     {text: "Vehicle", icon: "images/fi-br-car-alt.svg"},
                     {text: "Media", icon: "images/fi-br-desktop-wallpaper.svg"},
                     {text: "Auto", icon: "images/android-auto.svg"},
                     {text: "Audio", icon: "images/fi-br-music-alt.svg"},
-                    {text: "Video", icon: "images/fi-br-screen.svg"}
+                    {text: "Video", icon: "images/fi-br-screen.svg"},
+                    {text: "System", icon: "images/fi-br-settings.svg"}
                 ]
                 TabButton {
                     id: tabBtn
-                    width: Math.max(100, tabBar.width / 5)
+                    width: Math.max(80, tabBar.width / tabRepeater.count)
                     contentItem: ColumnLayout {
                         spacing: 5
                         Image {
@@ -216,7 +218,9 @@ Item {
                 SectionHeader {
                     text: "Output"
                 }
+                // Device selection only available in Head Unit mode
                 SettingRow {
+                    visible: settingsViewHandler.headUnitMode
                     label: "Device"
                     control: ModernComboBox {
                         model: pulseAudioDeviceModelOutput.comboBoxItems
@@ -224,11 +228,18 @@ Item {
                         onActivated: settingsViewHandler.audioPlaybackDevice = model[currentIndex].value
                     }
                 }
+                Label {
+                    visible: !settingsViewHandler.headUnitMode
+                    text: "Audio output device is managed by the operating system."
+                    font.pixelSize: 13
+                    color: cTextDim
+                    font.italic: true
+                }
                 SettingRow {
                     label: "Volume Limit"
                     control: RangeSlider {
                         Layout.fillWidth: true
-                        from: 0;
+                        from: 0
                         to: 255
                         first.value: settingsViewHandler.audioVolumePlaybackMin
                         second.value: settingsViewHandler.audioVolumePlaybackMax
@@ -241,12 +252,20 @@ Item {
                     text: "Input"
                 }
                 SettingRow {
+                    visible: settingsViewHandler.headUnitMode
                     label: "Microphone"
                     control: ModernComboBox {
                         model: pulseAudioDeviceModelInput.comboBoxItems
-                        currentIndex: findIndex(model, settingsViewHandler.audioCaptureDvice)
-                        onActivated: settingsViewHandler.audioCaptureDvice = model[currentIndex].value
+                        currentIndex: findIndex(model, settingsViewHandler.audioCaptureDevice)
+                        onActivated: settingsViewHandler.audioCaptureDevice = model[currentIndex].value
                     }
+                }
+                Label {
+                    visible: !settingsViewHandler.headUnitMode
+                    text: "Audio input device is managed by the operating system."
+                    font.pixelSize: 13
+                    color: cTextDim
+                    font.italic: true
                 }
             }
 
@@ -261,6 +280,57 @@ Item {
                         checked: settingsViewHandler.videoRotateDisplay
                         onToggled: settingsViewHandler.videoRotateDisplay = checked
                     }
+                }
+            }
+
+            // --- TAB 5: SYSTEM ---
+            SettingsPage {
+                SectionHeader {
+                    text: "Device Mode"
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 16
+
+                    Column {
+                        spacing: 4
+                        Layout.fillWidth: true
+
+                        Label {
+                            text: "Head Unit Mode"
+                            font.pixelSize: 15
+                            font.bold: true
+                            color: cTextMain
+                        }
+                        Label {
+                            text: settingsViewHandler.headUnitMode
+                                  ? "Full hardware control enabled — Bluetooth, Wi-Fi, and audio devices are managed by this application."
+                                  : "System-managed mode — hardware settings are controlled by the host operating system."
+                            font.pixelSize: 13
+                            color: cTextDim
+                            wrapMode: Text.WordWrap
+                            width: parent.width
+                        }
+                    }
+
+                    Switch {
+                        id: headUnitSwitch
+                        // On Linux this is freely toggleable; on Mac/Windows it is locked off.
+                        enabled: Qt.platform.os === "linux"
+                        checked: settingsViewHandler.headUnitMode
+                        onToggled: settingsViewHandler.headUnitMode = checked
+                    }
+                }
+
+                Label {
+                    visible: Qt.platform.os !== "linux"
+                    text: "Head Unit Mode is not available on this platform. Hardware settings are always managed by the operating system."
+                    font.pixelSize: 13
+                    color: cTextDim
+                    font.italic: true
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
                 }
             }
         }

@@ -99,10 +99,51 @@ Item {
         anchors.fill: parent
         color: Constants.primaryBackgroundColor
 
+        // ── System-managed status view (Mac/Windows/Linux Desktop) ───────────
+        Column {
+            anchors.centerIn: parent
+            spacing: 16
+            visible: !settingsViewHandler.headUnitMode
+
+            Rectangle {
+                width: 16
+                height: 16
+                radius: 8
+                anchors.horizontalCenter: parent.horizontalCenter
+                color: {
+                    var s = bluetoothHandler.bluetoothConnectionStatus
+                    if (s === BluetoothConnectionStatus.BC_CONNECTED)    return Constants.okColor
+                    if (s === BluetoothConnectionStatus.BC_CONNECTING)   return Constants.waitColor
+                    if (s === BluetoothConnectionStatus.BC_DISCONNECTED) return Constants.actionColor
+                    return Constants.badColor
+                }
+            }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Bluetooth — " + bluetoothHandler.statusText
+                color: "white"
+                font.pixelSize: 18
+                font.bold: true
+            }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Bluetooth is managed by the operating system.\nEnable Head Unit Mode in Settings › System to manage it here."
+                color: "lightgray"
+                font.pixelSize: 13
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                width: 500
+            }
+        }
+
+        // ── Full management view (Head Unit mode) ─────────────────────────────
         Column {
             anchors.fill: parent
             anchors.margins: 16
             spacing: 12
+            visible: settingsViewHandler.headUnitMode
 
             // ── Status row ────────────────────────────────────────────────────
             Row {

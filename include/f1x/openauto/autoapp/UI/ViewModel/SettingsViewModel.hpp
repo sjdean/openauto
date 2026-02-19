@@ -80,6 +80,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
       Q_PROPERTY(QString wirelessHotspotInterface READ getWirelessHotspotInterface WRITE setWirelessHotspotInterface NOTIFY wirelessHotspotInterfaceChanged)
 
     Q_PROPERTY(QString hwBluetoothAdapter READ getHwBluetoothAdapter WRITE setHwBluetoothAdapter NOTIFY hwBluetoothAdapterChanged)
+    Q_PROPERTY(bool headUnitMode READ isHeadUnitMode WRITE setHeadUnitMode NOTIFY headUnitModeChanged)
   public:
     explicit SettingsViewModel(configuration::IConfiguration::Pointer configuration,
                           QObject *parent = nullptr);
@@ -157,6 +158,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
       void wirelessHotspotInterfaceChanged();
 
     void hwBluetoothAdapterChanged();
+
+    void headUnitModeChanged();
 
   private:
     configuration::IConfiguration::Pointer configuration_;
@@ -353,6 +356,10 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     QString m_hwBluetoothAdapter;
     QString getHwBluetoothAdapter();
     void setHwBluetoothAdapter(QString value);
+
+    bool m_headUnitMode;
+    bool isHeadUnitMode() const;
+    void setHeadUnitMode(bool value);
 
   };
 }
