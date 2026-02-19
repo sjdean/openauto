@@ -32,6 +32,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             f1x::openauto::common::Enum::BluetoothConnectionStatus::Value bluetoothConnectionStatus READ
             getBluetoothConnectionStatus NOTIFY bluetoothConnnectionStatusChanged)
         Q_PROPERTY(QString statusText READ getStatusText NOTIFY bluetoothConnnectionStatusChanged)
+        Q_PROPERTY(bool isScanning READ isScanning NOTIFY isScanningChanged)
         // Agent property only valid on Linux, or return nullptr on Mac
         Q_PROPERTY(QObject* agent READ getAgent CONSTANT)
 
@@ -69,6 +70,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         QString getStatusText() const;
 
+        bool isScanning() const;
+
+        Q_INVOKABLE void ignoreDevice(const QString &address);
+
         QVariantList getPairedDeviceList();
 
         QVariantList getUnpairedDeviceList();
@@ -95,6 +100,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         void adapterCountChanged();
 
         void activeDeviceIndexChanged();
+
+        void isScanningChanged();
 
         void pairingPinConfirmation(const QString &pin, const QString &deviceAddress);
 
@@ -130,7 +137,11 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         int m_activeDeviceIndex = -1;
 
         int m_connectedDeviceCount = 0;
-        common::Enum::BluetoothConnectionStatus::Value m_bluetoothConnectionStatus;
+        common::Enum::BluetoothConnectionStatus::Value m_bluetoothConnectionStatus =
+            common::Enum::BluetoothConnectionStatus::BC_NOT_CONFIGURED;
+
+        bool m_isScanning = false;
+        QStringList m_ignoredDevices;
 
         std::unique_ptr<QBluetoothLocalDevice> localDevice_;
         QBluetoothDeviceDiscoveryAgent *discoveryAgent_;

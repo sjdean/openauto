@@ -6,6 +6,7 @@
 
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"
+#include <QTimer>
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcBtHandler, "journeyos.bluetooth")
 
@@ -22,56 +23,76 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     , m_manager("org.bluez", "/", "org.freedesktop.DBus.ObjectManager", QDBusConnection::systemBus())
 #endif
     {
-        // 1. Cross-Platform Hardware Init (Power/Visibility)
-        // This works on Mac AND Linux. No D-Bus needed.
-        localDevice_ = std::make_unique<QBluetoothLocalDevice>();
+        // 1. Restore saved adapter preference; fall back to system default
+        const QString savedAdapter = configuration_->getSettingByName<QString>("Bluetooth", "AdapterAddress");
+        if (!savedAdapter.isEmpty()) {
+            localDevice_ = std::make_unique<QBluetoothLocalDevice>(QBluetoothAddress(savedAdapter));
+            if (!localDevice_->isValid()) {
+                qWarning(lcBtHandler) << "Saved adapter" << savedAdapter << "not available, using default.";
+                localDevice_ = std::make_unique<QBluetoothLocalDevice>();
+            }
+        } else {
+            localDevice_ = std::make_unique<QBluetoothLocalDevice>();
+        }
+
         if (localDevice_->isValid()) {
             localDevice_->powerOn();
             localDevice_->setHostMode(QBluetoothLocalDevice::HostDiscoverable);
-
-            // Listen for pairing completion (Qt handles the handshake)
             connect(localDevice_.get(), &QBluetoothLocalDevice::pairingFinished,
                     this, &BluetoothHandler::onPairingFinished);
-
-            qInfo(lcBtHandler) << "System Bluetooth Initialized. Address: "
-                    << localDevice_->address().toString().toStdString();
+            qInfo(lcBtHandler) << "Bluetooth adapter ready:" << localDevice_->address().toString();
         } else {
-            qCritical(lcBtHandler) << "Bluetooth Adapter is not valid.";
+            qCritical(lcBtHandler) << "No valid Bluetooth adapter found.";
         }
 
-        // 2. Cross-Platform Scanning (Replaces manual D-Bus scanning)
+        // 2. Load ignored-device list from config
+        const QString ignored = configuration_->getSettingByName<QString>("Bluetooth", "IgnoredDevices");
+        if (!ignored.isEmpty())
+            m_ignoredDevices = ignored.split(',', Qt::SkipEmptyParts);
+
+        // 3. Cross-platform scanning
         discoveryAgent_ = new QBluetoothDeviceDiscoveryAgent(this);
         discoveryAgent_->setLowEnergyDiscoveryTimeout(5000);
-
         connect(discoveryAgent_, &QBluetoothDeviceDiscoveryAgent::deviceDiscovered,
                 this, &BluetoothHandler::onDeviceDiscovered);
         connect(discoveryAgent_, &QBluetoothDeviceDiscoveryAgent::finished,
                 this, &BluetoothHandler::onScanFinished);
 
-        // 3. LINUX AGENT (Strictly for Linux Pairing Popups)
+        // 4. Linux BlueZ pairing agent
 #ifdef Q_OS_LINUX
-        qInfo(lcBtHandler) << "Registering Custom BlueZ Agent...";
+        qInfo(lcBtHandler) << "Registering BlueZ pairing agent...";
         m_agent = new BluetoothAgent("/uk/co/cubeone/journeyos/agent", this);
-
         QDBusInterface agentManager("org.bluez", "/org/bluez", "org.bluez.AgentManager1", QDBusConnection::systemBus());
         if (agentManager.isValid()) {
             agentManager.call("RegisterAgent", QVariant::fromValue(QDBusObjectPath(m_agent->objectPath())),
                               "DisplayYesNo");
             agentManager.call("RequestDefaultAgent", QVariant::fromValue(QDBusObjectPath(m_agent->objectPath())));
         }
-
-        // Connect Agent signals to this Handler
-        connect(m_agent, &BluetoothAgent::pinConfirmationRequested,
+        connect(m_agent, &BluetoothAgent::pairingComplete,
                 this, &BluetoothHandler::onAgentPinRequested);
 #endif
+
+        // 5. Auto-connect to last known device after the BT stack settles
+        const QString lastDevice = configuration_->getSettingByName<QString>("Bluetooth", "PairedDeviceAddress");
+        if (!lastDevice.isEmpty()) {
+            QTimer::singleShot(3000, this, [this, lastDevice]() {
+                qInfo(lcBtHandler) << "Auto-connecting to last device:" << lastDevice;
+                doConnectToPairedDevice(lastDevice);
+            });
+        }
     }
 
     void BluetoothHandler::startScan() {
         qInfo(lcBtHandler) << "Starting Bluetooth Scan...";
-        m_devices.clear(); // Clear internal list
-        Q_EMIT unpairedDeviceListChanged(); // Notify UI to clear list
-
+        m_devices.clear();
+        Q_EMIT unpairedDeviceListChanged();
+        m_isScanning = true;
+        Q_EMIT isScanningChanged();
         discoveryAgent_->start();
+    }
+
+    bool BluetoothHandler::isScanning() const {
+        return m_isScanning;
     }
 
     void BluetoothHandler::pair(const QString &address) {
@@ -113,7 +134,9 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     }
 
     void BluetoothHandler::onScanFinished() {
-        qInfo(lcBtHandler) << "Scan Finished. Found " << m_devices.size() << " devices.";
+        qInfo(lcBtHandler) << "Scan finished. Found" << m_devices.size() << "devices.";
+        m_isScanning = false;
+        Q_EMIT isScanningChanged();
     }
 
     void BluetoothHandler::onPairingFinished(const QBluetoothAddress &address, QBluetoothLocalDevice::Pairing pairing) {
@@ -260,24 +283,27 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     }
 
     bool BluetoothHandler::doConnectToPairedDevice(const QString &address) {
+        setBluetoothConnectionStatus(common::Enum::BluetoothConnectionStatus::BC_CONNECTING);
+
         auto it = std::find_if(m_devices.begin(), m_devices.end(),
                                [&address](const Model::BluetoothDevice &d) { return d.address == address; });
 
-        if (it != m_devices.end()) {
-            return doConnectToPairedDevice(*it);
+        Model::BluetoothDevice device = (it != m_devices.end())
+            ? *it
+            : Model::BluetoothDevice(address, "Known Device", QDBusObjectPath(""), true, false);
+
+        const bool success = doConnectToPairedDevice(device);
+
+        if (success) {
+            if (it != m_devices.end())
+                it->connected = true;
+            setBluetoothConnectionStatus(common::Enum::BluetoothConnectionStatus::BC_CONNECTED);
+            Q_EMIT pairedDeviceListChanged();
+        } else {
+            setBluetoothConnectionStatus(common::Enum::BluetoothConnectionStatus::BC_DISCONNECTED);
         }
 
-        // If device not found in scan list, try to connect anyway using address
-#ifdef Q_OS_LINUX
-        QDBusObjectPath dummyPath; // Can't easily construct path without scan
-        Model::BluetoothDevice dummy(address, "Unknown", dummyPath, false, false);
-        return doConnectToPairedDevice(dummy);
-#else
-        // Mac just needs address
-        QDBusObjectPath dummyPath;
-        Model::BluetoothDevice dummy(address, "Unknown", dummyPath, false, false);
-        return doConnectToPairedDevice(dummy);
-#endif
+        return success;
     }
 
     /**
@@ -372,6 +398,16 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         Q_EMIT bluetoothConnnectionStatusChanged();
     }
 
+    void BluetoothHandler::ignoreDevice(const QString &address) {
+        if (m_ignoredDevices.contains(address))
+            return;
+        m_ignoredDevices.append(address);
+        configuration_->updateSettingByName("Bluetooth", "IgnoredDevices", m_ignoredDevices.join(','));
+        configuration_->save();
+        Q_EMIT unpairedDeviceListChanged();
+        qInfo(lcBtHandler) << "Device ignored:" << address;
+    }
+
     QString BluetoothHandler::getStatusText() const {
         switch (m_bluetoothConnectionStatus) {
             case common::Enum::BluetoothConnectionStatus::BC_CONNECTED:    return QStringLiteral("Connected");
@@ -399,7 +435,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     QVariantList BluetoothHandler::getUnpairedDeviceList() {
         QVariantList model;
         for (const auto &device: m_devices) {
-            if (!device.paired) {
+            if (!device.paired && !m_ignoredDevices.contains(device.address)) {
                 QVariantMap deviceMap;
                 deviceMap.insert("name", device.name);
                 deviceMap.insert("address", device.address);
@@ -453,46 +489,43 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                     this, &BluetoothHandler::onPairingFinished);
 
             // Save preference
-            configuration_->updateSettingByName("Bluetooth", "ActiveAdapter", address);
+            configuration_->updateSettingByName("Bluetooth", "AdapterAddress", address);
             configuration_->save();
         }
     }
 
     void BluetoothHandler::doDisconnect(const QString &address) {
-        qInfo(lcBtHandler) << "Requesting Disconnect for device:" << address;
+        qInfo(lcBtHandler) << "Requesting disconnect for device:" << address;
 
 #ifdef Q_OS_LINUX
         QString pathStr;
 
-        // 1. Try to find the device path in our cached model
         auto it = std::find_if(m_devices.begin(), m_devices.end(),
                                [&address](const Model::BluetoothDevice &d) { return d.address == address; });
 
-        if (it != m_devices.end()) {
+        if (it != m_devices.end())
             pathStr = it->path.path();
-        }
 
-        // 2. If path is missing or empty, construct it manually (Standard BlueZ format)
-        // Format: /org/bluez/hci0/dev_XX_XX_XX_XX_XX_XX
         if (pathStr.isEmpty() || pathStr == "/") {
             QString cleanAddress = address;
             cleanAddress.replace(":", "_");
-
-            // Use our helper to get the adapter path (e.g., /org/bluez/hci0)
-            QString adapterPath = getBluezAdapterPath();
-            pathStr = adapterPath + "/dev_" + cleanAddress;
+            pathStr = getBluezAdapterPath() + "/dev_" + cleanAddress;
         }
 
-        qInfo(lcBtHandler) << "Sending DBus Disconnect to:" << pathStr;
-
-        // 3. Call BlueZ API
+        qInfo(lcBtHandler) << "Sending D-Bus Disconnect to:" << pathStr;
         QDBusInterface deviceInterface("org.bluez", pathStr, "org.bluez.Device1", QDBusConnection::systemBus());
         deviceInterface.call(QDBus::NoBlock, "Disconnect");
-
 #else
-        // macOS/Windows: Qt Bluetooth API does not allow forcing a disconnect
-        // of a system-level pairing from the app side easily.
-        qInfo(lcBtHandler) << "Manual disconnect not supported on this platform via Qt API.";
+        qInfo(lcBtHandler) << "Manual disconnect not directly supported on this platform.";
 #endif
+
+        // Update local state regardless of platform
+        auto it2 = std::find_if(m_devices.begin(), m_devices.end(),
+                                [&address](const Model::BluetoothDevice &d) { return d.address == address; });
+        if (it2 != m_devices.end())
+            it2->connected = false;
+
+        setBluetoothConnectionStatus(common::Enum::BluetoothConnectionStatus::BC_DISCONNECTED);
+        Q_EMIT pairedDeviceListChanged();
     }
 }

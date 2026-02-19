@@ -87,7 +87,7 @@ void BluetoothAgent::reject() {
 // --- Private Helper ---
 
 void BluetoothAgent::replyToMessage(bool confirmed) {
-    if (!m_pendingMessage.service().isEmpty()) {
+    if (m_pendingMessage.service().isEmpty()) {
         qWarning(lcBtAgent) << "No pending message to reply to!";
         return;
     }

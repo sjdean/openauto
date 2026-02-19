@@ -79,6 +79,7 @@ namespace f1x::openauto::autoapp::configuration {
     bluetoothGroup.addSetting<bool>("Enabled", true);
     bluetoothGroup.addSetting<QString>("AdapterAddress", "");
     bluetoothGroup.addSetting<QString>("PairedDeviceAddress", "");
+    bluetoothGroup.addSetting<QString>("IgnoredDevices", "");
     bluetoothGroup.load(m_settings);
     m_configurationGroups.append(bluetoothGroup);
 

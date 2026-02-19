@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import JourneyOS
+import AndroidAutoMonitor
 
 Item {
     id: root
@@ -8,267 +9,305 @@ Item {
     height: 480
 
     signal close
-/*
-    property string bluetoothButtonText:
-        bluetoothMonitor.bluetoothStatus = BluetoothConnectionStatus.BC_NOT_CONFIGURED ? "Pair" :
-        bluetoothMonitor.bluetoothStatus = BluetoothConnectionStatus.BC_DISCONNECTED ? "Connect" :
-        bluetoothMonitor.bluetoothStatus = BluetoothConnectionStatus.BC_CONNECTING ? "Cancel" :
-        "Disconnect"
-*/
-    
-    /*
-      
-      Add a Connect/Disconnect button to the device on selected
-      Add a button underneath to pair which will go to BluetoothRemoteDevices
-      
-    */
 
-    // We use Column, not ColumnLayout
+    // ── PIN / Passkey confirmation overlay (Linux only, safe no-op on macOS) ──
+    Rectangle {
+        id: pinOverlay
+        anchors.fill: parent
+        color: "#CC000000"
+        z: 20
+        visible: false
+
+        property string promptText: ""
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 20
+
+            Rectangle {
+                width: 420
+                height: 180
+                radius: 10
+                color: Constants.primaryBackgroundColor
+                border.color: Constants.waitColor
+                border.width: 2
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 16
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: pinOverlay.promptText
+                        color: "white"
+                        font.pixelSize: 18
+                        wrapMode: Text.WordWrap
+                        width: 380
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    Row {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 20
+
+                        JourneyButton {
+                            text: "Accept"
+                            onClicked: {
+                                if (bluetoothHandler.agent)
+                                    bluetoothHandler.agent.accept()
+                                pinOverlay.visible = false
+                            }
+                        }
+
+                        JourneyButton {
+                            text: "Decline"
+                            onClicked: {
+                                if (bluetoothHandler.agent)
+                                    bluetoothHandler.agent.reject()
+                                pinOverlay.visible = false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Wire agent signals — Connections with a null target is safe in Qt6
+    Connections {
+        target: bluetoothHandler.agent
+        ignoreUnknownSignals: true
+
+        function onShowConfirmation(passkey) {
+            pinOverlay.promptText = "Confirm passkey on both devices:\n" + passkey
+            pinOverlay.visible = true
+        }
+
+        function onShowPinCode(pin) {
+            pinOverlay.promptText = "Enter this PIN on the device:\n" + pin
+            pinOverlay.visible = true
+        }
+
+        function onPairingComplete() {
+            pinOverlay.visible = false
+        }
+    }
+
+    // ── Background ────────────────────────────────────────────────────────────
+    Rectangle {
+        anchors.fill: parent
+        color: Constants.primaryBackgroundColor
+
         Column {
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 10 // 'spacing' works for Column/Row
+            anchors.margins: 16
+            spacing: 12
 
-            // --- 1. ADAPTER SELECTION ---
-            Text { text: "Select Adapter" }
-            ComboBox {
-                id: adapterCombo
-                width: parent.width // Manually set width
-                model: bluetoothViewModel.bluetoothAdapterList
-                textRole: "name" // From your Model::BluetoothAdapter struct
+            // ── Status row ────────────────────────────────────────────────────
+            Row {
+                width: parent.width
+                spacing: 10
 
-                onCurrentIndexChanged: {
-                    // TODO: Add Q_INVOKABLE to C++ to set active adapter
-                    // bluetoothViewModel.setActiveAdapter(currentIndex)
+                Text {
+                    text: "Bluetooth"
+                    color: "white"
+                    font.pixelSize: 20
+                    font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                // Coloured status dot
+                Rectangle {
+                    width: 10
+                    height: 10
+                    radius: 5
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: {
+                        var s = bluetoothHandler.bluetoothConnectionStatus
+                        if (s === BluetoothConnectionStatus.BC_CONNECTED)   return Constants.okColor
+                        if (s === BluetoothConnectionStatus.BC_CONNECTING)  return Constants.waitColor
+                        if (s === BluetoothConnectionStatus.BC_DISCONNECTED) return Constants.actionColor
+                        return Constants.badColor
+                    }
+                }
+
+                Text {
+                    text: bluetoothHandler.statusText
+                    color: "lightgray"
+                    font.pixelSize: 14
+                    anchors.verticalCenter: parent.verticalCenter
                 }
             }
 
-            // --- 2. PAIRED DEVICES LIST ---
-            Text { text: "Paired Devices" }
-            ListView {
-                id: pairedListView
+            // ── Adapter selection (only shown when multiple adapters exist) ───
+            Row {
                 width: parent.width
-                height: 150 // Give it a fixed height
-                clip: true // Important for scrolling
+                spacing: 10
+                visible: bluetoothHandler.adapterCount > 1
 
-                model: bluetoothViewModel.pairedDeviceList
+                Text {
+                    text: "Adapter:"
+                    color: "lightgray"
+                    font.pixelSize: 13
+                    anchors.verticalCenter: parent.verticalCenter
+                }
 
-                delegate: ItemDelegate {
-                    width: parent.width
+                ComboBox {
+                    id: adapterCombo
+                    width: parent.width - 80
+                    property var adapterList: bluetoothHandler.bluetoothAdapterList
+                    model: adapterList
+                    textRole: "name"
+                    onCurrentIndexChanged: {
+                        if (currentIndex >= 0 && currentIndex < adapterList.length)
+                            bluetoothHandler.setActiveAdapter(adapterList[currentIndex].address)
+                    }
+                }
+            }
 
-                    Row { // Use Row, not RowLayout
-                        width: parent.width
-                        spacing: 5
+            // ── Paired devices ────────────────────────────────────────────────
+            Text {
+                text: "Paired Devices"
+                color: "lightgray"
+                font.pixelSize: 13
+                font.bold: true
+            }
 
-                        Text { text: model.name }
-                        Text { text: "(" + model.address + ")" }
-                        Item { width: 10; height: 1 } // Manual spacer
+            ListView {
+                id: pairedList
+                width: parent.width
+                height: 150
+                clip: true
+                model: bluetoothHandler.pairedDeviceList
+
+                delegate: Rectangle {
+                    width: pairedList.width
+                    height: 48
+                    color: "transparent"
+
+                    // Device name + connected indicator
+                    Row {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 8
+
                         Text {
-                            text: model.connected ? "Connected" : ""
-                            color: Constants.okColor
+                            text: model.name || model.address
+                            color: "white"
+                            font.pixelSize: 14
+                            anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        // --- Buttons ---
+                        Text {
+                            visible: model.connected
+                            text: "(Connected)"
+                            color: Constants.okColor
+                            font.pixelSize: 12
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    // Action buttons
+                    Row {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 8
+
                         JourneyButton {
                             text: model.connected ? "Disconnect" : "Connect"
                             onClicked: {
-                                if (model.connected) {
-                                    // TODO: Add Q_INVOKABLE for disconnect
-                                    // bluetoothViewModel.doDisconnect(model.address)
-                                } else {
-                                    bluetoothViewModel.doConnectToPairedDevice(model.address)
-                                }
+                                if (model.connected)
+                                    bluetoothHandler.doDisconnect(model.address)
+                                else
+                                    bluetoothHandler.doConnectToPairedDevice(model.address)
                             }
                         }
 
                         JourneyButton {
                             text: "Forget"
-                            onClicked: {
-                                bluetoothViewModel.doRemovePair(model.address)
-                            }
+                            onClicked: bluetoothHandler.doRemovePair(model.address)
                         }
                     }
                 }
-            }
 
-            // --- 3. SCANNING ---
-            JourneyButton {
-                text: "Scan for New Devices"
-                width: parent.width
-                onClicked: {
-                    bluetoothViewModel.doScanDevicesForPairing()
+                // Empty state
+                Text {
+                    visible: pairedList.count === 0
+                    anchors.centerIn: parent
+                    text: "No paired devices"
+                    color: "gray"
+                    font.pixelSize: 13
                 }
             }
 
-            // --- 4. SCANNED DEVICES LIST ---
-            Text { text: "Found Devices" }
-            ListView {
-                id: scannedListView
+            // ── Scan controls ─────────────────────────────────────────────────
+            Row {
                 width: parent.width
-                height: 150 // Give it a fixed height
-                clip: true
+                spacing: 12
 
-                model: bluetoothViewModel.unpairedDeviceList
+                JourneyButton {
+                    text: bluetoothHandler.isScanning ? "Scanning…" : "Scan for Devices"
+                    enabled: !bluetoothHandler.isScanning
+                    onClicked: bluetoothHandler.startScan()
+                }
 
-                delegate: ItemDelegate {
-                    width: parent.width
-                    Row { // Use Row
-                        width: parent.width
-                        spacing: 10
-
-                        Text { text: model.name }
-                        Item { width: 20; height: 1 } // Manual spacer
-
-                        JourneyButton {
-                            text: "Pair"
-                            onClicked: {
-                                bluetoothViewModel.doConnectToPairedDevice(model.address)
-                            }
-                        }
-                    }
+                Text {
+                    visible: bluetoothHandler.isScanning
+                    text: "Searching for devices…"
+                    color: Constants.waitColor
+                    font.pixelSize: 13
+                    anchors.verticalCenter: parent.verticalCenter
                 }
             }
-        }
 
-    /*
-    Rectangle {
-        color: Constants.settingsPopupBackgroundColor
-        anchors.fill: parent
-        Column {
-            spacing: 10
-            padding: 10
-            
+            // ── Available / scanned devices ───────────────────────────────────
             Text {
-                text: "Paired Devices";
-                font.family: "Verdana"
-                font.pointSize: 20
+                visible: availableList.count > 0 || bluetoothHandler.isScanning
+                text: "Available Devices"
+                color: "lightgray"
+                font.pixelSize: 13
                 font.bold: true
             }
 
-            Row {
-                id: knownDeviceList
-                spacing: 10
-                padding: 10
+            ListView {
+                id: availableList
+                width: parent.width
+                height: 120
+                clip: true
+                visible: count > 0
+                model: bluetoothHandler.unpairedDeviceList
 
-                ListView {
-                    id: knownDeviceListView
-                    width: 160
-                    height: 80
-                    highlightRangeMode: ListView.NoHighlightRange
-                    // TODO: Replace ListModel with Items
-                    model: ListModel {
-                        ListElement {
-                            name: "Red"
-                            colorCode: "red"
+                delegate: Rectangle {
+                    width: availableList.width
+                    height: 44
+                    color: "transparent"
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: model.name || model.address
+                        color: "white"
+                        font.pixelSize: 14
+                    }
+
+                    Row {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 8
+
+                        JourneyButton {
+                            text: "Pair"
+                            onClicked: bluetoothHandler.pair(model.address)
                         }
 
-                        ListElement {
-                            name: "Green"
-                            colorCode: "green"
-                        }
-
-                        ListElement {
-                            name: "Blue"
-                            colorCode: "blue"
-                        }
-
-                        ListElement {
-                            name: "White"
-                            colorCode: "white"
+                        JourneyButton {
+                            text: "Ignore"
+                            onClicked: bluetoothHandler.ignoreDevice(model.address)
                         }
                     }
-                    delegate: ItemDelegate {
-
-                            width: knownDeviceListView.width - 12
-                            height: 30  // match the height of the text in your original setup
-
-                            text: name
-                            font.pointSize: 15
-                            font.family: "Verdana"
-
-                            // Custom background for each item
-                            background: Rectangle {
-                                        color: highlighted ? "lightsteelblue" : "transparent"
-                                        radius: 5
-                                    }
-
-                            // Highlight when selected
-                            highlighted: ListView.isCurrentItem
-                            onClicked: knownDeviceListView.currentIndex = index  // To highlight the clicked item
-                        }
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AlwaysOn   // or ScrollBar.AsNeeded for showing only when necessary
-                        // Customizing the scrollbar appearance
-                        contentItem: Rectangle {
-                            implicitWidth: 6
-                            implicitHeight: 100
-                            radius: width / 2
-                            color: "darkgray"
-                        }
-                    }
-                }
-
-                JourneyButton {
-                    id: connectButton
-                    text: root.bluetoothButtonText
-                    anchors.verticalCenter: parent.verticalCenter
-                    icon.source: "images/fi-br-link.svg"
-                    iconSize: 24
-                    enabled: knownDeviceListView.currentIndex !== -1
                 }
             }
-            
-            Row {
-                id: bluetoothStatusRow
-                spacing: 10
-                padding: 10
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 10
-                    width: 160
-                    
-                    Text {
-                        text: "Unpaired"
-                        font.pointSize: 11
-                        font.family: "Verdana"
-                        font.bold: true
-                        color: Constants.badColor
-                        visible: bluetoothMonitor.bluetoothStatus = BluetoothConnectionStatus.BC_NOT_CONFIGURED
-                    }
-                    Text {
-                        text: "Paired (N/C)"
-                        font.bold: true
-                        font.pointSize: 11
-                        font.family: "Verdana"
-                        color: Constants.waitColor
-                        visible: bluetoothMonitor.bluetoothStatus = BluetoothConnectionStatus.BC_DISCONNECTED
-                    }
-                    Text {
-                        text: "Connecting..."
-                        font.bold: true
-                        font.pointSize: 11
-                        font.family: "Verdana"
-                        color: Constants.actionColor
-                        visible: bluetoothMonitor.bluetoothStatus = BluetoothConnectionStatus.BC_CONNECTING
-                    }
-                    Text {
-                        text: "Connected"
-                        font.bold: true
-                        font.pointSize: 11
-                        font.family: "Verdana"
-                        color: Constants.okColor
-                        visible: bluetoothMonitor.bluetoothStatus = BluetoothConnectionStatus.BC_CONNECTED
-                    }
-                }
-                JourneyButton {
-                    id: journeyButton
-                    text: root.bluetoothButtonText
-                    anchors.verticalCenter: parent.verticalCenter
-                    icon.source: "images/fi-br-link.svg"
-                    iconSize: 24
-                }
-            }            
         }
     }
-*/
 }
