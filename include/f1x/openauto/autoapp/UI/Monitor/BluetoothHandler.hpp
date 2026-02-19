@@ -31,6 +31,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         Q_PROPERTY(
             f1x::openauto::common::Enum::BluetoothConnectionStatus::Value bluetoothConnectionStatus READ
             getBluetoothConnectionStatus NOTIFY bluetoothConnnectionStatusChanged)
+        Q_PROPERTY(QString statusText READ getStatusText NOTIFY bluetoothConnnectionStatusChanged)
         // Agent property only valid on Linux, or return nullptr on Mac
         Q_PROPERTY(QObject* agent READ getAgent CONSTANT)
 
@@ -41,11 +42,14 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         // Public Q_INVOKABLEs (Called by UI)
         Q_INVOKABLE QString getAdapterAddress() const;
 
+        Q_INVOKABLE void setActiveAdapter(const QString &address);
+
         Q_INVOKABLE void startScan();
 
         Q_INVOKABLE void pair(const QString &address);
 
         Q_INVOKABLE bool doConnectToPairedDevice(const QString &address);
+        Q_INVOKABLE void doDisconnect(const QString &address);
 
         Q_INVOKABLE bool doRemovePair(const QString &address);
 
@@ -62,6 +66,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         common::Enum::BluetoothConnectionStatus::Value getBluetoothConnectionStatus() const;
 
         void setBluetoothConnectionStatus(common::Enum::BluetoothConnectionStatus::Value value);
+
+        QString getStatusText() const;
 
         QVariantList getPairedDeviceList();
 
@@ -89,6 +95,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         void adapterCountChanged();
 
         void activeDeviceIndexChanged();
+
+        void pairingPinConfirmation(const QString &pin, const QString &deviceAddress);
 
     private slots:
         void onDeviceDiscovered(const QBluetoothDeviceInfo &info);
