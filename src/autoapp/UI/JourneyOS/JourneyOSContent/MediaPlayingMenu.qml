@@ -12,11 +12,24 @@ import JourneyOS
 
 Item {
     id: mediaPlayingMenu
-    width: Constants.width
-    height: Constants.height
+    width: parent ? parent.width : Constants.width
+    height: parent ? parent.height : Constants.height
+    property bool showSettings: true;
+    property bool hasRadio: false;
+    property bool hasNavigation: false;
+    property bool hasUSB: false;
+    property bool hasOBD: false;
+    property bool showPower: true;
+    property bool hasAndroidAuto: false;
 
-    signal viewSettings
-
+    signal viewSettings()
+    signal viewAndroidAuto()
+    signal viewPower()
+    signal viewOBD()
+    signal viewNavigation()
+    signal viewUSB()
+    signal viewRadio()
+    signal viewBluetooth()
 
     Column {
         id: leftColumn
@@ -28,8 +41,8 @@ Item {
         anchors.topMargin: 0
         anchors.bottomMargin: 0
         padding: 10
-        clip: true
         spacing: 10
+        clip: true
 
         JourneyButton {
             id: settingsButton
@@ -37,10 +50,25 @@ Item {
             iconSize: 36
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: "images/gears.svg"
+            visible: mediaPlayingMenu.showSettings
 
             Connections {
                 target: settingsButton
                 onClicked: mediaPlayingMenu.viewSettings()
+            }
+        }
+
+        JourneyButton {
+            id: androidAutoButton
+            text: "Android Auto"
+            iconSize: 36
+            anchors.horizontalCenter: parent.horizontalCenter
+            icon.source: "images/gears.svg"
+            visible: mediaPlayingMenu.hasAndroidAuto
+
+            Connections {
+                target: androidAutoButton
+                onClicked: mediaPlayingMenu.viewAndroidAuto()
             }
         }
 
@@ -50,9 +78,10 @@ Item {
             text: "Radio"
             iconSize: 36
             anchors.horizontalCenter: parent.horizontalCenter
+            visible: mediaPlayingMenu.hasRadio
             Connections {
                 target: radioButton
-                onClicked: console.log("clicked")
+                onClicked: mediaPlayingMenu.viewRadio()
             }
         }
 
@@ -62,9 +91,10 @@ Item {
             iconSize: 36
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: "images/map-marker.svg"
+            visible: mediaPlayingMenu.hasNavigation
             Connections {
                 target: navigationButton
-                onClicked: console.log("clicked")
+                onClicked: mediaPlayingMenu.viewNavigation()
             }
         }
 
@@ -74,9 +104,10 @@ Item {
             iconSize: 36
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: "images/usb-pendrive.svg"
+            visible: mediaPlayingMenu.hasUSB
             Connections {
                 target: usbButton
-                onClicked: console.log("clicked")
+                onClicked: mediaPlayingMenu.viewUSB()
             }
         }
     }
@@ -100,9 +131,10 @@ Item {
             iconSize: 36
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: "images/chart-tree.svg"
+            visible: mediaPlayingMenu.hasOBD
             Connections {
                 target: obdButton
-                onClicked: console.log("clicked")
+                onClicked: mediaPlayingMenu.viewOBD()
             }
         }
 
@@ -112,12 +144,11 @@ Item {
             iconSize: 36
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: "images/power.svg"
+            visible: mediaPlayingMenu.showPower
             Connections {
                 target: powerButton
-                onClicked: console.log("clicked")
+                onClicked: mediaPlayingMenu.viewPower()
             }
         }
-
     }
-
 }

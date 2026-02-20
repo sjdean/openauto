@@ -12,11 +12,26 @@ import JourneyOS
 
 Item {
     id: mediaNotPlayingMenu
-    width: Constants.width
-    height: Constants.height
+    width: parent ? parent.width : Constants.width
+    height: parent ? parent.height : Constants.height
 
-    signal viewSettings
+    property bool showSettings: true;
+    property bool hasRadio: false;
+    property bool hasNavigation: false;
+    property bool hasBluetooth: false;
+    property bool hasUSB: false;
+    property bool hasOBD: false;
+    property bool showPower: true;
+    property bool hasAndroidAuto: false;
 
+    signal viewSettings()
+    signal viewAndroidAuto()
+    signal viewPower()
+    signal viewOBD()
+    signal viewNavigation()
+    signal viewUSB()
+    signal viewRadio()
+    signal viewBluetooth()
 
     Rectangle {
         anchors.fill: parent
@@ -24,25 +39,95 @@ Item {
     }
 
     Rectangle {
-        width: 800-200
-        height: 480 - 200
+        width: parent.width - 200
+        height: parent.height - 200
         color: "#00000000"
 
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
 
-
         Grid {
             id: menuGrid
-            width: Constants.width - 200    // TODO: Dynamic Sizing of Left/Right Columns and Buttons based on Screen Size
+            width: parent.width
             anchors.verticalCenter: parent.verticalCenter
             spacing: 10
             padding: 5
 
+            // Media Sources
+            JourneyButton {
+                id: androidAutoButton
+                icon.source: "images/radio.svg"
+                text: "Android Auto"
+                visible: mediaNotPlayingMenu.hasAndroidAuto
+                Connections {
+                    target: androidAutoButton
+                    onClicked: mediaNotPlayingMenu.viewAndroidAuto()
+                }
+            }
+
+            JourneyButton {
+                id: radioButton
+                icon.source: "images/radio.svg"
+                text: "Radio"
+                visible: mediaNotPlayingMenu.hasRadio
+                Connections {
+                    target: radioButton
+                    onClicked: mediaNotPlayingMenu.viewRadio()
+                }
+            }
+
+            JourneyButton {
+                id: bluetoothButton
+                text: "Bluetooth"
+                icon.source: "images/bluetooth-alt.svg"
+                visible: mediaNotPlayingMenu.hasBluetooth
+                Connections {
+                    target: bluetoothButton
+                    onClicked: mediaNotPlayingMenu.viewBluetooth()
+                }
+            }
+
+            JourneyButton {
+                id: usbButton
+                text: "USB"
+                icon.source: "images/usb-pendrive.svg"
+                visible: mediaNotPlayingMenu.hasUSB
+                Connections {
+                    target: usbButton
+                    onClicked: mediaNotPlayingMenu.viewUSB()
+                }
+            }
+
+            // Functions - Navigation
+            JourneyButton {
+                id: navigationButton
+                text: "Navigation"
+                icon.source: "images/map-marker.svg"
+                visible: mediaNotPlayingMenu.hasNavigation
+                Connections {
+                    target: navigationButton
+                    onClicked: mediaNotPlayingMenu.viewNavigation()
+                }
+            }
+
+            // Functions - OBD
+            JourneyButton {
+                id: obdButton
+                text: "OBD"
+                icon.source: "images/chart-tree.svg"
+                visible: mediaNotPlayingMenu.hasOBD
+                Connections {
+                    target: obdButton
+                    onClicked: mediaNotPlayingMenu.viewODB()
+                }
+            }
+
+            // Functions - System
             JourneyButton {
                 id: settingsButton
                 text: "Settings"
                 icon.source: "images/gears.svg"
+                visible: mediaNotPlayingMenu.showSettings
 
                 Connections {
                     target: settingsButton
@@ -51,67 +136,15 @@ Item {
             }
 
             JourneyButton {
-                id: radioButton
-                icon.source: "images/radio.svg"
-                text: "Radio"
-                Connections {
-                    target: radioButton
-                    onClicked: console.log("clicked")
-                }
-            }
-
-            JourneyButton {
-                id: navigationButton
-                text: "Navigation"
-                icon.source: "images/map-marker.svg"
-                Connections {
-                    target: navigationButton
-                    onClicked: console.log("clicked")
-                }
-            }
-
-            JourneyButton {
-                id: bluetoothButton
-                text: "Bluetooth"
-                icon.source: "images/bluetooth-alt.svg"
-                Connections {
-                    target: bluetoothButton
-                    onClicked: console.log("clicked")
-                }
-            }
-
-            JourneyButton {
-                id: usbButton
-                text: "USB"
-                icon.source: "images/usb-pendrive.svg"
-                Connections {
-                    target: usbButton
-                    onClicked: console.log("clicked")
-                }
-            }
-
-            JourneyButton {
                 id: powerButton
                 text: "Power"
                 icon.source: "images/power.svg"
+                visible: mediaNotPlayingMenu.showPower
                 Connections {
                     target: powerButton
-                    onClicked: console.log("clicked")
-                }
-            }
-
-            JourneyButton {
-                id: obdButton
-                text: "OBD"
-                icon.source: "images/chart-tree.svg"
-                Connections {
-                    target: obdButton
-                    onClicked: console.log("clicked")
+                    onClicked: mediaNotPlayingMenu.viewPower()
                 }
             }
         }
-
     }
-
-
 }

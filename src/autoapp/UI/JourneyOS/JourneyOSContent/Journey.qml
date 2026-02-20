@@ -2,11 +2,13 @@ import QtQuick
 import QtQuick.Controls
 import JourneyOS 1.0
 import AndroidAutoMonitor
+
 Window {
     id: root
     width: 800
     height: 480
     visible: true
+    visibility: settingsViewHandler.headUnitMode ? Window.FullScreen : Window.Windowed
     color: Constants.primaryBackgroundColor
     title: "JourneyOS"
 
@@ -37,7 +39,9 @@ Window {
             radius: 10
         }
         contentItem: VolumePopup {}
-
+        onClosed: {
+            volumePopupHandler.saveSettings()
+        }
         // Auto-close logic
         Timer {
             id: volTimer; interval: 3000; running: volumePopup.opened; onTriggered: volumePopup.close()
@@ -56,6 +60,13 @@ Window {
             radius: 10
         }
         contentItem: BrightnessPopup {}
+        onClosed: {
+            brightnessPopupHandler.saveSettings()
+        }
+        // Auto-close logic
+        Timer {
+            id: brtTimer; interval: 3000; running: brightnessPopup.opened; onTriggered: brightnessPopup.close()
+        }
     }
 
     Popup {
@@ -114,6 +125,61 @@ Window {
         }
     }
 
+    Popup {
+        id: powerPopup
+        anchors.centerIn: parent
+        width: 400
+        height: 200
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            color: Constants.settingsPopupBackgroundColor
+            radius: 10
+            border.color: Constants.primaryBackgroundColor
+            border.width: 1
+        }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 20
+
+            Text {
+                text: "System Power"
+                font.pixelSize: 24
+                color: Constants.primaryTextColor
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            Row {
+                spacing: 20
+                JourneyButton {
+                    text: "Reboot"
+                    width: 150
+                    height: 50
+                    onClicked: systemPower.reboot()
+                }
+                JourneyButton {
+                    text: "Shutdown"
+                    width: 150
+                    height: 50
+                    onClicked: systemPower.powerOff()
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: stackView.currentItem
+        ignoreUnknownSignals: true
+
+        // Connect the Power signal
+        function onViewPower() { powerPopup.open() }
+
+        // ... [Other connections remain same] ...
+    }
+
     // ---------------------------------------------------------
     // 3. LOGIC & CONNECTIONS
     // ---------------------------------------------------------
@@ -122,11 +188,29 @@ Window {
     Connections {
         target: stackView.currentItem
         ignoreUnknownSignals: true
-        function onViewVolume() { volumePopup.open() }
-        function onViewBrightness() { brightnessPopup.open() }
+
+        // Navigational Options
+        function onViewPower() { console.log("Power Clicked") }             // TODO: This will go to a Power Screen or Show Popup
+        function onViewOBD() { console.log("OBD Clicked") }                 // TODO: This will go to an OBD Screen
+        function onViewNavigation() { console.log("Navigation Clicked") }   // TODO: This will go to a Navigation Screen
+        function onViewRadio() { console.log("Radio Clicked") }             // TODO: This will go to a Radio Screen
+        function onViewUSB() { console.log("USB Clicked") }                 // TODO: This will go to a USB Browser Screen
+        function onViewBluetooth() { console.log("Bluetooth Clicked") }     // TODO: This will go to a Bluetooth HFP/A2DP screen
         function onViewSettings() { stackView.push("SettingsView.qml") }
+        function onViewAndroidAuto() { stackView.push("AndroidAutoView.qml") }
+
         // Handle "Home" requests from any sub-screen
         function onRequestHome() { stackView.pop(null) }
+
+        // Contextual Options
+        function onViewWifiStatus() { wifiPopup.open() }
+        function onViewBluetoothStatus() { bluetoothPopup.open() }
+
+        // Control Sliders
+        function onViewVolume() { volumePopup.open() }
+        function onViewBrightness() { brightnessPopup.open() }
+
+
     }
 
     // Handle Android Auto Connection
@@ -147,5 +231,24 @@ Window {
                 stackView.pop(null)
             }
         }
+    }
+
+    Rectangle {
+        id: softwareDimmer
+        anchors.fill: parent
+        color: "black"
+        z: 9999 // Ensure it is above Popups and Android Auto
+
+        // Transparent to mouse events so you can still touch buttons!
+        enabled: false
+
+        // Calculate Opacity:
+        // Brightness 255 (Max) -> Opacity 0.0 (Invisible)
+        // Brightness 0   (Min) -> Opacity 0.85 (Very Dark, but legible)
+        // We don't go to 1.0, otherwise you can't find the slider to fix it!
+        opacity: 0.85 * (1.0 - (brightnessPopupHandler.screenBrightness / 255.0))
+
+        // Smooth transition when changing brightness
+        Behavior on opacity { NumberAnimation { duration: 100 } }
     }
 }

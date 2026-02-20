@@ -42,6 +42,7 @@
 #include "f1x/openauto/autoapp/Projection/InputDevice.hpp"
 #include "f1x/openauto/autoapp/UI/Combo/AudioDeviceModel.hpp"
 #include "f1x/openauto/autoapp/UI/Controller/LightController.hpp"
+#include "f1x/openauto/autoapp/UI/Controller/PowerController.hpp"
 #include "f1x/openauto/autoapp/UI/Monitor/VolumeHandler.hpp"
 #include "f1x/openauto/autoapp/UI/ViewModel/BrightnessViewModel.hpp"
 #include "f1x/openauto/autoapp/UI/ViewModel/SettingsViewModel.hpp"
@@ -80,6 +81,7 @@ Q_IMPORT_QML_PLUGIN(QtQuick_Studio_EventSystemPlugin)
 #endif
 
 inline void set_qt_environment() {
+    qputenv("QT_IM_MODULE", "qtvirtualkeyboard");
     qputenv("QML_COMPAT_RESOLVE_URLS_ON_ASSIGNMENT", "1");
     qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "1");
     qputenv("QT_ENABLE_HIGHDPI_SCALING", "0");
@@ -191,6 +193,13 @@ int main(int argc, char *argv[]) {
     autoapp::UI::Combo::FuelTypeModel fuelTypeModel;
     autoapp::UI::Combo::ResolutionModel resolutionModel;
 
+#ifdef Q_OS_LINUX
+    bool isSystemManaged = false; // Pi is Self Contained. Can access device settings.
+#else
+    bool isSystemManaged = true; // Mac/Windows don't allow editing device settings.
+#endif
+
+    context->setContextProperty("isSystemManaged", isSystemManaged);
     context->setContextProperty("driverPositionModel", &driverPositionModel);
     context->setContextProperty("evConnectorTypeModel", &evConnectorTypeModel);
     context->setContextProperty("frameRateModel", &frameRateModel);
@@ -208,7 +217,7 @@ int main(int argc, char *argv[]) {
 
     auto wifiMonitor = new autoapp::UI::Monitor::WifiMonitor(configuration, &app);
     auto wifiController = new f1x::openauto::autoapp::UI::Controller::WifiController(configuration, &app);
-    auto wifiViewModel = new f1x::openauto::autoapp::UI::ViewModel::WifiViewModel(configuration, wifiController, &app);
+    auto wifiViewModel = new f1x::openauto::autoapp::UI::ViewModel::WifiViewModel(configuration, wifiController, wifiMonitor, &app);
 
     autoapp::UI::Combo::NetworkAdapterModel networkAdapterModel;
     context->setContextProperty("networkAdapterModel", &networkAdapterModel);
@@ -240,6 +249,9 @@ int main(int argc, char *argv[]) {
     context->setContextProperty("volumePopupHandler", &volumeHandler);
     context->setContextProperty("brightnessPopupHandler", &brightnessHandler);
     engine.rootContext()->setContextProperty("wifiViewModel", wifiViewModel);
+    // Power Controller
+    autoapp::System::PowerController powerController;
+    context->setContextProperty("systemPower", &powerController);
 
     // Monitors
     auto androidAutoMonitor = std::make_shared<autoapp::UI::Monitor::AndroidAutoMonitor>();
@@ -294,7 +306,7 @@ int main(int argc, char *argv[]) {
 
     autoapp::projection::IVideoOutput::Pointer videoOutput;
     videoOutput = std::make_shared<autoapp::projection::QtVideoOutput>(configuration);
-qInfo(lcAutoapp) << "Video Output: ";
+    qInfo(lcAutoapp) << "Video Output: ";
     autoapp::projection::IAudioInput::Pointer audioInput;
     audioInput = std::make_shared<autoapp::projection::QtAudioInput>(1, 16, 16000, configuration);
 
@@ -316,6 +328,7 @@ qInfo(lcAutoapp) << "Video Output: ";
     }
     audioOutputSystem = std::make_shared<autoapp::projection::QtAudioOutput>(1, 16, 16000, configuration);
 
+    // Requested Video Size
     QRect videoGeometry;
     switch (configuration->getSettingByName<int>("AndroidAuto", "Resolution")) {
         case aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_1280x720:
@@ -332,11 +345,23 @@ qInfo(lcAutoapp) << "Video Output: ";
             break;
     }
 
+    // Get Screen Geometry
     QScreen *screen = QGuiApplication::primaryScreen();
-    QRect screenGeometry = screen == nullptr ? QRect(0, 0, 1, 1) : screen->geometry();
+    QRect screenGeometry = screen == nullptr ? QRect(0, 0, 800, 480) : screen->geometry();
+
+    // Touchscreen geometry must match the actual window/view size so that QML
+    // touch/mouse coordinates (which are in window space) map directly to the
+    // coordinate range we declare to Android Auto.
+    // - Head unit mode: window is fullscreen, so use the physical screen size.
+    // - Windowed mode: window is fixed at 800x480 regardless of screen size.
+    QRect touchscreenGeometry = settingsViewModel.isHeadUnitMode()
+        ? screenGeometry
+        : QRect(0, 0, 800, 480);
+
+    // Create Input Device
     autoapp::projection::IInputDevice::Pointer inputDevice(
         std::make_shared<autoapp::projection::InputDevice>(*QApplication::instance(), configuration,
-                                                           std::move(screenGeometry), std::move(videoGeometry)));
+                                                           std::move(touchscreenGeometry), std::move(videoGeometry)));
 
        context->setContextProperty("inputMapper", dynamic_cast<QObject*>(inputDevice.get()));
 

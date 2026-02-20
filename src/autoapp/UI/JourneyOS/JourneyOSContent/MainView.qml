@@ -4,17 +4,33 @@ import JourneyOS
 
 Item {
     id: mainView
-    width: 800
-    height: 480
+    width: parent ? parent.width : 800
+    height: parent ? parent.height : 480
     objectName: "MainView" // Useful for debugging
 
     // Signals to tell Journey.qml what to do
+
+    // Menu Buttons
     signal viewSettings()
-    signal viewVolume()
-    signal viewBrightness()
-    signal viewBluetoothStatus()
-    signal viewWifiStatus()
     signal viewAndroidAuto()
+    signal viewPower()
+    signal viewOBD()
+    signal viewNavigation()
+    signal viewUSB()
+    signal viewRadio()
+    signal viewBluetooth()
+
+    // Slider Controls
+    signal viewVolume()
+
+    signal viewBrightness()
+
+    // Status Buttons
+    signal viewBluetoothStatus()
+
+    signal viewWifiStatus()
+
+    signal viewAndroidAutoStatus()
 
     property bool isMediaPlaying: false
 
@@ -27,6 +43,8 @@ Item {
         onViewBrightness: mainView.viewBrightness()
         onViewBluetoothStatus: mainView.viewBluetoothStatus()
         onViewWifiStatus: mainView.viewWifiStatus()
+        onViewAndroidAutoStatus: mainView.viewAndroidAutoStatus()
+
     }
 
     // Container for menus (Media/Main)
@@ -41,30 +59,41 @@ Item {
             State {
                 name: "mainMenu"
                 when: !mainView.isMediaPlaying
-                PropertyChanges { target: mainMenu; opacity: 1 }
-                PropertyChanges { target: mediaMenu; opacity: 0 }
+                PropertyChanges {
+                    target: mainMenu; opacity: 1
+                }
+                PropertyChanges {
+                    target: mediaMenu; opacity: 0
+                }
             },
             State {
                 name: "mediaMenu"
                 when: mainView.isMediaPlaying
-                PropertyChanges { target: mainMenu; opacity: 0 }
-                PropertyChanges { target: mediaMenu; opacity: 1 }
+                PropertyChanges {
+                    target: mainMenu; opacity: 0
+                }
+                PropertyChanges {
+                    target: mediaMenu; opacity: 1
+                }
             }
         ]
 
         // Define transitions for smooth change between states
         transitions: [
             Transition {
-                from: "*"; to: "*"
+                from: "*";
+                to: "*"
                 ParallelAnimation {
-                    NumberAnimation { properties: "opacity"; duration: 500; easing.type: Easing.InOutQuad }
+                    NumberAnimation {
+                        properties: "opacity"; duration: 500; easing.type: Easing.InOutQuad
+                    }
                 }
             }
         ]
 
         MediaNotPlayingMenu {
             id: mainMenu
-            width: 660
+            width: parent.width
             height: parent.height
             anchors.horizontalCenter: parent.horizontalCenter
             clip: true
@@ -72,13 +101,19 @@ Item {
             Connections {
                 target: mainMenu
                 onViewSettings: mainView.viewSettings()
-
+                onViewAndroidAuto: mainView.viewAndroidAuto()
+                onViewPower: mainMenu.viewPower()
+                onViewOBD: mainMenu.viewOBD()
+                onViewNavigation: mainMenu.viewNavigation()
+                onViewRadio: mainMenu.viewRadio()
+                onViewUSB: mainMenu.viewUSB()
+                onViewBluetooth: mainMenu.viewBluetooth()
             }
         }
 
         MediaPlayingMenu {
             id: mediaMenu
-            width: 800
+            width: parent.width
             height: parent.height
             anchors.horizontalCenter: parent.horizontalCenter
             clip: true
@@ -86,7 +121,13 @@ Item {
             Connections {
                 target: mediaMenu
                 onViewSettings: mainView.viewSettings()
-
+                onViewAndroidAuto: mainView.viewAndroidAuto()
+                onViewPower: mainMenu.viewPower()
+                onViewOBD: mainMenu.viewOBD()
+                onViewNavigation: mainMenu.viewNavigation()
+                onViewRadio: mainMenu.viewRadio()
+                onViewUSB: mainMenu.viewUSB()
+                onViewBluetooth: mainMenu.viewBluetooth()
             }
         }
     }

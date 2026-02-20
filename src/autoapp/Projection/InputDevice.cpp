@@ -167,11 +167,9 @@ namespace f1x::openauto::autoapp::projection {
                 return true;
         };
 
-        if (type < 2) {
-            const uint32_t x = normX;
-            const uint32_t y = normY;
-            eventHandler_->onTouchEvent({pointerAction, x, y, 0});
-        }
+        const uint32_t x = normX;
+        const uint32_t y = normY;
+        eventHandler_->onTouchEvent({pointerAction, x, y, 0});
         return true;
     }
 
