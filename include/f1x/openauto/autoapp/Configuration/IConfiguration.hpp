@@ -7,6 +7,8 @@
 #include <f1x/openauto/autoapp/Configuration/ConfigurationSetting.hpp>
 #include <stdio.h>
 
+#include <qloggingcategory.h>
+
 namespace f1x::openauto::autoapp::configuration {
     using SettingType = std::variant<bool, int, QString>;
 
@@ -29,26 +31,25 @@ namespace f1x::openauto::autoapp::configuration {
                 return (*groupIt).template getValueForSetting<T>(settingName);
             } else {
                 // Group not found
-                fprintf(stderr, "Unable to find group 1 %s and setting %s\n", groupName.toStdString().c_str(),
-                        settingName.toStdString().c_str());
+                qWarning() << "Unable to find requested group";
                 //throw std::runtime_error("Group not found: " + groupName.toStdString());
             }
         }
 
         template<typename T>
         void updateSettingByName(QString groupName, QString settingName, T value) {
-            fprintf(stderr, "updateSettingByName\n");
+            qDebug() << "Updating group " << groupName << " setting " << settingName << " to " << value;
             auto groupIt = std::find_if(m_configurationGroups.begin(), m_configurationGroups.end(),
                                         [&groupName](const ConfigurationGroup &group) {
                                             return group.getName() == groupName;
                                         });
 
             if (groupIt != m_configurationGroups.end()) {
-                fprintf(stderr, "Found Setting\n");
+                qInfo() << "Setting Found";
                 (*groupIt).setValueForSetting(settingName, value);
             } else {
                 // Group not found
-                fprintf(stderr, "Unable to find group 2 %s\n", groupName.toStdString().c_str());
+                qWarning() << "Unable to find requested group";
                 //throw std::runtime_error("Group not found: " + groupName.toStdString());
             }
         }

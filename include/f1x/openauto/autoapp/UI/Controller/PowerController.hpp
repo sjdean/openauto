@@ -1,8 +1,15 @@
-//
-// Created by Simon Dean on 27/12/2025.
-//
+#pragma once
+#include <QObject>
 
-#ifndef OPENAUTO_POWERCONTROLLER_HPP
-#define OPENAUTO_POWERCONTROLLER_HPP
+namespace f1x::openauto::autoapp::System {
 
-#endif //OPENAUTO_POWERCONTROLLER_HPP
+    class PowerController : public QObject {
+        Q_OBJECT
+    public:
+        explicit PowerController(QObject *parent = nullptr);
+
+        Q_INVOKABLE void reboot();
+        Q_INVOKABLE void powerOff();
+    };
+
+}

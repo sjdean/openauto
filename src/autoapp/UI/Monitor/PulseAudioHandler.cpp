@@ -1,314 +1,258 @@
 #if defined(__LINUX__)
-#include <f1x/openauto/autoapp/UI/Monitor/PulseAudioHandler.hpp>
-#include <string>
-
+#include "f1x/openauto/autoapp/UI/Monitor/PulseAudioHandler.hpp"
 #include <qloggingcategory.h>
+#include <pulse/introspect.h>
+#include <pulse/operation.h>
+#include <pulse/thread-mainloop.h>
+
+#include "f1x/openauto/autoapp/UI/Monitor/IAudioHandler.h"
+
 Q_LOGGING_CATEGORY(lcAudioPulse, "journeyos.audio.pulse")
-namespace f1x::openauto::autoapp::UI::Monitor  {
-  /**
-   * Handles Pulse Audio through the IAudioHandler interface for Linux
-   * @return
-   */
-  PulseAudioHandler::PulseAudioHandler() {
-    m_mainloop = pa_mainloop_new();
-    m_mainloop_api = pa_mainloop_get_api(m_mainloop);
 
-    m_context = pa_context_new(m_mainloop_api, "JourneyOS");
-    pa_context_set_state_callback(m_context,
-                                  [](pa_context *c, void *userdata) {
-                                    if (pa_context_get_state(c) == PA_CONTEXT_READY) {
-                                      pa_threaded_mainloop_signal((pa_threaded_mainloop *) userdata, 0);
-                                    }
-                                  }, m_mainloop);
+namespace f1x::openauto::autoapp::UI::Monitor {
 
-    if (pa_context_connect(m_context, NULL, PA_CONTEXT_NOFLAGS, NULL) < 0) {
-      // throw error
-      return;
+    PulseAudioHandler::PulseAudioHandler() {
+        // Use PA_THREADED_MAINLOOP. This creates a background thread for audio processing.
+        // This is crucial for Qt apps to avoid freezing the GUI.
+        m_mainloop = pa_threaded_mainloop_new();
+        if (!m_mainloop) {
+            qCritical(lcAudioPulse) << "Failed to create PA threaded mainloop";
+            return;
+        }
+
+        m_api = pa_threaded_mainloop_get_api(m_mainloop);
+        m_context = pa_context_new(m_api, "JourneyOS");
+
+        pa_context_set_state_callback(m_context, context_state_callback, this);
+
+        if (pa_context_connect(m_context, nullptr, PA_CONTEXT_NOFLAGS, nullptr) < 0) {
+            qCritical(lcAudioPulse) << "pa_context_connect failed";
+            return;
+        }
+
+        // Start the background thread
+        if (pa_threaded_mainloop_start(m_mainloop) < 0) {
+            qCritical(lcAudioPulse) << "Failed to start PA mainloop";
+            return;
+        }
+        
+        // Wait for connection (optional, but good for initialization)
+        // In a real app, you might want to do this asynchronously, but for init it's often okay.
+        while (true) {
+            pa_threaded_mainloop_lock(m_mainloop);
+            pa_context_state_t state = pa_context_get_state(m_context);
+            pa_threaded_mainloop_unlock(m_mainloop);
+
+            if (state == PA_CONTEXT_READY) break;
+            if (!PA_CONTEXT_IS_GOOD(state)) {
+                qCritical(lcAudioPulse) << "PulseAudio connection failed during init";
+                break;
+            }
+            QThread::msleep(10); // Short sleep while waiting
+        }
     }
 
-    pa_threaded_mainloop *loop = pa_threaded_mainloop_new();
-    pa_threaded_mainloop_start(loop);
-
-    // Wait for the context to be ready
-    if (pa_context_get_state(m_context) != PA_CONTEXT_READY) {
-      pa_threaded_mainloop_wait(loop);
+    PulseAudioHandler::~PulseAudioHandler() {
+        if (m_mainloop) {
+            pa_threaded_mainloop_stop(m_mainloop);
+            if (m_context) {
+                pa_context_disconnect(m_context);
+                pa_context_unref(m_context);
+            }
+            pa_threaded_mainloop_free(m_mainloop);
+        }
     }
 
-    pa_threaded_mainloop_free(loop);
-  }
-
-  QString PulseAudioHandler::getDefaultSink() {
-    pa_operation *op;
-    QString defaultSinkName;
-
-    op = pa_context_get_server_info(m_context,
-        // Cast the lambda to pa_server_info_cb_t
-                                    static_cast<pa_server_info_cb_t>([](pa_context *context, const pa_server_info *info, void *userdata) {
-                                      std::string *name = static_cast<std::string *>(userdata);
-                                      *name = info->default_sink_name;
-                                      pa_threaded_mainloop_signal((pa_threaded_mainloop *) userdata, 0);
-                                    }),
-                                    &defaultSinkName);
-
-    if (op) {
-      pa_threaded_mainloop *loop = pa_threaded_mainloop_new();
-      pa_threaded_mainloop_start(loop);
-
-      // Wait for the context to be ready
-      if (pa_context_get_state(m_context) != PA_CONTEXT_READY) {
-        pa_threaded_mainloop_wait(loop);
-      }
-
-      pa_threaded_mainloop_free(loop);
-      pa_operation_unref(op);
-    } else {
-      // Handle the error, e.g., log it or throw an exception
-      throw std::runtime_error("Failed to get server info for default sink");
+    // --- HELPER CALLBACKS ---
+    
+    void PulseAudioHandler::context_state_callback(pa_context *c, void *userdata) {
+        // Just logging state changes
+        switch (pa_context_get_state(c)) {
+            case PA_CONTEXT_READY: qInfo(lcAudioPulse) << "PulseAudio Ready"; break;
+            case PA_CONTEXT_FAILED: qWarning(lcAudioPulse) << "PulseAudio Failed"; break;
+            default: break;
+        }
     }
 
-    return defaultSinkName;
-  }
+    // --- VOLUME CONTROL ---
 
-  void PulseAudioHandler::GetSinkInfoCallback(pa_context *c, const pa_sink_info *i, int eol, void *userdata) {
+    void PulseAudioHandler::setSinkVolume(const QString& deviceName, int volume) {
+        if (!m_mainloop || !m_context) return;
+        int safeVolume = std::clamp(volume, 0, 255);
+        pa_volume_t paVol = (pa_volume_t)((safeVolume * PA_VOLUME_NORM) / 255.0);
 
-    Q_UNUSED(c);
+        pa_cvolume cv;
+        cv.channels = 2; // Default to stereo
+        for(int i=0; i<cv.channels; i++) cv.values[i] = paVol;
 
-    ListDevicesState *state = reinterpret_cast<ListDevicesState*>(userdata);
-    if (!state) return;
+        pa_threaded_mainloop_lock(m_mainloop);
+        const char* name = deviceName.isEmpty() ? nullptr : deviceName.toUtf8().constData();
+        pa_operation* o = pa_context_set_sink_volume_by_name(m_context, name, &cv, nullptr, nullptr);
 
-    if (i) {
-      EngineDevice device;
-      device.description = QString::fromUtf8(i->description);
-      device.value = QString::fromUtf8(i->name);
-      device.iconname = device.GuessIconName();
-
-      state->devices.append(device);
+        if (o) pa_operation_unref(o);
+        pa_threaded_mainloop_unlock(m_mainloop);
     }
 
-    if (eol > 0) {
-      state->finished = true;
-    }
-  }
+    void PulseAudioHandler::setSourceVolume(const QString& deviceName, int volume) {
+        if (!m_mainloop || !m_context) return;
+        int safeVolume = std::clamp(volume, 0, 255);
+        pa_volume_t paVol = (pa_volume_t)((safeVolume * PA_VOLUME_NORM) / 255.0);
 
-  EngineDeviceList PulseAudioHandler::getSinks() {
-    if (!m_context || pa_context_get_state(m_context) != PA_CONTEXT_READY) {
-      // Log error or attempt reconnection
-      return EngineDeviceList();
-    }
+        pa_cvolume cv;
+        cv.channels = 1; // Mics usually mono
+        for(int i=0; i<cv.channels; i++) cv.values[i] = paVol;
 
-    ListDevicesState state;
-    pa_operation *op = pa_context_get_sink_info_list(m_context, &PulseAudioHandler::GetSinkInfoCallback, &state);
-
-    if (op) {
-      pa_threaded_mainloop *loop = pa_threaded_mainloop_new();
-      pa_threaded_mainloop_start(loop);
-
-      // Wait for the callback to finish
-      while (!state.finished) {
-        pa_threaded_mainloop_wait(loop);
-      }
-
-      pa_threaded_mainloop_free(loop);
-      pa_operation_unref(op);
-    } else {
-      // Handle the error, e.g., log it or throw an exception
-      throw std::runtime_error("Failed to get sink list");
+        pa_threaded_mainloop_lock(m_mainloop);
+        const char* name = deviceName.isEmpty() ? nullptr : deviceName.toUtf8().constData();
+        pa_operation* o = pa_context_set_source_volume_by_name(m_context, name, &cv, nullptr, nullptr);
+        if (o) pa_operation_unref(o);
+        pa_threaded_mainloop_unlock(m_mainloop);
     }
 
-    return state.devices;
-  }
-
-  void PulseAudioHandler::GetSourceInfoCallback(pa_context *c, const pa_source_info *i, int eol, void *userdata) {
-
-    Q_UNUSED(c);
-
-    ListDevicesState *state = reinterpret_cast<ListDevicesState*>(userdata);
-    if (!state) return;
-
-    if (i) {
-      EngineDevice device;
-      device.description = QString::fromUtf8(i->description);
-      device.value = QString::fromUtf8(i->name);
-      device.iconname = device.GuessIconName();
-
-      state->devices.append(device);
+    void PulseAudioHandler::setSinkMute(const QString& deviceName, bool mute) {
+        if (!m_mainloop || !m_context) return;
+        pa_threaded_mainloop_lock(m_mainloop);
+        const char* name = deviceName.isEmpty() ? nullptr : deviceName.toUtf8().constData();
+        pa_operation* o = pa_context_set_sink_mute_by_name(m_context, name, mute, nullptr, nullptr);
+        if (o) pa_operation_unref(o);
+        pa_threaded_mainloop_unlock(m_mainloop);
     }
 
-    if (eol > 0) {
-      state->finished = true;
-    }
-  }
-
-  EngineDeviceList PulseAudioHandler::getSources() {
-    if (!m_context || pa_context_get_state(m_context) != PA_CONTEXT_READY) {
-      // Log error or attempt reconnection
-      return EngineDeviceList();
+    void PulseAudioHandler::setSourceMute(const QString& deviceName, bool mute) {
+        if (!m_mainloop || !m_context) return;
+        pa_threaded_mainloop_lock(m_mainloop);
+        const char* name = deviceName.isEmpty() ? nullptr : deviceName.toUtf8().constData();
+        pa_operation* o = pa_context_set_source_mute_by_name(m_context, name, mute, nullptr, nullptr);
+        if (o) pa_operation_unref(o);
+        pa_threaded_mainloop_unlock(m_mainloop);
     }
 
-    ListDevicesState state;
-    pa_operation *op = pa_context_get_source_info_list(m_context, &PulseAudioHandler::GetSourceInfoCallback, &state);
+    // --- DEVICE INFORMATION (Synchronous Implementation) ---
 
-    if (op) {
-      pa_threaded_mainloop *loop = pa_threaded_mainloop_new();
-      pa_threaded_mainloop_start(loop);
-
-      // Wait for the callback to finish
-      while (!state.finished) {
-        pa_threaded_mainloop_wait(loop);
-      }
-
-      pa_threaded_mainloop_free(loop);
-      pa_operation_unref(op);
-    } else {
-      // Handle the error, e.g., log it or throw an exception
-      throw std::runtime_error("Failed to get sink list");
+    // Generic callback to populate our struct
+    void PulseAudioHandler::GetSinkInfoCallback(pa_context *, const pa_sink_info *i, int eol, void *userdata) {
+        ListDevicesState *state = static_cast<ListDevicesState*>(userdata);
+        if (eol > 0) {
+            state->finished = true;
+            pa_threaded_mainloop_signal(state->loop, 0); // Wake up waiting thread
+            return;
+        }
+        if (i) {
+            EngineDevice device;
+            device.description = QString::fromUtf8(i->description);
+            device.value = QString::fromUtf8(i->name);
+            device.iconname = device.GuessIconName();
+            state->devices.append(device);
+        }
     }
 
-    return state.devices;
-  }
+    EngineDeviceList PulseAudioHandler::getSinks() {
+        if (!m_mainloop) return {};
+        
+        ListDevicesState state;
+        state.loop = m_mainloop;
 
-  QString PulseAudioHandler::getDefaultSource() {
-    pa_operation *op;
-    QString defaultSourceName;
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation *op = pa_context_get_sink_info_list(m_context, &PulseAudioHandler::GetSinkInfoCallback, &state);
+        
+        if (op) {
+            while (!state.finished) {
+                pa_threaded_mainloop_wait(m_mainloop); // Wait for signal from callback
+            }
+            pa_operation_unref(op);
+        }
+        pa_threaded_mainloop_unlock(m_mainloop);
 
-    op = pa_context_get_server_info(m_context,
-        // Cast the lambda to pa_server_info_cb_t
-                                    static_cast<pa_server_info_cb_t>([](pa_context *context, const pa_server_info *info, void *userdata) {
-                                      std::string *name = static_cast<std::string *>(userdata);
-                                      *name = info->default_source_name;
-                                      pa_threaded_mainloop_signal((pa_threaded_mainloop *) userdata, 0);
-                                    }),
-                                    &defaultSourceName);
-
-    if (op) {
-      pa_threaded_mainloop *loop = pa_threaded_mainloop_new();
-      pa_threaded_mainloop_start(loop);
-
-      // Wait for the context to be ready
-      if (pa_context_get_state(m_context) != PA_CONTEXT_READY) {
-        pa_threaded_mainloop_wait(loop);
-      }
-
-      pa_threaded_mainloop_free(loop);
-      pa_operation_unref(op);
-    } else {
-      // Handle the error, e.g., log it or throw an exception
-      throw std::runtime_error("Failed to get server info for default source");
+        return state.devices;
     }
 
-    return defaultSourceName;
-  }
-
-  void PulseAudioHandler::setSinkVolume(int volume) {
-    // TODO: Swap to Configured Sink
-    QString sinkName = getDefaultSink();
-    pa_cvolume cvolume;
-    pa_cvolume_init(&cvolume);
-
-    pa_channel_map map;
-    pa_channel_map_init_auto(&map, 2, PA_CHANNEL_MAP_DEFAULT); // Assume stereo
-    pa_cvolume_set(&cvolume, map.channels, PA_VOLUME_NORM * volume / 100);
-
-    pa_operation *op = pa_context_set_sink_volume_by_name(m_context, sinkName.toStdString().c_str(), &cvolume,
-                                                          [](pa_context *, int success, void *) {
-                                                            if (!success) {
-                                                              fprintf(stderr, "Failed to set volume\n");
-                                                            }
-                                                          }, nullptr);
-
-    if (op) {
-      pa_operation_unref(op);
-    }
-  }
-
-  void PulseAudioHandler::setSourceVolume(int volume) {
-    // TODO: Swap to Configured Source
-    QString sinkName = getDefaultSource();
-    pa_cvolume cvolume;
-    pa_cvolume_init(&cvolume);
-
-    pa_channel_map map;
-    pa_channel_map_init_auto(&map, 2, PA_CHANNEL_MAP_DEFAULT); // Assume stereo
-    pa_cvolume_set(&cvolume, map.channels, PA_VOLUME_NORM * volume / 100);
-
-    pa_operation *op = pa_context_set_sink_volume_by_name(m_context, sinkName.toStdString().c_str(), &cvolume,
-                                                          [](pa_context *, int success, void *) {
-                                                            if (!success) {
-                                                              fprintf(stderr, "Failed to set volume\n");
-                                                            }
-                                                          }, nullptr);
-
-    if (op) {
-      pa_operation_unref(op);
-    }
-  }
-
-  void PulseAudioHandler::setSinkMute(bool mute) {
-    // TODO: Swap to Configured Sink
-    QString sinkName = getDefaultSink();
-    pa_operation *op = pa_context_set_sink_mute_by_name(m_context, sinkName.toStdString().c_str(), mute,
-                                                        [](pa_context *, int success, void *) {
-                                                          if (!success) {
-                                                            fprintf(stderr, "Failed to set mute state\n");
-                                                          }
-                                                        }, nullptr);
-    if (op) {
-      pa_operation_unref(op);
-    }
-  }
-
-  void PulseAudioHandler::setSourceMute(bool mute) {
-    // TODO: Swap to Configured Soure
-    QString sinkName = getDefaultSink();
-    pa_operation *op = pa_context_set_sink_mute_by_name(m_context, sinkName.toStdString().c_str(), mute,
-                                                        [](pa_context *, int success, void *) {
-                                                          if (!success) {
-                                                            fprintf(stderr, "Failed to set mute state\n");
-                                                          }
-                                                        }, nullptr);
-    if (op) {
-      pa_operation_unref(op);
-    }
-  }
-
-  std::vector<std::pair<std::string, std::string>> PulseAudioHandler::getDeviceList() {
-    std::vector<std::pair<std::string, std::string>> devices;
-
-    // Callback for collecting device info
-    auto info_callback = [](pa_context *c, const pa_source_info *i, int eol, void *userdata) {
-      auto *devices = static_cast<std::vector<std::pair<std::string, std::string>> *>(userdata);
-
-      if (eol > 0) return; // End of list
-
-      if (i) {
-        std::string name = i->name ? i->name : "Unknown";
-        std::string description = i->description ? i->description : "No description";
-        devices->emplace_back(name, description);
-      }
-    };
-
-    pa_operation *op = pa_context_get_source_info_list(m_context, info_callback, &devices);
-    if (op) {
-      while (pa_operation_get_state(op) == PA_OPERATION_RUNNING) {
-        pa_mainloop_iterate(m_mainloop, 1, NULL);
-      }
-      pa_operation_unref(op); // Don't forget to unref the operation after use
-    } else {
-      // Handle the error, maybe log it or inform the user
-      fprintf(stderr, "Failed to get source info list\n");
+    // Similar implementation for Sources
+    void PulseAudioHandler::GetSourceInfoCallback(pa_context *, const pa_source_info *i, int eol, void *userdata) {
+        ListDevicesState *state = static_cast<ListDevicesState*>(userdata);
+        if (eol > 0) {
+            state->finished = true;
+            pa_threaded_mainloop_signal(state->loop, 0);
+            return;
+        }
+        if (i) {
+            EngineDevice device;
+            device.description = QString::fromUtf8(i->description);
+            device.value = QString::fromUtf8(i->name);
+            state->devices.append(device);
+        }
     }
 
-    return devices;
-  }
+    EngineDeviceList PulseAudioHandler::getSources() {
+        if (!m_mainloop) return {};
+        ListDevicesState state;
+        state.loop = m_mainloop;
 
-  PulseAudioHandler::~PulseAudioHandler() {
-    if (m_context) {
-      pa_context_disconnect(m_context);
-      pa_context_unref(m_context);
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation *op = pa_context_get_source_info_list(m_context, &PulseAudioHandler::GetSourceInfoCallback, &state);
+        if (op) {
+            while (!state.finished) pa_threaded_mainloop_wait(m_mainloop);
+            pa_operation_unref(op);
+        }
+        pa_threaded_mainloop_unlock(m_mainloop);
+        return state.devices;
     }
-    if (m_mainloop) {
-      pa_mainloop_free(m_mainloop);
+    
+    // --- SERVER INFO (Default Sink Name) ---
+    
+    QString PulseAudioHandler::getDefaultSink() {
+        if (!m_mainloop) return {};
+        QString name;
+        struct InfoState { pa_threaded_mainloop* loop; QString* name; bool finished = false; };
+        InfoState state { m_mainloop, &name };
+
+        auto cb = [](pa_context *, const pa_server_info *i, void *userdata) {
+            InfoState *s = static_cast<InfoState*>(userdata);
+            if (i) *s->name = QString::fromUtf8(i->default_sink_name);
+            s->finished = true;
+            pa_threaded_mainloop_signal(s->loop, 0);
+        };
+
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation* op = pa_context_get_server_info(m_context, cb, &state);
+        if (op) {
+             while (!state.finished) pa_threaded_mainloop_wait(m_mainloop);
+             pa_operation_unref(op);
+        }
+        pa_threaded_mainloop_unlock(m_mainloop);
+        return name;
     }
-  }
+
+    QString PulseAudioHandler::getDefaultSource() {
+        if (!m_mainloop) return {};
+        QString name;
+        struct InfoState { pa_threaded_mainloop* loop; QString* name; bool finished = false; };
+        InfoState state { m_mainloop, &name };
+
+        auto cb = [](pa_context *, const pa_server_info *i, void *userdata) {
+            InfoState *s = static_cast<InfoState*>(userdata);
+            if (i) *s->name = QString::fromUtf8(i->default_source_name);
+            s->finished = true;
+            pa_threaded_mainloop_signal(s->loop, 0);
+        };
+
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation* op = pa_context_get_server_info(m_context, cb, &state);
+        if (op) {
+             while (!state.finished) pa_threaded_mainloop_wait(m_mainloop);
+             pa_operation_unref(op);
+        }
+        pa_threaded_mainloop_unlock(m_mainloop);
+        return name;
+    }
+
+    std::vector<std::pair<std::string, std::string>> PulseAudioHandler::getDeviceList() {
+        // Compatibility wrapper for your interface if needed
+        std::vector<std::pair<std::string, std::string>> result;
+        EngineDeviceList sinks = getSinks();
+        for(const auto& dev : sinks) {
+            result.push_back({dev.value.toStdString(), dev.description.toStdString()});
+        }
+        return result;
+    }
 }
 #endif

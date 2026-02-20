@@ -40,10 +40,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         virtual QString getDefaultSink() = 0;
         virtual QString getDefaultSource() = 0;
 
-        virtual void setSinkMute(bool mute) = 0;
-        virtual void setSinkVolume(int volume) = 0;
-        virtual void setSourceMute(bool mute) = 0;
-        virtual void setSourceVolume(int volume) = 0;
+        virtual void setSinkMute(const QString& deviceName, bool mute) = 0;
+        virtual void setSinkVolume(const QString& deviceName, int volume) = 0;
+        virtual void setSourceMute(const QString& deviceName, bool mute) = 0;
+        virtual void setSourceVolume(const QString& deviceName, int volume) = 0;
 
         virtual EngineDeviceList getSinks() = 0;
         virtual EngineDeviceList getSources() = 0;
@@ -58,10 +58,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         QString getDefaultSink() override { return QString(); }
         QString getDefaultSource() override { return QString(); }
-        void setSinkMute(bool) override {}
-        void setSinkVolume(int) override {}
-        void setSourceMute(bool) override {}
-        void setSourceVolume(int) override {}
+        void setSinkMute(const QString&, bool) override {}
+        void setSinkVolume(const QString&, int) override {}
+        void setSourceMute(const QString&, bool) override {}
+        void setSourceVolume(const QString&, int) override {}
         EngineDeviceList getSinks() override { return EngineDeviceList(); }
         EngineDeviceList getSources() override { return EngineDeviceList(); }
         std::vector<std::pair<std::string, std::string>> getDeviceList() override { return {}; }

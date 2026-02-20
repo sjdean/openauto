@@ -19,10 +19,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     QString getDefaultSink() override;
     QString getDefaultSource() override;
 
-    void setSinkMute(bool mute) override;
-    void setSinkVolume(int volume) override;
-    void setSourceMute(bool mute) override;
-    void setSourceVolume(int volume) override;
+    void setSinkMute(const QString& deviceName, bool mute) override;
+    void setSinkVolume(const QString& deviceName, int volume) override;
+    void setSourceMute(const QString& deviceName, bool mute) override;
+    void setSourceVolume(const QString& deviceName, int volume) override;
 
     EngineDeviceList getSinks() override;
     EngineDeviceList getSources() override;

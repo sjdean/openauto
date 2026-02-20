@@ -16,7 +16,7 @@ set(QML_IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
     FORCE
 )
 
-find_package(Qt6 2.15 REQUIRED COMPONENTS Core Gui Qml Quick)
+find_package(Qt6 2.15 REQUIRED COMPONENTS Core Gui Qml Quick VirtualKeyboard)
 
 #qt_add_executable(${CMAKE_PROJECT_NAME})
 qt_add_resources(${CMAKE_PROJECT_NAME} "configuration"

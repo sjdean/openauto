@@ -34,7 +34,7 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
   }
 
   void VolumeHandler::setVolumeSource(const int volume) {
-    QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
+    QString device = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
     const int min = configuration_->getSettingByName<int>("Audio", "CaptureMin");
     const int max = configuration_->getSettingByName<int>("Audio", "CaptureMax");
 
@@ -54,7 +54,7 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
   }
 
   void VolumeHandler::setVolumeSourceMute(const bool mute) {
-    QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
+    QString device = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
     m_audioHandler->setSourceMute(device, mute);
     m_volumeSourceMute = mute;
     emit volumeSourceMuteChanged();

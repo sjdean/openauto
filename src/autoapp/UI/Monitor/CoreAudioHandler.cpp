@@ -39,19 +39,19 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
     return defaultSourceName;
   }
 
-  void CoreAudioHandler::setSinkVolume(int volume) {
+  void CoreAudioHandler::setSinkVolume(const QString& deviceName, int volume) {
 
   }
 
-  void CoreAudioHandler::setSourceVolume(int volume) {
+  void CoreAudioHandler::setSourceVolume(const QString& deviceName, int volume) {
 
   }
 
-  void CoreAudioHandler::setSinkMute(bool mute) {
+  void CoreAudioHandler::setSinkMute(const QString& deviceName, bool mute) {
 
   }
 
-  void CoreAudioHandler::setSourceMute(bool mute) {
+  void CoreAudioHandler::setSourceMute(const QString& deviceName, bool mute) {
 
   }
 
@@ -65,4 +65,4 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
 
   }
 }
-#endif
+#endif/

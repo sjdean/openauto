@@ -28,6 +28,7 @@ Item {
             height: parent.height - muteButton.height - parent.spacing
             width: parent.width
             alternateColor: Constants.sliderAlternateColor
+            value: volumePopupHandler.volumeSink
             onValueChanged: volumePopupHandler.volumeSink = value
 
         }

@@ -35,6 +35,12 @@ signals:
 
     int m_userBrightnessTarget{};
     int m_calculatedBrightness{};
+
+#ifdef Q_OS_LINUX
+    QString m_backlightPath;
+    int m_backlightMaxBrightness{255};
+    void applyHardwareBrightness(int calculatedBrightness);
+#endif
   };
 
 }

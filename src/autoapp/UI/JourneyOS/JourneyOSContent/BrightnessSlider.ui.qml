@@ -10,13 +10,15 @@ import QtQuick.Controls
 
 Slider {
     id: brightnessSlider
-    value: 0.5
+    from: 0
+    to: 255
+    stepSize: 1
+    snapMode: Slider.SnapAlways
     orientation: Qt.Vertical
     background: baseBackground
+    value: brightnessPopupHandler.targetBrightness
     property color sliderColor: "#cc2d004d"
     property color alternateColor: "#ab381353"
-
-    // TODO: Brightness Repsonses
 
     Rectangle {
         id: baseBackground

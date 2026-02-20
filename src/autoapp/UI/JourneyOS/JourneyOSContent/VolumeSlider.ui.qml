@@ -11,7 +11,11 @@ import JourneyOS 1.0
 
 Slider {
     id: volumeSlider
-    value: 0.5
+    from: 0
+    to: 255
+    stepSize: 1
+    snapMode: Slider.SnapAlways
+    value: volumePopupHandler.volumeSink
     orientation: Qt.Vertical
     background: baseBackground
     property color sliderColor: Constants.sliderPrimaryColor
