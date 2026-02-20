@@ -124,18 +124,21 @@ void WifiController::enableHotspotImpl(const QString& ssid, const QString& pass)
 }
 #endif
 
-// These are the ONLY functions that are truly platform-specific right now
 void WifiController::scan()
 {
 #ifdef Q_OS_LINUX
-    // Real scan implementation — call your existing WifiMonitor or direct NM call
-    // Example (you probably already have this somewhere):
-    QDBusInterface nm("org.freedesktop.NetworkManager",
-                      "/org/freedesktop/NetworkManager",
-                      "org.freedesktop.NetworkManager", m_bus);
+    if (m_wifiDevicePath.isEmpty()) {
+        emit errorOccurred(tr("Wi-Fi interface not ready"));
+        return;
+    }
 
-    QDBusPendingCall async = nm.asyncCall("Scan", QVariant::fromValue(QList<QVariant>{}));
-    auto* watcher = new QDBusPendingCallWatcher(async, this);
+    QDBusInterface wireless("org.freedesktop.NetworkManager",
+                            m_wifiDevicePath,
+                            "org.freedesktop.NetworkManager.Device.Wireless",
+                            m_bus);
+
+    QVariantMap options; // empty options accepted by NM
+    auto* watcher = new QDBusPendingCallWatcher(wireless.asyncCall("RequestScan", options), this);
     connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher* w) {
         if (w->isError())
             emit errorOccurred(tr("Scan failed: %1").arg(w->error().message()));
@@ -160,19 +163,71 @@ void WifiController::disconnect()
     auto* watcher = new QDBusPendingCallWatcher(async, this);
     connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher* w) {
         if (w->isError())
-            qWarning(logWifiCtrl) << "Disconnect failed:" << w->error().message();
+            qWarning(lcWifi) << "Disconnect failed:" << w->error().message();
         else
-            qInfo(logWifiCtrl) << "Disconnected from Wi-Fi";
+            qInfo(lcWifi) << "Disconnected from Wi-Fi";
         w->deleteLater();
     });
 #endif
 }
 
-// Optional: add a helper if you want to reuse from monitor
+void WifiController::connectToNetwork(const QString& ssid, const QString& password)
+{
+#ifdef Q_OS_LINUX
+    connectToWifiImpl(ssid, password);
+#else
+    Q_UNUSED(ssid)
+    Q_UNUSED(password)
+#endif
+}
+
+#ifdef Q_OS_LINUX
 void WifiController::connectToWifiImpl(const QString& ssid, const QString& password)
 {
-    // ← your full AddAndActivateConnection logic here (same as hotspot but mode="infrastructure")
-    // You already have this code from your old version — just paste it here
+    if (m_wifiDevicePath.isEmpty()) {
+        emit errorOccurred(tr("Wi-Fi interface not ready"));
+        return;
+    }
+
+    QVariantMap connection, wifi, wifiSec, ipv4;
+    connection["uuid"] = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    connection["id"] = ssid;
+    connection["type"] = "802-11-wireless";
+    connection["interface-name"] = m_currentIface;
+
+    wifi["ssid"] = ssid.toUtf8();
+    wifi["mode"] = "infrastructure";
+
+    ipv4["method"] = "auto"; // DHCP
+
+    QDBusMessage msg = QDBusMessage::createMethodCall(
+        "org.freedesktop.NetworkManager",
+        "/org/freedesktop/NetworkManager",
+        "org.freedesktop.NetworkManager",
+        "AddAndActivateConnection");
+
+    if (!password.isEmpty()) {
+        wifiSec["key-mgmt"] = "wpa-psk";
+        wifiSec["psk"] = password;
+        msg << connection << wifi << wifiSec << ipv4
+            << QDBusObjectPath(m_wifiDevicePath) << QDBusObjectPath("/");
+    } else {
+        msg << connection << wifi << QVariantMap() << ipv4
+            << QDBusObjectPath(m_wifiDevicePath) << QDBusObjectPath("/");
+    }
+
+    auto* w = new QDBusPendingCallWatcher(m_bus.asyncCall(msg), this);
+    connect(w, &QDBusPendingCallWatcher::finished, this, [this, ssid](QDBusPendingCallWatcher* call) {
+        if (call->isError()) {
+            qCritical(lcWifi) << "Connect failed:" << call->error().message();
+            emit errorOccurred(tr("Connect failed: %1").arg(call->error().message()));
+        } else {
+            qInfo(lcWifi) << "Connecting to:" << ssid;
+            emit statusChanged(tr("Connecting to %1").arg(ssid));
+        }
+        call->deleteLater();
+    });
 }
+#endif
 
 } // namespace

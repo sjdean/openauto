@@ -4,12 +4,13 @@ import JourneyOS
 
 Item {
     id: wirelessPopup
-    implicitWidth: layoutColumn.implicitWidth + 40
-    implicitHeight: layoutColumn.implicitHeight + 40
+    implicitWidth: 460
+    implicitHeight: contentColumn.implicitHeight + 40
 
     Rectangle {
         color: Constants.settingsPopupBackgroundColor
         anchors.fill: parent
+        radius: 8
     }
 
     RoundButton {
@@ -19,16 +20,60 @@ Item {
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.margins: 5
+        z: 10
         onClicked: wirelessPopup.parent.close()
     }
 
     Column {
-        id: layoutColumn
-        spacing: 10
-        anchors.centerIn: parent
-        width: parent.width - 20
+        id: contentColumn
+        spacing: 8
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: 20
+        anchors.topMargin: 10
 
-        // ── Enable toggle — always visible ──────────────────────────────────
+        // ── Title ────────────────────────────────────────────────────────────
+        Text {
+            text: "Wi-Fi"
+            font.pixelSize: 16
+            font.bold: true
+            color: Constants.primaryTextColor
+        }
+
+        // ── Status strip ─────────────────────────────────────────────────────
+        Rectangle {
+            width: parent.width
+            height: statusRow.implicitHeight + 12
+            color: wifiViewModel.connected ? "#22009900" : "#22990000"
+            radius: 4
+
+            Row {
+                id: statusRow
+                anchors.centerIn: parent
+                spacing: 12
+
+                Text {
+                    text: wifiViewModel.connected ? "● Connected" : "○ Not Connected"
+                    color: wifiViewModel.connected ? Constants.okColor : Constants.badColor
+                    font.pixelSize: 12
+                }
+                Text {
+                    visible: wifiViewModel.connected
+                    text: wifiViewModel.currentSsid.length > 0 ? ("  " + wifiViewModel.currentSsid) : ""
+                    color: Constants.primaryTextColor
+                    font.pixelSize: 12
+                }
+                Text {
+                    visible: wifiViewModel.connected && wifiViewModel.signalStrength > 0
+                    text: wifiViewModel.signalStrength + "%"
+                    color: Constants.primaryTextColor
+                    font.pixelSize: 12
+                }
+            }
+        }
+
+        // ── Enable toggle ────────────────────────────────────────────────────
         CheckBox {
             id: checkBoxEnableWireless
             text: qsTr("Enable Wireless")
@@ -36,16 +81,16 @@ Item {
             onCheckedChanged: wifiViewModel.isEnabled = checked
         }
 
-        // ── Interface selection — always visible ─────────────────────────────
-        Text { text: "Interface" }
+        // ── Interface selection ───────────────────────────────────────────────
+        Text { text: "Interface"; color: Constants.primaryTextColor; font.pixelSize: 12 }
         ComboBox {
             id: networkInterface
             width: parent.width
             model: networkAdapterModel.comboBoxItems
             textRole: "displayName"
             currentIndex: {
-                let idx = networkAdapterModel.comboBoxItems.findIndex(
-                    item => item.address === wifiViewModel.selectedInterface)
+                var idx = networkAdapterModel.comboBoxItems.findIndex(
+                    function(item) { return item.address === wifiViewModel.selectedInterface })
                 return idx !== -1 ? idx : 0
             }
             onCurrentIndexChanged: {
@@ -56,12 +101,13 @@ Item {
             }
         }
 
-        // ── Head Unit controls — hidden on Mac/Windows/Linux Desktop ─────────
+        // ── Head Unit controls ────────────────────────────────────────────────
         Column {
             visible: settingsViewHandler.headUnitMode
             width: parent.width
-            spacing: 10
+            spacing: 8
 
+            // Mode selector
             ButtonGroup { id: wirelessModeGroup }
 
             Row {
@@ -69,26 +115,28 @@ Item {
                 RadioButton {
                     id: hotspotButton
                     text: qsTr("Hotspot")
-                    checked: wifiViewModel.mode === 1
-                    onCheckedChanged: if (checked) wifiViewModel.mode = 1
+                    // WIRELESS_HOTSPOT = 0
+                    checked: wifiViewModel.mode === 0
+                    onCheckedChanged: if (checked) wifiViewModel.mode = 0
                     ButtonGroup.group: wirelessModeGroup
                 }
                 RadioButton {
                     id: clientButton
                     text: qsTr("Client")
-                    checked: wifiViewModel.mode === 2
-                    onCheckedChanged: if (checked) wifiViewModel.mode = 2
+                    // WIRELESS_CLIENT = 1
+                    checked: wifiViewModel.mode === 1
+                    onCheckedChanged: if (checked) wifiViewModel.mode = 1
                     ButtonGroup.group: wirelessModeGroup
                 }
             }
 
-            // Hotspot credentials
+            // ── Hotspot credentials ───────────────────────────────────────────
             Column {
-                visible: wifiViewModel.mode === 1
+                visible: wifiViewModel.mode === 0
                 width: parent.width
                 spacing: 6
 
-                Text { text: qsTr("Hotspot SSID") }
+                Text { text: qsTr("Hotspot SSID"); color: Constants.primaryTextColor; font.pixelSize: 12 }
                 TextField {
                     width: parent.width
                     placeholderText: qsTr("SSID")
@@ -96,46 +144,147 @@ Item {
                     onTextEdited: wifiViewModel.hotspotSsid = text
                 }
 
-                Text { text: qsTr("Hotspot Password") }
+                Text { text: qsTr("Hotspot Password"); color: Constants.primaryTextColor; font.pixelSize: 12 }
                 TextField {
                     width: parent.width
-                    placeholderText: qsTr("Password")
+                    placeholderText: qsTr("Password (min 8 chars)")
                     echoMode: TextInput.Password
                     text: wifiViewModel.hotspotPassword
                     onTextEdited: wifiViewModel.hotspotPassword = text
                 }
             }
 
-            // Client credentials
+            // ── Client credentials + scan ─────────────────────────────────────
             Column {
-                visible: wifiViewModel.mode === 2
+                visible: wifiViewModel.mode === 1
                 width: parent.width
                 spacing: 6
 
-                Text { text: qsTr("Network SSID") }
+                // Saved credentials row
+                Text { text: qsTr("Network SSID"); color: Constants.primaryTextColor; font.pixelSize: 12 }
                 TextField {
+                    id: clientSsidField
                     width: parent.width
-                    placeholderText: qsTr("SSID")
-                    text: wifiViewModel.currentSsid
+                    placeholderText: qsTr("Network name")
+                    text: wifiViewModel.clientSsid
+                    onTextEdited: wifiViewModel.clientSsid = text
                 }
 
-                Text { text: qsTr("Network Password") }
-                TextField {
+                Text { text: qsTr("Password"); color: Constants.primaryTextColor; font.pixelSize: 12 }
+                Row {
                     width: parent.width
-                    placeholderText: qsTr("Password")
-                    echoMode: TextInput.Password
+                    spacing: 8
+                    TextField {
+                        id: clientPasswordField
+                        width: parent.width - connectBtn.width - 8
+                        placeholderText: qsTr("Password")
+                        echoMode: TextInput.Password
+                        text: wifiViewModel.clientPassword
+                        onTextEdited: wifiViewModel.clientPassword = text
+                    }
+                    Button {
+                        id: connectBtn
+                        text: "Connect"
+                        onClicked: wifiViewModel.connectToNetwork(clientSsidField.text, clientPasswordField.text)
+                    }
+                }
+
+                // Scan controls
+                Row {
+                    width: parent.width
+                    spacing: 8
+                    Button {
+                        text: "Scan"
+                        onClicked: wifiViewModel.doWirelessNetworkScan()
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: wifiViewModel.accessPoints.length > 0
+                              ? (wifiViewModel.accessPoints.length + " network(s) found")
+                              : "No scan results"
+                        color: Constants.primaryTextColor
+                        font.pixelSize: 11
+                        font.italic: true
+                    }
+                }
+
+                // Scan results list
+                Rectangle {
+                    visible: wifiViewModel.accessPoints.length > 0
+                    width: parent.width
+                    height: Math.min(apList.contentHeight + 2, 160)
+                    color: "#22ffffff"
+                    radius: 4
+                    clip: true
+
+                    ListView {
+                        id: apList
+                        anchors.fill: parent
+                        model: wifiViewModel.accessPoints
+                        spacing: 2
+
+                        delegate: Rectangle {
+                            width: apList.width
+                            height: 36
+                            color: apMouseArea.containsPress ? "#44ffffff" : "transparent"
+                            radius: 3
+
+                            Row {
+                                anchors.fill: parent
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
+                                spacing: 8
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.secured ? "🔒" : "📶"
+                                    font.pixelSize: 14
+                                }
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.ssid
+                                    color: Constants.primaryTextColor
+                                    font.pixelSize: 13
+                                    elide: Text.ElideRight
+                                    width: parent.width - 80
+                                }
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: modelData.strength + "%"
+                                    color: modelData.strength > 60 ? Constants.okColor
+                                         : modelData.strength > 30 ? Constants.waitColor
+                                         : Constants.badColor
+                                    font.pixelSize: 12
+                                }
+                            }
+
+                            MouseArea {
+                                id: apMouseArea
+                                anchors.fill: parent
+                                onClicked: {
+                                    clientSsidField.text = modelData.ssid
+                                    wifiViewModel.clientSsid = modelData.ssid
+                                    clientPasswordField.text = ""
+                                    clientPasswordField.forceActiveFocus()
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        // ── System-managed notice ────────────────────────────────────────────
+        // ── System-managed notice ─────────────────────────────────────────────
         Text {
             visible: !settingsViewHandler.headUnitMode
-            text: qsTr("Wi-Fi is managed by the operating system.\nEnable/disable and interface selection are available.")
+            text: qsTr("Wi-Fi is managed by the operating system.\nInterface selection is available.")
             color: "gray"
             font.italic: true
             wrapMode: Text.WordWrap
             width: parent.width
+            font.pixelSize: 12
         }
+
+        Item { width: 1; height: 4 } // bottom padding
     }
 }

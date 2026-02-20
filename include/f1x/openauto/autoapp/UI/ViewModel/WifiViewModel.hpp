@@ -5,6 +5,7 @@
 #include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
+#include "f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp"
 
 namespace f1x::openauto::autoapp::UI::ViewModel {
     class WifiViewModel : public QObject {
@@ -22,10 +23,12 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         Q_PROPERTY(int signalStrength READ getSignalStrength NOTIFY signalStrengthChanged)
         Q_PROPERTY(bool connected READ getConnected NOTIFY connectedChanged)
         Q_PROPERTY(QVariantList accessPoints READ getAccessPoints NOTIFY accessPointsChanged)
+        Q_PROPERTY(QVariantList availableInterfaces READ getAvailableInterfaces NOTIFY availableInterfacesChanged)
 
     public:
         explicit WifiViewModel(configuration::IConfiguration::Pointer config,
                                        UI::Controller::WifiController* controller,
+                                       UI::Monitor::WifiMonitor* monitor,
                                        QObject *parent = nullptr);
         // Read
         QString getSelectedInterface() const;
@@ -42,6 +45,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         bool getIsEnabled() const;
 
         QVariantList getAccessPoints() const;
+        QVariantList getAvailableInterfaces() const;
 
         // Write (saves to config + emits)
         Q_INVOKABLE void setSelectedInterface(const QString &iface);
@@ -53,13 +57,20 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         Q_INVOKABLE void setIsEnabled(bool enabled);
 
         Q_INVOKABLE void doWirelessNetworkScan();
+        Q_INVOKABLE void connectToNetwork(const QString &ssid, const QString &password);
 
-        // Called from WifiMonitor -- These aren't called by WiFiViewModel though?
+    public slots:
         void updateCurrentSsid(const QString &ssid);
         void updateSignalStrength(int strength);
         void updateConnected(bool connected);
         void updateMode(common::Enum::WirelessType::Value mode);
         void updateAccessPoints(const QVariantList &aps);
+
+        // Interface info
+        void updateInterface(const QString &macAddress);
+        void updateInterfaceUp(bool up);
+        void updateCurrentIP(const QString &ip);
+        void updateAvailableInterfaces(const QVariantList &interfaces);
 
     signals:
         void isEnabledChanged();
@@ -74,12 +85,17 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         void connectedChanged();
         void accessPointsChanged();
         void scanRequested();
+        void interfaceMacChanged();
+        void interfaceUpChanged();
+        void currentIpChanged();
+        void availableInterfacesChanged();
 
         void connectRequested(const QString &ssid);
 
     private:
         configuration::IConfiguration::Pointer m_config;
         Controller::WifiController* m_wifiController;
+        Monitor::WifiMonitor* m_monitor;
         common::Enum::WirelessType::Value m_mode;
         QString m_selectedInterface;
         QString m_hotspotSsid;
@@ -91,5 +107,9 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         bool m_connected{false};
         bool m_isEnabled{false};
         QVariantList m_accessPoints;
+        QVariantList m_availableInterfaces;
+        QString m_currentIp;
+        bool m_interfaceUp;
+        QString m_interfaceMac;
     };
 } // namespace

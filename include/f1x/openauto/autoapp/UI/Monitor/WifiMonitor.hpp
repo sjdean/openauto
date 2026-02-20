@@ -32,23 +32,21 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     signals:
         // Real-time status
         void currentSsidChanged(const QString &ssid);
-
         void signalStrengthChanged(int strength); // 0–100
         void connectedChanged(bool connected);
-
         void modeChanged(common::Enum::WirelessType::Value mode);
 
         // Interface info
         void interfaceChanged(const QString &macAddress);
-
         void interfaceUpChanged(bool up);
-
         void currentIpChanged(const QString &ip);
-
         void availableInterfacesChanged(const QVariantList &interfaces);
 
         // Scan results (Linux only for now)
         void accessPointsChanged(const QVariantList &aps);
+
+    public slots:
+        void requestScan();
 
     private slots:
         void refreshCrossPlatformInfo();
@@ -56,14 +54,18 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 #ifdef Q_OS_LINUX
         void findWifiDevice(const QString &ifaceName);
         void onDeviceStateChanged(quint32 newState, quint32 oldState, quint32 reason);
-        void onActiveConnectionChanged(const QVariantMap &changed);
-        void updateActiveConnection(const QDBusObjectPath &path);
+        void onPropertiesChanged(const QString &interfaceName, const QVariantMap &changed,
+                                 const QStringList &invalidated);
 #endif
 
     private:
         void updateInterfaceList();
-
         void updateCurrentIp();
+
+#ifdef Q_OS_LINUX
+        void refreshLinuxStatus();
+        void refreshAccessPoints();
+#endif
 
         configuration::IConfiguration::Pointer m_config;
 

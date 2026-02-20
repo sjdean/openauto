@@ -11,8 +11,11 @@ Q_LOGGING_CATEGORY(lcVmWifi, "journeyos.wifi")
 namespace f1x::openauto::autoapp::UI::ViewModel {
 
     // 1. Accept Pointer in Constructor
-    WifiViewModel::WifiViewModel(configuration::IConfiguration::Pointer config, UI::Controller::WifiController* controller, QObject *parent)
-        : QObject(parent), m_config(std::move(config)), m_wifiController(controller)
+    WifiViewModel::WifiViewModel(configuration::IConfiguration::Pointer config,
+    UI::Controller::WifiController* controller,
+    UI::Monitor::WifiMonitor* monitor,
+    QObject *parent)
+        : QObject(parent), m_config(std::move(config)), m_wifiController(controller), m_monitor(monitor)
     {
         // Load from config
         m_selectedInterface = m_config->getSettingByName<QString>("Wireless", "Interface");
@@ -23,6 +26,16 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         m_isEnabled         = m_config->getSettingByName<bool>("Wireless", "Enabled");
         auto modeVal        = m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type");
         updateMode(modeVal);
+
+        connect(m_monitor, &Monitor::WifiMonitor::signalStrengthChanged,this, &WifiViewModel::updateSignalStrength);
+        connect(m_monitor, &Monitor::WifiMonitor::accessPointsChanged,this, &WifiViewModel::updateAccessPoints);
+        connect(m_monitor, &Monitor::WifiMonitor::connectedChanged,this, &WifiViewModel::updateConnected);
+        connect(m_monitor, &Monitor::WifiMonitor::modeChanged,this, &WifiViewModel::updateMode);
+        connect(m_monitor, &Monitor::WifiMonitor::currentSsidChanged, this, &WifiViewModel::updateCurrentSsid);
+        connect(m_monitor, &Monitor::WifiMonitor::availableInterfacesChanged, this, &WifiViewModel::updateAvailableInterfaces);
+        connect(m_monitor, &Monitor::WifiMonitor::currentIpChanged, this, &WifiViewModel::updateCurrentIP);
+        connect(m_monitor, &Monitor::WifiMonitor::interfaceChanged, this, &WifiViewModel::updateInterface);
+        connect(m_monitor, &Monitor::WifiMonitor::interfaceUpChanged, this, &WifiViewModel::updateInterfaceUp);
     }
 
     bool WifiViewModel::getIsEnabled() const { return m_isEnabled; }
@@ -71,6 +84,10 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     QVariantList WifiViewModel::getAccessPoints() const {
         return m_accessPoints;
+    }
+
+    QVariantList WifiViewModel::getAvailableInterfaces() const {
+        return m_availableInterfaces;
     }
 
 
@@ -134,7 +151,19 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     }
 
     void WifiViewModel::doWirelessNetworkScan() {
-        m_wifiController->scan();
+        m_monitor->requestScan();
+    }
+
+    void WifiViewModel::connectToNetwork(const QString &ssid, const QString &password) {
+        if (ssid.isEmpty()) return;
+        m_clientSsid = ssid;
+        m_clientPassword = password;
+        m_config->updateSettingByName<QString>("Wireless", "ClientSSID", ssid);
+        m_config->updateSettingByName<QString>("Wireless", "ClientPassword", password);
+        m_config->save();
+        emit clientSsidChanged();
+        emit clientPasswordChanged();
+        m_wifiController->connectToNetwork(ssid, password);
     }
 
     // Called by WifiMonitor
@@ -149,6 +178,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     }
     void WifiViewModel::updateMode(common::Enum::WirelessType::Value m) {
         if (m != m_mode) {
+            m_mode = m;
             m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", m);
             m_config->save();
             emit modeChanged();
@@ -158,5 +188,25 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void WifiViewModel::updateAccessPoints(const QVariantList& aps) {
         m_accessPoints = aps;
         emit accessPointsChanged();
+    }
+
+    void WifiViewModel::updateInterface(const QString &macAddress) {
+        m_interfaceMac = macAddress;
+        emit interfaceMacChanged();
+    }
+
+    void WifiViewModel::updateInterfaceUp(bool up) {
+        m_interfaceUp = up;
+        emit interfaceUpChanged();
+    }
+
+    void WifiViewModel::updateCurrentIP(const QString &ip) {
+        m_currentIp = ip;
+        emit currentIpChanged();
+    }
+
+    void WifiViewModel::updateAvailableInterfaces(const QVariantList &interfaces) {
+        m_availableInterfaces = interfaces;
+        emit availableInterfacesChanged();
     }
 }

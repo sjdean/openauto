@@ -108,20 +108,17 @@ Window {
 
     Popup {
         id: wifiPopup
-        x: 100
-        y: 100
-        width: 300
-        height: 200
+        anchors.centerIn: parent
+        width: Math.min(500, parent.width - 40)
+        height: Math.min(wifiPopupContent.implicitHeight + 20, parent.height - 40)
         modal: true
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        background: Rectangle {
-            color: "#FFFFFF"
-            border.color: "transparent"
-            border.width: 0
-        }
+        padding: 0
+        background: Item {}
         contentItem: WirelessPopup {
-
+            id: wifiPopupContent
+            width: wifiPopup.width
         }
     }
 

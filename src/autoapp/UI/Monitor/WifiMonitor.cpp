@@ -148,8 +148,75 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         emit availableInterfacesChanged(list);
     }
 
+    void WifiMonitor::requestScan()
+    {
+#ifdef Q_OS_LINUX
+        if (m_wifiDevicePath.isEmpty()) return;
+
+        QDBusInterface wireless("org.freedesktop.NetworkManager",
+                                m_wifiDevicePath,
+                                "org.freedesktop.NetworkManager.Device.Wireless",
+                                m_bus);
+
+        QVariantMap options; // NM accepts empty options map
+        auto *w = new QDBusPendingCallWatcher(wireless.asyncCall("RequestScan", options), this);
+        connect(w, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
+            if (call->isError())
+                qWarning(lcWifiMonitor) << "RequestScan failed:" << call->error().message();
+            else
+                QTimer::singleShot(2000, this, &WifiMonitor::refreshAccessPoints);
+            call->deleteLater();
+        });
+#endif
+    }
+
+#ifdef Q_OS_LINUX
+    void WifiMonitor::refreshAccessPoints()
+    {
+        if (m_wifiDevicePath.isEmpty()) return;
+
+        QDBusInterface wireless("org.freedesktop.NetworkManager",
+                                m_wifiDevicePath,
+                                "org.freedesktop.NetworkManager.Device.Wireless",
+                                m_bus);
+
+        QDBusReply<QList<QDBusObjectPath>> reply = wireless.call("GetAllAccessPoints");
+        if (!reply.isValid()) {
+            qWarning(lcWifiMonitor) << "GetAllAccessPoints failed:" << reply.error().message();
+            return;
+        }
+
+        QVariantList apList;
+        for (const QDBusObjectPath &apPath : reply.value()) {
+            QDBusInterface ap("org.freedesktop.NetworkManager",
+                              apPath.path(),
+                              "org.freedesktop.NetworkManager.AccessPoint",
+                              m_bus);
+
+            QByteArray ssidBytes = ap.property("Ssid").toByteArray();
+            QString ssid = QString::fromUtf8(ssidBytes);
+            if (ssid.isEmpty()) continue;
+
+            int strength = ap.property("Strength").toInt();
+            bool secured = (ap.property("WpaFlags").toUInt() | ap.property("RsnFlags").toUInt()) > 0;
+
+            QVariantMap apMap;
+            apMap["ssid"] = ssid;
+            apMap["strength"] = strength;
+            apMap["secured"] = secured;
+            apList.append(apMap);
+        }
+
+        std::sort(apList.begin(), apList.end(), [](const QVariant &a, const QVariant &b) {
+            return a.toMap()["strength"].toInt() > b.toMap()["strength"].toInt();
+        });
+
+        emit accessPointsChanged(apList);
+    }
+#endif
+
     // ————————————————————
-    // Linux-only D-Bus code (unchanged from your working version)
+    // Linux-only D-Bus code
     // ————————————————————
 
 #ifdef Q_OS_LINUX

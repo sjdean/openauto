@@ -4,25 +4,37 @@
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 #include "f1x/openauto/autoapp/Configuration/Configuration.hpp"
 
+#ifdef Q_OS_LINUX
+#include <QDBusConnection>
+#include <QDBusPendingCallWatcher>
+#include <QUuid>
+#endif
+
 namespace f1x::openauto::autoapp::UI::Controller {
     class WifiController final : public QObject {
+        Q_OBJECT
 
     public:
         explicit WifiController(configuration::Configuration::Pointer config,
                                 QObject *parent = nullptr);
 
-        // Public API used by QML/Settings
         void setInterface(const QString &ifaceName);
         void setMode(common::Enum::WirelessType::Value mode);
         void setHotspotCredentials(const QString &ssid, const QString &password);
         void setWirelessCredentials(const QString &ssid, const QString &password);
         void scan();
         void disconnect();
-        void connectToWifiImpl(const QString &ssid, const QString &password);
+        void connectToNetwork(const QString &ssid, const QString &password);
+
+    signals:
+        void errorOccurred(const QString &message);
+        void statusChanged(const QString &message);
 
     private:
+        void applyAllSettings();
+        configuration::Configuration::Pointer m_config;
+
 #ifdef Q_OS_LINUX
-    private: // Linux-only implementation details
         void enableHotspotImpl(const QString &ssid, const QString &password);
         void connectToWifiImpl(const QString &ssid, const QString &password);
 
@@ -30,7 +42,5 @@ namespace f1x::openauto::autoapp::UI::Controller {
         QString m_wifiDevicePath;
         QDBusConnection m_bus = QDBusConnection::systemBus();
 #endif
-        void applyAllSettings();
-        configuration::Configuration::Pointer m_config;
     };
 } // namespace
