@@ -20,6 +20,15 @@ if (TAGLIB_LIBRARIES AND TAGLIB_INCLUDE_DIRS)
   # in cache already
   set(TAGLIB_FOUND TRUE)
 else (TAGLIB_LIBRARIES AND TAGLIB_INCLUDE_DIRS)
+  find_package(PkgConfig QUIET)
+  if(PKG_CONFIG_FOUND)
+    pkg_check_modules(TAGLIB QUIET taglib)
+    if(TAGLIB_FOUND)
+      message(STATUS "taglib found via pkg-config")
+      return()
+    endif()
+  endif()
+
   find_path(TAGLIB_INCLUDE_DIR
     NAMES
         taglib.h

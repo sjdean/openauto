@@ -1,191 +1,308 @@
-cmake_minimum_required(VERSION 3.15)
-project(openauto CXX)
-message(STATUS "OpenAuto")
+cmake_minimum_required(VERSION 3.16)
 
-# --- Global Configuration ---
+# ─── Version (single source of truth) ────────────────────────────────────────
+# Numeric triplet only — used for VERSION/SOVERSION.
+# Display string (with date/git) is separate and never used for file naming.
+set(LIBRARY_BUILD_DATE          "20260225")
+set(LIBRARY_BUILD_MAJOR_RELEASE 4)
+set(LIBRARY_BUILD_MINOR_RELEASE 1)
+set(LIBRARY_BUILD_INCREMENTAL   0)
+
+set(LIBRARY_BUILD_VERSION_STRING
+        "${LIBRARY_BUILD_MAJOR_RELEASE}.${LIBRARY_BUILD_MINOR_RELEASE}.${LIBRARY_BUILD_INCREMENTAL}+${LIBRARY_BUILD_DATE}")
+
+project(openauto
+        VERSION "${LIBRARY_BUILD_MAJOR_RELEASE}.${LIBRARY_BUILD_MINOR_RELEASE}.${LIBRARY_BUILD_INCREMENTAL}"
+        DESCRIPTION "OpenAuto - Android Auto head unit"
+        LANGUAGES CXX
+)
+
+# ─── Language standard ────────────────────────────────────────────────────────
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# ─── Qt auto-tools ───────────────────────────────────────────────────────────
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/")
+# ─── Module path ─────────────────────────────────────────────────────────────
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
+
+# ─── GNU install dirs ─────────────────────────────────────────────────────────
 include(GNUInstallDirs)
 
-# --- Automatic Versioning ---
-include(gitversion)
-set(OPENAUTO_BUILD_MAJOR_RELEASE 4)
-set(OPENAUTO_BUILD_MINOR_RELEASE 1)
-set(PROGRAM_VERSION_STRING "${OPENAUTO_BUILD_MAJOR_RELEASE}.${OPENAUTO_BUILD_MINOR_RELEASE}.${_git_commit_count}+${_build_version}")
-message(STATUS "Project Version: ${PROGRAM_VERSION_STRING}")
+# ─── Default build type ───────────────────────────────────────────────────────
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "Defaulting to Release build")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+            "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
 
-# --- Build Type Configuration ---
-if (NOT CMAKE_BUILD_TYPE)
-    message(STATUS "Forcing Release build type")
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-endif ()
+# ─── Platform detection ───────────────────────────────────────────────────────
+# Use CMAKE_SYSTEM_NAME directly — avoids relying on the LINUX variable which
+# requires CMake 3.25+. We target 3.16 minimum.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(OPENAUTO_LINUX TRUE)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(OPENAUTO_MACOS TRUE)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(OPENAUTO_WINDOWS TRUE)
+endif()
 
-# --- macOS Specifics ---
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")  # macOS
-    message(STATUS "MacOS System Detected")
-    add_definitions(-DMAC_OS)
-    find_package(protobuf REQUIRED CONFIG)
-    find_package(absl REQUIRED)
-else ()
-    find_package(Protobuf REQUIRED) # Provides Protobuf::protobuf
-endif ()
+message(STATUS "Build type      : ${CMAKE_BUILD_TYPE}")
+message(STATUS "System          : ${CMAKE_SYSTEM_NAME} / ${CMAKE_SYSTEM_PROCESSOR}")
+if(CMAKE_CROSSCOMPILING)
+    message(STATUS "Cross-compiling : YES (target: ${CMAKE_SYSTEM_PROCESSOR})")
+endif()
 
-# --- QT 6 ---
-option(QT6_INSTALL_DIR "Specify the path to the root Qt 6 installation directory (e.g., /Users/user/Qt/6.x.x/macos)" "")
+# ─── Git metadata (display only — never used in file/library names) ───────────
+# Gracefully degrades when .git is absent (Yocto work dir, CI tarballs, etc.)
+find_package(Git QUIET)
+if(Git_FOUND)
+    execute_process(
+            COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            OUTPUT_VARIABLE   _git_short_hash
+            ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    execute_process(
+            COMMAND "${GIT_EXECUTABLE}" rev-parse --abbrev-ref HEAD
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            OUTPUT_VARIABLE   _git_branch
+            ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif()
+if(NOT _git_short_hash OR _git_short_hash STREQUAL "")
+    set(_git_short_hash "unknown")
+endif()
+if(NOT _git_branch OR _git_branch STREQUAL "")
+    set(_git_branch "unknown")
+endif()
+if(NOT _git_short_hash STREQUAL "unknown")
+    set(LIBRARY_BUILD_VERSION_STRING
+            "${LIBRARY_BUILD_MAJOR_RELEASE}.${LIBRARY_BUILD_MINOR_RELEASE}.${LIBRARY_BUILD_INCREMENTAL}+${LIBRARY_BUILD_DATE}.g${_git_short_hash}")
+endif()
+message(STATUS "Version         : ${LIBRARY_BUILD_VERSION_STRING} (branch: ${_git_branch})")
+
+# ─── ccache ───────────────────────────────────────────────────────────────────
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    message(STATUS "ccache          : ${CCACHE_PROGRAM}")
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+endif()
+
+# ─── Qt 6 ─────────────────────────────────────────────────────────────────────
+# QT6_INSTALL_DIR is for local desktop builds only.
+# In Yocto, Qt is in the sysroot automatically — this option is ignored.
 if(NOT "${QT6_INSTALL_DIR}" STREQUAL "")
-    # Check if the path exists on the file system
     if(EXISTS "${QT6_INSTALL_DIR}")
-        # Append the custom path to CMAKE_PREFIX_PATH
-        # CMake will then search this location for the Qt6Config.cmake files.
         list(APPEND CMAKE_PREFIX_PATH "${QT6_INSTALL_DIR}")
-        message(STATUS "Adding custom Qt 6 installation directory to CMAKE_PREFIX_PATH: ${QT6_INSTALL_DIR}")
+        message(STATUS "Qt6 prefix      : ${QT6_INSTALL_DIR}")
     else()
-        # Warn the user if the provided path is invalid
-        message(WARNING "QT6_INSTALL_DIR set to non-existent path: ${QT6_INSTALL_DIR}")
+        message(WARNING "QT6_INSTALL_DIR points to non-existent path: ${QT6_INSTALL_DIR}")
     endif()
 endif()
 
-# --- Find Dependencies (Modern CONFIG Mode) ---
-find_package(aap_protobuf REQUIRED CONFIG) # Finds config, provides AAPProto::aap_protobuf
-find_package(aasdk REQUIRED CONFIG)        # Finds config, provides AASDK::aasdk
+find_package(Qt6 REQUIRED COMPONENTS
+        Core Gui Qml Quick Bluetooth DBus
+        Network Multimedia MultimediaWidgets Widgets
+)
+
+# ─── aap_protobuf and aasdk ───────────────────────────────────────────────────
+# Both ship proper CMake config packages (Config.cmake.in + find_dependency).
+# CONFIG mode is required here. The legacy Find*.cmake modules in cmake_modules/
+# (Findaap_protobuf.cmake, Findaasdk.cmake) are superseded — do not use them.
+# They search for hardcoded filenames (GalConstants.pb.h, Version.hpp) that are
+# not guaranteed to exist and create raw path variables rather than imported
+# targets, which breaks Yocto cross-sysroot builds.
+find_package(aap_protobuf REQUIRED CONFIG)   # → AAPProto::aap_protobuf
+find_package(aasdk        REQUIRED CONFIG)   # → AASDK::aasdk
+
+# ─── Boost ────────────────────────────────────────────────────────────────────
 find_package(Boost REQUIRED COMPONENTS system log)
-find_package(libusb-1.0 REQUIRED)
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Bluetooth DBus Network Multimedia MultimediaWidgets Widgets)
+
+# ─── OpenSSL ──────────────────────────────────────────────────────────────────
+find_package(OpenSSL REQUIRED)
+
+# ─── libusb — three-tier: config → pkg-config → manual ───────────────────────
+# Yocto does not install CMake config files for libusb1, and pkg-config is a
+# native tool unavailable in the cross sysroot. The manual fallback using
+# find_library/find_path always works because Yocto stages headers and libs
+# into recipe-sysroot at known FHS paths, which CMake searches via sysroot.
+find_package(libusb-1.0 QUIET CONFIG)
+if(libusb-1.0_FOUND OR TARGET libusb-1.0::libusb-1.0)
+    set(LIBUSB_TARGET libusb-1.0::libusb-1.0)
+    message(STATUS "libusb-1.0      : found via config mode")
+else()
+    find_package(PkgConfig QUIET)
+    if(PKG_CONFIG_FOUND)
+        pkg_check_modules(libusb QUIET IMPORTED_TARGET libusb-1.0)
+    endif()
+    if(TARGET PkgConfig::libusb)
+        set(LIBUSB_TARGET PkgConfig::libusb)
+        message(STATUS "libusb-1.0      : found via pkg-config")
+    else()
+        find_path(LIBUSB_INCLUDE_DIR NAMES libusb.h PATH_SUFFIXES libusb-1.0)
+        find_library(LIBUSB_LIBRARY NAMES usb-1.0 usb)
+        if(NOT LIBUSB_INCLUDE_DIR OR NOT LIBUSB_LIBRARY)
+            message(FATAL_ERROR
+                    "libusb-1.0 not found. Tried config mode, pkg-config, and find_library.")
+        endif()
+        add_library(libusb-1.0::libusb-1.0 UNKNOWN IMPORTED)
+        set_target_properties(libusb-1.0::libusb-1.0 PROPERTIES
+                IMPORTED_LOCATION             "${LIBUSB_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIR}"
+        )
+        set(LIBUSB_TARGET libusb-1.0::libusb-1.0)
+        message(STATUS "libusb-1.0      : found via find_library (${LIBUSB_LIBRARY})")
+    endif()
+endif()
+
+# ─── FFMPEG ───────────────────────────────────────────────────────────────────
 find_package(FFMPEG REQUIRED)
 
-#if(APPLE)
-#    message(STATUS "Patching Qt6::Gui to remove deprecated AGL framework dependency...")
-#
-#    # Get the list of libraries Qt::Gui thinks it needs
-#    get_property(QT_GUI_LIBS TARGET Qt6::Gui PROPERTY INTERFACE_LINK_LIBRARIES)
-#
-#    # Remove AGL from that list
-#    list(REMOVE_ITEM QT_GUI_LIBS "-framework AGL")
-#
-#    # Set the list back without AGL
-#    set_property(TARGET Qt6::Gui PROPERTY INTERFACE_LINK_LIBRARIES "${QT_GUI_LIBS}")
-#endif()
-find_package(OpenSSL REQUIRED)
+# ─── taglib ───────────────────────────────────────────────────────────────────
 find_package(taglib REQUIRED)
 
-# --- Linux-Only Dependencies ---
-if (LINUX)
-    message(STATUS "Linux system detected, searching for Linux libraries")
+# ─── Linux-only dependencies ──────────────────────────────────────────────────
+if(OPENAUTO_LINUX)
+    message(STATUS "Linux: searching for blkid and gps")
     find_package(blkid REQUIRED)
-    find_package(gps REQUIRED)
-else ()
-    message(STATUS "Non-Linux system, skipping linux only libraries")
-endif ()
+    find_package(gps   REQUIRED)
+endif()
 
-if (WIN32)
-    set(WINSOCK2_LIBRARIES "ws2_32")
-endif ()
+# ─── Windows-specific ─────────────────────────────────────────────────────────
+if(OPENAUTO_WINDOWS)
+    set(PLATFORM_LINK_LIBS ws2_32)
+endif()
 
-# --- QML Configuration ---
-#set(UI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/autoapp/UI/JourneyOS")
-#add_subdirectory(${UI_DIR})
+# ─── Qt Design Studio components (network fetch) ─────────────────────────────
+# qmlcomponents.cmake uses FetchContent to download from GitHub at configure
+# time. This works on desktop but will fail in Yocto's network-isolated build.
+# Automatically disabled when cross-compiling; can be forced off with
+# -DOPENAUTO_QDS_COMPONENTS=OFF on any platform.
+option(OPENAUTO_QDS_COMPONENTS "Fetch and build Qt Design Studio components (requires network)" ON)
+if(OPENAUTO_QDS_COMPONENTS AND CMAKE_CROSSCOMPILING)
+    message(STATUS "QDS components  : DISABLED (cross-compiling — no network access)")
+    set(OPENAUTO_QDS_COMPONENTS OFF)
+elseif(OPENAUTO_QDS_COMPONENTS)
+    message(STATUS "QDS components  : enabled")
+else()
+    message(STATUS "QDS components  : disabled")
+endif()
 
-set(UI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/autoapp/UI/JourneyOS")
-
-# Set Main Source Folders
+# ─── Source files ─────────────────────────────────────────────────────────────
 set(sources_directory ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(include_directory ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# Set common source
-set(common_include_directory ${include_directory}/f1x/openauto/Common)
-set(config_include_directory ${include_directory}/f1x/openauto/Configuration)
-set(config_sources_directory ${sources_directory}/Configuration)
-
-# Set autoapp sources
+set(common_include_directory  ${include_directory}/f1x/openauto/Common)
+set(config_include_directory  ${include_directory}/f1x/openauto/Configuration)
+set(config_sources_directory  ${sources_directory}/Configuration)
 set(autoapp_sources_directory ${sources_directory}/autoapp)
 set(autoapp_include_directory ${include_directory}/f1x/openauto/autoapp)
 
 file(GLOB_RECURSE autoapp_source_files
-        ${autoapp_sources_directory}/*.ui   # <-- MUST keep for AUTOUIC
+        CONFIGURE_DEPENDS
+        ${autoapp_sources_directory}/*.ui      # required for AUTOUIC
         ${autoapp_sources_directory}/*.cpp
-        ${autoapp_include_directory}/*.hpp # <-- MUST keep for AUTOMOC
-        ${autoapp_include_directory}/*.h   # <-- MUST keep for AUTOMOC
+        ${autoapp_include_directory}/*.hpp     # required for AUTOMOC
+        ${autoapp_include_directory}/*.h       # required for AUTOMOC
         ${config_sources_directory}/*.cpp
-        ${config_include_directory}/*.hpp # <-- MUST keep for AUTOMOC
-        ${common_include_directory}/*.hpp) # <-- MUST keep for AUTOMOC
+        ${config_include_directory}/*.hpp      # required for AUTOMOC
+        ${common_include_directory}/*.hpp      # required for AUTOMOC
+)
 
-add_compile_definitions(QT_MESSAGELOGCONTEXT)
-
-# --- Target: autoapp ---
+# ─── Executable target ────────────────────────────────────────────────────────
 qt_add_executable(autoapp ${autoapp_source_files})
 
+# ─── Compiler options (cross-platform) ───────────────────────────────────────
 target_compile_features(autoapp PRIVATE cxx_std_17)
-target_compile_options(autoapp PRIVATE -Wall -pedantic)
-target_compile_definitions(autoapp PRIVATE BOOST_ALL_DYN_LINK)
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_definitions(autoapp PRIVATE NDEBUG)
-endif ()
 
-# ==============================================================
-# JourneyOS UI – Qt Design Studio integration (this is the only part you needed)
-# ==============================================================
+# Semicolons required as list separators inside generator expressions —
+# spaces silently fail with Xcode and Visual Studio generators.
+target_compile_options(autoapp PRIVATE
+        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-pedantic>
+        $<$<CXX_COMPILER_ID:MSVC>:/W4>
+)
 
+target_compile_definitions(autoapp PRIVATE
+        QT_MESSAGELOGCONTEXT
+        BOOST_ALL_DYN_LINK
+        $<$<CONFIG:Release>:NDEBUG>
+        $<$<BOOL:${OPENAUTO_MACOS}>:MAC_OS>    # was add_definitions(-DMAC_OS) — now target-scoped
+)
+
+# ─── Qt Design Studio subdirectories ─────────────────────────────────────────
 set(UI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/autoapp/UI/JourneyOS")
-
-# Build the two QDS plugins
 add_subdirectory(${UI_DIR}/JourneyOSContent)
 add_subdirectory(${UI_DIR}/JourneyOS)
 
-
-# This single line silences the Qt6CoreMacros error forever
 set_source_files_properties("${UI_DIR}/qtquickcontrols2.conf"
         PROPERTIES QT_RESOURCE_ALIAS "/qtquickcontrols2.conf"
 )
-
-# The trick: use an absolute path BUT tell Qt explicitly that it's intentional
 qt_add_resources(autoapp "configuration"
         PREFIX "/"
-        FILES ${UI_DIR}/qtquickcontrols2.conf)
-
-
-# Link the two plugins (you can list them once here – no need to repeat later)
-target_link_libraries(autoapp PRIVATE
-        JourneyOSplugin
-        JourneyOSContentplugin
+        FILES  "${UI_DIR}/qtquickcontrols2.conf"
 )
 
-include(qmlcomponents)
+# ─── QDS component plugins ────────────────────────────────────────────────────
+if(OPENAUTO_QDS_COMPONENTS)
+    include(qmlcomponents)   # fetches QuickStudio* plugins from GitHub
+endif()
 
-# ==============================================================
-# Rest of your original linking (unchanged, just without the duplicate plugin lines)
-# ==============================================================
-
+# ─── Include directories (target-scoped) ─────────────────────────────────────
 target_include_directories(autoapp PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${TAGLIB_INCLUDE_DIRS}
-        ${ILCLIENT_INCLUDE_DIRS}
         ${FFMPEG_INCLUDE_DIRS}
+        ${TAGLIB_INCLUDE_DIRS}
 )
 
-target_link_libraries(autoapp PUBLIC
+# ─── Link libraries ───────────────────────────────────────────────────────────
+# autoapp is an executable — PRIVATE throughout is correct.
+# PUBLIC would leak dependencies transitively, which is meaningless for an exe.
+target_link_libraries(autoapp PRIVATE
+        # Android Auto stack
         AASDK::aasdk
         AAPProto::aap_protobuf
-        Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml Qt6::DBus
-        Qt6::Bluetooth Qt6::Multimedia Qt6::MultimediaWidgets Qt6::Network Qt6::Widgets
-        libusb
-        ${FFMPEG_LIBRARIES}
-        PRIVATE
+
+        # Qt modules
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Quick
+        Qt6::Qml
+        Qt6::DBus
+        Qt6::Bluetooth
+        Qt6::Multimedia
+        Qt6::MultimediaWidgets
+        Qt6::Network
+        Qt6::Widgets
+
+        # Qt Design Studio UI plugins
+        JourneyOSplugin
+        JourneyOSContentplugin
+
+        # System
+        ${LIBUSB_TARGET}
+        Boost::system
         Boost::log
+        OpenSSL::SSL
+        OpenSSL::Crypto
+
+        # Media
+        ${FFMPEG_LIBRARIES}
         ${TAGLIB_LIBRARIES}
-        ${ILCLIENT_LIBRARIES}
-        ${WINSOCK2_LIBRARIES}
+
+        # Platform (Winsock on Windows, empty elsewhere)
+        ${PLATFORM_LINK_LIBS}
 )
 
-if (LINUX)
+# ─── Linux-only links ─────────────────────────────────────────────────────────
+if(OPENAUTO_LINUX)
     target_include_directories(autoapp PRIVATE
             ${BLKID_INCLUDE_DIRS}
             ${GPS_INCLUDE_DIRS}
@@ -195,15 +312,17 @@ if (LINUX)
             ${BLKID_LIBRARIES}
             ${GPS_LIBRARIES}
     )
-endif ()
+endif()
 
+# ─── Output properties ────────────────────────────────────────────────────────
+# VERSION/SOVERSION are for shared libraries, not executables.
+# Use OUTPUT_NAME and RUNTIME_OUTPUT_DIRECTORY only.
 set_target_properties(autoapp PROPERTIES
-        VERSION ${PROGRAM_VERSION_STRING}
-        SOVERSION ${_git_commit_count}
+        OUTPUT_NAME              "autoapp"
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
 )
 
-# --- Install Rules ---
+# ─── Install ──────────────────────────────────────────────────────────────────
 install(TARGETS autoapp
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 )

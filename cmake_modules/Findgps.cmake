@@ -20,6 +20,15 @@ if (GPS_LIBRARIES AND GPS_INCLUDE_DIRS)
   # in cache already
   set(GPS_FOUND TRUE)
 else (GPS_LIBRARIES AND GPS_INCLUDE_DIRS)
+  find_package(PkgConfig QUIET)
+  if(PKG_CONFIG_FOUND)
+    pkg_check_modules(GPS QUIET gps)
+    if(GPS_FOUND)
+      message(STATUS "gps found via pkg-config")
+      return()
+    endif()
+  endif()
+
   find_path(GPS_INCLUDE_DIR
     NAMES
         gps.h

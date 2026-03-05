@@ -20,6 +20,15 @@ if (BLKID_LIBRARIES AND BLKID_INCLUDE_DIRS)
   # in cache already
   set(BLKID_FOUND TRUE)
 else (BLKID_LIBRARIES AND BLKID_INCLUDE_DIRS)
+  find_package(PkgConfig QUIET)
+  if(PKG_CONFIG_FOUND)
+    pkg_check_modules(BLKID QUIET blkid)
+    if(BLKID_FOUND)
+      message(STATUS "blkid found via pkg-config")
+      return()
+    endif()
+  endif()
+
   find_path(BLKID_INCLUDE_DIR
     NAMES
         blkid.h
