@@ -3,10 +3,11 @@
 #include <QObject>
 #include <QVideoSink>
 #include <QVideoFrame>
-#include <mutex>
-#include <vector>
+#include <condition_variable>
 #include <deque>
-#include <thread> // [CHANGED] Include std::thread
+#include <mutex>
+#include <thread>
+#include <vector>
 
 // FFmpeg Includes
 extern "C" {
