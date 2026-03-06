@@ -1,4 +1,4 @@
-#if defined(__LINUX__)
+#ifdef Q_OS_LINUX
 #include "f1x/openauto/autoapp/UI/Monitor/PulseAudioHandler.hpp"
 #include <qloggingcategory.h>
 #include <pulse/introspect.h>

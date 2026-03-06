@@ -50,7 +50,7 @@
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityMethod.hpp"
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityState.hpp"
 #include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"
-#if defined(__LINUX__)
+#ifdef Q_OS_LINUX
 #include <pulse/pulseaudio.h>
 #include <f1x/openauto/autoapp/UI/Monitor/PulseAudioHandler.hpp>
 #elif defined(__APPLE__)
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
 
     // Environment
     std::shared_ptr<autoapp::UI::Monitor::IAudioHandler> audioHandler;
-#if defined(__LINUX__)
+#ifdef Q_OS_LINUX
     audioHandler = std::make_shared<autoapp::UI::Monitor::PulseAudioHandler>();
 #elif defined(__APPLE__)
     audioHandler = std::make_shared<autoapp::UI::Monitor::CoreAudioHandler>();

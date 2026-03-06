@@ -17,7 +17,7 @@ namespace f1x::openauto::autoapp::service::sensor {
   void SensorService::start() {
 
     strand_.dispatch([this, self = this->shared_from_this()]() {
-#if defined(__LINUX__)
+#ifdef Q_OS_LINUX
       if (gps_open("127.0.0.1", "2947", &this->gpsData_)) {
         qWarning(lcServiceSensor) << "[SensorService] can't connect to GPSD.";
       } else {
@@ -41,7 +41,7 @@ namespace f1x::openauto::autoapp::service::sensor {
     this->stopPolling = true;
 
     strand_.dispatch([this, self = this->shared_from_this()]() {
-#if defined(__LINUX__)
+#ifdef Q_OS_LINUX
       if (this->gpsEnabled_) {
         gps_stream(&this->gpsData_, WATCH_DISABLE, NULL);
         gps_close(&this->gpsData_);
@@ -158,7 +158,7 @@ namespace f1x::openauto::autoapp::service::sensor {
 
   void SensorService::sendGPSLocationData() {
     qInfo(lcServiceSensor) << "[SensorService] sendGPSLocationData()";
-#if defined(__LINUX__)
+#ifdef Q_OS_LINUX
     aap_protobuf::service::sensorsource::message::SensorBatch indication;
 
     auto *locInd = indication.add_location_data();
@@ -201,7 +201,7 @@ namespace f1x::openauto::autoapp::service::sensor {
           this->previous = this->isNight;
           this->sendNightData();
         }
-#if defined(__LINUX__)
+#ifdef Q_OS_LINUX
         if ((this->gpsEnabled_) &&
             (gps_waiting(&this->gpsData_, 0)) &&
 #if GPSD_API_MAJOR_VERSION >= 11

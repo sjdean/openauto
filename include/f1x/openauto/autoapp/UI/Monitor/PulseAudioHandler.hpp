@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(__LINUX__)
+#ifdef Q_OS_LINUX
 #include "IAudioHandler.h"
 #include <pulse/pulseaudio.h>
 #include <QString>
