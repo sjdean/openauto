@@ -29,9 +29,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         Q_PROPERTY(int adapterCount READ getAdapterCount NOTIFY adapterCountChanged)
         Q_PROPERTY(int activeDeviceIndex READ getActiveDeviceIndex NOTIFY activeDeviceIndexChanged)
         Q_PROPERTY(
-            f1x::openauto::common::Enum::BluetoothConnection
-::Value bluetoothConnectionStatus READ
-            getBluetoothConnectionStatus NOTIFY bluetoothConnnectionStatusChanged)
+            f1x::openauto::common::Enum::BluetoothConnectionStatus::Value bluetoothConnectionStatus
+            READ getBluetoothConnectionStatus NOTIFY bluetoothConnnectionStatusChanged)
         Q_PROPERTY(QString statusText READ getStatusText NOTIFY bluetoothConnnectionStatusChanged)
         Q_PROPERTY(bool isScanning READ isScanning NOTIFY isScanningChanged)
         // Agent property only valid on Linux, or return nullptr on Mac
