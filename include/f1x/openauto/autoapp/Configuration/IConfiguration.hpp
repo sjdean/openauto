@@ -1,6 +1,5 @@
 #pragma once
 
-#include <stdexcept>
 #include <string>
 #include <aap_protobuf/service/media/sink/message/VideoCodecResolutionType.pb.h>
 #include <aap_protobuf/service/media/sink/message/KeyCode.pb.h>
@@ -30,10 +29,9 @@ namespace f1x::openauto::autoapp::configuration {
 
             if (groupIt != m_configurationGroups.end()) {
                 return (*groupIt).template getValueForSetting<T>(settingName);
-            } else {
-                // Group not found
-                throw std::runtime_error("Configuration group not found: " + groupName.toStdString());
             }
+            qWarning() << "getSettingByName: group not found:" << groupName;
+            return T{};
         }
 
         template<typename T>
@@ -48,9 +46,7 @@ namespace f1x::openauto::autoapp::configuration {
                 qInfo() << "Setting Found";
                 (*groupIt).setValueForSetting(settingName, value);
             } else {
-                // Group not found
-                qWarning() << "Unable to find requested group";
-                //throw std::runtime_error("Group not found: " + groupName.toStdString());
+                qWarning() << "updateSettingByName: group not found:" << groupName;
             }
         }
 
