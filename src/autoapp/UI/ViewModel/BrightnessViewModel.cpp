@@ -58,8 +58,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
                 const int parsed = maxFile.readAll().trimmed().toInt();
                 if (parsed > 0) m_backlightMaxBrightness = parsed;
             }
-            qCInfo(lcVmBrightness) << "Backlight device:" << m_backlightPath
-                                   << "max:" << m_backlightMaxBrightness;
+            qInfo(lcVmBrightness) << "Backlight device:" << m_backlightPath
+                                  << "max:" << m_backlightMaxBrightness;
         }
 #endif
     }
@@ -81,8 +81,9 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
         const int calculatedBrightness = calculateBrightness(min, max, userBrightnessTarget);
 
-        qCDebug(lcVmBrightness) << " Min " << min << " Max " << max << " Requested " << userBrightnessTarget <<
- " Calculated " << calculatedBrightness;
+        qDebug(lcVmBrightness) << "Min" << min << "Max" << max
+                               << "Requested" << userBrightnessTarget
+                               << "Calculated" << calculatedBrightness;
 
         if (m_calculatedBrightness != calculatedBrightness) {
             m_calculatedBrightness = calculatedBrightness;
