@@ -1,8 +1,8 @@
 #include <f1x/openauto/autoapp/Projection/IInputDeviceEventHandler.hpp>
 #include <f1x/openauto/autoapp/Projection/InputDevice.hpp>
 #include <qloggingcategory.h>
-#include <service/control/message/AudioFocusNotification.pb.h>
-#include <service/inputsource/message/KeyEvent.pb.h>
+#include <aap_protobuf/service/control/message/AudioFocusNotification.pb.h>
+#include <aap_protobuf/service/inputsource/message/KeyEvent.pb.h>
 Q_LOGGING_CATEGORY(lcInput, "journeyos.input")
 
 namespace f1x::openauto::autoapp::projection {

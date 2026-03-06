@@ -1,8 +1,8 @@
 #include "f1x/openauto/autoapp/UI/Monitor/BluetoothHandler.hpp"
 #include <aaw/MessageId.pb.h>
 
-#include <service/bluetooth/message/BluetoothPairingRequest.pb.h>
-#include <service/control/message/ByeByeRequest.pb.h>
+#include <aap_protobuf/service/bluetooth/message/BluetoothPairingRequest.pb.h>
+#include <aap_protobuf/service/control/message/ByeByeRequest.pb.h>
 
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"

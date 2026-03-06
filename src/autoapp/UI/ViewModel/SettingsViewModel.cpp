@@ -1,10 +1,10 @@
 #include <QtCore/QObject>
 #include <QProcess>
 #include <f1x/openauto/autoapp/UI/ViewModel/SettingsViewModel.hpp>
-#include <service/control/message/DriverPosition.pb.h>
-#include <service/media/sink/message/VideoFrameRateType.pb.h>
-#include <service/sensorsource/message/EvConnectorType.pb.h>
-#include <service/sensorsource/message/FuelType.pb.h>
+#include <aap_protobuf/service/control/message/DriverPosition.pb.h>
+#include <aap_protobuf/service/media/sink/message/VideoFrameRateType.pb.h>
+#include <aap_protobuf/service/sensorsource/message/EvConnectorType.pb.h>
+#include <aap_protobuf/service/sensorsource/message/FuelType.pb.h>
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 #include <qloggingcategory.h>

@@ -3,7 +3,7 @@
 #include <thread>
 #include <aasdk/USB/AOAPDevice.hpp>
 #include <aasdk/TCP/TCPEndpoint.hpp>
-#include <service/bluetooth/message/BluetoothAuthenticationData.pb.h>
+#include <aap_protobuf/service/bluetooth/message/BluetoothAuthenticationData.pb.h>
 
 #include "f1x/openauto/autoapp/Bootstrap/AndroidBluetoothServer.hpp"
 #include "f1x/openauto/autoapp/Bootstrap/AndroidBluetoothService.hpp"

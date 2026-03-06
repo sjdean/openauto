@@ -5,11 +5,11 @@
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/unknown_field_set.h>
-#include <service/control/message/AudioFocusRequestType.pb.h>
-#include <service/wifiprojection/WifiProjectionService.pb.h>
-#include <service/wifiprojection/message/WifiCredentialsRequest.pb.h>
-#include <service/wifiprojection/message/AccessPointType.pb.h>
-#include <service/wifiprojection/message/WifiSecurityMode.pb.h>
+#include <aap_protobuf/service/control/message/AudioFocusRequestType.pb.h>
+#include <aap_protobuf/service/wifiprojection/WifiProjectionService.pb.h>
+#include <aap_protobuf/service/wifiprojection/message/WifiCredentialsRequest.pb.h>
+#include <aap_protobuf/service/wifiprojection/message/AccessPointType.pb.h>
+#include <aap_protobuf/service/wifiprojection/message/WifiSecurityMode.pb.h>
 #include "f1x/openauto/autoapp/Bootstrap/AndroidBluetoothServer.hpp"
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "aaw/WifiVersionRequest.pb.h"
