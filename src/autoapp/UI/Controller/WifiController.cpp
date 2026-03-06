@@ -1,6 +1,10 @@
 #include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
 #include <QTimer>
 #include <qloggingcategory.h>
+#ifdef Q_OS_LINUX
+#include <QtDBus/QDBusInterface>
+#include <QtDBus/QDBusObjectPath>
+#endif
 Q_LOGGING_CATEGORY(lcWifi, "journeyos.wifi.controller")
 
 namespace f1x::openauto::autoapp::UI::Controller {
@@ -16,7 +20,7 @@ void WifiController::applyAllSettings()
 {
 #ifdef Q_OS_LINUX
     const QString iface = m_config->getSettingByName<QString>("Wireless", "Interface", "wlan0");
-    const auto mode = m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", WirelessType::WIRELESS_CLIENT);
+    const auto mode = m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", common::Enum::WirelessType::WIRELESS_CLIENT);
 
     setInterface(iface);
     setMode(mode);
@@ -38,7 +42,7 @@ void WifiController::setInterface(const QString& ifaceName)
         if (w->isError()) {
             qWarning(lcWifi) << "Interface not found:" << w->error().message();
         } else {
-            m_wifiDevicePath = w->reply().argumentAt<0>().value<QDBusObjectPath>().path();
+            m_wifiDevicePath = w->reply().arguments().at(0).value<QDBusObjectPath>().path();
             qInfo(lcWifi) << "Wi-Fi device path resolved:" << m_wifiDevicePath;
         }
         w->deleteLater();
@@ -49,7 +53,7 @@ void WifiController::setInterface(const QString& ifaceName)
 void WifiController::setMode(common::Enum::WirelessType::Value mode)
 {
 #ifdef Q_OS_LINUX
-    if (mode == WirelessType::WIRELESS_HOTSPOT) {
+    if (mode == common::Enum::WirelessType::WIRELESS_HOTSPOT) {
         const QString ssid = m_config->getSettingByName<QString>("Wireless", "HotspotSSID", "MyCarHotspot");
         const QString pass = m_config->getSettingByName<QString>("Wireless", "HotspotPassword", "12345678");
         enableHotspotImpl(ssid, pass);
@@ -63,9 +67,9 @@ void WifiController::setHotspotCredentials(const QString& ssid, const QString& p
 {
 #ifdef Q_OS_LINUX
     if (m_currentIface.isEmpty()) return;
-    m_config->setSetting("Wireless", "HotspotSSID", ssid);
-    m_config->setSetting("Wireless", "HotspotPassword", password);
-    m_config->setSetting("Wireless", "Type", WirelessType::WIRELESS_HOTSPOT);
+    m_config->updateSettingByName<QString>("Wireless", "HotspotSSID", ssid);
+    m_config->updateSettingByName<QString>("Wireless", "HotspotPassword", password);
+    m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", common::Enum::WirelessType::WIRELESS_HOTSPOT);
     m_config->save();
 
     enableHotspotImpl(ssid, password);

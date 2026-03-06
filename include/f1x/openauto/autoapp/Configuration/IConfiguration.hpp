@@ -20,8 +20,7 @@ namespace f1x::openauto::autoapp::configuration {
         virtual ~IConfiguration() = default;
 
         template<typename T>
-        T getSettingByName(QString groupName, QString settingName) {
-            // Find the group
+        T getSettingByName(QString groupName, QString settingName, T defaultValue = T{}) {
             auto groupIt = std::find_if(m_configurationGroups.begin(), m_configurationGroups.end(),
                                         [&groupName](const ConfigurationGroup &group) {
                                             return group.getName() == groupName;
@@ -31,7 +30,7 @@ namespace f1x::openauto::autoapp::configuration {
                 return (*groupIt).template getValueForSetting<T>(settingName);
             }
             qWarning() << "getSettingByName: group not found:" << groupName;
-            return T{};
+            return defaultValue;
         }
 
         template<typename T>
