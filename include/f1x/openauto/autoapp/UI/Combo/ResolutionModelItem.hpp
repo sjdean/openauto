@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QVariant>
-#include <service/media/sink/message/VideoCodecResolutionType.pb.h>
+#include <aap_protobuf/service/media/sink/message/VideoCodecResolutionType.pb.h>
 
 namespace f1x::openauto::autoapp::UI::Combo {
   class ResolutionModelItem : public QObject {
