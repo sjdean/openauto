@@ -8,7 +8,7 @@
 #include "f1x/openauto/autoapp/UI/Model/BluetoothAdapter.hpp"
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 
-#if defined(__LINUX__)
+#ifdef Q_OS_LINUX
 #include "f1x/openauto/autoapp/UI/BluetoothAgent.hpp"
 #include <QtDBus/QDBusReply>
 #include <QtDBus/QDBusInterface>
@@ -29,7 +29,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         Q_PROPERTY(int adapterCount READ getAdapterCount NOTIFY adapterCountChanged)
         Q_PROPERTY(int activeDeviceIndex READ getActiveDeviceIndex NOTIFY activeDeviceIndexChanged)
         Q_PROPERTY(
-            f1x::openauto::common::Enum::BluetoothConnectionStatus::Value bluetoothConnectionStatus READ
+            f1x::openauto::common::Enum::BluetoothConnection
+::Value bluetoothConnectionStatus READ
             getBluetoothConnectionStatus NOTIFY bluetoothConnnectionStatusChanged)
         Q_PROPERTY(QString statusText READ getStatusText NOTIFY bluetoothConnnectionStatusChanged)
         Q_PROPERTY(bool isScanning READ isScanning NOTIFY isScanningChanged)
@@ -146,7 +147,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         std::unique_ptr<QBluetoothLocalDevice> localDevice_;
         QBluetoothDeviceDiscoveryAgent *discoveryAgent_;
 
-#if defined(__LINUX__)
+#ifdef Q_OS_LINUX
         QDBusInterface m_manager;
         BluetoothAgent *m_agent;
 #endif
