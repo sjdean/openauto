@@ -2,6 +2,10 @@
 #include <QDebug>
 #include <QRegularExpression>
 #include <QProcess>
+#ifdef Q_OS_LINUX
+#include <QDBusPendingReply>
+#include <QDBusReply>
+#endif
 
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcWifiMonitor, "journeyos.wifi.monitor")
