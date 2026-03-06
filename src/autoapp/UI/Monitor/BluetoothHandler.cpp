@@ -68,8 +68,16 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                               "DisplayYesNo");
             agentManager.call("RequestDefaultAgent", QVariant::fromValue(QDBusObjectPath(m_agent->objectPath())));
         }
+        connect(m_agent, &BluetoothAgent::showConfirmation,
+                this, [this](const QString &passkey) {
+                    onAgentPinRequested(passkey, QString());
+                });
+        connect(m_agent, &BluetoothAgent::showPinCode,
+                this, [this](const QString &pin) {
+                    onAgentPinRequested(pin, QString());
+                });
         connect(m_agent, &BluetoothAgent::pairingComplete,
-                this, &BluetoothHandler::onAgentPinRequested);
+                this, []() { /* pairing complete — QML dismisses popup via state change */ });
 #endif
 
         // 5. Auto-connect to last known device after the BT stack settles
