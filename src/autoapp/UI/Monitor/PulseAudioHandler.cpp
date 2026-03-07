@@ -1,5 +1,5 @@
-#ifdef Q_OS_LINUX
 #include "f1x/openauto/autoapp/UI/Monitor/PulseAudioHandler.hpp"
+#ifdef Q_OS_LINUX
 #include <qloggingcategory.h>
 #include <pulse/introspect.h>
 #include <pulse/operation.h>
