@@ -47,6 +47,23 @@ public slots:
     QString RequestPinCode(const QDBusObjectPath &device);
 
     /**
+     * @brief D-Bus: BlueZ asks our agent for a numeric passkey (legacy pairing).
+     * Returns 0 and emits showPinCode so the user sees the value.
+     */
+    quint32 RequestPasskey(const QDBusObjectPath &device);
+
+    /**
+     * @brief D-Bus: BlueZ tells us to display a PIN code to the user (informational).
+     */
+    void DisplayPinCode(const QDBusObjectPath &device, const QString &pincode);
+
+    /**
+     * @brief D-Bus: BlueZ tells us to display a passkey to the user (informational).
+     * @param entered How many digits the remote device has entered so far.
+     */
+    void DisplayPasskey(const QDBusObjectPath &device, quint32 passkey, quint16 entered);
+
+    /**
      * @brief D-Bus: BlueZ asks for "Yes/No" confirmation of a passkey.
      * We store the D-Bus message and emit a signal to QML.
      */

@@ -10,6 +10,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
     class IBluetoothManager : public QObject {
         Q_OBJECT
+        Q_PROPERTY(bool isPairingModeEnabled READ isPairingModeEnabled NOTIFY pairingModeEnabledChanged)
 
     public:
         explicit IBluetoothManager(QObject *parent = nullptr) : QObject(parent) {}
@@ -37,6 +38,9 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         Q_INVOKABLE virtual bool removePair(const QString &address) = 0;
         Q_INVOKABLE virtual bool removeAllPairs() = 0;
         Q_INVOKABLE virtual void ignoreDevice(const QString &address) = 0;
+        Q_INVOKABLE virtual void enablePairingMode(bool enabled) = 0;
+
+        virtual bool isPairingModeEnabled() const = 0;
 
     signals:
         void bluetoothAdapterListChanged();
@@ -48,6 +52,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         void activeDeviceIndexChanged();
         void isScanningChanged();
         void pairingPinConfirmation(const QString &pin, const QString &deviceAddress);
+        void pairingModeEnabledChanged();
     };
 
 } // namespace

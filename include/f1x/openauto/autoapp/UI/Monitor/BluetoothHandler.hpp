@@ -36,6 +36,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         Q_PROPERTY(bool isScanning READ isScanning NOTIFY isScanningChanged)
         // Agent property only valid on Linux, or return nullptr on Mac
         Q_PROPERTY(QObject* agent READ getAgent CONSTANT)
+        Q_PROPERTY(bool isPairingModeEnabled READ isPairingModeEnabled NOTIFY pairingModeEnabledChanged)
 
     public:
         explicit BluetoothHandler(configuration::IConfiguration::Pointer configuration,
@@ -56,6 +57,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         Q_INVOKABLE bool removePair(const QString &address) override;
 
         Q_INVOKABLE bool removeAllPairs() override;
+
+        Q_INVOKABLE void enablePairingMode(bool enabled) override;
+
+        bool isPairingModeEnabled() const override { return m_pairingModeEnabled; }
 
         QVariantList getBluetoothAdapterList() override;
 
@@ -109,6 +114,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         bool removePairImpl(const Model::BluetoothDevice &device);
 #ifdef Q_OS_LINUX
         QString getBluezAdapterPath();
+        void loadPairedDevicesFromBlueZ();
 #endif
 
         configuration::IConfiguration::Pointer configuration_;
@@ -123,6 +129,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             common::Enum::BluetoothConnectionStatus::BC_NOT_CONFIGURED;
 
         bool m_isScanning = false;
+        bool m_pairingModeEnabled = true;
         QStringList m_ignoredDevices;
 
         std::unique_ptr<QBluetoothLocalDevice> localDevice_;

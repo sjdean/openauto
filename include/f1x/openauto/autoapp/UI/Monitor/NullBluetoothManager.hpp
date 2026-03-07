@@ -32,6 +32,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         bool removePair(const QString &) override { return false; }
         bool removeAllPairs() override { return false; }
         void ignoreDevice(const QString &) override {}
+        void enablePairingMode(bool) override {}
+        bool isPairingModeEnabled() const override { return false; }
     };
 
 } // namespace

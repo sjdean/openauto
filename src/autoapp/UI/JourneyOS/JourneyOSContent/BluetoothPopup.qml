@@ -94,6 +94,66 @@ Item {
         }
     }
 
+    // ── Remove device confirmation overlay ────────────────────────────────────
+    Rectangle {
+        id: removeConfirmOverlay
+        anchors.fill: parent
+        color: "#CC000000"
+        z: 10
+        visible: false
+
+        property string deviceAddress: ""
+        property string deviceName: ""
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 20
+
+            Rectangle {
+                width: 380
+                height: 160
+                radius: 10
+                color: Constants.primaryBackgroundColor
+                border.color: Constants.actionColor
+                border.width: 2
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                Column {
+                    anchors.centerIn: parent
+                    spacing: 16
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: "Forget \"" + removeConfirmOverlay.deviceName + "\"?"
+                        color: "white"
+                        font.pixelSize: 16
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                        width: 340
+                    }
+
+                    Row {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 20
+
+                        JourneyButton {
+                            text: "Forget"
+                            onClicked: {
+                                bluetoothHandler.removePair(removeConfirmOverlay.deviceAddress)
+                                removeConfirmOverlay.visible = false
+                            }
+                        }
+
+                        JourneyButton {
+                            text: "Cancel"
+                            onClicked: removeConfirmOverlay.visible = false
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // ── Background ────────────────────────────────────────────────────────────
     Rectangle {
         anchors.fill: parent
@@ -267,7 +327,11 @@ Item {
 
                         JourneyButton {
                             text: "Forget"
-                            onClicked: bluetoothHandler.removePair(model.address)
+                            onClicked: {
+                                removeConfirmOverlay.deviceAddress = model.address
+                                removeConfirmOverlay.deviceName = model.name || model.address
+                                removeConfirmOverlay.visible = true
+                            }
                         }
                     }
                 }
@@ -298,6 +362,32 @@ Item {
                     text: "Searching for devices…"
                     color: Constants.waitColor
                     font.pixelSize: 13
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+
+            // ── Pairing mode toggle ────────────────────────────────────────────
+            Row {
+                width: parent.width
+                spacing: 10
+
+                Text {
+                    text: "Pairing Mode"
+                    color: "lightgray"
+                    font.pixelSize: 13
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Switch {
+                    id: pairingModeSwitch
+                    checked: bluetoothHandler.isPairingModeEnabled
+                    onCheckedChanged: bluetoothHandler.enablePairingMode(checked)
+                }
+
+                Text {
+                    text: pairingModeSwitch.checked ? "On — device is discoverable" : "Off"
+                    color: pairingModeSwitch.checked ? Constants.okColor : "gray"
+                    font.pixelSize: 12
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }

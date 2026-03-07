@@ -80,14 +80,27 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                 this, []() { /* pairing complete — QML dismisses popup via state change */ });
 #endif
 
-        // 5. Auto-connect to last known device after the BT stack settles
-        const QString lastDevice = configuration_->getSettingByName<QString>("Bluetooth", "PairedDeviceAddress");
-        if (!lastDevice.isEmpty()) {
-            QTimer::singleShot(3000, this, [this, lastDevice]() {
+        // 5. Load already-paired devices from BlueZ so the list is populated on startup
+#ifdef Q_OS_LINUX
+        loadPairedDevicesFromBlueZ();
+#endif
+
+        // 6. Auto-connect to last known device after the BT stack settles.
+        //    If the saved device is unreachable, fall back to other paired devices.
+        QTimer::singleShot(3000, this, [this]() {
+            const QString lastDevice = configuration_->getSettingByName<QString>("Bluetooth", "PairedDeviceAddress");
+            if (!lastDevice.isEmpty()) {
                 qInfo(lcBtHandler) << "Auto-connecting to last device:" << lastDevice;
-                connectToDevice(lastDevice);
-            });
-        }
+                if (connectToDevice(lastDevice)) return;
+                qWarning(lcBtHandler) << "Auto-connect to" << lastDevice << "failed, trying other paired devices.";
+            }
+            for (const auto &device : m_devices) {
+                if (device.paired && device.address != lastDevice) {
+                    qInfo(lcBtHandler) << "Auto-connect fallback: trying" << device.address;
+                    if (connectToDevice(device.address)) return;
+                }
+            }
+        });
     }
 
     void BluetoothHandler::startScan() {
@@ -479,6 +492,42 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         // Fallback if lookup fails (unlikely)
         return QStringLiteral("/org/bluez/hci0");
     }
+
+    void BluetoothHandler::loadPairedDevicesFromBlueZ() {
+        QDBusReply<QVariantMap> reply = m_manager.call("GetManagedObjects");
+        if (!reply.isValid()) {
+            qWarning(lcBtHandler) << "loadPairedDevicesFromBlueZ: GetManagedObjects failed:" << reply.error().message();
+            return;
+        }
+
+        const QVariantMap &objects = reply.value();
+        bool changed = false;
+
+        for (auto it = objects.constBegin(); it != objects.constEnd(); ++it) {
+            const QVariantMap &interfaces = it.value().toMap();
+            if (!interfaces.contains("org.bluez.Device1")) continue;
+
+            const QVariantMap &props = interfaces["org.bluez.Device1"].toMap();
+            if (!props.value("Paired", false).toBool()) continue;
+
+            const QString address = props.value("Address").toString();
+            const QString name = props.value("Name", props.value("Alias", address)).toString();
+            const bool connected = props.value("Connected", false).toBool();
+
+            // Avoid duplicates
+            const bool exists = std::any_of(m_devices.constBegin(), m_devices.constEnd(),
+                [&address](const Model::BluetoothDevice &d) { return d.address == address; });
+            if (exists) continue;
+
+            Model::BluetoothDevice device(address, name, QDBusObjectPath(it.key()), true, connected);
+            m_devices.append(device);
+            changed = true;
+            qInfo(lcBtHandler) << "Loaded paired device from BlueZ:" << name << address;
+        }
+
+        if (changed)
+            Q_EMIT pairedDeviceListChanged();
+    }
 #endif
 
     void BluetoothHandler::setActiveAdapter(const QString &address) {
@@ -503,6 +552,33 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             configuration_->updateSettingByName("Bluetooth", "AdapterAddress", address);
             configuration_->save();
         }
+    }
+
+    void BluetoothHandler::enablePairingMode(bool enabled) {
+        if (m_pairingModeEnabled == enabled) return;
+        m_pairingModeEnabled = enabled;
+
+#ifdef Q_OS_LINUX
+        QDBusInterface agentManager("org.bluez", "/org/bluez", "org.bluez.AgentManager1",
+                                    QDBusConnection::systemBus());
+        if (agentManager.isValid()) {
+            if (enabled) {
+                agentManager.call("RegisterAgent",
+                                  QVariant::fromValue(QDBusObjectPath(m_agent->objectPath())),
+                                  "DisplayYesNo");
+                agentManager.call("RequestDefaultAgent",
+                                  QVariant::fromValue(QDBusObjectPath(m_agent->objectPath())));
+                qInfo(lcBtHandler) << "Pairing mode enabled";
+            } else {
+                agentManager.call("UnregisterAgent",
+                                  QVariant::fromValue(QDBusObjectPath(m_agent->objectPath())));
+                qInfo(lcBtHandler) << "Pairing mode disabled";
+            }
+        } else {
+            qWarning(lcBtHandler) << "AgentManager1 not available for enablePairingMode";
+        }
+#endif
+        Q_EMIT pairingModeEnabledChanged();
     }
 
     void BluetoothHandler::disconnectDevice(const QString &address) {

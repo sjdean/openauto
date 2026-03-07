@@ -45,6 +45,23 @@ QString BluetoothAgent::RequestPinCode(const QDBusObjectPath &device) {
     return pin;
 }
 
+quint32 BluetoothAgent::RequestPasskey(const QDBusObjectPath &device) {
+    qInfo(lcBtAgent) << "Requesting passkey for device" << device.path();
+    // Return 0 as a default passkey and display it to the user
+    emit showPinCode(QStringLiteral("000000"));
+    return 0;
+}
+
+void BluetoothAgent::DisplayPinCode(const QDBusObjectPath &device, const QString &pincode) {
+    qInfo(lcBtAgent) << "Display PIN code" << pincode << "for device" << device.path();
+    emit showPinCode(pincode);
+}
+
+void BluetoothAgent::DisplayPasskey(const QDBusObjectPath &device, quint32 passkey, quint16 entered) {
+    qInfo(lcBtAgent) << "Display passkey" << passkey << "(entered:" << entered << ") for device" << device.path();
+    emit showConfirmation(QString::number(passkey));
+}
+
 void BluetoothAgent::RequestConfirmation(const QDBusMessage &message, const QDBusObjectPath &device, quint32 passkey) {
     qInfo(lcBtAgent) << "Requesting confirmation for passkey:" << passkey << "for device" << device.path();
 
