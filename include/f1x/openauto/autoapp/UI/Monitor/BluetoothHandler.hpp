@@ -16,10 +16,11 @@
 
 #include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"
 #include "f1x/openauto/autoapp/Projection/LocalBluetoothDevice.hpp"
+#include "f1x/openauto/autoapp/UI/Monitor/IBluetoothManager.hpp"
 
 
 namespace f1x::openauto::autoapp::UI::Monitor {
-    class BluetoothHandler : public QObject {
+    class BluetoothHandler : public IBluetoothManager {
         Q_OBJECT
         // Properties
         Q_PROPERTY(QVariantList bluetoothAdapterList READ getBluetoothAdapterList NOTIFY bluetoothAdapterListChanged)
@@ -30,8 +31,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         Q_PROPERTY(int activeDeviceIndex READ getActiveDeviceIndex NOTIFY activeDeviceIndexChanged)
         Q_PROPERTY(
             f1x::openauto::common::Enum::BluetoothConnectionStatus::Value bluetoothConnectionStatus
-            READ getBluetoothConnectionStatus NOTIFY bluetoothConnnectionStatusChanged)
-        Q_PROPERTY(QString statusText READ getStatusText NOTIFY bluetoothConnnectionStatusChanged)
+            READ getBluetoothConnectionStatus NOTIFY bluetoothConnectionStatusChanged)
+        Q_PROPERTY(QString statusText READ getStatusText NOTIFY bluetoothConnectionStatusChanged)
         Q_PROPERTY(bool isScanning READ isScanning NOTIFY isScanningChanged)
         // Agent property only valid on Linux, or return nullptr on Mac
         Q_PROPERTY(QObject* agent READ getAgent CONSTANT)
@@ -41,69 +42,50 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                                   QObject *parent = nullptr);
 
         // Public Q_INVOKABLEs (Called by UI)
-        Q_INVOKABLE QString getAdapterAddress() const;
+        Q_INVOKABLE QString getAdapterAddress() const override;
 
-        Q_INVOKABLE void setActiveAdapter(const QString &address);
+        Q_INVOKABLE void setActiveAdapter(const QString &address) override;
 
-        Q_INVOKABLE void startScan();
+        Q_INVOKABLE void startScan() override;
 
-        Q_INVOKABLE void pair(const QString &address);
+        Q_INVOKABLE void pair(const QString &address) override;
 
-        Q_INVOKABLE bool doConnectToPairedDevice(const QString &address);
-        Q_INVOKABLE void doDisconnect(const QString &address);
+        Q_INVOKABLE bool connectToDevice(const QString &address) override;
+        Q_INVOKABLE void disconnectDevice(const QString &address) override;
 
-        Q_INVOKABLE bool doRemovePair(const QString &address);
+        Q_INVOKABLE bool removePair(const QString &address) override;
 
-        Q_INVOKABLE bool doRemoveAllPairs();
+        Q_INVOKABLE bool removeAllPairs() override;
 
-        QVariantList getBluetoothAdapterList();
+        QVariantList getBluetoothAdapterList() override;
 
-        int getConnectedDeviceCount() const;
+        int getConnectedDeviceCount() const override;
 
-        int getAdapterCount() const;
+        int getAdapterCount() const override;
 
-        int getActiveDeviceIndex() const;
+        int getActiveDeviceIndex() const override;
 
-        common::Enum::BluetoothConnectionStatus::Value getBluetoothConnectionStatus() const;
+        common::Enum::BluetoothConnectionStatus::Value getBluetoothConnectionStatus() const override;
 
         void setBluetoothConnectionStatus(common::Enum::BluetoothConnectionStatus::Value value);
 
-        QString getStatusText() const;
+        QString getStatusText() const override;
 
-        bool isScanning() const;
+        bool isScanning() const override;
 
-        Q_INVOKABLE void ignoreDevice(const QString &address);
+        Q_INVOKABLE void ignoreDevice(const QString &address) override;
 
-        QVariantList getPairedDeviceList();
+        QVariantList getPairedDeviceList() override;
 
-        QVariantList getUnpairedDeviceList();
+        QVariantList getUnpairedDeviceList() override;
 
-        QObject *getAgent() const {
+        QObject *getAgent() const override {
 #ifdef Q_OS_LINUX
             return m_agent;
 #else
             return nullptr;
 #endif
         }
-
-    signals:
-        void bluetoothAdapterListChanged();
-
-        void unpairedDeviceListChanged();
-
-        void pairedDeviceListChanged();
-
-        void bluetoothConnnectionStatusChanged();
-
-        void connectedDeviceCountChanged();
-
-        void adapterCountChanged();
-
-        void activeDeviceIndexChanged();
-
-        void isScanningChanged();
-
-        void pairingPinConfirmation(const QString &pin, const QString &deviceAddress);
 
     private slots:
         void onDeviceDiscovered(const QBluetoothDeviceInfo &info);
@@ -120,11 +102,11 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     private:
         bool disconnectCurrentDevice();
 
-        bool connectToDevice(const Model::BluetoothDevice &device);
+        bool connectToDeviceImpl(const Model::BluetoothDevice &device);
 
-        bool doConnectToPairedDevice(Model::BluetoothDevice device);
+        bool connectToPairedDeviceImpl(Model::BluetoothDevice device);
 
-        bool doRemovePair(const Model::BluetoothDevice &device);
+        bool removePairImpl(const Model::BluetoothDevice &device);
 #ifdef Q_OS_LINUX
         QString getBluezAdapterPath();
 #endif

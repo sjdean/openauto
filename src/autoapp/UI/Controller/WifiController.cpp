@@ -10,7 +10,7 @@ Q_LOGGING_CATEGORY(lcWifi, "journeyos.wifi.controller")
 namespace f1x::openauto::autoapp::UI::Controller {
 
 WifiController::WifiController(configuration::Configuration::Pointer config, QObject* parent)
-    : QObject(parent)
+    : IWiFiController(parent)
     , m_config(std::move(config))
 {
     applyAllSettings();

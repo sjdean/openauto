@@ -103,7 +103,7 @@ Item {
         Column {
             anchors.centerIn: parent
             spacing: 16
-            visible: !settingsViewHandler.headUnitMode
+            visible: !ConfigGate.showConfig
 
             Rectangle {
                 width: 16
@@ -143,7 +143,7 @@ Item {
             anchors.fill: parent
             anchors.margins: 16
             spacing: 12
-            visible: settingsViewHandler.headUnitMode
+            visible: ConfigGate.showConfig
 
             // ── Status row ────────────────────────────────────────────────────
             Row {
@@ -259,15 +259,15 @@ Item {
                             text: model.connected ? "Disconnect" : "Connect"
                             onClicked: {
                                 if (model.connected)
-                                    bluetoothHandler.doDisconnect(model.address)
+                                    bluetoothHandler.disconnectDevice(model.address)
                                 else
-                                    bluetoothHandler.doConnectToPairedDevice(model.address)
+                                    bluetoothHandler.connectToDevice(model.address)
                             }
                         }
 
                         JourneyButton {
                             text: "Forget"
-                            onClicked: bluetoothHandler.doRemovePair(model.address)
+                            onClicked: bluetoothHandler.removePair(model.address)
                         }
                     }
                 }

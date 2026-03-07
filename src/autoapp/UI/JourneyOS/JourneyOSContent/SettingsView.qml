@@ -220,7 +220,7 @@ Item {
                 }
                 // Device selection only available in Head Unit mode
                 SettingRow {
-                    visible: settingsViewHandler.headUnitMode
+                    visible: ConfigGate.showConfig
                     label: "Device"
                     control: ModernComboBox {
                         model: pulseAudioDeviceModelOutput.comboBoxItems
@@ -229,7 +229,7 @@ Item {
                     }
                 }
                 Label {
-                    visible: !settingsViewHandler.headUnitMode
+                    visible: !ConfigGate.showConfig
                     text: "Audio output device is managed by the operating system."
                     font.pixelSize: 13
                     color: cTextDim
@@ -252,7 +252,7 @@ Item {
                     text: "Input"
                 }
                 SettingRow {
-                    visible: settingsViewHandler.headUnitMode
+                    visible: ConfigGate.showConfig
                     label: "Microphone"
                     control: ModernComboBox {
                         model: pulseAudioDeviceModelInput.comboBoxItems
@@ -261,7 +261,7 @@ Item {
                     }
                 }
                 Label {
-                    visible: !settingsViewHandler.headUnitMode
+                    visible: !ConfigGate.showConfig
                     text: "Audio input device is managed by the operating system."
                     font.pixelSize: 13
                     color: cTextDim
@@ -317,14 +317,14 @@ Item {
                     Switch {
                         id: headUnitSwitch
                         // On Linux this is freely toggleable; on Mac/Windows it is locked off.
-                        enabled: Qt.platform.os === "linux"
+                        enabled: ConfigGate.showConfig
                         checked: settingsViewHandler.headUnitMode
                         onToggled: settingsViewHandler.headUnitMode = checked
                     }
                 }
 
                 Label {
-                    visible: Qt.platform.os !== "linux"
+                    visible: !ConfigGate.showConfig
                     text: "Head Unit Mode is not available on this platform. Hardware settings are always managed by the operating system."
                     font.pixelSize: 13
                     color: cTextDim

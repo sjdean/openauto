@@ -14,7 +14,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     using namespace f1x::openauto::common::Enum;
 
     WifiMonitor::WifiMonitor(configuration::IConfiguration::Pointer config, QObject *parent)
-        : QObject(parent)
+        : IWiFiMonitor(parent)
           , m_config(std::move(config))
           , m_refreshTimer(new QTimer(this)) {
         // === 1. Find current Wi-Fi interface (cross-platform) ===

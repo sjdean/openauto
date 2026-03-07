@@ -3,12 +3,15 @@
 
 
 
+set_source_files_properties(ConfigGate.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+
 qt_add_library(JourneyOSContent STATIC)
 qt6_add_qml_module(JourneyOSContent
     URI "JourneyOSContent"
     VERSION 1.0
     RESOURCE_PREFIX "/qt/qml"
     QML_FILES
+        "ConfigGate.qml"
         "BrightnessPopup.ui.qml"
         "BluetoothPopup.qml"
         "Journey.qml"

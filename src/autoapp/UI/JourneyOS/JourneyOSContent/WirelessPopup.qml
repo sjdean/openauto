@@ -103,7 +103,7 @@ Item {
 
         // ── Head Unit controls ────────────────────────────────────────────────
         Column {
-            visible: settingsViewHandler.headUnitMode
+            visible: ConfigGate.showConfig
             width: parent.width
             spacing: 8
 
@@ -276,7 +276,7 @@ Item {
 
         // ── System-managed notice ─────────────────────────────────────────────
         Text {
-            visible: !settingsViewHandler.headUnitMode
+            visible: !ConfigGate.showConfig
             text: qsTr("Wi-Fi is managed by the operating system.\nInterface selection is available.")
             color: "gray"
             font.italic: true

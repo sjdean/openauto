@@ -8,6 +8,7 @@
 
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
+#include "f1x/openauto/autoapp/UI/Monitor/IWiFiMonitor.hpp"
 
 #ifdef Q_OS_LINUX
 #include <QDBusConnection>
@@ -21,7 +22,7 @@
 //#endif
 
 namespace f1x::openauto::autoapp::UI::Monitor {
-    class WifiMonitor : public QObject {
+    class WifiMonitor : public IWiFiMonitor {
         Q_OBJECT
 
     public:

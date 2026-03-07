@@ -25,17 +25,24 @@
 
 // Backed from System Calls
 #include <f1x/openauto/autoapp/UI/Combo/BluetoothAdapterModel.hpp>
-#include <f1x/openauto/autoapp/UI/Combo/BluetoothDeviceModel.hpp>
 
 //
 #include <f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp>
 
 #include <f1x/openauto/autoapp/UI/Combo/NetworkAdapterModel.hpp>
 
+#include "f1x/openauto/autoapp/UI/ViewModel/WifiViewModel.hpp"
+
+#ifdef Q_OS_LINUX
+#include <f1x/openauto/autoapp/UI/Combo/BluetoothDeviceModel.hpp>
 #include <f1x/openauto/autoapp/UI/Monitor/BluetoothHandler.hpp>
 #include "f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp"
 #include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
-#include "f1x/openauto/autoapp/UI/ViewModel/WifiViewModel.hpp"
+#else
+#include "f1x/openauto/autoapp/UI/Monitor/NullBluetoothManager.hpp"
+#include "f1x/openauto/autoapp/UI/Monitor/NullWiFiMonitor.hpp"
+#include "f1x/openauto/autoapp/UI/Controller/NullWiFiController.hpp"
+#endif
 
 #include "f1x/openauto/autoapp/Configuration/Configuration.hpp"
 #include "f1x/openauto/autoapp/Projection/IInputDevice.hpp"
@@ -215,28 +222,38 @@ int main(int argc, char *argv[]) {
     context->setContextProperty("pulseAudioDeviceModelOutput", &pulseAudioDeviceModelOutput);
     context->setContextProperty("pulseAudioDeviceModelInput", &pulseAudioDeviceModelInput);
 
-    auto wifiMonitor = new autoapp::UI::Monitor::WifiMonitor(configuration, &app);
-    auto wifiController = new f1x::openauto::autoapp::UI::Controller::WifiController(configuration, &app);
-    auto wifiViewModel = new f1x::openauto::autoapp::UI::ViewModel::WifiViewModel(configuration, wifiController, wifiMonitor, &app);
+#ifdef Q_OS_LINUX
+    auto* wifiMon = new autoapp::UI::Monitor::WifiMonitor(configuration, &app);
+    auto* wifiCtrl = new autoapp::UI::Controller::WifiController(configuration, &app);
+#else
+    auto* wifiMon = new autoapp::UI::Monitor::NullWiFiMonitor(&app);
+    auto* wifiCtrl = new autoapp::UI::Controller::NullWiFiController(&app);
+#endif
+    auto* wifiViewModel = new f1x::openauto::autoapp::UI::ViewModel::WifiViewModel(configuration, wifiCtrl, wifiMon, &app);
 
     autoapp::UI::Combo::NetworkAdapterModel networkAdapterModel;
     context->setContextProperty("networkAdapterModel", &networkAdapterModel);
 
     // Connect to Bluetooth
-    autoapp::UI::Monitor::BluetoothHandler bluetoothHandler(configuration);
+    autoapp::UI::Monitor::IBluetoothManager* bluetoothManager = nullptr;
+#ifdef Q_OS_LINUX
+    auto* bluetoothHandlerConcrete = new autoapp::UI::Monitor::BluetoothHandler(configuration, &app);
+    bluetoothManager = bluetoothHandlerConcrete;
+    auto* bluetoothDeviceModel = new autoapp::UI::Combo::BluetoothDeviceModel(bluetoothHandlerConcrete, &app);
+    context->setContextProperty("bluetoothDeviceModel", bluetoothDeviceModel);
+#else
+    bluetoothManager = new autoapp::UI::Monitor::NullBluetoothManager(&app);
+    context->setContextProperty("bluetoothDeviceModel", nullptr);
+#endif
 
     // Bluetooth Adapters on Host
     autoapp::UI::Combo::BluetoothAdapterModel bluetoothAdapterModel;
     context->setContextProperty("bluetoothAdapterModel", &bluetoothAdapterModel);
 
-    // Bluetooth Devices
-    autoapp::UI::Combo::BluetoothDeviceModel bluetoothDeviceModel(&bluetoothHandler);
-    context->setContextProperty("bluetoothDeviceModel", &bluetoothDeviceModel);
-
-    context->setContextProperty("bluetoothHandler", &bluetoothHandler);
-    context->setContextProperty("bluetoothViewModel", &bluetoothHandler);
-    context->setContextProperty("bluetoothMonitor", &bluetoothHandler);
-    context->setContextProperty("bluetoothPopupHandler", &bluetoothHandler);
+    context->setContextProperty("bluetoothHandler", bluetoothManager);
+    context->setContextProperty("bluetoothViewModel", bluetoothManager);
+    context->setContextProperty("bluetoothMonitor", bluetoothManager);
+    context->setContextProperty("bluetoothPopupHandler", bluetoothManager);
 
     // Setting Handlers
     autoapp::UI::Controller::LightController lightHandler(configuration);
@@ -255,7 +272,7 @@ int main(int argc, char *argv[]) {
 
     // Monitors
     auto androidAutoMonitor = std::make_shared<autoapp::UI::Monitor::AndroidAutoMonitor>();
-    context->setContextProperty("wifiMonitor", wifiMonitor);
+    context->setContextProperty("wifiMonitor", wifiMon);
     context->setContextProperty("androidAutoMonitor", androidAutoMonitor.get());
 
     // Bluetooth Status and Connectivity // DBus/BlueZ

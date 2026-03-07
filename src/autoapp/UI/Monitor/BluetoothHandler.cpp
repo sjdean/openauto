@@ -17,7 +17,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      * @param parent
      */
     BluetoothHandler::BluetoothHandler(configuration::IConfiguration::Pointer configuration, QObject *parent)
-        : QObject(parent)
+        : IBluetoothManager(parent)
           , configuration_(std::move(configuration))
 #ifdef Q_OS_LINUX
     , m_manager("org.bluez", "/", "org.freedesktop.DBus.ObjectManager", QDBusConnection::systemBus())
@@ -85,7 +85,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         if (!lastDevice.isEmpty()) {
             QTimer::singleShot(3000, this, [this, lastDevice]() {
                 qInfo(lcBtHandler) << "Auto-connecting to last device:" << lastDevice;
-                doConnectToPairedDevice(lastDevice);
+                connectToDevice(lastDevice);
             });
         }
     }
@@ -269,7 +269,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      * @param device
      * @return
      */
-    bool BluetoothHandler::connectToDevice(const Model::BluetoothDevice &device) {
+    bool BluetoothHandler::connectToDeviceImpl(const Model::BluetoothDevice &device) {
 #ifdef Q_OS_LINUX
         // Linux: Force connect via D-Bus
         QString pathStr = device.path.path();
@@ -290,7 +290,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 #endif
     }
 
-    bool BluetoothHandler::doConnectToPairedDevice(const QString &address) {
+    bool BluetoothHandler::connectToDevice(const QString &address) {
         setBluetoothConnectionStatus(common::Enum::BluetoothConnectionStatus::BC_CONNECTING);
 
         auto it = std::find_if(m_devices.begin(), m_devices.end(),
@@ -298,9 +298,13 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         Model::BluetoothDevice device = (it != m_devices.end())
             ? *it
+#ifdef Q_OS_LINUX
             : Model::BluetoothDevice(address, "Known Device", QDBusObjectPath(""), true, false);
+#else
+            : Model::BluetoothDevice(address, "Known Device", QString{}, true, false);
+#endif
 
-        const bool success = doConnectToPairedDevice(device);
+        const bool success = connectToPairedDeviceImpl(device);
 
         if (success) {
             if (it != m_devices.end())
@@ -319,24 +323,23 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      * @param device The Bluetooth device to connect to. This includes its address and other details.
      * @return True if the connection to the device was successful, false otherwise.
      */
-    bool BluetoothHandler::doConnectToPairedDevice(Model::BluetoothDevice device) {
+    bool BluetoothHandler::connectToPairedDeviceImpl(Model::BluetoothDevice device) {
         disconnectCurrentDevice();
         configuration_->updateSettingByName("Bluetooth", "PairedDeviceAddress", device.address);
         configuration_->save();
-        return connectToDevice(device);
+        return connectToDeviceImpl(device);
     }
 
-    bool BluetoothHandler::doRemovePair(const QString &address) {
+    bool BluetoothHandler::removePair(const QString &address) {
         auto it = std::find_if(m_devices.begin(), m_devices.end(),
                                [&address](const Model::BluetoothDevice &d) { return d.address == address; });
 
         if (it == m_devices.end()) {
-            qWarning(lcBtHandler) << "doRemovePair: No device found with address" << address;
+            qWarning(lcBtHandler) << "removePair: No device found with address" << address;
             return false;
         }
 
-        // Now call your *original* logic
-        return doRemovePair(*it); // This calls your original C++ function
+        return removePairImpl(*it);
     }
 
     /**
@@ -347,7 +350,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      * @param device The Bluetooth device to be unpaired, including its address and path.
      * @return True if the device was successfully unpaired, false otherwise.
      */
-    bool BluetoothHandler::doRemovePair(const Model::BluetoothDevice &device) {
+    bool BluetoothHandler::removePairImpl(const Model::BluetoothDevice &device) {
 #ifdef Q_OS_LINUX
         // Linux: Remove via Adapter D-Bus
 
@@ -375,7 +378,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 #endif
     }
 
-    bool BluetoothHandler::doRemoveAllPairs() {
+    bool BluetoothHandler::removeAllPairs() {
         disconnectCurrentDevice();
 
         // We iterate over our internal list which is simpler
@@ -386,7 +389,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         for (const auto &device: devicesCopy) {
             if (device.paired) {
-                if (!doRemovePair(device)) {
+                if (!removePairImpl(device)) {
                     allSuccess = false;
                 }
             }
@@ -403,7 +406,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
     void BluetoothHandler::setBluetoothConnectionStatus(common::Enum::BluetoothConnectionStatus::Value value) {
         m_bluetoothConnectionStatus = value;
-        Q_EMIT bluetoothConnnectionStatusChanged();
+        Q_EMIT bluetoothConnectionStatusChanged();
     }
 
     void BluetoothHandler::ignoreDevice(const QString &address) {
@@ -502,7 +505,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         }
     }
 
-    void BluetoothHandler::doDisconnect(const QString &address) {
+    void BluetoothHandler::disconnectDevice(const QString &address) {
         qInfo(lcBtHandler) << "Requesting disconnect for device:" << address;
 
 #ifdef Q_OS_LINUX

@@ -3,6 +3,7 @@
 #include <QString>
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 #include "f1x/openauto/autoapp/Configuration/Configuration.hpp"
+#include "f1x/openauto/autoapp/UI/Controller/IWiFiController.hpp"
 
 #ifdef Q_OS_LINUX
 #include <QDBusConnection>
@@ -11,7 +12,7 @@
 #endif
 
 namespace f1x::openauto::autoapp::UI::Controller {
-    class WifiController final : public QObject {
+    class WifiController : public IWiFiController {
         Q_OBJECT
 
     public:

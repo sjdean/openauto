@@ -2,10 +2,10 @@
 
 #include <QObject>
 #include <QVariantList>
-#include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
+#include "f1x/openauto/autoapp/UI/Controller/IWiFiController.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
-#include "f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp"
+#include "f1x/openauto/autoapp/UI/Monitor/IWiFiMonitor.hpp"
 
 namespace f1x::openauto::autoapp::UI::ViewModel {
     class WifiViewModel : public QObject {
@@ -27,8 +27,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     public:
         explicit WifiViewModel(configuration::IConfiguration::Pointer config,
-                                       UI::Controller::WifiController* controller,
-                                       UI::Monitor::WifiMonitor* monitor,
+                                       UI::Controller::IWiFiController* controller,
+                                       UI::Monitor::IWiFiMonitor* monitor,
                                        QObject *parent = nullptr);
         // Read
         QString getSelectedInterface() const;
@@ -94,8 +94,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     private:
         configuration::IConfiguration::Pointer m_config;
-        Controller::WifiController* m_wifiController;
-        Monitor::WifiMonitor* m_monitor;
+        Controller::IWiFiController* m_wifiController;
+        Monitor::IWiFiMonitor* m_monitor;
         common::Enum::WirelessType::Value m_mode;
         QString m_selectedInterface;
         QString m_hotspotSsid;

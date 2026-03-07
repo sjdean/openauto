@@ -3,7 +3,7 @@
 #include <QDebug>
 
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
-#include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
+#include "f1x/openauto/autoapp/UI/Controller/IWiFiController.hpp"
 #include "f1x/openauto/Common/Enum/WirelessType.hpp"
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcVmWifi, "journeyos.wifi")
@@ -12,8 +12,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     // 1. Accept Pointer in Constructor
     WifiViewModel::WifiViewModel(configuration::IConfiguration::Pointer config,
-    UI::Controller::WifiController* controller,
-    UI::Monitor::WifiMonitor* monitor,
+    UI::Controller::IWiFiController* controller,
+    UI::Monitor::IWiFiMonitor* monitor,
     QObject *parent)
         : QObject(parent), m_config(std::move(config)), m_wifiController(controller), m_monitor(monitor)
     {
@@ -27,15 +27,15 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         auto modeVal        = m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type");
         updateMode(modeVal);
 
-        connect(m_monitor, &Monitor::WifiMonitor::signalStrengthChanged,this, &WifiViewModel::updateSignalStrength);
-        connect(m_monitor, &Monitor::WifiMonitor::accessPointsChanged,this, &WifiViewModel::updateAccessPoints);
-        connect(m_monitor, &Monitor::WifiMonitor::connectedChanged,this, &WifiViewModel::updateConnected);
-        connect(m_monitor, &Monitor::WifiMonitor::modeChanged,this, &WifiViewModel::updateMode);
-        connect(m_monitor, &Monitor::WifiMonitor::currentSsidChanged, this, &WifiViewModel::updateCurrentSsid);
-        connect(m_monitor, &Monitor::WifiMonitor::availableInterfacesChanged, this, &WifiViewModel::updateAvailableInterfaces);
-        connect(m_monitor, &Monitor::WifiMonitor::currentIpChanged, this, &WifiViewModel::updateCurrentIP);
-        connect(m_monitor, &Monitor::WifiMonitor::interfaceChanged, this, &WifiViewModel::updateInterface);
-        connect(m_monitor, &Monitor::WifiMonitor::interfaceUpChanged, this, &WifiViewModel::updateInterfaceUp);
+        connect(m_monitor, &Monitor::IWiFiMonitor::signalStrengthChanged,this, &WifiViewModel::updateSignalStrength);
+        connect(m_monitor, &Monitor::IWiFiMonitor::accessPointsChanged,this, &WifiViewModel::updateAccessPoints);
+        connect(m_monitor, &Monitor::IWiFiMonitor::connectedChanged,this, &WifiViewModel::updateConnected);
+        connect(m_monitor, &Monitor::IWiFiMonitor::modeChanged,this, &WifiViewModel::updateMode);
+        connect(m_monitor, &Monitor::IWiFiMonitor::currentSsidChanged, this, &WifiViewModel::updateCurrentSsid);
+        connect(m_monitor, &Monitor::IWiFiMonitor::availableInterfacesChanged, this, &WifiViewModel::updateAvailableInterfaces);
+        connect(m_monitor, &Monitor::IWiFiMonitor::currentIpChanged, this, &WifiViewModel::updateCurrentIP);
+        connect(m_monitor, &Monitor::IWiFiMonitor::interfaceChanged, this, &WifiViewModel::updateInterface);
+        connect(m_monitor, &Monitor::IWiFiMonitor::interfaceUpChanged, this, &WifiViewModel::updateInterfaceUp);
     }
 
     bool WifiViewModel::getIsEnabled() const { return m_isEnabled; }
