@@ -42,10 +42,19 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void WifiViewModel::setIsEnabled(bool enabled) {
         if (enabled != m_isEnabled) {
+            m_isEnabled = enabled;
             m_config->updateSettingByName<bool>("Wireless", "Enabled", enabled);
             m_config->save();
             emit isEnabledChanged();
         }
+    }
+
+    WifiViewModel::WifiStatus WifiViewModel::getStatus() const {
+        if (m_mode == common::Enum::WirelessType::WIRELESS_HOTSPOT && m_connected)
+            return WifiStatus::HotspotActive;
+        if (m_connected)
+            return WifiStatus::Connected;
+        return WifiStatus::Disconnected;
     }
 
     QString WifiViewModel::getSelectedInterface() const { return m_selectedInterface; }
@@ -115,7 +124,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
             m_hotspotSsid = ssid;
             m_config->updateSettingByName<QString>("Wireless", "HotspotSSID", ssid);
             m_config->save();
-            m_wifiController->setHotspotCredentials(m_hotspotSsid, m_hotspotPassword);
+            // Do not activate hotspot on credential edit — use applyHotspot() explicitly.
             emit hotspotSsidChanged();
         }
     }
@@ -125,7 +134,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
             m_hotspotPassword = pass;
             m_config->updateSettingByName<QString>("Wireless", "HotspotPassword", pass);
             m_config->save();
-            m_wifiController->setHotspotCredentials(m_hotspotSsid, m_hotspotPassword);
+            // Do not activate hotspot on credential edit — use applyHotspot() explicitly.
             emit hotspotPasswordChanged();
         }
     }
@@ -174,7 +183,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         if (s != m_signalStrength) { m_signalStrength = s; emit signalStrengthChanged(); }
     }
     void WifiViewModel::updateConnected(bool c) {
-        if (c != m_connected) { m_connected = c; emit connectedChanged(); }
+        if (c != m_connected) { m_connected = c; emit connectedChanged(); emit statusChanged(); }
     }
     void WifiViewModel::updateMode(common::Enum::WirelessType::Value m) {
         if (m != m_mode) {
@@ -182,6 +191,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
             m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", m);
             m_config->save();
             emit modeChanged();
+            emit statusChanged();
         }
     }
 
@@ -208,5 +218,13 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void WifiViewModel::updateAvailableInterfaces(const QVariantList &interfaces) {
         m_availableInterfaces = interfaces;
         emit availableInterfacesChanged();
+    }
+
+    void WifiViewModel::disconnectCurrent() {
+        m_wifiController->disconnect();
+    }
+
+    void WifiViewModel::applyHotspot() {
+        m_wifiController->setMode(common::Enum::WirelessType::WIRELESS_HOTSPOT);
     }
 }

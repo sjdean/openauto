@@ -88,15 +88,24 @@ Item {
             width: parent.width
             model: networkAdapterModel.comboBoxItems
             textRole: "displayName"
-            currentIndex: {
-                var idx = networkAdapterModel.comboBoxItems.findIndex(
-                    function(item) { return item.address === wifiViewModel.selectedInterface })
-                return idx !== -1 ? idx : 0
+
+            // Set initial selection by interface name (the value WifiController needs).
+            Component.onCompleted: {
+                var items = networkAdapterModel.comboBoxItems
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].interfaceName === wifiViewModel.selectedInterface) {
+                        currentIndex = i
+                        break
+                    }
+                }
             }
-            onCurrentIndexChanged: {
-                if (currentIndex >= 0 && currentIndex < networkAdapterModel.comboBoxItems.length) {
-                    wifiViewModel.selectedInterface = networkAdapterModel.comboBoxItems[currentIndex].address
-                    networkAdapterModel.currentComboBoxItem = networkAdapterModel.comboBoxItems[currentIndex]
+
+            // onActivated fires only on explicit user interaction, not on model load.
+            onActivated: {
+                var items = networkAdapterModel.comboBoxItems
+                if (currentIndex >= 0 && currentIndex < items.length) {
+                    wifiViewModel.selectedInterface = items[currentIndex].interfaceName
+                    networkAdapterModel.currentComboBoxItem = items[currentIndex]
                 }
             }
         }
@@ -152,6 +161,18 @@ Item {
                     text: wifiViewModel.hotspotPassword
                     onTextEdited: wifiViewModel.hotspotPassword = text
                 }
+
+                Row {
+                    spacing: 8
+                    Button {
+                        text: "Start Hotspot"
+                        onClicked: wifiViewModel.applyHotspot()
+                    }
+                    Button {
+                        text: "Stop"
+                        onClicked: wifiViewModel.disconnectCurrent()
+                    }
+                }
             }
 
             // ── Client credentials + scan ─────────────────────────────────────
@@ -176,7 +197,7 @@ Item {
                     spacing: 8
                     TextField {
                         id: clientPasswordField
-                        width: parent.width - connectBtn.width - 8
+                        width: parent.width - connectBtn.width - disconnectBtn.width - 16
                         placeholderText: qsTr("Password")
                         echoMode: TextInput.Password
                         text: wifiViewModel.clientPassword
@@ -186,6 +207,12 @@ Item {
                         id: connectBtn
                         text: "Connect"
                         onClicked: wifiViewModel.connectToNetwork(clientSsidField.text, clientPasswordField.text)
+                    }
+                    Button {
+                        id: disconnectBtn
+                        text: "Disconnect"
+                        enabled: wifiViewModel.connected
+                        onClicked: wifiViewModel.disconnectCurrent()
                     }
                 }
 

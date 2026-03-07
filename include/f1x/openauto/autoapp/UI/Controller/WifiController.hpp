@@ -8,8 +8,13 @@
 #ifdef Q_OS_LINUX
 #include <QDBusConnection>
 #include <QDBusPendingCallWatcher>
+#include <QNetworkInterface>
 #include <QUuid>
 #endif
+
+// NM AddAndActivateConnection expects a{sa{sv}} — one nested dict, not separate maps
+using NMConnectionSettings = QMap<QString, QVariantMap>;
+Q_DECLARE_METATYPE(NMConnectionSettings)
 
 namespace f1x::openauto::autoapp::UI::Controller {
     class WifiController : public IWiFiController {

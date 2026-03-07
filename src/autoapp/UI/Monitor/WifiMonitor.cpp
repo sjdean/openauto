@@ -18,20 +18,31 @@ namespace f1x::openauto::autoapp::UI::Monitor {
           , m_config(std::move(config))
           , m_refreshTimer(new QTimer(this)) {
         // === 1. Find current Wi-Fi interface (cross-platform) ===
-        QString macAddress = m_config->getSettingByName<QString>("Wireless", "Interface");
+        // "Interface" stores the interface name ("wlan0") - used by WifiController.
+        // "InterfaceMAC" stores the hardware address for stable identification across renames.
+        const QString savedName = m_config->getSettingByName<QString>("Wireless", "Interface");
+        const QString savedMac  = m_config->getSettingByName<QString>("Wireless", "InterfaceMAC");
 
-        if (!macAddress.isEmpty()) {
-            // Find interface by MAC (most reliable)
+        if (!savedName.isEmpty()) {
+            // Primary: match by interface name
+            QNetworkInterface byName = QNetworkInterface::interfaceFromName(savedName);
+            if (byName.isValid() && byName.type() == QNetworkInterface::Wifi) {
+                m_currentInterface = byName;
+            }
+        }
+
+        if (!m_currentInterface.isValid() && !savedMac.isEmpty()) {
+            // Secondary: match by saved MAC (backwards-compat / renamed interface)
             for (const QNetworkInterface &i: QNetworkInterface::allInterfaces()) {
                 if (i.type() == QNetworkInterface::Wifi &&
-                    i.hardwareAddress().compare(macAddress, Qt::CaseInsensitive) == 0) {
+                    i.hardwareAddress().compare(savedMac, Qt::CaseInsensitive) == 0) {
                     m_currentInterface = i;
                     break;
                 }
             }
         }
 
-        // Fallback: if no MAC saved, auto-detect first Wi-Fi adapter
+        // Fallback: auto-detect first active Wi-Fi adapter
         if (!m_currentInterface.isValid()) {
             for (const QNetworkInterface &i: QNetworkInterface::allInterfaces()) {
                 if (i.type() == QNetworkInterface::Wifi &&
@@ -43,11 +54,11 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             }
         }
 
-        // Save MAC forever if we have a valid adapter
+        // Persist MAC for stable future identification (separate key, does not overwrite name)
         if (m_currentInterface.isValid()) {
-            QString currentMac = m_currentInterface.hardwareAddress();
-            if (macAddress.isEmpty() || macAddress != currentMac) {
-                m_config->updateSettingByName<QString>("Wireless", "Interface", currentMac);
+            const QString currentMac = m_currentInterface.hardwareAddress();
+            if (savedMac != currentMac) {
+                m_config->updateSettingByName<QString>("Wireless", "InterfaceMAC", currentMac);
                 m_config->save();
             }
         }
@@ -91,20 +102,18 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             return;
         }
 
-        // These work perfectly on Linux, macOS, and Windows
         bool isUp = m_currentInterface.flags() & QNetworkInterface::IsUp;
         emit interfaceUpChanged(isUp);
-        emit connectedChanged(isUp); // Good enough for now
 
-        updateCurrentIp(); // Shows real IP on all platforms
-        updateInterfaceList(); // Shows real interface list + MAC
+        updateCurrentIp();
+        updateInterfaceList();
 
 #ifdef Q_OS_LINUX
-        // Linux: Full SSID + signal from NetworkManager D-Bus (your existing code)
-        // → Do nothing here, your D-Bus slots already emit currentSsidChanged/signalStrengthChanged
-
+        // On Linux, connection state is tracked accurately by the NM D-Bus StateChanged signal.
+        // Do not emit connectedChanged here — it would overwrite the authoritative D-Bus state.
 #else
-        // macOS + Windows: We don't have SSID/signal yet → show honest placeholder
+        // macOS + Windows: use IsUp as a best-effort proxy and show honest placeholders.
+        emit connectedChanged(isUp);
         emit currentSsidChanged(tr("Not available"));
         emit signalStrengthChanged(0);
 #endif

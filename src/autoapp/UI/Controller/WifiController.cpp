@@ -4,6 +4,7 @@
 #ifdef Q_OS_LINUX
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusObjectPath>
+#include <QtDBus/QDBusMetaType>
 #endif
 Q_LOGGING_CATEGORY(lcWifi, "journeyos.wifi.controller")
 
@@ -13,6 +14,9 @@ WifiController::WifiController(configuration::Configuration::Pointer config, QOb
     : IWiFiController(parent)
     , m_config(std::move(config))
 {
+#ifdef Q_OS_LINUX
+    qDBusRegisterMetaType<NMConnectionSettings>();
+#endif
     applyAllSettings();
 }
 
@@ -27,10 +31,22 @@ void WifiController::applyAllSettings()
 #endif
 }
 
-void WifiController::setInterface(const QString& ifaceName)
+void WifiController::setInterface(const QString& ifaceOrMac)
 {
 #ifdef Q_OS_LINUX
-    if (ifaceName.isEmpty()) return;
+    if (ifaceOrMac.isEmpty()) return;
+
+    // If it looks like a MAC address, resolve to the interface name that NM needs.
+    QString ifaceName = ifaceOrMac;
+    if (ifaceOrMac.contains(QChar(':'))) {
+        for (const QNetworkInterface &i : QNetworkInterface::allInterfaces()) {
+            if (i.hardwareAddress().compare(ifaceOrMac, Qt::CaseInsensitive) == 0) {
+                ifaceName = i.name();
+                break;
+            }
+        }
+    }
+
     m_currentIface = ifaceName;
 
     QDBusInterface nm("org.freedesktop.NetworkManager",
@@ -53,12 +69,20 @@ void WifiController::setInterface(const QString& ifaceName)
 void WifiController::setMode(common::Enum::WirelessType::Value mode)
 {
 #ifdef Q_OS_LINUX
+    // Always tear down the current connection before switching modes.
+    disconnect();
+
     if (mode == common::Enum::WirelessType::WIRELESS_HOTSPOT) {
         const QString ssid = m_config->getSettingByName<QString>("Wireless", "HotspotSSID", "MyCarHotspot");
         const QString pass = m_config->getSettingByName<QString>("Wireless", "HotspotPassword", "12345678");
         enableHotspotImpl(ssid, pass);
     } else {
-        disconnect(); // fall back to client mode
+        // Reconnect to saved client network if credentials exist.
+        const QString ssid = m_config->getSettingByName<QString>("Wireless", "ClientSSID");
+        const QString pass = m_config->getSettingByName<QString>("Wireless", "ClientPassword");
+        if (!ssid.isEmpty()) {
+            connectToWifiImpl(ssid, pass);
+        }
     }
 #endif
 }
@@ -78,9 +102,10 @@ void WifiController::setHotspotCredentials(const QString& ssid, const QString& p
 
 void WifiController::setWirelessCredentials(const QString& ssid, const QString& password)
 {
-#ifdef Q_OS_LINUX
-    connectToWifiImpl(ssid, password);
-#endif
+    // Credentials are already saved to config by the ViewModel.
+    // Explicit connection is triggered only via connectToNetwork().
+    Q_UNUSED(ssid)
+    Q_UNUSED(password)
 }
 
 #ifdef Q_OS_LINUX
@@ -91,21 +116,29 @@ void WifiController::enableHotspotImpl(const QString& ssid, const QString& pass)
         return;
     }
 
-    QVariantMap connection, wifi, wifiSec, ipv4;
+    // NM AddAndActivateConnection expects a{sa{sv}} as a single argument.
+    QVariantMap connection;
     connection["uuid"] = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    connection["id"] = ssid;
+    connection["id"]   = ssid;
     connection["type"] = "802-11-wireless";
     connection["interface-name"] = m_currentIface;
 
+    QVariantMap wifi;
     wifi["ssid"] = ssid.toUtf8();
     wifi["mode"] = "ap";
 
+    QVariantMap wifiSec;
     wifiSec["key-mgmt"] = "wpa-psk";
-    wifiSec["psk"] = pass;
+    wifiSec["psk"]      = pass;
 
-    ipv4["method"] = "shared"; // NAT + 10.42.0.1
+    QVariantMap ipv4;
+    ipv4["method"] = "shared"; // NAT + 10.42.0.1/24
 
-    const QVariantMap maps[] = { connection, wifi, wifiSec, ipv4 };
+    NMConnectionSettings settings;
+    settings["connection"]              = connection;
+    settings["802-11-wireless"]         = wifi;
+    settings["802-11-wireless-security"] = wifiSec;
+    settings["ipv4"]                    = ipv4;
 
     QDBusMessage msg = QDBusMessage::createMethodCall(
         "org.freedesktop.NetworkManager",
@@ -113,12 +146,12 @@ void WifiController::enableHotspotImpl(const QString& ssid, const QString& pass)
         "org.freedesktop.NetworkManager",
         "AddAndActivateConnection");
 
-    msg << maps[0] << maps[1] << maps[2] << maps[3]
-        << QDBusObjectPath(m_wifiDevicePath)
-        << QDBusObjectPath("/");
+    msg << QVariant::fromValue(settings)
+        << QVariant::fromValue(QDBusObjectPath(m_wifiDevicePath))
+        << QVariant::fromValue(QDBusObjectPath("/"));
 
     auto* w = new QDBusPendingCallWatcher(m_bus.asyncCall(msg), this);
-    connect(w, &QDBusPendingCallWatcher::finished, this, [ssid](QDBusPendingCallWatcher* call){
+    connect(w, &QDBusPendingCallWatcher::finished, this, [ssid](QDBusPendingCallWatcher* call) {
         if (call->isError())
             qCritical(lcWifi) << "Hotspot failed:" << call->error().message();
         else
@@ -193,16 +226,31 @@ void WifiController::connectToWifiImpl(const QString& ssid, const QString& passw
         return;
     }
 
-    QVariantMap connection, wifi, wifiSec, ipv4;
+    // NM AddAndActivateConnection expects a{sa{sv}} as a single argument.
+    QVariantMap connection;
     connection["uuid"] = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    connection["id"] = ssid;
+    connection["id"]   = ssid;
     connection["type"] = "802-11-wireless";
     connection["interface-name"] = m_currentIface;
 
+    QVariantMap wifi;
     wifi["ssid"] = ssid.toUtf8();
     wifi["mode"] = "infrastructure";
 
+    QVariantMap ipv4;
     ipv4["method"] = "auto"; // DHCP
+
+    NMConnectionSettings settings;
+    settings["connection"]      = connection;
+    settings["802-11-wireless"] = wifi;
+    settings["ipv4"]            = ipv4;
+
+    if (!password.isEmpty()) {
+        QVariantMap wifiSec;
+        wifiSec["key-mgmt"] = "wpa-psk";
+        wifiSec["psk"]      = password;
+        settings["802-11-wireless-security"] = wifiSec;
+    }
 
     QDBusMessage msg = QDBusMessage::createMethodCall(
         "org.freedesktop.NetworkManager",
@@ -210,15 +258,9 @@ void WifiController::connectToWifiImpl(const QString& ssid, const QString& passw
         "org.freedesktop.NetworkManager",
         "AddAndActivateConnection");
 
-    if (!password.isEmpty()) {
-        wifiSec["key-mgmt"] = "wpa-psk";
-        wifiSec["psk"] = password;
-        msg << connection << wifi << wifiSec << ipv4
-            << QDBusObjectPath(m_wifiDevicePath) << QDBusObjectPath("/");
-    } else {
-        msg << connection << wifi << QVariantMap() << ipv4
-            << QDBusObjectPath(m_wifiDevicePath) << QDBusObjectPath("/");
-    }
+    msg << QVariant::fromValue(settings)
+        << QVariant::fromValue(QDBusObjectPath(m_wifiDevicePath))
+        << QVariant::fromValue(QDBusObjectPath("/"));
 
     auto* w = new QDBusPendingCallWatcher(m_bus.asyncCall(msg), this);
     connect(w, &QDBusPendingCallWatcher::finished, this, [this, ssid](QDBusPendingCallWatcher* call) {

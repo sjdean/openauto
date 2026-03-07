@@ -10,6 +10,7 @@
 namespace f1x::openauto::autoapp::UI::ViewModel {
     class WifiViewModel : public QObject {
         Q_OBJECT
+
         Q_PROPERTY(
             QString selectedInterface READ getSelectedInterface WRITE setSelectedInterface NOTIFY selectedInterfaceChanged)
         Q_PROPERTY(common::Enum::WirelessType::Value mode READ getMode WRITE setMode NOTIFY modeChanged)
@@ -24,8 +25,12 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         Q_PROPERTY(bool connected READ getConnected NOTIFY connectedChanged)
         Q_PROPERTY(QVariantList accessPoints READ getAccessPoints NOTIFY accessPointsChanged)
         Q_PROPERTY(QVariantList availableInterfaces READ getAvailableInterfaces NOTIFY availableInterfacesChanged)
+        Q_PROPERTY(WifiStatus status READ getStatus NOTIFY statusChanged)
 
     public:
+        enum class WifiStatus { Disconnected, Connected, HotspotActive };
+        Q_ENUM(WifiStatus)
+
         explicit WifiViewModel(configuration::IConfiguration::Pointer config,
                                        UI::Controller::IWiFiController* controller,
                                        UI::Monitor::IWiFiMonitor* monitor,
@@ -46,6 +51,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
         QVariantList getAccessPoints() const;
         QVariantList getAvailableInterfaces() const;
+        WifiStatus getStatus() const;
 
         // Write (saves to config + emits)
         Q_INVOKABLE void setSelectedInterface(const QString &iface);
@@ -58,6 +64,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
         Q_INVOKABLE void doWirelessNetworkScan();
         Q_INVOKABLE void connectToNetwork(const QString &ssid, const QString &password);
+        Q_INVOKABLE void disconnectCurrent();
+        Q_INVOKABLE void applyHotspot();
 
     public slots:
         void updateCurrentSsid(const QString &ssid);
@@ -91,6 +99,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         void availableInterfacesChanged();
 
         void connectRequested(const QString &ssid);
+        void statusChanged();
 
     private:
         configuration::IConfiguration::Pointer m_config;

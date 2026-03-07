@@ -234,6 +234,7 @@ target_compile_definitions(autoapp PRIVATE
         BOOST_ALL_DYN_LINK
         $<$<CONFIG:Release>:NDEBUG>
         $<$<BOOL:${OPENAUTO_MACOS}>:MAC_OS>    # was add_definitions(-DMAC_OS) — now target-scoped
+        OPENAUTO_VERSION_STRING="${LIBRARY_BUILD_VERSION_STRING}"
 )
 
 # ─── Qt Design Studio subdirectories ─────────────────────────────────────────

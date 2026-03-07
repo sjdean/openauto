@@ -32,6 +32,7 @@
 #include <f1x/openauto/autoapp/UI/Combo/NetworkAdapterModel.hpp>
 
 #include "f1x/openauto/autoapp/UI/ViewModel/WifiViewModel.hpp"
+#include "f1x/openauto/autoapp/UI/UpdateManager.hpp"
 
 #ifdef Q_OS_LINUX
 #include <f1x/openauto/autoapp/UI/Combo/BluetoothDeviceModel.hpp>
@@ -274,6 +275,10 @@ int main(int argc, char *argv[]) {
     auto androidAutoMonitor = std::make_shared<autoapp::UI::Monitor::AndroidAutoMonitor>();
     context->setContextProperty("wifiMonitor", wifiMon);
     context->setContextProperty("androidAutoMonitor", androidAutoMonitor.get());
+
+    // OTA update manager (stub — no real HTTP yet)
+    auto* updateManager = new f1x::openauto::autoapp::UI::UpdateManager(configuration, &app);
+    context->setContextProperty("updateManager", updateManager);
 
     // Bluetooth Status and Connectivity // DBus/BlueZ
     // Wifi Status // Other

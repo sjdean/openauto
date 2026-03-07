@@ -332,6 +332,91 @@ Item {
                     wrapMode: Text.WordWrap
                     Layout.fillWidth: true
                 }
+
+                // ── OTA Updates (platform-gated) ──────────────────────────────
+                SectionHeader {
+                    visible: ConfigGate.showConfig
+                    text: "Software Updates"
+                }
+
+                RowLayout {
+                    visible: ConfigGate.showConfig
+                    Layout.fillWidth: true
+                    spacing: 16
+
+                    Column {
+                        spacing: 4
+                        Layout.fillWidth: true
+
+                        Label {
+                            text: "Current version: " + updateManager.currentVersion
+                            font.pixelSize: 13
+                            color: cTextMain
+                        }
+                        Label {
+                            id: updateStatusLabel
+                            text: updateManager.updateAvailable
+                                  ? ("Update available: " + updateManager.latestVersion)
+                                  : "Up to date"
+                            font.pixelSize: 13
+                            color: updateManager.updateAvailable ? cAccent : cTextDim
+                        }
+                    }
+
+                    Button {
+                        text: "Check for Updates"
+                        Layout.alignment: Qt.AlignVCenter
+                        onClicked: {
+                            if (!wifiViewModel.connected) {
+                                wifiWarningDialog.open()
+                            } else {
+                                updateManager.checkForUpdate()
+                            }
+                        }
+                    }
+                }
+
+                // Confirmation dialog: shown when an update is found
+                Connections {
+                    target: updateManager
+                    function onCheckComplete(available, version) {
+                        if (available) updateFoundDialog.open()
+                    }
+                }
+            }
+        }
+
+        // ── OTA dialogs — declared outside StackLayout so they overlay everything ──
+        Dialog {
+            id: wifiWarningDialog
+            title: "Wi-Fi Required"
+            modal: true
+            anchors.centerIn: parent
+            standardButtons: Dialog.Ok
+
+            Label {
+                text: "A Wi-Fi connection is required to check for updates.\nPlease connect to a network first."
+                wrapMode: Text.WordWrap
+                width: 360
+            }
+        }
+
+        Dialog {
+            id: updateFoundDialog
+            title: "Update Available"
+            modal: true
+            anchors.centerIn: parent
+            standardButtons: Dialog.Ok | Dialog.Cancel
+
+            Label {
+                text: "Version " + updateManager.latestVersion + " is available.\n\nThe update will be downloaded and applied on next restart."
+                wrapMode: Text.WordWrap
+                width: 360
+            }
+
+            onAccepted: {
+                updateManager.downloadUpdate()
+                updateManager.applyUpdate()
             }
         }
 
