@@ -85,6 +85,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     explicit SettingsViewModel(configuration::IConfiguration::Pointer configuration,
                           QObject *parent = nullptr);
 
+    bool isHeadUnitMode() const;
+
   signals:
 
     void carIdChanged();
@@ -358,7 +360,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void setHwBluetoothAdapter(QString value);
 
     bool m_headUnitMode;
-    bool isHeadUnitMode() const;
     void setHeadUnitMode(bool value);
 
   };
