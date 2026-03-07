@@ -7,7 +7,6 @@
 <file>JourneyOS/EventListSimulator.qml</file>
 <file>JourneyOS/qmldir</file>
 <file>JourneyOSContent/App2.qml</file>
-<file>JourneyOSContent/BluetoothPinPopup.qml</file>
 <file>JourneyOSContent/ClickOutsideHandler.qml</file>
 <file>JourneyOSContent/Header.ui.qml</file>
 <file>JourneyOSContent/images/bluetooth-alt.svg</file>

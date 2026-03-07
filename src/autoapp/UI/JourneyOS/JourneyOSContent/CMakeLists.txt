@@ -17,7 +17,6 @@ qt6_add_qml_module(JourneyOSContent
         "Journey.qml"
         "ClickOutsideHandler.qml"
         "BrightnessSlider.ui.qml"
-        "BluetoothPinPopup.qml"
         "Header.ui.qml"
         "MediaPlayingMenu.qml"
         "JourneyButton.ui.qml"

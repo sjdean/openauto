@@ -241,11 +241,14 @@ Item {
                 }
             }
 
-            // ── Adapter selection (only shown when multiple adapters exist) ───
+            // ── Adapter selection ──────────────────────────────────────────────
+            // Shown whenever at least one adapter exists so the user always
+            // knows which hardware is active. Switches the active adapter and
+            // saves the preference to settings.
             Row {
                 width: parent.width
                 spacing: 10
-                visible: bluetoothHandler.adapterCount > 1
+                visible: bluetoothHandler.adapterCount > 0
 
                 Text {
                     text: "Adapter:"
@@ -260,7 +263,22 @@ Item {
                     property var adapterList: bluetoothHandler.bluetoothAdapterList
                     model: adapterList
                     textRole: "name"
-                    onCurrentIndexChanged: {
+
+                    // Set the initial selection to the currently active adapter
+                    // without triggering setActiveAdapter (use onActivated for that).
+                    Component.onCompleted: {
+                        var savedAddr = bluetoothHandler.getAdapterAddress()
+                        for (var i = 0; i < adapterList.length; i++) {
+                            if (adapterList[i].address === savedAddr) {
+                                currentIndex = i
+                                break
+                            }
+                        }
+                    }
+
+                    // onActivated fires only on explicit user selection, not on
+                    // programmatic currentIndex changes — avoids spurious adapter switches.
+                    onActivated: {
                         if (currentIndex >= 0 && currentIndex < adapterList.length)
                             bluetoothHandler.setActiveAdapter(adapterList[currentIndex].address)
                     }

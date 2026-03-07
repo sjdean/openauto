@@ -110,6 +110,13 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         m_isScanning = true;
         Q_EMIT isScanningChanged();
         discoveryAgent_->start();
+
+        // Classic BT (BR/EDR) has no built-in timeout — stop after 12 seconds if still running.
+        // BLE already stops via setLowEnergyDiscoveryTimeout(5000).
+        QTimer::singleShot(12000, this, [this]() {
+            if (m_isScanning)
+                discoveryAgent_->stop();
+        });
     }
 
     bool BluetoothHandler::isScanning() const {
@@ -202,8 +209,12 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         for (const QBluetoothHostInfo &info: hostInfos) {
             QVariantMap map;
-            map["name"] = info.name();
-            map["address"] = info.address().toString();
+            const QString addrStr = info.address().toString();
+            // Display name includes the address so adapters are distinguishable in the combo
+            map["name"] = info.name().isEmpty()
+                          ? addrStr
+                          : info.name() + u" \u2014 " + addrStr;
+            map["address"] = addrStr;
 
             // 2. Probe the status of THIS specific adapter
             QBluetoothLocalDevice adapter(info.address());
@@ -243,7 +254,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     }
 
     int BluetoothHandler::getAdapterCount() const {
-        return m_adapters.size();
+        return QBluetoothLocalDevice::allDevices().count();
     }
 
     int BluetoothHandler::getActiveDeviceIndex() const {

@@ -71,38 +71,16 @@ Window {
 
     Popup {
         id: bluetoothPopup
-        x: 100
-        y: 100
-        width: 300
-        height: 200
+        anchors.centerIn: parent
+        width: parent.width
+        height: parent.height
         modal: true
         focus: true
+        padding: 0
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        background: Rectangle {
-            color: "#FFFFFF"
-            border.color: "transparent"
-            border.width: 0
-        }
+        background: Item {}
         contentItem: BluetoothPopup {
             onClose: bluetoothPopup.close()
-        }
-    }
-
-    Popup {
-        id: pinPopup
-        width: 300
-        height: 200
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-
-        // We will create this QML file next
-        contentItem: BluetoothPinPopup {
-            // We pass the agent from the C++ view model
-            agent: bluetoothViewModel.agent
-
-            onAccepted: pinPopup.close()
-            onRejected: pinPopup.close()
         }
     }
 
@@ -167,47 +145,33 @@ Window {
         }
     }
 
-    Connections {
-        target: stackView.currentItem
-        ignoreUnknownSignals: true
-
-        // Connect the Power signal
-        function onViewPower() { powerPopup.open() }
-
-        // ... [Other connections remain same] ...
-    }
-
     // ---------------------------------------------------------
     // 3. LOGIC & CONNECTIONS
     // ---------------------------------------------------------
 
-    // Handle signals from the Current View (MainView OR AndroidAutoView)
+    // Handle signals from the current view (MainView OR AndroidAutoView)
     Connections {
         target: stackView.currentItem
         ignoreUnknownSignals: true
 
-        // Navigational Options
-        function onViewPower() { console.log("Power Clicked") }             // TODO: This will go to a Power Screen or Show Popup
-        function onViewOBD() { console.log("OBD Clicked") }                 // TODO: This will go to an OBD Screen
-        function onViewNavigation() { console.log("Navigation Clicked") }   // TODO: This will go to a Navigation Screen
-        function onViewRadio() { console.log("Radio Clicked") }             // TODO: This will go to a Radio Screen
-        function onViewUSB() { console.log("USB Clicked") }                 // TODO: This will go to a USB Browser Screen
-        function onViewBluetooth() { console.log("Bluetooth Clicked") }     // TODO: This will go to a Bluetooth HFP/A2DP screen
-        function onViewSettings() { stackView.push("SettingsView.qml") }
+        // Navigation
+        function onViewPower()       { powerPopup.open() }
+        function onViewOBD()         { console.log("OBD Clicked") }       // TODO: OBD screen
+        function onViewNavigation()  { console.log("Navigation Clicked") } // TODO: Nav screen
+        function onViewRadio()       { console.log("Radio Clicked") }     // TODO: Radio screen
+        function onViewUSB()         { console.log("USB Clicked") }       // TODO: USB browser
+        function onViewBluetooth()   { console.log("Bluetooth Clicked") } // TODO: BT HFP/A2DP
+        function onViewSettings()    { stackView.push("SettingsView.qml") }
         function onViewAndroidAuto() { stackView.push("AndroidAutoView.qml") }
+        function onRequestHome()     { stackView.pop(null) }
 
-        // Handle "Home" requests from any sub-screen
-        function onRequestHome() { stackView.pop(null) }
-
-        // Contextual Options
-        function onViewWifiStatus() { wifiPopup.open() }
+        // Status popups
+        function onViewWifiStatus()      { wifiPopup.open() }
         function onViewBluetoothStatus() { bluetoothPopup.open() }
 
-        // Control Sliders
-        function onViewVolume() { volumePopup.open() }
+        // Slider popups
+        function onViewVolume()     { volumePopup.open() }
         function onViewBrightness() { brightnessPopup.open() }
-
-
     }
 
     // Handle Android Auto Connection
