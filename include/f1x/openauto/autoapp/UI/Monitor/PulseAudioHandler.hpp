@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/qglobal.h>   // defines Q_OS_LINUX before the guard below
 #ifdef Q_OS_LINUX
 #include "IAudioHandler.h"
 #include <pulse/pulseaudio.h>
