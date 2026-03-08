@@ -52,7 +52,7 @@ Item {
     property bool androidAutoConnected: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED
     property bool androidAutoConnecting: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTING
     property string androidAutoMethodText: androidAutoMonitor.method === AndroidAutoConnectivityMethod.AA_USB ? "USB"
-                                                                  : AndroidAutoConnectivityMethod.AA_WIFI ? "Wi-Fi"
+                                                                  : androidAutoMonitor.method === AndroidAutoConnectivityMethod.AA_WIFI ? "Wi-Fi"
                                                                   : "Unknown"
 
     Rectangle {

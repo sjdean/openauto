@@ -147,6 +147,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 #endif
     {
         m_hwBluetoothAdapter = configuration_->getSettingByName<QString>("Bluetooth", "AdapterAddress");
+        m_androidAutoHomeButtonVisibility = configuration_->getSettingByName<QString>("AndroidAuto", "HomeButtonVisibility");
     }
 
     QString SettingsViewModel::getCarMake() const {
@@ -736,6 +737,19 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
             m_wirelessType = value;
 
             emit wirelessTypeChanged();
+        }
+    }
+
+    QString SettingsViewModel::getAndroidAutoHomeButtonVisibility() const {
+        return m_androidAutoHomeButtonVisibility;
+    }
+
+    void SettingsViewModel::setAndroidAutoHomeButtonVisibility(QString value) {
+        if (m_androidAutoHomeButtonVisibility != value) {
+            configuration_->updateSettingByName<QString>("AndroidAuto", "HomeButtonVisibility", value);
+            configuration_->save();
+            m_androidAutoHomeButtonVisibility = value;
+            emit androidAutoHomeButtonVisibilityChanged();
         }
     }
 }

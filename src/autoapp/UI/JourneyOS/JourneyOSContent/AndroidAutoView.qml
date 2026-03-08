@@ -12,6 +12,14 @@ Item {
     signal viewBrightness()
     signal viewSettings()
 
+    // Show the home button and restart the idle hide timer
+    function revealHomeBtn() {
+        if (settingsViewHandler.androidAutoHomeButtonVisibility !== "alwaysVisible") {
+            homeBtn.opacity = 1
+            homeBtnHideTimer.restart()
+        }
+    }
+
     // 1. VIDEO LAYER
     VideoOutput {
         id: aaVideoOutput
@@ -27,7 +35,7 @@ Item {
 
         // This area will catch actual mouse clicks.
         // On a pure touchscreen driver (without mouse emulation), this does nothing.
-        onPressed:  (mouse) => inputMapper.handleMouseEvent(0, mouse.x, mouse.y)
+        onPressed:  (mouse) => { inputMapper.handleMouseEvent(0, mouse.x, mouse.y); revealHomeBtn() }
         onReleased: (mouse) => inputMapper.handleMouseEvent(1, mouse.x, mouse.y)
         onPositionChanged: (mouse) => inputMapper.handleMouseEvent(2, mouse.x, mouse.y)
     }
@@ -44,6 +52,7 @@ Item {
             // We only care about the first finger for standard AA usage
             if (points.length > 0)
                 inputMapper.handleTouchEvent(0, points[0].x, points[0].y)
+            revealHomeBtn()
         }
         onReleased: (points) => {
             if (points.length > 0)
@@ -56,7 +65,7 @@ Item {
     }
 
     // 4. OVERLAY LAYER (UI)
-    // A subtle floating home button
+    // A subtle floating home button — fades in on touch, auto-hides after idle
     RoundButton {
         id: homeBtn
         text: "⌂"
@@ -69,6 +78,11 @@ Item {
         anchors.left: parent.left
         anchors.margins: 30
         z: 999
+
+        // Visibility: alwaysVisible shows at full opacity, touchToReveal starts hidden
+        opacity: settingsViewHandler.androidAutoHomeButtonVisibility === "alwaysVisible" ? 1 : 0
+
+        Behavior on opacity { NumberAnimation { duration: 200 } }
 
         // Content (Icon)
         contentItem: Text {
@@ -92,6 +106,14 @@ Item {
         }
 
         onClicked: root.requestHome()
+    }
+
+    // Auto-hide timer: hides the home button after 3 seconds of idle
+    Timer {
+        id: homeBtnHideTimer
+        interval: 3000
+        running: false
+        onTriggered: homeBtn.opacity = 0
     }
 
     // Cleanup

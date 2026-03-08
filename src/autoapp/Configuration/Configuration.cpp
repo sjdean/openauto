@@ -72,6 +72,7 @@ namespace f1x::openauto::autoapp::configuration {
     aaGroup.addSetting<bool>("Telephony", false);
     aaGroup.addSetting<int>("FrameRate", aap_protobuf::service::media::sink::message::VideoFrameRateType::VIDEO_FPS_60);
     aaGroup.addSetting<int>("Resolution", aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_800x480);
+    aaGroup.addSetting<QString>("HomeButtonVisibility", "touchToReveal"); // "touchToReveal" | "alwaysVisible"
     aaGroup.load(m_settings);
     m_configurationGroups.append(aaGroup);
 

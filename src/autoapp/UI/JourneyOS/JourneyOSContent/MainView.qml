@@ -98,6 +98,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             clip: true
             opacity: mainView.isMediaPlaying ? 0 : 1 // Initial opacity based on isMediaPlaying
+            hasAndroidAuto: true
             Connections {
                 target: mainMenu
                 onViewSettings: mainView.viewSettings()
@@ -118,6 +119,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             clip: true
             opacity: mainView.isMediaPlaying ? 1 : 0 // Initial opacity based on isMediaPlaying
+            hasAndroidAuto: true
             Connections {
                 target: mediaMenu
                 onViewSettings: mainView.viewSettings()

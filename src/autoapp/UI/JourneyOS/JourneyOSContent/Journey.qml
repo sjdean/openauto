@@ -101,6 +101,61 @@ Window {
     }
 
     Popup {
+        id: aaInfoPopup
+        anchors.centerIn: parent
+        width: 300
+        height: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED ? 190 : 150
+        modal: false
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            color: Constants.settingsPopupBackgroundColor
+            radius: 10
+            border.color: Constants.primaryBackgroundColor
+            border.width: 1
+        }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 14
+
+            Text {
+                text: "Android Auto"
+                font.pixelSize: 18
+                color: Constants.primaryTextColor
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            Text {
+                text: {
+                    if (androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED)
+                        "Connected via " + (androidAutoMonitor.method === AndroidAutoConnectivityMethod.AA_USB ? "USB" : "Wi-Fi")
+                    else if (androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTING)
+                        "Connecting\u2026"
+                    else
+                        "Not Connected"
+                }
+                font.pixelSize: 14
+                color: Constants.primaryTextColor
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            JourneyButton {
+                text: "View Android Auto"
+                visible: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED
+                width: 200
+                height: 40
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked: {
+                    aaInfoPopup.close()
+                    if (stackView.currentItem.objectName !== "AndroidAutoView")
+                        stackView.push("AndroidAutoView.qml")
+                }
+            }
+        }
+    }
+
+    Popup {
         id: powerPopup
         anchors.centerIn: parent
         width: 400
@@ -166,8 +221,9 @@ Window {
         function onRequestHome()     { stackView.pop(null) }
 
         // Status popups
-        function onViewWifiStatus()      { wifiPopup.open() }
-        function onViewBluetoothStatus() { bluetoothPopup.open() }
+        function onViewWifiStatus()          { wifiPopup.open() }
+        function onViewBluetoothStatus()     { bluetoothPopup.open() }
+        function onViewAndroidAutoStatus()   { aaInfoPopup.open() }
 
         // Slider popups
         function onViewVolume()     { volumePopup.open() }
