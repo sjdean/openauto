@@ -146,14 +146,11 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                                [&address](const Model::BluetoothDevice &d) { return d.address == address; });
 
         if (it == m_devices.end()) {
-            // On Mac, we don't have a D-Bus path, so we pass an empty one.
 #ifdef Q_OS_LINUX
-            QDBusObjectPath path("/"); // Placeholder, or you could query BlueZ if needed
+            Model::BluetoothDevice device(address, name, QDBusObjectPath("/"), false, false);
 #else
-            QDBusObjectPath path;
+            Model::BluetoothDevice device(address, name, QString{}, false, false);
 #endif
-
-            Model::BluetoothDevice device(address, name, path, false, false);
             m_devices.append(device);
 
             Q_EMIT unpairedDeviceListChanged();
