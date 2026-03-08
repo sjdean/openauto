@@ -33,6 +33,7 @@
 
 #include "f1x/openauto/autoapp/UI/ViewModel/WifiViewModel.hpp"
 #include "f1x/openauto/autoapp/UI/UpdateManager.hpp"
+#include "f1x/openauto/autoapp/Hardware/HardwareProfile.hpp"
 
 #ifdef Q_OS_LINUX
 #include <f1x/openauto/autoapp/UI/Combo/BluetoothDeviceModel.hpp>
@@ -176,6 +177,16 @@ int main(int argc, char *argv[]) {
     QQuickView oj;
 
     qInfo(lcAutoapp) << "Initialising GUI";
+    // HardwareProfile singleton — exposes hardware.json flags to QML
+    // (written at boot by journeyos-hardware-detect; falls back to safe defaults if absent)
+    qmlRegisterSingletonType<f1x::openauto::autoapp::Hardware::HardwareProfile>(
+        "JourneyOS.Hardware", 1, 0, "HardwareProfile",
+        [](QQmlEngine*, QJSEngine*) -> QObject* {
+            auto* p = f1x::openauto::autoapp::Hardware::HardwareProfile::instance();
+            QQmlEngine::setObjectOwnership(p, QQmlEngine::CppOwnership);
+            return p;
+        });
+
     qmlRegisterUncreatableType<f1x::openauto::common::Enum::AndroidAutoConnectivityState>(
             "AndroidAutoMonitor", 1, 0, "AndroidAutoConnectivityState", "Enum");
 

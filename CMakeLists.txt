@@ -216,6 +216,10 @@ file(GLOB_RECURSE autoapp_source_files
         ${common_include_directory}/*.hpp      # required for AUTOMOC
 )
 
+# Exclude journeyos-hardware-detect sources from the autoapp build.
+# These live in Hardware/Detect/ and have their own main() entry point.
+list(FILTER autoapp_source_files EXCLUDE REGEX ".*/Hardware/Detect/.*\\.cpp$")
+
 # ─── Executable target ────────────────────────────────────────────────────────
 qt_add_executable(autoapp ${autoapp_source_files})
 
@@ -326,4 +330,54 @@ set_target_properties(autoapp PROPERTIES
 # ─── Install ──────────────────────────────────────────────────────────────────
 install(TARGETS autoapp
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+)
+
+# ─── Hardware detection tool ──────────────────────────────────────────────────
+# Standalone Type=oneshot executable that runs once at boot (before Weston/autoapp)
+# to detect hardware and write /run/journeyos/{hardware.json,kms.json,qt.env}.
+set(hw_detect_sources
+    src/autoapp/Hardware/Detect/main.cpp
+    src/autoapp/Hardware/Detect/HardwareDetector.cpp
+    src/autoapp/Hardware/Detect/QtHardwareDetector.cpp
+)
+
+if(OPENAUTO_LINUX)
+    list(APPEND hw_detect_sources
+        src/autoapp/Hardware/Detect/RpiHardwareDetector.cpp)
+endif()
+
+add_executable(journeyos-hardware-detect ${hw_detect_sources})
+
+target_compile_features(journeyos-hardware-detect PRIVATE cxx_std_17)
+
+target_compile_options(journeyos-hardware-detect PRIVATE
+        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-pedantic>
+        $<$<CXX_COMPILER_ID:MSVC>:/W4>
+)
+
+target_include_directories(journeyos-hardware-detect PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(journeyos-hardware-detect PRIVATE
+    Qt6::Core
+    Qt6::Gui          # QGuiApplication, QScreen
+    Qt6::Network      # QNetworkInterface
+    Qt6::Multimedia   # QMediaDevices, QAudioDevice, QCameraDevice
+    Qt6::Bluetooth    # QBluetoothLocalDevice
+)
+
+# Enable RPi-specific detection code path on Linux builds
+if(OPENAUTO_LINUX)
+    target_compile_definitions(journeyos-hardware-detect PRIVATE
+        JOURNEYOS_RPI_DETECTION)
+endif()
+
+set_target_properties(journeyos-hardware-detect PROPERTIES
+    OUTPUT_NAME              "journeyos-hardware-detect"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_SBINDIR}"
+)
+
+install(TARGETS journeyos-hardware-detect
+    RUNTIME DESTINATION "${CMAKE_INSTALL_SBINDIR}"
 )
