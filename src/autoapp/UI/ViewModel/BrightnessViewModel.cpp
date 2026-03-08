@@ -1,5 +1,6 @@
 #include "f1x/openauto/autoapp/UI/ViewModel/BrightnessViewModel.hpp"
 
+#include <algorithm>
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDir>
@@ -28,14 +29,14 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         QObject::connect(&m_lightHandler, &Controller::LightController::lightsOnChanged,
                          this, &BrightnessViewModel::onLightChange);
 
-        m_userBrightnessTarget = m_configuration->getSettingByName<int>("Screen", "Brightness");
-
+        // Load saved brightness and clamp to current day/night [min,max] range
+        const int savedBrightness = m_configuration->getSettingByName<int>("Screen", "Brightness");
         const int min = m_configuration->getSettingByName<int>(
-    "Screen", m_lightHandler.getDay() || m_lightHandler.getLightsOn() ? "DayMin" : "NightMin");
+            "Screen", m_lightHandler.getDay() || m_lightHandler.getLightsOn() ? "DayMin" : "NightMin");
         const int max = m_configuration->getSettingByName<int>(
             "Screen", m_lightHandler.getDay() || m_lightHandler.getLightsOn() ? "DayMax" : "NightMax");
-
-        m_calculatedBrightness = calculateBrightness(min, max, m_userBrightnessTarget);
+        m_userBrightnessTarget = std::clamp(savedBrightness, min, max);
+        m_calculatedBrightness = m_userBrightnessTarget;
 
 #ifdef Q_OS_LINUX
         // Detect sysfs backlight device, preferring the RPi official display driver
@@ -64,49 +65,56 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 #endif
     }
 
+    int BrightnessViewModel::getCurrentMin() const {
+        return m_configuration->getSettingByName<int>(
+            "Screen", m_lightHandler.getDay() || m_lightHandler.getLightsOn() ? "DayMin" : "NightMin");
+    }
+
+    int BrightnessViewModel::getCurrentMax() const {
+        return m_configuration->getSettingByName<int>(
+            "Screen", m_lightHandler.getDay() || m_lightHandler.getLightsOn() ? "DayMax" : "NightMax");
+    }
+
     void BrightnessViewModel::onLightChange() {
-        // The light state changed, so we must recalculate
+        // Min/max bounds change when day/night switches — update slider bounds in QML
+        emit currentMinChanged();
+        emit currentMaxChanged();
+        // Re-apply current target (clamps to new day/night range)
         setTargetBrightness(m_userBrightnessTarget);
     }
 
     /**
-     *
-     * @param userBrightnessTarget Target brightness to set 0 to 255
+     * Set brightness directly in hardware units within [currentMin, currentMax].
+     * @param userBrightnessTarget Hardware brightness value (not abstract 0-255 proportion)
      */
     void BrightnessViewModel::setTargetBrightness(const int userBrightnessTarget) {
-        const int min = m_configuration->getSettingByName<int>(
-            "Screen", m_lightHandler.getDay() || m_lightHandler.getLightsOn() ? "DayMin" : "NightMin");
-        const int max = m_configuration->getSettingByName<int>(
-            "Screen", m_lightHandler.getDay() || m_lightHandler.getLightsOn() ? "DayMax" : "NightMax");
-
-        const int calculatedBrightness = calculateBrightness(min, max, userBrightnessTarget);
+        const int min = getCurrentMin();
+        const int max = getCurrentMax();
+        const int clamped = std::clamp(userBrightnessTarget, min, max);
 
         qDebug(lcVmBrightness) << "Min" << min << "Max" << max
                                << "Requested" << userBrightnessTarget
-                               << "Calculated" << calculatedBrightness;
+                               << "Clamped" << clamped;
 
-        if (m_calculatedBrightness != calculatedBrightness) {
-            m_calculatedBrightness = calculatedBrightness;
+        if (m_calculatedBrightness != clamped) {
+            m_calculatedBrightness = clamped;
 
 #ifdef Q_OS_LINUX
             // Hardware Control via DBus (Non-blocking / Fire-and-forget)
-            // We expect a custom service (running as root) to listen to this.
             QDBusMessage message = QDBusMessage::createMethodCall(
-                "uk.co.cubeone.journeyos.backlight", // Service
-                "/uk/co/cubeone/journeyos/backlight", // Path
-                "uk.co.cubeone.journeyos.backlight", // Interface
-                "SetBrightness" // Method
+                "uk.co.cubeone.journeyos.backlight",
+                "/uk/co/cubeone/journeyos/backlight",
+                "uk.co.cubeone.journeyos.backlight",
+                "SetBrightness"
             );
-            message << calculatedBrightness;
-
-            // Send without blocking the UI thread
+            message << clamped;
             QDBusConnection::systemBus().call(message, QDBus::NoBlock);
 #endif
             emit screenBrightnessChanged();
         }
-        if (m_userBrightnessTarget != userBrightnessTarget) {
-            m_userBrightnessTarget = userBrightnessTarget;
-            m_configuration->updateSettingByName("Screen", "Brightness", userBrightnessTarget);
+        if (m_userBrightnessTarget != clamped) {
+            m_userBrightnessTarget = clamped;
+            m_configuration->updateSettingByName("Screen", "Brightness", clamped);
             emit targetBrightnessChanged();
         }
     }
@@ -127,20 +135,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     int BrightnessViewModel::getScreenBrightness() const {
         qInfo(lcVmBrightness) << "Calculated brightness: " << m_calculatedBrightness;
         return m_calculatedBrightness;
-    }
-
-    /**
-     *
-     * @param min Minimum brightness bound
-     * @param max Maximum brightness bound
-     * @param target brightness
-     * @return Brightness calculated within the minimum/maximum bound
-     */
-    int BrightnessViewModel::calculateBrightness(const int min, const int max, const int target) {
-        int safeTarget = std::clamp(target, 0, 255);
-        float ratio = safeTarget / 255.0f;
-
-        return static_cast<int>(min + ((max - min) * ratio));
     }
 
     void BrightnessViewModel::saveSettings() const {

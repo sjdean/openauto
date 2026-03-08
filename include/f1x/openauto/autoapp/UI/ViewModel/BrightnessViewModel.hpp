@@ -10,6 +10,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     Q_PROPERTY(int targetBrightness READ getTargetBrightness WRITE setTargetBrightness NOTIFY targetBrightnessChanged)
     Q_PROPERTY(int screenBrightness READ getScreenBrightness NOTIFY screenBrightnessChanged)
+    Q_PROPERTY(int currentMin READ getCurrentMin NOTIFY currentMinChanged)
+    Q_PROPERTY(int currentMax READ getCurrentMax NOTIFY currentMaxChanged)
 
   public:
     BrightnessViewModel(configuration::IConfiguration::Pointer configuration, Controller::LightController& lightHandler, QObject *parent = nullptr);
@@ -19,16 +21,19 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void setTargetBrightness(int userBrightnessTarget);
     int getTargetBrightness() const;
     int getScreenBrightness() const;
+    int getCurrentMin() const;
+    int getCurrentMax() const;
 
 signals:
     void targetBrightnessChanged();
     void screenBrightnessChanged();
+    void currentMinChanged();
+    void currentMaxChanged();
 
   public slots:
     void onLightChange();
 
   private:
-    static int calculateBrightness(int min, int max, int target);
 
     configuration::IConfiguration::Pointer m_configuration;
     Controller::LightController& m_lightHandler;

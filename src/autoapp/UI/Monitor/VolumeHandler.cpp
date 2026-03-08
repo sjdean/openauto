@@ -1,4 +1,5 @@
 #include "f1x/openauto/autoapp/UI/Monitor/VolumeHandler.hpp"
+#include <algorithm>
 #include <utility>
 
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
@@ -9,40 +10,40 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
   VolumeHandler::VolumeHandler(configuration::IConfiguration::Pointer configuration, std::shared_ptr<IAudioHandler> audioHandler) :
   configuration_(std::move(configuration)),
   m_audioHandler(std::move(audioHandler)) {
-    const int min = configuration_->getSettingByName<int>("Audio", "PlaybackMin");
-    const int max = configuration_->getSettingByName<int>("Audio", "PlaybackMax");
-    const int volume = configuration_->getSettingByName<int>("Audio", "PlaybackVolume");
-    QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
+    m_sinkMin   = configuration_->getSettingByName<int>("Audio", "PlaybackMin");
+    m_sinkMax   = configuration_->getSettingByName<int>("Audio", "PlaybackMax");
+    m_sourceMin = configuration_->getSettingByName<int>("Audio", "CaptureMin");
+    m_sourceMax = configuration_->getSettingByName<int>("Audio", "CaptureMax");
 
-    const int calculatedVolume = calculateVolume(min, max, volume);
-
-    m_audioHandler->setSinkVolume(device, calculatedVolume);
+    // Clamp stored value to current [min,max] range and apply to hardware
+    const int volume = std::clamp(
+        configuration_->getSettingByName<int>("Audio", "PlaybackVolume"), m_sinkMin, m_sinkMax);
+    const QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
+    m_audioHandler->setSinkVolume(device, volume);
     m_volumeSink = volume;
+
+    const int captureVolume = std::clamp(
+        configuration_->getSettingByName<int>("Audio", "CaptureVolume"), m_sourceMin, m_sourceMax);
+    const QString captureDevice = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
+    m_audioHandler->setSourceVolume(captureDevice, captureVolume);
+    m_volumeSource = captureVolume;
   }
 
   void VolumeHandler::setVolumeSink(const int volume) {
-    QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
-    const int min = configuration_->getSettingByName<int>("Audio", "PlaybackMin");
-    const int max = configuration_->getSettingByName<int>("Audio", "PlaybackMax");
-
-    const int calculatedVolume = calculateVolume(min, max, volume);
-
-    m_audioHandler->setSinkVolume(device, calculatedVolume);
-    configuration_->updateSettingByName("Audio", "PlaybackVolume", volume);
-    m_volumeSink = volume;
+    const int clamped = std::clamp(volume, m_sinkMin, m_sinkMax);
+    const QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
+    m_audioHandler->setSinkVolume(device, clamped);
+    configuration_->updateSettingByName("Audio", "PlaybackVolume", clamped);
+    m_volumeSink = clamped;
     emit volumeSinkChanged();
   }
 
   void VolumeHandler::setVolumeSource(const int volume) {
-    QString device = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
-    const int min = configuration_->getSettingByName<int>("Audio", "CaptureMin");
-    const int max = configuration_->getSettingByName<int>("Audio", "CaptureMax");
-
-    const int calculatedVolume = calculateVolume(min, max, volume);
-
-    m_audioHandler->setSourceVolume(device, calculatedVolume);
-    configuration_->updateSettingByName("Audio", "CaptureVolume", volume);
-    m_volumeSource = volume;
+    const int clamped = std::clamp(volume, m_sourceMin, m_sourceMax);
+    const QString device = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
+    m_audioHandler->setSourceVolume(device, clamped);
+    configuration_->updateSettingByName("Audio", "CaptureVolume", clamped);
+    m_volumeSource = clamped;
     emit volumeSourceChanged();
   }
 
@@ -60,10 +61,10 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
     emit volumeSourceMuteChanged();
   }
 
-  int VolumeHandler::calculateVolume(const int min, const int max, const int target) {
-    const auto calculatedVolume = min + (((max - min) * target) / 255);
-    return calculatedVolume;
-  }
+  int VolumeHandler::getVolumeSinkMin() const { return m_sinkMin; }
+  int VolumeHandler::getVolumeSinkMax() const { return m_sinkMax; }
+  int VolumeHandler::getVolumeSourceMin() const { return m_sourceMin; }
+  int VolumeHandler::getVolumeSourceMax() const { return m_sourceMax; }
 
   bool VolumeHandler::getVolumeSourceMute() const {
     return m_volumeSourceMute;

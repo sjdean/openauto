@@ -167,8 +167,15 @@ namespace f1x::openauto::autoapp::projection {
                 return true;
         };
 
-        const uint32_t x = normX;
-        const uint32_t y = normY;
+        // Scale coordinates from QML window space (touchscreenGeometry_) to AA video space (displayGeometry_)
+        const float scaleX = touchscreenGeometry_.width() > 0
+            ? static_cast<float>(displayGeometry_.width()) / touchscreenGeometry_.width()
+            : 1.0f;
+        const float scaleY = touchscreenGeometry_.height() > 0
+            ? static_cast<float>(displayGeometry_.height()) / touchscreenGeometry_.height()
+            : 1.0f;
+        const uint32_t x = static_cast<uint32_t>(normX * scaleX);
+        const uint32_t y = static_cast<uint32_t>(normY * scaleY);
         eventHandler_->onTouchEvent({pointerAction, x, y, 0});
         return true;
     }
@@ -191,8 +198,15 @@ namespace f1x::openauto::autoapp::projection {
                 return true;
         };
 
-        const uint32_t x = normX;
-        const uint32_t y = normY;
+        // Scale coordinates from QML window space (touchscreenGeometry_) to AA video space (displayGeometry_)
+        const float scaleX = touchscreenGeometry_.width() > 0
+            ? static_cast<float>(displayGeometry_.width()) / touchscreenGeometry_.width()
+            : 1.0f;
+        const float scaleY = touchscreenGeometry_.height() > 0
+            ? static_cast<float>(displayGeometry_.height()) / touchscreenGeometry_.height()
+            : 1.0f;
+        const uint32_t x = static_cast<uint32_t>(normX * scaleX);
+        const uint32_t y = static_cast<uint32_t>(normY * scaleY);
         eventHandler_->onTouchEvent({pointerAction, x, y, 0});
 
         return true;
@@ -250,8 +264,5 @@ namespace f1x::openauto::autoapp::projection {
 
         return codes;
     }
-
-#include "f1x/openauto/autoapp/Projection/InputDevice.hpp"
-#include <algorithm> // for std::max, std::min
 
 }

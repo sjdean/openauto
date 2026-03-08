@@ -146,6 +146,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
                                                             m_headUnitMode(false)
 #endif
     {
+        m_hwBluetoothAdapter = configuration_->getSettingByName<QString>("Bluetooth", "AdapterAddress");
     }
 
     QString SettingsViewModel::getCarMake() const {
@@ -187,7 +188,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAudioPlaybackDevice(QString value) {
         if (m_audioPlaybackDeviceValue != value) {
-            configuration_->updateSettingByName<QString>("Car", "Model", value);
+            configuration_->updateSettingByName<QString>("Audio", "PlaybackDevice", value);
             configuration_->save();
             m_audioPlaybackDeviceValue = value;
             emit audioPlaybackDeviceChanged();
@@ -196,7 +197,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAudioCaptureDevice(QString value) {
         if (m_audioCaptureDeviceValue != value) {
-            configuration_->updateSettingByName<QString>("Car", "Model", value);
+            configuration_->updateSettingByName<QString>("Audio", "CaptureDevice", value);
             configuration_->save();
             m_audioCaptureDeviceValue = value;
             emit audioCaptureDeviceChanged();
@@ -209,7 +210,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setHwBluetoothAdapter(QString value) {
         if (m_hwBluetoothAdapter != value) {
-            configuration_->updateSettingByName<QString>("Car", "Model", value);
+            configuration_->updateSettingByName<QString>("Bluetooth", "AdapterAddress", value);
             configuration_->save();
             m_hwBluetoothAdapter = value;
             emit hwBluetoothAdapterChanged();
@@ -349,7 +350,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAudioVolumeCapture(int value) {
         if (value != m_audioVolumeCapture) {
-            configuration_->updateSettingByName<int>("Car", "CaptureVolume", value);
+            configuration_->updateSettingByName<int>("Audio", "CaptureVolume", value);
             configuration_->save();
             m_audioVolumeCapture = value;
             emit audioVolumeCaptureChanged();
@@ -543,7 +544,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setWirelessClientSSID(QString value) {
         if (m_wirelessClientSSID != value) {
-            configuration_->updateSettingByName<QString>("Wireless", "SSID", value);
+            configuration_->updateSettingByName<QString>("Wireless", "ClientSSID", value);
             configuration_->save();
 
             m_wirelessClientSSID = value;
@@ -674,16 +675,15 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setWirelessHotspotInterface(QString value) {
         if (m_wirelessHotspotInterface != value) {
-            configuration_->updateSettingByName<QString>("Wireless", "HotspotPassword", value);
+            configuration_->updateSettingByName<QString>("Wireless", "Interface", value);
             configuration_->save();
-            m_wirelessHotspotPassword = value;
+            m_wirelessHotspotInterface = value;
 
 #ifdef Q_OS_LINUX
-            // TODO: Update to Save MAC Address to File. Create an Agnostic Handler, which could be Linux, Mac or Windows.
             QSettings settings("/etc/hostapd/hostapd.conf", QSettings::IniFormat);
 
-            // Update wpa_passphrase
-            settings.setValue("wpa_passphrase", m_wirelessHotspotInterface);
+            // Update the wireless interface used by hostapd
+            settings.setValue("interface", m_wirelessHotspotInterface);
 
             // Sync to write changes
             settings.sync();
@@ -693,7 +693,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
             emit wirelessHotspotInterfaceChanged();
 #else
-            qInfo() << "Desktop Mode: Skipping sudo hostapd restart for SSID change.";
+            qInfo() << "Desktop Mode: Skipping sudo hostapd restart for interface change.";
 #endif
         }
     }

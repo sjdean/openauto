@@ -10,8 +10,8 @@ import QtQuick.Controls
 
 Slider {
     id: brightnessSlider
-    from: 0
-    to: 255
+    from: brightnessPopupHandler.currentMin
+    to: brightnessPopupHandler.currentMax
     stepSize: 1
     snapMode: Slider.SnapAlways
     orientation: Qt.Vertical

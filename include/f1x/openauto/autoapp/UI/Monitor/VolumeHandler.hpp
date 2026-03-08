@@ -12,6 +12,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     Q_PROPERTY(int volumeSource READ getVolumeSource WRITE setVolumeSource NOTIFY volumeSourceChanged)
     Q_PROPERTY(bool volumeSinkMute READ getVolumeSinkMute WRITE setVolumeSinkMute NOTIFY volumeSinkMuteChanged)
     Q_PROPERTY(bool volumeSourceMute READ getVolumeSourceMute WRITE setVolumeSourceMute NOTIFY volumeSourceMuteChanged)
+    Q_PROPERTY(int volumeSinkMin READ getVolumeSinkMin CONSTANT)
+    Q_PROPERTY(int volumeSinkMax READ getVolumeSinkMax CONSTANT)
+    Q_PROPERTY(int volumeSourceMin READ getVolumeSourceMin CONSTANT)
+    Q_PROPERTY(int volumeSourceMax READ getVolumeSourceMax CONSTANT)
   public:
     VolumeHandler(configuration::IConfiguration::Pointer configuration, std::shared_ptr<IAudioHandler> audioHandler);
 
@@ -26,6 +30,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     int getVolumeSource() const;
     bool getVolumeSinkMute() const;
     bool getVolumeSourceMute() const;
+    int getVolumeSinkMin() const;
+    int getVolumeSinkMax() const;
+    int getVolumeSourceMin() const;
+    int getVolumeSourceMax() const;
 
     signals:
       void volumeSinkChanged();
@@ -40,8 +48,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     int m_volumeSource{};
     bool m_volumeSinkMute{};
     bool m_volumeSourceMute{};
-
-    static int calculateVolume(int min, int max, int target);
+    int m_sinkMin{0};
+    int m_sinkMax{255};
+    int m_sourceMin{0};
+    int m_sourceMax{255};
 
     std::shared_ptr<IAudioHandler> m_audioHandler;
 
