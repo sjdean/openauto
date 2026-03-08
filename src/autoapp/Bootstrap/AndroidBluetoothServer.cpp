@@ -61,9 +61,10 @@ namespace f1x::openauto::autoapp::bootstrap {
   // HELPER: Find the Network Interface based on Configured MAC
   // ---------------------------------------------------------
   QNetworkInterface AndroidBluetoothServer::findConfiguredInterface() const {
-      // 1. Get the target MAC address from settings
-      // Assuming the key in settings is "Interface" under "Wireless" (e.g., "B8:27:EB:...")
-      QString targetMac = configuration_->getSettingByName<QString>("Wireless", "Interface");
+      // 1. Get the target MAC address from settings.
+      // "InterfaceMAC" stores the hardware address (e.g. "B8:27:EB:...").
+      // "Interface" stores the interface name and must not be used for MAC comparison.
+      QString targetMac = configuration_->getSettingByName<QString>("Wireless", "InterfaceMAC");
 
       // Normalize config MAC (remove dashes/colons, make uppercase) for safer comparison
       QString normalizedTarget = targetMac.toUpper();
@@ -220,7 +221,7 @@ namespace f1x::openauto::autoapp::bootstrap {
 
     response.set_bssid(bssid);
     response.set_security_mode(
-        aap_protobuf::service::wifiprojection::message::WifiSecurityMode::WPA2_ENTERPRISE);
+        aap_protobuf::service::wifiprojection::message::WifiSecurityMode::WPA2_PERSONAL);
     response.set_access_point_type(aap_protobuf::service::wifiprojection::message::AccessPointType::STATIC);
 
     sendMessage(response, 3);

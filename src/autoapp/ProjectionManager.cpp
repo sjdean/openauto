@@ -237,5 +237,9 @@ namespace f1x::openauto::autoapp {
         } else {
             qWarning(lcProjectionManager) << "WiFi Accept Error: " << err.message().c_str();
         }
+        // Always re-arm the acceptor so future connections are accepted.
+        if (!isStopped_) {
+            startServerSocket();
+        }
     }
 }

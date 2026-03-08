@@ -16,6 +16,7 @@
 #include <f1x/openauto/autoapp/Projection/DummyBluetoothDevice.hpp>
 #include "f1x/openauto/autoapp/Service/Bluetooth/BluetoothService.hpp"
 #include "f1x/openauto/autoapp/Service/MediaSink/TelephonyAudioService.hpp"
+#include "f1x/openauto/autoapp/Service/NavigationStatus/NavigationStatusService.hpp"
 #include "f1x/openauto/autoapp/UI/Monitor/BluetoothHandler.hpp"
 
 #include <qloggingcategory.h>
@@ -81,7 +82,8 @@ namespace f1x::openauto::autoapp::service {
 
         serviceList.emplace_back(this->createBluetoothService(messenger));
         serviceList.emplace_back(this->createInputService(messenger));
-        //serviceList.emplace_back(this->createWifiProjectionService(messenger));
+        serviceList.emplace_back(this->createNavigationStatusService(messenger));
+        serviceList.emplace_back(this->createWifiProjectionService(messenger));
 
         return serviceList;
     }
@@ -159,15 +161,20 @@ namespace f1x::openauto::autoapp::service {
     void ServiceFactory::createMediaSourceServices(f1x::openauto::autoapp::service::ServiceList &serviceList,
                                                    aasdk::messenger::IMessenger::Pointer messenger) {
         qInfo(lcServiceFactory) << "...Sources";
-        projection::IAudioInput::Pointer audioInput(new projection::QtAudioInput(1, 16, 16000, configuration_),
-                                                    std::bind(&QObject::deleteLater, std::placeholders::_1));
+        // Use the pre-initialised audio input passed to this factory rather than
+        // creating a new device on every session.
         serviceList.emplace_back(std::make_shared<mediasource::MicrophoneMediaSourceService>(ioService_, messenger,
-            std::move(audioInput)));
+            audioInput_));
     }
 
     IService::Pointer ServiceFactory::createSensorService(aasdk::messenger::IMessenger::Pointer messenger) {
         qInfo(lcServiceFactory) << "...Sensors";
         return std::make_shared<sensor::SensorService>(ioService_, messenger);
+    }
+
+    IService::Pointer ServiceFactory::createNavigationStatusService(aasdk::messenger::IMessenger::Pointer messenger) {
+        qInfo(lcServiceFactory) << "...Navigation Status";
+        return std::make_shared<navigationstatus::NavigationStatusService>(ioService_, messenger);
     }
 
     IService::Pointer ServiceFactory::createWifiProjectionService(aasdk::messenger::IMessenger::Pointer messenger) {

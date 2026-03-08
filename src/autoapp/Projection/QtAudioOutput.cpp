@@ -94,14 +94,13 @@ namespace f1x::openauto::autoapp::projection {
   // -- Slots (Run on Worker Thread) --
 
   void QtAudioOutput::onStartPlayback() {
+    if (!audioOutput_) {
+      qCWarning(lcQtAudioOut) << "onStartPlayback called before audio sink was ready — ignored.";
+      return;
+    }
     if (!playbackStarted_) {
       qInfo(lcQtAudioOut) << "Stream Start (Pull Mode)";
-
-      // [CRITICAL FIX] PULL MODE
-      // We pass our buffer to start(). QAudioSink will now wake up periodically
-      // on this worker thread to pull data. It will never block the Main Thread.
       audioOutput_->start(&audioInternalBuffer_);
-
       float vol = configuration_->getSettingByName<int>("Audio", "PlaybackVolume") / 100.0f;
       audioOutput_->setVolume(std::clamp(vol, 0.0f, 1.0f));
       playbackStarted_ = true;

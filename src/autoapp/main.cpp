@@ -337,7 +337,7 @@ int main(int argc, char *argv[]) {
     autoapp::projection::IAudioOutput::Pointer audioOutputTelephony;
     autoapp::projection::IAudioOutput::Pointer audioOutputSystem;
 
-    if (configuration->getSettingByName<bool>("AndroidAuto", "Guidance")) {
+    if (configuration->getSettingByName<bool>("AndroidAuto", "Media")) {
         audioOutputMedia = std::make_shared<autoapp::projection::QtAudioOutput>(2, 16, 48000, configuration);
     }
 
