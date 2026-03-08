@@ -122,6 +122,12 @@ find_package(Qt6 REQUIRED COMPONENTS
 find_package(aap_protobuf REQUIRED CONFIG)   # → AAPProto::aap_protobuf
 find_package(aasdk        REQUIRED CONFIG)   # → AASDK::aasdk
 
+# ─── Abseil ───────────────────────────────────────────────────────────────────
+# Protobuf 5.x / 30.x inlines ABSL_CHECK / ABSL_LOG calls in its public headers.
+# The aap_protobuf cmake config does not list abseil in INTERFACE_LINK_LIBRARIES,
+# so any TU that includes protobuf headers fails to link without this.
+find_package(absl REQUIRED CONFIG)
+
 # ─── Boost ────────────────────────────────────────────────────────────────────
 find_package(Boost REQUIRED COMPONENTS system log)
 
@@ -274,6 +280,11 @@ target_link_libraries(autoapp PRIVATE
         # Android Auto stack
         AASDK::aasdk
         AAPProto::aap_protobuf
+
+        # Abseil — required by protobuf 5.x headers (ABSL_CHECK / ABSL_LOG).
+        # aap_protobuf's cmake config omits these transitive deps, so we link directly.
+        absl::log
+        absl::check
 
         # Qt modules
         Qt6::Core
