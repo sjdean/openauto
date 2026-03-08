@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.VirtualKeyboard
 import JourneyOS 1.0
 import AndroidAutoMonitor
 
@@ -247,6 +248,30 @@ Window {
                 console.log("Disconnected")
                 stackView.pop(null)
             }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // VIRTUAL KEYBOARD
+    // ---------------------------------------------------------
+    // InputPanel must live in the root Window so it can overlay all content.
+    // It starts off-screen (y: root.height) and slides up when a text field
+    // is focused, then slides back down on dismiss.
+    InputPanel {
+        id: inputPanel
+        z: 10000   // above softwareDimmer (9999) so it remains readable at low brightness
+        x: 0
+        width: root.width
+        y: root.height  // off-screen when idle
+
+        states: State {
+            name: "visible"
+            when: inputPanel.active
+            PropertyChanges { target: inputPanel; y: root.height - inputPanel.height }
+        }
+        transitions: Transition {
+            from: ""; to: "visible"; reversible: true
+            NumberAnimation { property: "y"; duration: 250; easing.type: Easing.InOutQuad }
         }
     }
 

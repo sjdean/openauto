@@ -149,6 +149,7 @@ Item {
                 TextField {
                     width: parent.width
                     placeholderText: qsTr("SSID")
+                    inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText | Qt.ImhSensitiveData
                     text: wifiViewModel.hotspotSsid
                     onTextEdited: wifiViewModel.hotspotSsid = text
                 }
@@ -158,6 +159,7 @@ Item {
                     width: parent.width
                     placeholderText: qsTr("Password (min 8 chars)")
                     echoMode: TextInput.Password
+                    inputMethodHints: Qt.ImhHiddenText | Qt.ImhSensitiveData | Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
                     text: wifiViewModel.hotspotPassword
                     onTextEdited: wifiViewModel.hotspotPassword = text
                 }
@@ -187,6 +189,7 @@ Item {
                     id: clientSsidField
                     width: parent.width
                     placeholderText: qsTr("Network name")
+                    inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText | Qt.ImhSensitiveData
                     text: wifiViewModel.clientSsid
                     onTextEdited: wifiViewModel.clientSsid = text
                 }
@@ -200,6 +203,7 @@ Item {
                         width: parent.width - connectBtn.width - disconnectBtn.width - 16
                         placeholderText: qsTr("Password")
                         echoMode: TextInput.Password
+                        inputMethodHints: Qt.ImhHiddenText | Qt.ImhSensitiveData | Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
                         text: wifiViewModel.clientPassword
                         onTextEdited: wifiViewModel.clientPassword = text
                     }
