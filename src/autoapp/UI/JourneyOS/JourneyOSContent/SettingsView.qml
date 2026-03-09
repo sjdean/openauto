@@ -11,6 +11,7 @@ Item {
     // -- SETTINGS PAGE THEME -- mapped from Constants for easy future theming
     readonly property color cTextMain: Constants.textOnSettings
     readonly property color cTextDim:  Constants.textDimOnSettings
+    readonly property color cTextNote: Constants.textNoteOnSettings
     readonly property color cAccent:   Constants.textOnSettings
     readonly property color cSurface:  Constants.settingsSurface
     readonly property color cBorder:   Constants.settingsBorder
@@ -232,10 +233,11 @@ Item {
                     visible: !ConfigGate.showConfig
                     text: "Audio output device is managed by the operating system."
                     font.pixelSize: 13
-                    color: cTextDim
+                    color: cTextNote
                     font.italic: true
                 }
                 SettingRow {
+                    visible: ConfigGate.showConfig
                     label: "Volume Limit"
                     control: RangeSlider {
                         Layout.fillWidth: true
@@ -246,6 +248,13 @@ Item {
                         first.onMoved: settingsViewHandler.audioVolumePlaybackMin = first.value
                         second.onMoved: settingsViewHandler.audioVolumePlaybackMax = second.value
                     }
+                }
+                Label {
+                    visible: !ConfigGate.showConfig
+                    text: "Volume limits are managed by the operating system."
+                    font.pixelSize: 13
+                    color: cTextNote
+                    font.italic: true
                 }
 
                 SectionHeader {
@@ -264,7 +273,7 @@ Item {
                     visible: !ConfigGate.showConfig
                     text: "Audio input device is managed by the operating system."
                     font.pixelSize: 13
-                    color: cTextDim
+                    color: cTextNote
                     font.italic: true
                 }
             }
@@ -284,6 +293,11 @@ Item {
             }
 
             // --- TAB 5: SYSTEM ---
+            // TODO (4.2): Add "System Information" section below Device Mode:
+            //   - Device name / hostname
+            //   - JourneyOS version + build date  (from updateManager.currentVersion + build timestamp)
+            //   - Kernel / OS version
+            //   - Hardware profile summary (display type, audio HAT, CAN bus, GPS)
             SettingsPage {
                 SectionHeader {
                     text: "Device Mode"
@@ -327,7 +341,7 @@ Item {
                     visible: !ConfigGate.showConfig
                     text: "Head Unit Mode is not available on this platform. Hardware settings are always managed by the operating system."
                     font.pixelSize: 13
-                    color: cTextDim
+                    color: cTextNote
                     font.italic: true
                     wrapMode: Text.WordWrap
                     Layout.fillWidth: true
@@ -442,22 +456,25 @@ Item {
                 anchors.margins: 15
                 spacing: 20
 
+                // Cancel — red outline, discards changes
                 Button {
-                    text: "Back"
+                    text: "Cancel"
                     Layout.preferredWidth: 120
                     Layout.fillHeight: true
                     background: Rectangle {
-                        color: parent.down ? "#EEE" : "transparent"
+                        color: "transparent"
                         radius: 8
-                        border.color: "#CCC"
-                        border.width: 1
+                        border.color: Constants.btnCancelBorder
+                        border.width: 2
+                        opacity: parent.down ? 0.6 : 1.0
                     }
                     contentItem: Text {
                         text: parent.text
                         font.pixelSize: 16
-                        color: cTextDim
+                        color: Constants.btnCancelFg
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
+                        opacity: parent.parent.down ? 0.6 : 1.0
                     }
                     onClicked: stackView.pop()
                 }
@@ -466,19 +483,20 @@ Item {
                     Layout.fillWidth: true
                 }
 
+                // Save Changes — green confirm, writes settings
                 Button {
                     text: "Save Changes"
                     Layout.preferredWidth: 180
                     Layout.fillHeight: true
                     background: Rectangle {
-                        color: parent.down ? Qt.darker(cAccent, 1.2) : cAccent
+                        color: parent.down ? Constants.btnConfirmBgPressed : Constants.btnConfirmBg
                         radius: 8
                     }
                     contentItem: Text {
                         text: parent.text
                         font.pixelSize: 16
                         font.bold: true
-                        color: "white"
+                        color: Constants.btnConfirmFg
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }

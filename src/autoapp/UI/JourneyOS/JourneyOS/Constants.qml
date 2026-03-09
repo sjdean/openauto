@@ -68,6 +68,7 @@ QtObject {
     readonly property color textDisabled:       "#888888"   // Disabled / placeholder
     readonly property color textOnSettings:     "#3A4856"   // Text on light settings bg
     readonly property color textDimOnSettings:  "#9DADBC"   // Dim text on light settings bg
+    readonly property color textNoteOnSettings: "#536878"   // Readable info/note text on light settings bg
 
     // ── STATUS / SEMANTIC COLOURS ─────────────────────────────────────────────
     readonly property color statusOk:           "#009900"   // Connected / good
@@ -114,11 +115,23 @@ QtObject {
     readonly property color btnDangerFg:            "#FF6666"    // vivid red  ✕
     readonly property color btnDangerFgPressed:     "#FFAAAA"    // lighter on press
 
-    // Confirm / Accept — dark green background, white label / tick
+    // Confirm / Accept / Save — dark green background, white label / tick
+    // Used for: Save Changes, OK, Accept
     readonly property color btnConfirmBg:           "#CC003300"  // dark green, 80 % opaque
     readonly property color btnConfirmBgPressed:    "#CC006600"  // brighter on press
     readonly property color btnConfirmFg:           "#FFFFFF"    // white  ✓
     readonly property color btnConfirmFgPressed:    "#CCFFCC"    // tinted on press
+
+    // Action / Primary — deep blue background, white label
+    // Used for: Reboot, Submit, primary non-destructive actions
+    readonly property color btnActionBg:            "#CC1A0080"  // deep blue, 80 % opaque
+    readonly property color btnActionBgPressed:     "#CC2A00C0"  // brighter on press
+    readonly property color btnActionFg:            "#FFFFFF"    // white text
+
+    // Cancel — transparent outline, red border + text
+    // Used for: Cancel, Back (as dismiss), outline-only destructive hint
+    readonly property color btnCancelBorder:        "#CC3333"    // vivid red outline
+    readonly property color btnCancelFg:            "#CC3333"    // vivid red text
 
     // ── SLIDER COLOURS ────────────────────────────────────────────────────────
     // Volume slider: interpolates purple (low) ↔ blue (high)
