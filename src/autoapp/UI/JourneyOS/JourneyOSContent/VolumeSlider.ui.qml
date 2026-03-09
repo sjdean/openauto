@@ -71,10 +71,9 @@ Slider {
         implicitWidth: 26
         implicitHeight: 26
         radius: 13
-        color: "#f6f6f6"
-        border.color: "#bdbebf"
+        color: Constants.sliderHandle
+        border.color: Constants.sliderHandleBorder
     }
-
 
     states: [
         State {
@@ -87,8 +86,8 @@ Slider {
 
             PropertyChanges {
                 target: handleItem
-                color: Constants.sliderPrimaryColor
-                border.color: "#ffffff"
+                color: Constants.sliderHandlePressed
+                border.color: Constants.textPrimary
             }
         }
     ]

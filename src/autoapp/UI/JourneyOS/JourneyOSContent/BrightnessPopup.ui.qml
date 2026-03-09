@@ -21,9 +21,9 @@ Item {
 
         BrightnessSlider {
             id: brightnessSlider
-            height: parent.height   // - muteButton.height - parent.spacing
+            height: parent.height
             width: parent.width
-            alternateColor: "#ab381353"
+            alternateColor: Constants.sliderBrightnessHigh
             onValueChanged: brightnessPopupHandler.targetBrightness = value
             value: brightnessPopupHandler.targetBrightness
         }

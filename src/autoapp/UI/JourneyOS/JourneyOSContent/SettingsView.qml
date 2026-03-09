@@ -8,13 +8,13 @@ Item {
     width: 800
     height: 480
 
-    // -- THEME CONSTANTS --
-    readonly property color cTextMain: "#3a4856"
-    readonly property color cTextDim: "#9dadbc"
-    readonly property color cAccent: "#3a4856"
-    readonly property color cSurface: "#ebfbff"
-    readonly property color cBorder: "#3a4856"
-    readonly property color cBase: "#a3caed"
+    // -- SETTINGS PAGE THEME -- mapped from Constants for easy future theming
+    readonly property color cTextMain: Constants.textOnSettings
+    readonly property color cTextDim:  Constants.textDimOnSettings
+    readonly property color cAccent:   Constants.textOnSettings
+    readonly property color cSurface:  Constants.settingsSurface
+    readonly property color cBorder:   Constants.settingsBorder
+    readonly property color cBase:     Constants.settingsPageBackground
 
     readonly property int paddingOuter: 30
     readonly property int labelWidth: 280
@@ -38,7 +38,7 @@ Item {
             currentIndex: 0
 
             background: Rectangle {
-                color: Qt.rgba(255, 255, 255, 0.5)
+                color: Constants.settingsTabBar
             }
 
             Repeater {
@@ -376,13 +376,6 @@ Item {
                     }
                 }
 
-                // Confirmation dialog: shown when an update is found
-                Connections {
-                    target: updateManager
-                    function onCheckComplete(available, version) {
-                        if (available) updateFoundDialog.open()
-                    }
-                }
             }
         }
 
@@ -420,6 +413,15 @@ Item {
             }
         }
 
+        // OTA update-found connection — must live in rootRect (not inside SettingsPage)
+        // because SettingsPage.userContent only accepts QQuickItem children.
+        Connections {
+            target: updateManager
+            function onCheckComplete(available, version) {
+                if (available) updateFoundDialog.open()
+            }
+        }
+
         // ---------------------------------------------------------
         // 3. FLOATING GLASS FOOTER
         // ---------------------------------------------------------
@@ -428,11 +430,11 @@ Item {
             height: settingsView.footerHeight
             width: parent.width
             anchors.bottom: parent.bottom
-            color: "#D9FFFFFF"
-            z: 10 // Ensure it stays on top of the ScrollView
+            color: Constants.settingsFooter
+            z: 10
 
             Rectangle {
-                width: parent.width; height: 1; color: "#E0E0E0"; anchors.top: parent.top
+                width: parent.width; height: 1; color: Constants.settingsFooterBorder; anchors.top: parent.top
             }
 
             RowLayout {
@@ -525,7 +527,7 @@ Item {
     }
 
     component SectionHeader : Label {
-        font.pixelSize: 16
+        font.pixelSize: Constants.fontSubtitle
         font.bold: true
         font.capitalization: Font.AllUppercase
         color: cTextMain
@@ -580,13 +582,13 @@ Item {
             color: parent.down ? "#EEE" : cSurface
             border.color: parent.activeFocus ? cAccent : cBorder
             border.width: 1
-            radius: 4
+            radius: Constants.radiusInput
         }
         contentItem: Text {
             leftPadding: 10
             text: parent.displayText
             color: cTextMain
-            font.pixelSize: 15
+            font.pixelSize: Constants.fontBody
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
         }
@@ -605,7 +607,7 @@ Item {
                 }
             }
             background: Rectangle {
-                color: cSurface; border.color: cBorder
+                color: cSurface; border.color: cBorder; radius: Constants.radiusInput
             }
         }
         delegate: ItemDelegate {
@@ -632,28 +634,28 @@ Item {
         Layout.fillWidth: true
         Layout.preferredHeight: settingsView.controlHeight
         color: cTextMain
-        font.pixelSize: 15
+        font.pixelSize: Constants.fontBody
         background: Rectangle {
             color: parent.activeFocus ? "#FAFAFA" : cSurface
             border.color: parent.activeFocus ? cAccent : cBorder
             border.width: 1
-            radius: 4
+            radius: Constants.radiusInput
         }
     }
 
     component ModernCheckBox : CheckBox {
-        font.pixelSize: 15
+        font.pixelSize: Constants.fontBody
         indicator: Rectangle {
             implicitWidth: 24; implicitHeight: 24
             x: parent.leftPadding
             y: parent.height / 2 - height / 2
-            radius: 4
+            radius: Constants.radiusInput
             color: cSurface
             border.color: parent.checked ? cAccent : cBorder
             Rectangle {
                 width: 14; height: 14
                 anchors.centerIn: parent
-                radius: 2
+                radius: Constants.radiusInput - 1
                 color: cAccent
                 visible: parent.parent.checked
             }
@@ -670,12 +672,12 @@ Item {
     component ModernSpinBox : SpinBox {
         id: rootSpin
         Layout.preferredHeight: settingsView.controlHeight
-        font.pixelSize: 15
+        font.pixelSize: Constants.fontBody
         background: Rectangle {
             implicitWidth: 140
             border.color: cBorder
             color: cSurface
-            radius: 4
+            radius: Constants.radiusInput
         }
     }
 

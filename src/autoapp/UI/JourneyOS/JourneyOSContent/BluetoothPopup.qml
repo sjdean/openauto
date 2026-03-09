@@ -14,7 +14,7 @@ Item {
     Rectangle {
         id: pinOverlay
         anchors.fill: parent
-        color: "#CC000000"
+        color: Constants.popupOverlayDim
         z: 20
         visible: false
 
@@ -27,8 +27,8 @@ Item {
             Rectangle {
                 width: 420
                 height: 180
-                radius: 10
-                color: Constants.primaryBackgroundColor
+                radius: Constants.radiusPopup
+                color: Constants.popupBackground
                 border.color: Constants.waitColor
                 border.width: 2
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -40,8 +40,8 @@ Item {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: pinOverlay.promptText
-                        color: "white"
-                        font.pixelSize: 18
+                        color: Constants.textPrimary
+                        font.pixelSize: Constants.fontHeading
                         wrapMode: Text.WordWrap
                         width: 380
                         horizontalAlignment: Text.AlignHCenter
@@ -98,7 +98,7 @@ Item {
     Rectangle {
         id: removeConfirmOverlay
         anchors.fill: parent
-        color: "#CC000000"
+        color: Constants.popupOverlayDim
         z: 10
         visible: false
 
@@ -112,9 +112,9 @@ Item {
             Rectangle {
                 width: 380
                 height: 160
-                radius: 10
-                color: Constants.primaryBackgroundColor
-                border.color: Constants.actionColor
+                radius: Constants.radiusPopup
+                color: Constants.popupBackground
+                border.color: Constants.statusBad
                 border.width: 2
                 anchors.horizontalCenter: parent.horizontalCenter
 
@@ -125,8 +125,8 @@ Item {
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: "Forget \"" + removeConfirmOverlay.deviceName + "\"?"
-                        color: "white"
-                        font.pixelSize: 16
+                        color: Constants.textPrimary
+                        font.pixelSize: Constants.fontSubtitle
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap
                         width: 340
@@ -157,7 +157,36 @@ Item {
     // ── Background ────────────────────────────────────────────────────────────
     Rectangle {
         anchors.fill: parent
-        color: Constants.primaryBackgroundColor
+        color: Constants.popupBackground
+
+        // Close button — small ✕ circle in top-right corner
+        Rectangle {
+            id: closeBtn
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: 10
+            width: 28
+            height: 28
+            radius: Constants.radiusCircle
+            color: closeBtnArea.pressed ? Constants.btnDangerBgPressed : Constants.btnDangerBg
+            z: 1
+
+            Behavior on color { ColorAnimation { duration: 80 } }
+
+            Text {
+                anchors.centerIn: parent
+                text: "\u2715"
+                color: Constants.btnDangerFg
+                font.pixelSize: Constants.fontLabel
+                font.bold: true
+            }
+
+            MouseArea {
+                id: closeBtnArea
+                anchors.fill: parent
+                onClicked: root.close()
+            }
+        }
 
         // ── System-managed status view (Mac/Windows/Linux Desktop) ───────────
         Column {
@@ -172,26 +201,26 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: {
                     var s = bluetoothHandler.bluetoothConnectionStatus
-                    if (s === BluetoothConnectionStatus.BC_CONNECTED)    return Constants.okColor
-                    if (s === BluetoothConnectionStatus.BC_CONNECTING)   return Constants.waitColor
-                    if (s === BluetoothConnectionStatus.BC_DISCONNECTED) return Constants.actionColor
-                    return Constants.badColor
+                    if (s === BluetoothConnectionStatus.BC_CONNECTED)    return Constants.statusOk
+                    if (s === BluetoothConnectionStatus.BC_CONNECTING)   return Constants.statusWait
+                    if (s === BluetoothConnectionStatus.BC_DISCONNECTED) return Constants.statusAction
+                    return Constants.statusBad
                 }
             }
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "Bluetooth — " + bluetoothHandler.statusText
-                color: "white"
-                font.pixelSize: 18
+                color: Constants.textPrimary
+                font.pixelSize: Constants.fontHeading
                 font.bold: true
             }
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "Bluetooth is managed by the operating system.\nEnable Head Unit Mode in Settings › System to manage it here."
-                color: "lightgray"
-                font.pixelSize: 13
+                color: Constants.textSecondary
+                font.pixelSize: Constants.fontLabel
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
                 width: 500
@@ -202,6 +231,7 @@ Item {
         Column {
             anchors.fill: parent
             anchors.margins: 16
+            anchors.topMargin: 44   // leave room for close button
             spacing: 12
             visible: ConfigGate.showConfig
 
@@ -212,8 +242,8 @@ Item {
 
                 Text {
                     text: "Bluetooth"
-                    color: "white"
-                    font.pixelSize: 20
+                    color: Constants.textPrimary
+                    font.pixelSize: Constants.fontTitle
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -226,25 +256,22 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     color: {
                         var s = bluetoothHandler.bluetoothConnectionStatus
-                        if (s === BluetoothConnectionStatus.BC_CONNECTED)   return Constants.okColor
-                        if (s === BluetoothConnectionStatus.BC_CONNECTING)  return Constants.waitColor
-                        if (s === BluetoothConnectionStatus.BC_DISCONNECTED) return Constants.actionColor
-                        return Constants.badColor
+                        if (s === BluetoothConnectionStatus.BC_CONNECTED)    return Constants.statusOk
+                        if (s === BluetoothConnectionStatus.BC_CONNECTING)   return Constants.statusWait
+                        if (s === BluetoothConnectionStatus.BC_DISCONNECTED) return Constants.statusAction
+                        return Constants.statusBad
                     }
                 }
 
                 Text {
                     text: bluetoothHandler.statusText
-                    color: "lightgray"
-                    font.pixelSize: 14
+                    color: Constants.textSecondary
+                    font.pixelSize: Constants.fontBody
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
 
             // ── Adapter selection ──────────────────────────────────────────────
-            // Shown whenever at least one adapter exists so the user always
-            // knows which hardware is active. Switches the active adapter and
-            // saves the preference to settings.
             Row {
                 width: parent.width
                 spacing: 10
@@ -252,8 +279,8 @@ Item {
 
                 Text {
                     text: "Adapter:"
-                    color: "lightgray"
-                    font.pixelSize: 13
+                    color: Constants.textSecondary
+                    font.pixelSize: Constants.fontLabel
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -264,8 +291,6 @@ Item {
                     model: adapterList
                     textRole: "name"
 
-                    // Set the initial selection to the currently active adapter
-                    // without triggering setActiveAdapter (use onActivated for that).
                     Component.onCompleted: {
                         var savedAddr = bluetoothHandler.getAdapterAddress()
                         for (var i = 0; i < adapterList.length; i++) {
@@ -276,8 +301,6 @@ Item {
                         }
                     }
 
-                    // onActivated fires only on explicit user selection, not on
-                    // programmatic currentIndex changes — avoids spurious adapter switches.
                     onActivated: {
                         if (currentIndex >= 0 && currentIndex < adapterList.length)
                             bluetoothHandler.setActiveAdapter(adapterList[currentIndex].address)
@@ -288,8 +311,8 @@ Item {
             // ── Paired devices ────────────────────────────────────────────────
             Text {
                 text: "Paired Devices"
-                color: "lightgray"
-                font.pixelSize: 13
+                color: Constants.textSecondary
+                font.pixelSize: Constants.fontLabel
                 font.bold: true
             }
 
@@ -305,7 +328,6 @@ Item {
                     height: 48
                     color: "transparent"
 
-                    // Device name + connected indicator
                     Row {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
@@ -313,21 +335,20 @@ Item {
 
                         Text {
                             text: model.name || model.address
-                            color: "white"
-                            font.pixelSize: 14
+                            color: Constants.textPrimary
+                            font.pixelSize: Constants.fontBody
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
                         Text {
                             visible: model.connected
                             text: "(Connected)"
-                            color: Constants.okColor
-                            font.pixelSize: 12
+                            color: Constants.statusOk
+                            font.pixelSize: Constants.fontCaption
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
 
-                    // Action buttons
                     Row {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
@@ -359,8 +380,8 @@ Item {
                     visible: pairedList.count === 0
                     anchors.centerIn: parent
                     text: "No paired devices"
-                    color: "gray"
-                    font.pixelSize: 13
+                    color: Constants.textDisabled
+                    font.pixelSize: Constants.fontLabel
                 }
             }
 
@@ -378,8 +399,8 @@ Item {
                 Text {
                     visible: bluetoothHandler.isScanning
                     text: "Searching for devices…"
-                    color: Constants.waitColor
-                    font.pixelSize: 13
+                    color: Constants.statusWait
+                    font.pixelSize: Constants.fontLabel
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -391,8 +412,8 @@ Item {
 
                 Text {
                     text: "Pairing Mode"
-                    color: "lightgray"
-                    font.pixelSize: 13
+                    color: Constants.textSecondary
+                    font.pixelSize: Constants.fontLabel
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -404,8 +425,8 @@ Item {
 
                 Text {
                     text: pairingModeSwitch.checked ? "On — device is discoverable" : "Off"
-                    color: pairingModeSwitch.checked ? Constants.okColor : "gray"
-                    font.pixelSize: 12
+                    color: pairingModeSwitch.checked ? Constants.statusOk : Constants.textDisabled
+                    font.pixelSize: Constants.fontCaption
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -414,8 +435,8 @@ Item {
             Text {
                 visible: availableList.count > 0 || bluetoothHandler.isScanning
                 text: "Available Devices"
-                color: "lightgray"
-                font.pixelSize: 13
+                color: Constants.textSecondary
+                font.pixelSize: Constants.fontLabel
                 font.bold: true
             }
 
@@ -436,8 +457,8 @@ Item {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         text: model.name || model.address
-                        color: "white"
-                        font.pixelSize: 14
+                        color: Constants.textPrimary
+                        font.pixelSize: Constants.fontBody
                     }
 
                     Row {

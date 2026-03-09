@@ -47,10 +47,9 @@ Button {
         id: rectangleBackground
         color: Constants.buttonBackgroundColor
         opacity: enabled ? 1 : 0.3
-        radius: 5
+        radius: Constants.radiusButton
         border.width: 0
         anchors.fill: parent
-
     }
 
     contentItem: control.textIsStatus ? horizontalButton : itemButton

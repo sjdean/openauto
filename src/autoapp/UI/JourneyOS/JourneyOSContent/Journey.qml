@@ -43,9 +43,10 @@ Window {
         onClosed: {
             volumePopupHandler.saveSettings()
         }
-        // Auto-close logic
+        onOpened: volTimer.restart()
+        // Auto-close: 5 s after last interaction (restarted by Connections below)
         Timer {
-            id: volTimer; interval: 3000; running: volumePopup.opened; onTriggered: volumePopup.close()
+            id: volTimer; interval: 5000; repeat: false; onTriggered: volumePopup.close()
         }
     }
 
@@ -64,9 +65,10 @@ Window {
         onClosed: {
             brightnessPopupHandler.saveSettings()
         }
-        // Auto-close logic
+        onOpened: brtTimer.restart()
+        // Auto-close: 5 s after last interaction (restarted by Connections below)
         Timer {
-            id: brtTimer; interval: 3000; running: brightnessPopup.opened; onTriggered: brightnessPopup.close()
+            id: brtTimer; interval: 5000; repeat: false; onTriggered: brightnessPopup.close()
         }
     }
 
@@ -98,6 +100,7 @@ Window {
         contentItem: WirelessPopup {
             id: wifiPopupContent
             width: wifiPopup.width
+            onClose: wifiPopup.close()
         }
     }
 
@@ -110,9 +113,9 @@ Window {
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
         background: Rectangle {
-            color: Constants.settingsPopupBackgroundColor
-            radius: 10
-            border.color: Constants.primaryBackgroundColor
+            color: Constants.popupBackgroundTranslucent
+            radius: Constants.radiusPopup
+            border.color: Constants.popupBorder
             border.width: 1
         }
 
@@ -122,8 +125,9 @@ Window {
 
             Text {
                 text: "Android Auto"
-                font.pixelSize: 18
-                color: Constants.primaryTextColor
+                font.pixelSize: Constants.fontHeading
+                font.bold: true
+                color: Constants.textPrimary
                 anchors.horizontalCenter: parent.horizontalCenter
             }
 
@@ -136,8 +140,8 @@ Window {
                     else
                         "Not Connected"
                 }
-                font.pixelSize: 14
-                color: Constants.primaryTextColor
+                font.pixelSize: Constants.fontBody
+                color: Constants.textSecondary
                 anchors.horizontalCenter: parent.horizontalCenter
             }
 
@@ -166,9 +170,9 @@ Window {
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
         background: Rectangle {
-            color: Constants.settingsPopupBackgroundColor
-            radius: 10
-            border.color: Constants.primaryBackgroundColor
+            color: Constants.popupBackgroundTranslucent
+            radius: Constants.radiusPopup
+            border.color: Constants.popupBorder
             border.width: 1
         }
 
@@ -178,8 +182,9 @@ Window {
 
             Text {
                 text: "System Power"
-                font.pixelSize: 24
-                color: Constants.primaryTextColor
+                font.pixelSize: Constants.fontTitle
+                font.bold: true
+                color: Constants.textPrimary
                 anchors.horizontalCenter: parent.horizontalCenter
             }
 
@@ -229,6 +234,17 @@ Window {
         // Slider popups
         function onViewVolume()     { volumePopup.open() }
         function onViewBrightness() { brightnessPopup.open() }
+    }
+
+    // Restart slider auto-close timers on each interaction so they only
+    // close 5 s after the user stops touching the slider.
+    Connections {
+        target: volumePopupHandler
+        function onVolumeSinkChanged() { if (volumePopup.opened) volTimer.restart() }
+    }
+    Connections {
+        target: brightnessPopupHandler
+        function onTargetBrightnessChanged() { if (brightnessPopup.opened) brtTimer.restart() }
     }
 
     // Handle Android Auto Connection
@@ -288,7 +304,10 @@ Window {
         // Brightness 255 (Max) -> Opacity 0.0 (Invisible)
         // Brightness 0   (Min) -> Opacity 0.85 (Very Dark, but legible)
         // We don't go to 1.0, otherwise you can't find the slider to fix it!
-        opacity: 0.85 * (1.0 - (brightnessPopupHandler.screenBrightness / 255.0))
+        // Divide by currentMax so that at max slider position opacity == 0 (no tint)
+        opacity: brightnessPopupHandler.currentMax > 0
+                 ? 0.85 * Math.max(0.0, 1.0 - (brightnessPopupHandler.screenBrightness / brightnessPopupHandler.currentMax))
+                 : 0
 
         // Smooth transition when changing brightness
         Behavior on opacity { NumberAnimation { duration: 100 } }

@@ -88,20 +88,18 @@ Item {
         contentItem: Text {
             text: homeBtn.text
             font: homeBtn.font
-            color: "white"
+            color: Constants.textPrimary
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            opacity: homeBtn.down ? 0.7 : 1.0 // Visual feedback on press
+            opacity: homeBtn.down ? 0.7 : 1.0
         }
 
         // Background
         background: Rectangle {
             radius: homeBtn.width / 2
-            color: "#80000000" // 50% Black
-            border.color: "#40FFFFFF" // Subtle white border
+            color: Constants.aaHomeBtnBg
+            border.color: Constants.aaHomeBtnBorder
             border.width: 2
-
-            // Visual Feedback: Darker when pressed
             opacity: homeBtn.down ? 0.9 : 0.6
         }
 

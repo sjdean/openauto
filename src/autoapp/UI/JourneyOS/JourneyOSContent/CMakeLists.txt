@@ -67,6 +67,7 @@ qt6_add_qml_module(JourneyOSContent
         "images/fi-br-volume-mute.svg"
         "images/fi-br-volume.svg"
         "images/fi-br-brightness.svg"
+        "images/fi-br-settings.svg"
 )
 
 

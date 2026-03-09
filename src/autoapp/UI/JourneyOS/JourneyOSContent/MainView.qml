@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import JourneyOS
+import AndroidAutoMonitor
 
 Item {
     id: mainView
@@ -98,17 +99,17 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             clip: true
             opacity: mainView.isMediaPlaying ? 0 : 1 // Initial opacity based on isMediaPlaying
-            hasAndroidAuto: true
+            hasAndroidAuto: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED
             Connections {
                 target: mainMenu
                 onViewSettings: mainView.viewSettings()
                 onViewAndroidAuto: mainView.viewAndroidAuto()
-                onViewPower: mainMenu.viewPower()
-                onViewOBD: mainMenu.viewOBD()
-                onViewNavigation: mainMenu.viewNavigation()
-                onViewRadio: mainMenu.viewRadio()
-                onViewUSB: mainMenu.viewUSB()
-                onViewBluetooth: mainMenu.viewBluetooth()
+                onViewPower: mainView.viewPower()
+                onViewOBD: mainView.viewOBD()
+                onViewNavigation: mainView.viewNavigation()
+                onViewRadio: mainView.viewRadio()
+                onViewUSB: mainView.viewUSB()
+                onViewBluetooth: mainView.viewBluetooth()
             }
         }
 
@@ -119,17 +120,17 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             clip: true
             opacity: mainView.isMediaPlaying ? 1 : 0 // Initial opacity based on isMediaPlaying
-            hasAndroidAuto: true
+            hasAndroidAuto: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED
             Connections {
                 target: mediaMenu
                 onViewSettings: mainView.viewSettings()
                 onViewAndroidAuto: mainView.viewAndroidAuto()
-                onViewPower: mainMenu.viewPower()
-                onViewOBD: mainMenu.viewOBD()
-                onViewNavigation: mainMenu.viewNavigation()
-                onViewRadio: mainMenu.viewRadio()
-                onViewUSB: mainMenu.viewUSB()
-                onViewBluetooth: mainMenu.viewBluetooth()
+                onViewPower: mainView.viewPower()
+                onViewOBD: mainView.viewOBD()
+                onViewNavigation: mainView.viewNavigation()
+                onViewRadio: mainView.viewRadio()
+                onViewUSB: mainView.viewUSB()
+                onViewBluetooth: mainView.viewBluetooth()
             }
         }
     }

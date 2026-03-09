@@ -7,21 +7,41 @@ Item {
     implicitWidth: 460
     implicitHeight: contentColumn.implicitHeight + 40
 
+    signal close
+
     Rectangle {
-        color: Constants.settingsPopupBackgroundColor
+        color: Constants.popupBackgroundTranslucent
         anchors.fill: parent
-        radius: 8
+        radius: Constants.radiusCard
     }
 
-    RoundButton {
+    // ── Close button ──────────────────────────────────────────────────────────
+    Rectangle {
         id: closeBtn
-        text: "X"
-        flat: true
         anchors.top: parent.top
         anchors.right: parent.right
-        anchors.margins: 5
+        anchors.margins: 10
+        width: 28
+        height: 28
+        radius: Constants.radiusCircle
+        color: closeBtnArea.pressed ? Constants.btnDangerBgPressed : Constants.btnDangerBg
         z: 10
-        onClicked: wirelessPopup.parent.close()
+
+        Behavior on color { ColorAnimation { duration: 80 } }
+
+        Text {
+            anchors.centerIn: parent
+            text: "\u2715"
+            color: Constants.btnDangerFg
+            font.pixelSize: Constants.fontLabel
+            font.bold: true
+        }
+
+        MouseArea {
+            id: closeBtnArea
+            anchors.fill: parent
+            onClicked: wirelessPopup.close()
+        }
     }
 
     Column {
@@ -33,20 +53,20 @@ Item {
         anchors.margins: 20
         anchors.topMargin: 10
 
-        // ── Title ────────────────────────────────────────────────────────────
+        // ── Title ─────────────────────────────────────────────────────────────
         Text {
             text: "Wi-Fi"
-            font.pixelSize: 16
+            font.pixelSize: Constants.fontSubtitle
             font.bold: true
-            color: Constants.primaryTextColor
+            color: Constants.textPrimary
         }
 
-        // ── Status strip ─────────────────────────────────────────────────────
+        // ── Status strip ──────────────────────────────────────────────────────
         Rectangle {
             width: parent.width
             height: statusRow.implicitHeight + 12
-            color: wifiViewModel.connected ? "#22009900" : "#22990000"
-            radius: 4
+            color: wifiViewModel.connected ? Constants.statusBgOk : Constants.statusBgBad
+            radius: Constants.radiusInput
 
             Row {
                 id: statusRow
@@ -55,25 +75,25 @@ Item {
 
                 Text {
                     text: wifiViewModel.connected ? "● Connected" : "○ Not Connected"
-                    color: wifiViewModel.connected ? Constants.okColor : Constants.badColor
-                    font.pixelSize: 12
+                    color: wifiViewModel.connected ? Constants.statusOk : Constants.statusBad
+                    font.pixelSize: Constants.fontCaption
                 }
                 Text {
                     visible: wifiViewModel.connected
                     text: wifiViewModel.currentSsid.length > 0 ? ("  " + wifiViewModel.currentSsid) : ""
-                    color: Constants.primaryTextColor
-                    font.pixelSize: 12
+                    color: Constants.textPrimary
+                    font.pixelSize: Constants.fontCaption
                 }
                 Text {
                     visible: wifiViewModel.connected && wifiViewModel.signalStrength > 0
                     text: wifiViewModel.signalStrength + "%"
-                    color: Constants.primaryTextColor
-                    font.pixelSize: 12
+                    color: Constants.textPrimary
+                    font.pixelSize: Constants.fontCaption
                 }
             }
         }
 
-        // ── Enable toggle ────────────────────────────────────────────────────
+        // ── Enable toggle ─────────────────────────────────────────────────────
         CheckBox {
             id: checkBoxEnableWireless
             text: qsTr("Enable Wireless")
@@ -82,14 +102,13 @@ Item {
         }
 
         // ── Interface selection ───────────────────────────────────────────────
-        Text { text: "Interface"; color: Constants.primaryTextColor; font.pixelSize: 12 }
+        Text { text: "Interface"; color: Constants.textSecondary; font.pixelSize: Constants.fontCaption }
         ComboBox {
             id: networkInterface
             width: parent.width
             model: networkAdapterModel.comboBoxItems
             textRole: "displayName"
 
-            // Set initial selection by interface name (the value WifiController needs).
             Component.onCompleted: {
                 var items = networkAdapterModel.comboBoxItems
                 for (var i = 0; i < items.length; i++) {
@@ -100,7 +119,6 @@ Item {
                 }
             }
 
-            // onActivated fires only on explicit user interaction, not on model load.
             onActivated: {
                 var items = networkAdapterModel.comboBoxItems
                 if (currentIndex >= 0 && currentIndex < items.length) {
@@ -116,7 +134,6 @@ Item {
             width: parent.width
             spacing: 8
 
-            // Mode selector
             ButtonGroup { id: wirelessModeGroup }
 
             Row {
@@ -124,7 +141,6 @@ Item {
                 RadioButton {
                     id: hotspotButton
                     text: qsTr("Hotspot")
-                    // WIRELESS_HOTSPOT = 0
                     checked: wifiViewModel.mode === 0
                     onCheckedChanged: if (checked) wifiViewModel.mode = 0
                     ButtonGroup.group: wirelessModeGroup
@@ -132,7 +148,6 @@ Item {
                 RadioButton {
                     id: clientButton
                     text: qsTr("Client")
-                    // WIRELESS_CLIENT = 1
                     checked: wifiViewModel.mode === 1
                     onCheckedChanged: if (checked) wifiViewModel.mode = 1
                     ButtonGroup.group: wirelessModeGroup
@@ -145,7 +160,7 @@ Item {
                 width: parent.width
                 spacing: 6
 
-                Text { text: qsTr("Hotspot SSID"); color: Constants.primaryTextColor; font.pixelSize: 12 }
+                Text { text: qsTr("Hotspot SSID"); color: Constants.textSecondary; font.pixelSize: Constants.fontCaption }
                 TextField {
                     width: parent.width
                     placeholderText: qsTr("SSID")
@@ -154,7 +169,7 @@ Item {
                     onTextEdited: wifiViewModel.hotspotSsid = text
                 }
 
-                Text { text: qsTr("Hotspot Password"); color: Constants.primaryTextColor; font.pixelSize: 12 }
+                Text { text: qsTr("Hotspot Password"); color: Constants.textSecondary; font.pixelSize: Constants.fontCaption }
                 TextField {
                     width: parent.width
                     placeholderText: qsTr("Password (min 8 chars)")
@@ -183,8 +198,7 @@ Item {
                 width: parent.width
                 spacing: 6
 
-                // Saved credentials row
-                Text { text: qsTr("Network SSID"); color: Constants.primaryTextColor; font.pixelSize: 12 }
+                Text { text: qsTr("Network SSID"); color: Constants.textSecondary; font.pixelSize: Constants.fontCaption }
                 TextField {
                     id: clientSsidField
                     width: parent.width
@@ -194,7 +208,7 @@ Item {
                     onTextEdited: wifiViewModel.clientSsid = text
                 }
 
-                Text { text: qsTr("Password"); color: Constants.primaryTextColor; font.pixelSize: 12 }
+                Text { text: qsTr("Password"); color: Constants.textSecondary; font.pixelSize: Constants.fontCaption }
                 Row {
                     width: parent.width
                     spacing: 8
@@ -233,8 +247,8 @@ Item {
                         text: wifiViewModel.accessPoints.length > 0
                               ? (wifiViewModel.accessPoints.length + " network(s) found")
                               : "No scan results"
-                        color: Constants.primaryTextColor
-                        font.pixelSize: 11
+                        color: Constants.textSecondary
+                        font.pixelSize: Constants.fontSmall
                         font.italic: true
                     }
                 }
@@ -244,8 +258,8 @@ Item {
                     visible: wifiViewModel.accessPoints.length > 0
                     width: parent.width
                     height: Math.min(apList.contentHeight + 2, 160)
-                    color: "#22ffffff"
-                    radius: 4
+                    color: Constants.overlaySubtle
+                    radius: Constants.radiusInput
                     clip: true
 
                     ListView {
@@ -257,8 +271,8 @@ Item {
                         delegate: Rectangle {
                             width: apList.width
                             height: 36
-                            color: apMouseArea.containsPress ? "#44ffffff" : "transparent"
-                            radius: 3
+                            color: apMouseArea.containsPress ? Constants.overlayPress : "transparent"
+                            radius: Constants.radiusInput - 1
 
                             Row {
                                 anchors.fill: parent
@@ -268,24 +282,24 @@ Item {
 
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: modelData.secured ? "🔒" : "📶"
-                                    font.pixelSize: 14
+                                    text: modelData.secured ? "\uD83D\uDD12" : "\uD83D\uDCF6"
+                                    font.pixelSize: Constants.fontBody
                                 }
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: modelData.ssid
-                                    color: Constants.primaryTextColor
-                                    font.pixelSize: 13
+                                    color: Constants.textPrimary
+                                    font.pixelSize: Constants.fontLabel
                                     elide: Text.ElideRight
                                     width: parent.width - 80
                                 }
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: modelData.strength + "%"
-                                    color: modelData.strength > 60 ? Constants.okColor
-                                         : modelData.strength > 30 ? Constants.waitColor
-                                         : Constants.badColor
-                                    font.pixelSize: 12
+                                    color: modelData.strength > 60 ? Constants.statusOk
+                                         : modelData.strength > 30 ? Constants.statusWait
+                                         : Constants.statusBad
+                                    font.pixelSize: Constants.fontCaption
                                 }
                             }
 
@@ -309,11 +323,11 @@ Item {
         Text {
             visible: !ConfigGate.showConfig
             text: qsTr("Wi-Fi is managed by the operating system.\nInterface selection is available.")
-            color: "gray"
+            color: Constants.textDisabled
             font.italic: true
             wrapMode: Text.WordWrap
             width: parent.width
-            font.pixelSize: 12
+            font.pixelSize: Constants.fontCaption
         }
 
         Item { width: 1; height: 4 } // bottom padding

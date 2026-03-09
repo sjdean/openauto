@@ -7,6 +7,7 @@ Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on
 
 import QtQuick
 import QtQuick.Controls
+import JourneyOS 1.0
 
 Slider {
     id: brightnessSlider
@@ -17,8 +18,10 @@ Slider {
     orientation: Qt.Vertical
     background: baseBackground
     value: brightnessPopupHandler.targetBrightness
-    property color sliderColor: "#cc2d004d"
-    property color alternateColor: "#ab381353"
+
+    // Single-hue intensity variation: dark purple (dim) → softer purple (bright)
+    property color sliderColor:    Constants.sliderBrightnessLow
+    property color alternateColor: Constants.sliderBrightnessHigh
 
     Rectangle {
         id: baseBackground
@@ -28,30 +31,25 @@ Slider {
         implicitHeight: 200
         width: implicitWidth
         height: brightnessSlider.availableHeight
-        radius: 10
-        color: "#77bdbebf"
+        radius: Constants.radiusSlider
+        color: Constants.sliderTrackBg
 
         Rectangle {
             y: ((brightnessSlider.availableHeight - handleItem.height) * brightnessSlider.visualPosition) + brightnessSlider.topPadding
             id: groove
             height: brightnessSlider.availableHeight - ((brightnessSlider.availableHeight - handleItem.height) * brightnessSlider.visualPosition) - brightnessSlider.topPadding
             width: parent.width
-            radius: 10
+            radius: Constants.radiusSlider
 
             Behavior on color {
                 ColorAnimation { duration: 100 }
             }
 
-            // Calculate color based on slider position
             color: Qt.hsla(
-                       // Hue interpolation
                        (Qt.hsla(sliderColor.hslHue, 0, 0, 1).hslHue * (1 - brightnessSlider.visualPosition)) +
                        (Qt.hsla(alternateColor.hslHue, 0, 0, 1).hslHue * brightnessSlider.visualPosition),
-                       // Saturation interpolation
                        (sliderColor.hslSaturation * (1 - brightnessSlider.visualPosition)) + (alternateColor.hslSaturation * brightnessSlider.visualPosition),
-                       // Lightness interpolation
                        (sliderColor.hslLightness * (1 - brightnessSlider.visualPosition)) + (alternateColor.hslLightness * brightnessSlider.visualPosition),
-                       // Alpha interpolation
                        (sliderColor.a * (1 - brightnessSlider.visualPosition)) + (alternateColor.a * brightnessSlider.visualPosition)
                    )
         }
@@ -70,10 +68,9 @@ Slider {
         implicitWidth: 26
         implicitHeight: 26
         radius: 13
-        color: "#f6f6f6"
-        border.color: "#bdbebf"
+        color: Constants.sliderHandle
+        border.color: Constants.sliderHandleBorder
     }
-
 
     states: [
         State {
@@ -86,8 +83,8 @@ Slider {
 
             PropertyChanges {
                 target: handleItem
-                color: "#cc2d004d"
-                border.color: "#ffffff"
+                color: Constants.sliderHandlePressed
+                border.color: Constants.textPrimary
             }
         }
     ]
