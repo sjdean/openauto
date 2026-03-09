@@ -20,7 +20,8 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
 
   void WifiProjectionService::start() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcServiceWifi) << "[WifiProjectionService] start()";
+      qInfo(lcServiceWifi) << "[WifiProjectionService] start() — arming channel receive";
+      channel_->receive(this->shared_from_this());
     });
   }
 

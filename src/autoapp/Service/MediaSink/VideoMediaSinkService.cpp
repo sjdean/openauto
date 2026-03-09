@@ -13,7 +13,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
 
     void VideoMediaSinkService::start() {
         strand_.dispatch([this, self = this->shared_from_this()]() {
-            qInfo(lcServiceSinkMediaVideo) << "Starting Service on Channel " << aasdk::messenger::channelIdToString(
+            qInfo(lcServiceSinkMediaVideo) << "[VideoChannel] start() — channel:" << aasdk::messenger::channelIdToString(
                 channel_->getId());
             channel_->receive(this->shared_from_this());
         });
@@ -78,13 +78,13 @@ namespace f1x::openauto::autoapp::service::mediasink {
     void
     VideoMediaSinkService::onMediaChannelSetupRequest(
         const aap_protobuf::service::media::shared::message::Setup &request) {
-        qInfo(lcServiceSinkMediaVideo) << "Setting up Channel: " << aasdk::messenger::channelIdToString(channel_->getId()) << ", Codec: " << MediaCodecType_Name(request.type());
+        qInfo(lcServiceSinkMediaVideo) << "[VideoChannel] onMediaChannelSetupRequest() codec:" << MediaCodecType_Name(request.type());
 
         auto status = videoOutput_->init()
                           ? aap_protobuf::service::media::shared::message::Config::STATUS_READY
                           : aap_protobuf::service::media::shared::message::Config::STATUS_WAIT;
 
-        qInfo(lcServiceSinkMediaVideo) << "Video Output initialised with: " << Config_Status_Name(status) << " on Channel " << aasdk::messenger::channelIdToString(channel_->getId());
+        qInfo(lcServiceSinkMediaVideo) << "[VideoChannel] init status:" << Config_Status_Name(status);
 
         aap_protobuf::service::media::shared::message::Config response;
         response.set_status(status);
@@ -97,13 +97,13 @@ namespace f1x::openauto::autoapp::service::mediasink {
                                 std::placeholders::_1));
 
         channel_->sendChannelSetupResponse(response, std::move(promise));
-        qInfo(lcServiceSinkMediaVideo) << "Channel Setup Response sent on Channel " << aasdk::messenger::channelIdToString(channel_->getId());
+        qInfo(lcServiceSinkMediaVideo) << "[VideoChannel] setup response sent — focus indication will follow on promise";
         channel_->receive(this->shared_from_this());
     }
 
     void VideoMediaSinkService::onChannelOpenRequest(
         const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-        qInfo(lcServiceSinkMediaVideo) << "Request to Open Channel " << aasdk::messenger::channelIdToString(channel_->getId()) << ", Priority: " << request.priority();
+        qInfo(lcServiceSinkMediaVideo) << "[VideoChannel] onChannelOpenRequest() priority:" << request.priority();
 
         const aap_protobuf::shared::MessageStatus status = videoOutput_->open()
                                                                ? aap_protobuf::shared::MessageStatus::STATUS_SUCCESS
@@ -139,9 +139,11 @@ namespace f1x::openauto::autoapp::service::mediasink {
 
     void VideoMediaSinkService::onMediaWithTimestampIndication(aasdk::messenger::Timestamp::ValueType timestamp,
                                                                const aasdk::common::DataConstBuffer &buffer) {
-      //  qDebug(lcServiceSinkMediaVideo) << "onMediaWithTimestampIndication()";
-       // qDebug(lcServiceSinkMediaVideo) << "Channel Id: "
-               // << aasdk::messenger::channelIdToString(channel_->getId()) << ", session: " << session_;
+        static int frameCount = 0;
+        ++frameCount;
+        if (frameCount <= 5 || frameCount % 100 == 0)
+            qDebug(lcServiceSinkMediaVideo) << "[VideoChannel] onMediaWithTimestampIndication frame#" << frameCount
+                                            << "size=" << buffer.size;
 
         videoOutput_->write(timestamp, buffer);
 
@@ -192,7 +194,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
     }
 
     void VideoMediaSinkService::sendVideoFocusIndication() {
-        qInfo(lcServiceSinkMediaVideo) << "sendVideoFocusIndication()";
+        qInfo(lcServiceSinkMediaVideo) << "[VideoChannel] sendVideoFocusIndication() — telling phone to start streaming";
 
         aap_protobuf::service::media::video::message::VideoFocusNotification videoFocusIndication;
         videoFocusIndication.set_focus(
@@ -200,7 +202,8 @@ namespace f1x::openauto::autoapp::service::mediasink {
         videoFocusIndication.set_unsolicited(false);
 
         auto promise = aasdk::channel::SendPromise::defer(strand_);
-        promise->then([]() {
+        promise->then([this, self = this->shared_from_this()]() {
+            qInfo(lcServiceSinkMediaVideo) << "[VideoChannel] focus indication SENT — phone should now stream video";
         }, std::bind(&VideoMediaSinkService::onChannelError, this->shared_from_this(),
                      std::placeholders::_1));
         channel_->sendVideoFocusIndication(videoFocusIndication, std::move(promise));

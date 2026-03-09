@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QVideoSink>
 #include <QVideoFrame>
+#include <atomic>
 #include <condition_variable>
 #include <deque>
 #include <mutex>
@@ -53,7 +54,7 @@ namespace f1x::openauto::autoapp::projection {
         std::mutex mutex_;
         std::condition_variable cv_;
         std::deque<VideoPacket> packetQueue_;
-        bool stopRequested_ = false;
+        std::atomic<bool> stopRequested_{false};
 
         AVCodecContext* codecContext_ = nullptr;
         AVPacket* packet_ = nullptr;

@@ -2,6 +2,7 @@
 #include <f1x/openauto/autoapp/Service/AndroidAutoSession.hpp>
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityState.hpp"
 #include <qloggingcategory.h>
+#include <QtEndian>
 Q_LOGGING_CATEGORY(lcSession, "journeyos.session")
 
 namespace f1x::openauto::autoapp::service {
@@ -99,8 +100,10 @@ namespace f1x::openauto::autoapp::service {
     androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
 
     qInfo(lcSession) << "onVersionResponse()";
-    qInfo(lcSession) << "Version Received: " << majorCode << "." << minorCode
-                       << ", with status: " << status;
+    qInfo(lcSession) << "Phone AA protocol version: "
+                     << qFromBigEndian<quint16>(majorCode) << "."
+                     << qFromBigEndian<quint16>(minorCode)
+                     << ", status:" << status;
 
     if (status == aap_protobuf::shared::MessageStatus::STATUS_NO_COMPATIBLE_VERSION) {
       qCritical(lcSession) << "Version mismatch.";
@@ -297,7 +300,15 @@ namespace f1x::openauto::autoapp::service {
   }
 
   void AndroidAutoSession::onPingRequest(const aap_protobuf::service::control::message::PingRequest &request) {
-    qInfo(lcSession) << "onPingRequest()";
+    qInfo(lcSession) << "onPingRequest() ts=" << request.timestamp();
+
+    aap_protobuf::service::control::message::PingResponse response;
+    response.set_timestamp(request.timestamp());
+
+    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    promise->then([]() {}, std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(),
+                                     std::placeholders::_1));
+    controlServiceChannel_->sendPingResponse(response, std::move(promise));
     controlServiceChannel_->receive(this->shared_from_this());
   }
 
