@@ -60,5 +60,9 @@ namespace f1x::openauto::autoapp::projection {
         AVPacket* packet_ = nullptr;
         AVFrame* frame_ = nullptr;
         const AVCodec* codec_ = nullptr;
+
+        // swscale context for converting non-YUV420P frames (lazy-initialised)
+        SwsContext* swsCtx_ = nullptr;
+        int swsCtxSrcFmt_ = -1;   // cached source format to detect changes
     };
 }

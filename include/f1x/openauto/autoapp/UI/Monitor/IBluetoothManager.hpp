@@ -11,6 +11,17 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     class IBluetoothManager : public QObject {
         Q_OBJECT
         Q_PROPERTY(bool isPairingModeEnabled READ isPairingModeEnabled NOTIFY pairingModeEnabledChanged)
+        Q_PROPERTY(QString statusText READ getStatusText NOTIFY bluetoothConnectionStatusChanged)
+        Q_PROPERTY(bool isScanning READ isScanning NOTIFY isScanningChanged)
+        Q_PROPERTY(int adapterCount READ getAdapterCount NOTIFY adapterCountChanged)
+        Q_PROPERTY(int connectedDeviceCount READ getConnectedDeviceCount NOTIFY connectedDeviceCountChanged)
+        Q_PROPERTY(int activeDeviceIndex READ getActiveDeviceIndex NOTIFY activeDeviceIndexChanged)
+        Q_PROPERTY(QVariantList bluetoothAdapterList READ getBluetoothAdapterList NOTIFY bluetoothAdapterListChanged)
+        Q_PROPERTY(QVariantList pairedDeviceList READ getPairedDeviceList NOTIFY pairedDeviceListChanged)
+        Q_PROPERTY(QVariantList unpairedDeviceList READ getUnpairedDeviceList NOTIFY unpairedDeviceListChanged)
+        Q_PROPERTY(common::Enum::BluetoothConnectionStatus::Value bluetoothConnectionStatus
+                   READ getBluetoothConnectionStatus NOTIFY bluetoothConnectionStatusChanged)
+        Q_PROPERTY(QObject* agent READ getAgent CONSTANT)
 
     public:
         explicit IBluetoothManager(QObject *parent = nullptr) : QObject(parent) {}

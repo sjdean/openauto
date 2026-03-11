@@ -4,10 +4,7 @@ Q_LOGGING_CATEGORY(lcServiceBt, "journeyos.service.bluetooth")
 
 namespace f1x::openauto::autoapp::service::bluetooth {
 
-  /// AndroidAuto channel to advise bluetooth avaulability and to manage HFP/A2DP pairing requests.
-  /// \param ioService
-  /// \param messenger
-  /// \param bluetoothDevice
+  /// AndroidAuto channel to advise bluetooth availability and to manage HFP/A2DP pairing requests.
   BluetoothService::BluetoothService(boost::asio::io_service &ioService,
                                      aasdk::messenger::IMessenger::Pointer messenger,
                                      projection::IBluetoothDevice::Pointer bluetoothDevice)
@@ -19,43 +16,40 @@ namespace f1x::openauto::autoapp::service::bluetooth {
 
   void BluetoothService::start() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcServiceBt) << "[BluetoothService] start()";
+      qInfo(lcServiceBt) << "starting";
       channel_->receive(this->shared_from_this());
     });
   }
 
   void BluetoothService::stop() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcServiceBt) << "[BluetoothService] stop()";
+      qInfo(lcServiceBt) << "stopping";
       bluetoothDevice_->stop();
     });
   }
 
   void BluetoothService::pause() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcServiceBt) << "[BluetoothService] pause()";
+      qInfo(lcServiceBt) << "paused";
     });
   }
 
   void BluetoothService::resume() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcServiceBt) << "[BluetoothService] resume()";
+      qInfo(lcServiceBt) << "resumed";
     });
   }
 
   void BluetoothService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    qInfo(lcServiceBt) << "[BluetoothService] fillFeatures()";
-
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
 
     auto bluetooth = service->mutable_bluetooth_service();
 
     if (bluetoothDevice_->isAvailable()) {
-      qInfo(lcServiceBt) << "[BluetoothService] Local Address: " << bluetoothDevice_->getAdapterAddress();
+      qInfo(lcServiceBt) << "adapter address=" << bluetoothDevice_->getAdapterAddress();
 
-      // TODO: Also need to re-establish Bluetooth
       // If the HU wants the MD to skip the Bluetooth Pairing and Connection process, the HU can declare its address as SKIP_THIS_BLUETOOTH
       bluetooth->set_car_address(bluetoothDevice_->getAdapterAddress());
 
@@ -65,21 +59,19 @@ namespace f1x::openauto::autoapp::service::bluetooth {
       bluetooth->add_supported_pairing_methods(
           aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_NUMERIC_COMPARISON);
     } else {
-      qInfo(lcServiceBt) << "[BluetoothService] Bluetooth Not Available ";
+      qWarning(lcServiceBt) << "bluetooth not available";
       bluetooth->set_car_address("");
-      bluetooth->add_supported_pairing_methods(aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_UNAVAILABLE);
+      bluetooth->add_supported_pairing_methods(
+          aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_UNAVAILABLE);
     }
   }
 
-  void
-  BluetoothService::onChannelOpenRequest(const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    qInfo(lcServiceBt) << "[BluetoothService] onChannelOpenRequest()";
-    qDebug(lcServiceBt) << "[BluetoothService] Channel Id: " << request.service_id() << ", Priority: "
-                        << request.priority();
+  void BluetoothService::onChannelOpenRequest(
+      const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
+    qInfo(lcServiceBt) << "channel open service_id=" << request.service_id() << " priority=" << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
-    const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
-    response.set_status(status);
+    response.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
 
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {}, std::bind(&BluetoothService::onChannelError, this->shared_from_this(),
@@ -90,24 +82,16 @@ namespace f1x::openauto::autoapp::service::bluetooth {
 
   void BluetoothService::onBluetoothPairingRequest(
       const aap_protobuf::service::bluetooth::message::BluetoothPairingRequest &request) {
-    qInfo(lcServiceBt) << "[BluetoothService] onBluetoothPairingRequest()";
-    qInfo(lcServiceBt) << "[BluetoothService] Phone Address: " << request.phone_address();
+    const auto isPaired = bluetoothDevice_->isPaired(request.phone_address());
+    qInfo(lcServiceBt) << "pairing request phone=" << request.phone_address() << " already_paired=" << isPaired;
 
     aap_protobuf::service::bluetooth::message::BluetoothPairingResponse response;
-
-    const auto isPaired = bluetoothDevice_->isPaired(request.phone_address());
-    if (isPaired) {
-      qInfo(lcServiceBt) << "[BluetoothService] Phone is Already Paired";
-    } else {
-      qInfo(lcServiceBt) << "[BluetoothService] Phone is Not Paired";
-    }
 
     /*
      * The HU must always send a STATUS_SUCCESS response, or STATUS_BLUETOOTH_PAIRING_DELAYED if:
      *    there's a delay in allowing bluetooth
      *    the HU is already engaged in a bluetooth call
      */
-
     // TODO: Consider when we need to send STATUS_BLUETOOTH_PAIRING_DELAYED
     response.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
     response.set_already_paired(isPaired);
@@ -121,12 +105,13 @@ namespace f1x::openauto::autoapp::service::bluetooth {
   }
 
   void BluetoothService::sendBluetoothAuthenticationData() {
-    qInfo(lcServiceBt) << "[BluetoothService] sendBluetoothAuthenticationData()";
+    qInfo(lcServiceBt) << "sending authentication data";
 
     aap_protobuf::service::bluetooth::message::BluetoothAuthenticationData data;
     // TODO: Do we need to generate a random pin, or is 123456 sufficient?
     data.set_auth_data("123456");
-    data.set_pairing_method(aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_PIN);
+    data.set_pairing_method(
+        aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_PIN);
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {}, std::bind(&BluetoothService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
@@ -136,17 +121,13 @@ namespace f1x::openauto::autoapp::service::bluetooth {
 
   void BluetoothService::onBluetoothAuthenticationResult(
       const aap_protobuf::service::bluetooth::message::BluetoothAuthenticationResult &request) {
-    qInfo(lcServiceBt) << "[BluetoothService] onBluetoothAuthenticationResult()";
-    qInfo(lcServiceBt) << "[BluetoothService] AuthData " << request.status();
+    qInfo(lcServiceBt) << "auth result status=" << request.status();
     aap_protobuf::service::bluetooth::message::BluetoothPairingResponse response;
-
     channel_->receive(this->shared_from_this());
   }
 
   void BluetoothService::onChannelError(const aasdk::error::Error &e) {
-    qCritical(lcServiceBt) << "[BluetoothService] onChannelError(): " << e.what();
+    qCritical(lcServiceBt) << "channel error=" << e.what();
   }
+
 }
-
-
-

@@ -55,6 +55,7 @@ namespace f1x::openauto::autoapp::configuration {
     audioGroup.addSetting<int>("CaptureMax", 255);
     audioGroup.addSetting<int>("PlaybackVolume", 150);
     audioGroup.addSetting<int>("CaptureVolume", 150);
+    audioGroup.addSetting<bool>("DebugRecord", true);
     audioGroup.addSetting<QString>("PlaybackDevice", "");
     audioGroup.addSetting<QString>("CaptureDevice", "");
     audioGroup.load(m_settings);

@@ -47,12 +47,23 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
     qInfo(lcServiceWifi) << "[WifiProjectionService] fillFeatures()";
 
+    // Resolve BSSID from the configured interface name.
+    // If the interface is absent (e.g. no hotspot on this host), skip advertising
+    // the channel entirely — an empty BSSID causes phones to reject the whole
+    // service discovery response and disconnect before opening any channels.
+    const QString interfaceName = configuration_->getSettingByName<QString>("Wireless", "Interface");
+    const QString bssid = QNetworkInterface::interfaceFromName(interfaceName).hardwareAddress();
+    if (bssid.isEmpty()) {
+      qWarning(lcServiceWifi) << "[WifiProjectionService] fillFeatures(): interface"
+                              << interfaceName << "has no MAC address — WiFi projection not advertised";
+      return;
+    }
+
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
 
     auto *wifiChannel = service->mutable_wifi_projection_service();
-    // TODO: Make Interface Name Dynamic
-    wifiChannel->set_car_wifi_bssid(QNetworkInterface::interfaceFromName("wlan0").hardwareAddress().toStdString());
+    wifiChannel->set_car_wifi_bssid(bssid.toStdString());
   }
 
   void WifiProjectionService::onWifiCredentialsRequest(

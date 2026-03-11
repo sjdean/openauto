@@ -3,14 +3,15 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QProcess>
-#include <QDebug>
+#include <qloggingcategory.h>
+Q_LOGGING_CATEGORY(lcPower, "journeyos.power")
 
 namespace f1x::openauto::autoapp::System {
 
     PowerController::PowerController(QObject *parent) : QObject(parent) {}
 
     void PowerController::reboot() {
-        qInfo() << "PowerController: Requesting Reboot";
+        qInfo(lcPower) << "reboot requested";
 #ifdef Q_OS_LINUX
         QDBusMessage msg = QDBusMessage::createMethodCall(
                 "uk.co.cubeone.journeyos.helper",
@@ -23,7 +24,7 @@ namespace f1x::openauto::autoapp::System {
     }
 
     void PowerController::powerOff() {
-        qInfo() << "PowerController: Requesting Power Off";
+        qInfo(lcPower) << "power off requested";
 #ifdef Q_OS_LINUX
         QDBusMessage msg = QDBusMessage::createMethodCall(
                 "uk.co.cubeone.journeyos.helper",

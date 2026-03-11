@@ -12,22 +12,19 @@ namespace f1x::openauto::autoapp::UI::Combo {
     }
 
     void BluetoothAdapterModel::populateComboBoxItems() {
-        qDebug(lcComboBtAdapter) << "Clear existing list";
         m_comboBoxItems.clear();
-        qDebug(lcComboBtAdapter) << "Get device list";
         QList<QBluetoothHostInfo> adapters = QBluetoothLocalDevice::allDevices();
 
         if (!adapters.isEmpty()) {
-            qInfo(lcComboBtAdapter) << adapters.count() << " Bluetooth Adapters Found.";
+            qDebug(lcComboBtAdapter) << "adapters found count=" << adapters.count();
             for (const QBluetoothHostInfo &adapter: adapters) {
                 QString adapterAddress = adapter.address().toString();
-                qDebug(lcComboBtAdapter) << "Processing adapter " << adapter.name();
                 addComboBoxItem(QString("%1 (%2)").arg(adapter.name()).arg(
                                     adapterAddress).toUtf8().constData(),
                                 adapterAddress);
             }
         } else {
-            qInfo(lcComboBtAdapter) << "No Bluetooth Adapters Found.";
+            qDebug(lcComboBtAdapter) << "no adapters found";
             addComboBoxItem("SettingsWindow", "none");
         }
     }

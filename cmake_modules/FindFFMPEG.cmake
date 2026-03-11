@@ -1,7 +1,7 @@
 # cmake_modules/FindFFMPEG.cmake
 
 # Define the components we need
-set(FFMPEG_COMPONENTS avcodec avutil swscale)
+set(FFMPEG_COMPONENTS avcodec avformat avutil swscale swresample avfilter)
 
 # Search paths for local/desktop installs.
 # In Yocto these are ignored — CMake searches the sysroot automatically.

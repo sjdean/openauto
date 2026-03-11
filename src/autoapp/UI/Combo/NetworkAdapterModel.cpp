@@ -1,14 +1,10 @@
 #include <QNetworkInterface>
 #include "f1x/openauto/autoapp/UI/Combo/NetworkAdapterModel.hpp"
 
-#include <qloggingcategory.h>
-#include <qloggingcategory.h>
-Q_LOGGING_CATEGORY(lcComboNetAdapter, "journeyos.network.adapter.list")
 
 namespace f1x::openauto::autoapp::UI::Combo {
 
     NetworkAdapterModel::NetworkAdapterModel(QObject *parent) : QObject(parent) {
-        qDebug(lcComboNetAdapter) << "NetworkAdapterModel Initiated";
         populateComboBoxItems();
 
     }

@@ -219,7 +219,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     }
 
     void SettingsViewModel::setCarMake(QString value) {
-        fprintf(stderr, "SettingsViewModel::setCarMake %s\n", value.toStdString().c_str());
         if (m_carMake != value) {
             configuration_->updateSettingByName<QString>("Car", "Make", value);
             configuration_->save();
@@ -568,7 +567,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
             QProcess::execute("sudo", QStringList() << "wpa_cli" << "-i" << "wlan0" << "reconfigure");
             emit wirelessClientSSIDChanged();
 #else
-            qInfo() << "Desktop Mode: Skipping sudo wpa_cli execution for SSID change.";
+            qDebug(lcVmSettings) << "desktop mode: skipping wpa_cli for SSID change";
 #endif
         }
     }
@@ -594,7 +593,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
             emit wirelessClientPasswordChanged();
 #else
-            qInfo() << "Desktop Mode: Skipping sudo wpa_cli execution for Password change.";
+            qDebug(lcVmSettings) << "desktop mode: skipping wpa_cli for password change";
 #endif
         }
     }
@@ -628,7 +627,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
             emit wirelessHotspotSSIDChanged();
 #else
-            qInfo() << "Desktop Mode: Skipping sudo hostapd restart for SSID change.";
+            qDebug(lcVmSettings) << "desktop mode: skipping hostapd restart for SSID change";
 #endif
         }
     }
@@ -653,7 +652,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
             emit wirelessHotspotPasswordChanged();
 #else
-            qInfo() << "Desktop Mode: Skipping sudo hostapd restart for SSID change.";
+            qDebug(lcVmSettings) << "desktop mode: skipping hostapd restart for SSID change";
 #endif
         }
     }
@@ -694,7 +693,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
             emit wirelessHotspotInterfaceChanged();
 #else
-            qInfo() << "Desktop Mode: Skipping sudo hostapd restart for interface change.";
+            qDebug(lcVmSettings) << "desktop mode: skipping hostapd restart for interface change";
 #endif
         }
     }

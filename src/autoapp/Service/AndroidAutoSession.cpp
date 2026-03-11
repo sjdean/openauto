@@ -25,14 +25,14 @@ namespace f1x::openauto::autoapp::service {
   }
 
   AndroidAutoSession::~AndroidAutoSession() {
-    qDebug(lcSession) << "destroy.";
+    qInfo(lcSession) << "session destroyed";
   }
 
   void AndroidAutoSession::start(IAndroidAutoSessionEventHandler &eventHandler) {
     androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
 
     strand_.dispatch([this, self = this->shared_from_this(), eventHandler = &eventHandler]() {
-      qInfo(lcSession) << "start()";
+      qInfo(lcSession) << ">>> session starting";
 
       eventHandler_ = eventHandler;
       std::for_each(serviceList_.begin(), serviceList_.end(), std::bind(&IService::start, std::placeholders::_1));
@@ -41,7 +41,7 @@ namespace f1x::openauto::autoapp::service {
       versionRequestPromise->then([]() {}, std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(),
                                                      std::placeholders::_1));
 
-      qDebug(lcSession) << "Send Version Request.";
+      qDebug(lcSession) << "sending version request";
       controlServiceChannel_->sendVersionRequest(std::move(versionRequestPromise));
       controlServiceChannel_->receive(this->shared_from_this());
     });
@@ -53,7 +53,7 @@ namespace f1x::openauto::autoapp::service {
 
 
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcSession) << "stop()";
+      qInfo(lcSession) << ">>> session stopping";
 
       try {
         eventHandler_ = nullptr;
@@ -64,33 +64,33 @@ namespace f1x::openauto::autoapp::service {
         transport_->stop();
         cryptor_->deinit();
       } catch (...) {
-        qCritical(lcSession) << "stop() - exception when stopping.";
+        qCritical(lcSession) << "exception while stopping session";
       }
     });
   }
 
   void AndroidAutoSession::pause() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcSession) << "pause()";
+      qInfo(lcSession) << ">>> session pausing";
 
       try {
         std::for_each(serviceList_.begin(), serviceList_.end(),
                       std::bind(&IService::pause, std::placeholders::_1));
       } catch (...) {
-        qCritical(lcSession) << "pause() - exception when pausing.";
+        qCritical(lcSession) << "exception while pausing session";
       }
     });
   }
 
   void AndroidAutoSession::resume() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcSession) << "resume()";
+      qInfo(lcSession) << ">>> session resuming";
 
       try {
         std::for_each(serviceList_.begin(), serviceList_.end(),
                       std::bind(&IService::resume, std::placeholders::_1));
       } catch (...) {
-        qCritical(lcSession) << "resume() exception when resuming.";
+        qCritical(lcSession) << "exception while resuming session";
       }
     });
   }
@@ -99,20 +99,17 @@ namespace f1x::openauto::autoapp::service {
                                             aap_protobuf::shared::MessageStatus status) {
     androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
 
-    qInfo(lcSession) << "onVersionResponse()";
-    qInfo(lcSession) << "Phone AA protocol version: "
+    qInfo(lcSession) << "protocol version="
                      << qFromBigEndian<quint16>(majorCode) << "."
                      << qFromBigEndian<quint16>(minorCode)
-                     << ", status:" << status;
+                     << "status=" << status;
 
     if (status == aap_protobuf::shared::MessageStatus::STATUS_NO_COMPATIBLE_VERSION) {
-      qCritical(lcSession) << "Version mismatch.";
+      qCritical(lcSession) << "incompatible protocol version";
       this->triggerQuit();
     } else {
-      qDebug(lcSession) << "Version matches.";
-
       try {
-        qInfo(lcSession) << "Beginning SSL handshake.";
+        qInfo(lcSession) << "SSL handshake starting";
         cryptor_->doHandshake();
 
         auto handshakePromise = aasdk::channel::SendPromise::defer(strand_);
@@ -122,28 +119,27 @@ namespace f1x::openauto::autoapp::service {
         controlServiceChannel_->receive(this->shared_from_this());
       }
       catch (const aasdk::error::Error &e) {
-        qWarning(lcSession) << "Handshake Error.";
+        qWarning(lcSession) << "SSL handshake failed";
         this->onChannelError(e);
       }
     }
   }
 
   void AndroidAutoSession::onHandshake(const aasdk::common::DataConstBuffer &payload) {
-    qInfo(lcSession) << "onHandshake()";
-    qDebug(lcSession) << "Payload size: " << payload.size;
+    qDebug(lcSession) << "handshake payload bytes=" << payload.size;
 
     try {
       cryptor_->writeHandshakeBuffer(payload);
 
       if (!cryptor_->doHandshake()) {
-        qInfo(lcSession) << "Re-attempting handshake.";
+        qInfo(lcSession) << "SSL handshake continuing";
 
         auto handshakePromise = aasdk::channel::SendPromise::defer(strand_);
         handshakePromise->then([]() {}, std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(),
                                                   std::placeholders::_1));
         controlServiceChannel_->sendHandshake(cryptor_->readHandshakeBuffer(), std::move(handshakePromise));
       } else {
-        qInfo(lcSession) << "Handshake completed.";
+        qInfo(lcSession) << "SSL handshake completed";
 
         aap_protobuf::service::control::message::AuthResponse authCompleteIndication;
         authCompleteIndication.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
@@ -157,16 +153,14 @@ namespace f1x::openauto::autoapp::service {
       controlServiceChannel_->receive(this->shared_from_this());
     }
     catch (const aasdk::error::Error &e) {
-      qCritical(lcSession) << "Error during handshake";
+      qCritical(lcSession) << "handshake error";
       this->onChannelError(e);
     }
   }
 
   void AndroidAutoSession::onServiceDiscoveryRequest(
       const aap_protobuf::service::control::message::ServiceDiscoveryRequest &request) {
-    qInfo(lcSession) << "onServiceDiscoveryRequest()";
-    qDebug(lcSession) << "Type: " << request.label_text() << ", Model: "
-                        << request.device_name();
+    qInfo(lcSession) << "service discovery label=" << request.label_text() << "model=" << request.device_name();
 
     aap_protobuf::service::control::message::ServiceDiscoveryResponse serviceDiscoveryResponse;
     serviceDiscoveryResponse.mutable_channels()->Reserve(256);
@@ -210,9 +204,7 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoSession::onAudioFocusRequest(
       const aap_protobuf::service::control::message::AudioFocusRequest &request) {
-    qInfo(lcSession) << "onAudioFocusRequest()";
-    qDebug(lcSession) << "AudioFocusRequestType received: "
-                        << AudioFocusRequestType_Name(request.audio_focus_type());
+    qDebug(lcSession) << "audio focus request=" << AudioFocusRequestType_Name(request.audio_focus_type());
 
     /*
      * When the MD starts playing music for example, it sends a gain request. The HU replies:
@@ -234,8 +226,7 @@ namespace f1x::openauto::autoapp::service {
         ? aap_protobuf::service::control::message::AudioFocusStateType::AUDIO_FOCUS_STATE_LOSS
         : aap_protobuf::service::control::message::AudioFocusStateType::AUDIO_FOCUS_STATE_GAIN;
 
-    qDebug(lcSession) << "AudioFocusStateType determined: "
-                        << AudioFocusStateType_Name(audioFocusStateType);
+    qDebug(lcSession) << "audio focus response=" << AudioFocusStateType_Name(audioFocusStateType);
 
     aap_protobuf::service::control::message::AudioFocusNotification response;
     response.set_focus_state(audioFocusStateType);
@@ -251,8 +242,7 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoSession::onByeByeRequest(
       const aap_protobuf::service::control::message::ByeByeRequest &request) {
-    qInfo(lcSession) << "onByeByeRequest()";
-    qDebug(lcSession) << "Reason received: " << request.reason();
+    qInfo(lcSession) << "bye-bye request reason=" << request.reason();
 
     aap_protobuf::service::control::message::ByeByeResponse response;
     auto promise = aasdk::channel::SendPromise::defer(strand_);
@@ -265,16 +255,14 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoSession::onByeByeResponse(
       const aap_protobuf::service::control::message::ByeByeResponse &response) {
-    qInfo(lcSession) << "onByeByeResponse()";
+    qInfo(lcSession) << "bye-bye acknowledged, quitting";
     androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED);
     this->triggerQuit();
   }
 
   void AndroidAutoSession::onNavigationFocusRequest(
       const aap_protobuf::service::control::message::NavFocusRequestNotification &request) {
-    qInfo(lcSession) << "onNavigationFocusRequest()";
-    qDebug(lcSession) << "NavFocusRequestNotification type received: "
-                        << NavFocusType_Name(request.focus_type());
+    qDebug(lcSession) << "nav focus request type=" << NavFocusType_Name(request.focus_type());
 
     /*
      * If the MD sends NAV_FOCUS_PROJECTED in the request, we should stop any local navigation on the HU and grant NAV_FOCUS_NATIVE in the response.
@@ -295,12 +283,12 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoSession::onBatteryStatusNotification(
       const aap_protobuf::service::control::message::BatteryStatusNotification &notification) {
-    qInfo(lcSession) << "onBatteryStatusNotification()";
+    qDebug(lcSession) << "battery status notification received";
     controlServiceChannel_->receive(this->shared_from_this());
   }
 
   void AndroidAutoSession::onPingRequest(const aap_protobuf::service::control::message::PingRequest &request) {
-    qInfo(lcSession) << "onPingRequest() ts=" << request.timestamp();
+    qDebug(lcSession) << "ping request ts=" << request.timestamp();
 
     aap_protobuf::service::control::message::PingResponse response;
     response.set_timestamp(request.timestamp());
@@ -314,31 +302,30 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoSession::onVoiceSessionRequest(
       const aap_protobuf::service::control::message::VoiceSessionNotification &request) {
-    qInfo(lcSession) << "onVoiceSessionRequest()";
+    qDebug(lcSession) << "voice session request received";
     controlServiceChannel_->receive(this->shared_from_this());
   }
 
   void AndroidAutoSession::onPingResponse(const aap_protobuf::service::control::message::PingResponse &response) {
-    qInfo(lcSession) << "onPingResponse()";
-    qDebug(lcSession) << "Timestamp: " << response.timestamp();
+    qDebug(lcSession) << "ping response ts=" << response.timestamp();
     pinger_->pong();
     controlServiceChannel_->receive(this->shared_from_this());
   }
 
   void AndroidAutoSession::onChannelError(const aasdk::error::Error &e) {
-    qCritical(lcSession) << "onChannelError(): " << e.what();
+    qCritical(lcSession) << "channel error:" << e.what();
     this->triggerQuit();
   }
 
   void AndroidAutoSession::triggerQuit() {
-    qInfo(lcSession) << "triggerQuit()";
+    qInfo(lcSession) << "<<< session quit triggered";
     if (eventHandler_ != nullptr) {
       eventHandler_->onAndroidAutoQuit();
     }
   }
 
   void AndroidAutoSession::schedulePing() {
-    qInfo(lcSession) << "schedulePing()";
+    qDebug(lcSession) << "ping scheduled";
     auto promise = IPinger::Promise::defer(strand_);
     promise->then([this, self = this->shared_from_this()]() {
                     this->sendPing();
@@ -347,7 +334,7 @@ namespace f1x::openauto::autoapp::service {
                   [this, self = this->shared_from_this()](auto error) {
                     if (error != aasdk::error::ErrorCode::OPERATION_ABORTED &&
                         error != aasdk::error::ErrorCode::OPERATION_IN_PROGRESS) {
-                      qCritical(lcSession) << "Ping timer exceeded.";
+                      qCritical(lcSession) << "ping timeout exceeded";
                       this->triggerQuit();
                     }
                   });
@@ -356,7 +343,7 @@ namespace f1x::openauto::autoapp::service {
   }
 
   void AndroidAutoSession::sendPing() {
-    qDebug(lcSession) << "sendPing()";
+    qDebug(lcSession) << "sending ping";
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {},
                   std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(), std::placeholders::_1));

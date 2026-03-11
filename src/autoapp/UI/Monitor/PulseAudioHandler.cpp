@@ -16,7 +16,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         // This is crucial for Qt apps to avoid freezing the GUI.
         m_mainloop = pa_threaded_mainloop_new();
         if (!m_mainloop) {
-            qCritical(lcAudioPulse) << "Failed to create PA threaded mainloop";
+            qCritical(lcAudioPulse) << "mainloop create failed";
             return;
         }
 
@@ -26,13 +26,13 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         pa_context_set_state_callback(m_context, context_state_callback, this);
 
         if (pa_context_connect(m_context, nullptr, PA_CONTEXT_NOFLAGS, nullptr) < 0) {
-            qCritical(lcAudioPulse) << "pa_context_connect failed";
+            qCritical(lcAudioPulse) << "context connect failed";
             return;
         }
 
         // Start the background thread
         if (pa_threaded_mainloop_start(m_mainloop) < 0) {
-            qCritical(lcAudioPulse) << "Failed to start PA mainloop";
+            qCritical(lcAudioPulse) << "mainloop start failed";
             return;
         }
         
@@ -45,7 +45,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
             if (state == PA_CONTEXT_READY) break;
             if (!PA_CONTEXT_IS_GOOD(state)) {
-                qCritical(lcAudioPulse) << "PulseAudio connection failed during init";
+                qCritical(lcAudioPulse) << "connection failed during init";
                 break;
             }
             QThread::msleep(10); // Short sleep while waiting
@@ -68,8 +68,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     void PulseAudioHandler::context_state_callback(pa_context *c, void *userdata) {
         // Just logging state changes
         switch (pa_context_get_state(c)) {
-            case PA_CONTEXT_READY: qInfo(lcAudioPulse) << "PulseAudio Ready"; break;
-            case PA_CONTEXT_FAILED: qWarning(lcAudioPulse) << "PulseAudio Failed"; break;
+            case PA_CONTEXT_READY: qInfo(lcAudioPulse) << "ready"; break;
+            case PA_CONTEXT_FAILED: qWarning(lcAudioPulse) << "failed"; break;
             default: break;
         }
     }

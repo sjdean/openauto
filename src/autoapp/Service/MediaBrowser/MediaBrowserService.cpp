@@ -17,31 +17,31 @@ namespace f1x::openauto::autoapp::service::mediabrowser {
 
   void MediaBrowserService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceBrowser) << "[MediaBrowserService] start()";
+      qDebug(lcServiceBrowser) << "starting";
     });
   }
 
   void MediaBrowserService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceBrowser) << "[MediaBrowserService] stop()";
+      qDebug(lcServiceBrowser) << "stopping";
     });
   }
 
   void MediaBrowserService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceBrowser) << "[MediaBrowserService] pause()";
+      qDebug(lcServiceBrowser) << "pausing";
     });
   }
 
   void MediaBrowserService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceBrowser) << "[MediaBrowserService] resume()";
+      qDebug(lcServiceBrowser) << "resuming";
     });
   }
 
   void MediaBrowserService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    qInfo(lcServiceBrowser) << "[MediaBrowserService] fillFeatures()";
+    qDebug(lcServiceBrowser) << "filling features";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -51,9 +51,7 @@ namespace f1x::openauto::autoapp::service::mediabrowser {
 
   void MediaBrowserService::onChannelOpenRequest(
       const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    qInfo(lcServiceBrowser) << "[MediaBrowserService] onChannelOpenRequest()";
-    qInfo(lcServiceBrowser) << "[MediaBrowserService] Channel Id: " << request.service_id() << ", Priority: "
-                       << request.priority();
+    qInfo(lcServiceBrowser) << "channel open service_id=" << request.service_id() << " priority=" << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
@@ -68,7 +66,7 @@ namespace f1x::openauto::autoapp::service::mediabrowser {
   }
 
   void MediaBrowserService::onChannelError(const aasdk::error::Error &e) {
-    qCritical(lcServiceBrowser) << "[MediaBrowserService] onChannelError(): " << e.what();
+    qWarning(lcServiceBrowser) << "channel error msg=" << e.what();
   }
 }
 

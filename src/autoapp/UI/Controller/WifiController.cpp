@@ -56,10 +56,10 @@ void WifiController::setInterface(const QString& ifaceOrMac)
     auto* watcher = new QDBusPendingCallWatcher(nm.asyncCall("GetDeviceByIpIface", ifaceName), this);
     connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher* w) {
         if (w->isError()) {
-            qWarning(lcWifi) << "Interface not found:" << w->error().message();
+            qWarning(lcWifi) << "interface not found error=" << w->error().message();
         } else {
             m_wifiDevicePath = w->reply().arguments().at(0).value<QDBusObjectPath>().path();
-            qInfo(lcWifi) << "Wi-Fi device path resolved:" << m_wifiDevicePath;
+            qInfo(lcWifi) << "device path=" << m_wifiDevicePath;
         }
         w->deleteLater();
     });
@@ -153,9 +153,9 @@ void WifiController::enableHotspotImpl(const QString& ssid, const QString& pass)
     auto* w = new QDBusPendingCallWatcher(m_bus.asyncCall(msg), this);
     connect(w, &QDBusPendingCallWatcher::finished, this, [ssid](QDBusPendingCallWatcher* call) {
         if (call->isError())
-            qCritical(lcWifi) << "Hotspot failed:" << call->error().message();
+            qWarning(lcWifi) << "hotspot failed error=" << call->error().message();
         else
-            qInfo(lcWifi) << "Hotspot started:" << ssid;
+            qInfo(lcWifi) << "hotspot started ssid=" << ssid;
         call->deleteLater();
     });
 }
@@ -200,9 +200,9 @@ void WifiController::disconnect()
     auto* watcher = new QDBusPendingCallWatcher(async, this);
     connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher* w) {
         if (w->isError())
-            qWarning(lcWifi) << "Disconnect failed:" << w->error().message();
+            qWarning(lcWifi) << "disconnect failed error=" << w->error().message();
         else
-            qInfo(lcWifi) << "Disconnected from Wi-Fi";
+            qInfo(lcWifi) << "disconnected";
         w->deleteLater();
     });
 #endif
@@ -265,10 +265,10 @@ void WifiController::connectToWifiImpl(const QString& ssid, const QString& passw
     auto* w = new QDBusPendingCallWatcher(m_bus.asyncCall(msg), this);
     connect(w, &QDBusPendingCallWatcher::finished, this, [this, ssid](QDBusPendingCallWatcher* call) {
         if (call->isError()) {
-            qCritical(lcWifi) << "Connect failed:" << call->error().message();
+            qWarning(lcWifi) << "connect failed error=" << call->error().message();
             emit errorOccurred(tr("Connect failed: %1").arg(call->error().message()));
         } else {
-            qInfo(lcWifi) << "Connecting to:" << ssid;
+            qInfo(lcWifi) << "connecting ssid=" << ssid;
             emit statusChanged(tr("Connecting to %1").arg(ssid));
         }
         call->deleteLater();

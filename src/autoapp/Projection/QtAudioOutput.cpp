@@ -54,7 +54,7 @@ namespace f1x::openauto::autoapp::projection {
   }
 
   void QtAudioOutput::createAudioOutput() {
-    qInfo(lcQtAudioOut) << "[Threaded] Initializing Sink on:" << QThread::currentThread();
+    qInfo(lcQtAudioOut) << "audio sink init thread=" << QThread::currentThread();
 
     QAudioDevice device = QMediaDevices::defaultAudioOutput();
     QString configDeviceName = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
@@ -95,11 +95,11 @@ namespace f1x::openauto::autoapp::projection {
 
   void QtAudioOutput::onStartPlayback() {
     if (!audioOutput_) {
-      qCWarning(lcQtAudioOut) << "onStartPlayback called before audio sink was ready — ignored.";
+      qCWarning(lcQtAudioOut) << "playback start before sink ready - ignored";
       return;
     }
     if (!playbackStarted_) {
-      qInfo(lcQtAudioOut) << "Stream Start (Pull Mode)";
+      qInfo(lcQtAudioOut) << "playback started";
       audioOutput_->start(&audioInternalBuffer_);
       float vol = configuration_->getSettingByName<int>("Audio", "PlaybackVolume") / 100.0f;
       audioOutput_->setVolume(std::clamp(vol, 0.0f, 1.0f));

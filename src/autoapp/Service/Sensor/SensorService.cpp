@@ -19,9 +19,9 @@ namespace f1x::openauto::autoapp::service::sensor {
     strand_.dispatch([this, self = this->shared_from_this()]() {
 #ifdef Q_OS_LINUX
       if (gps_open("127.0.0.1", "2947", &this->gpsData_)) {
-        qWarning(lcServiceSensor) << "[SensorService] can't connect to GPSD.";
+        qWarning(lcServiceSensor) << "gpsd connect failed";
       } else {
-        qInfo(lcServiceSensor) << "[SensorService] Connected to GPSD.";
+        qInfo(lcServiceSensor) << "gpsd connected";
         gps_stream(&this->gpsData_, WATCH_ENABLE | WATCH_JSON, NULL);
         this->gpsEnabled_ = true;
       }
@@ -31,7 +31,7 @@ namespace f1x::openauto::autoapp::service::sensor {
       }
       this->sensorPolling();
 #endif
-      qInfo(lcServiceSensor) << "[SensorService] start()";
+      qInfo(lcServiceSensor) << "starting";
       channel_->receive(this->shared_from_this());
     });
 
@@ -48,25 +48,25 @@ namespace f1x::openauto::autoapp::service::sensor {
         this->gpsEnabled_ = false;
       }
 #endif
-      qInfo(lcServiceSensor) << "[SensorService] stop()";
+      qInfo(lcServiceSensor) << "stopping";
     });
   }
 
   void SensorService::pause() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcServiceSensor) << "[SensorService] pause()";
+      qDebug(lcServiceSensor) << "pausing";
     });
   }
 
   void SensorService::resume() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcServiceSensor) << "[SensorService] resume()";
+      qDebug(lcServiceSensor) << "resuming";
     });
   }
 
   void SensorService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    qInfo(lcServiceSensor) << "[SensorService] fillFeatures()";
+    qDebug(lcServiceSensor) << "filling features";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -81,9 +81,7 @@ namespace f1x::openauto::autoapp::service::sensor {
   }
 
   void SensorService::onChannelOpenRequest(const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    qInfo(lcServiceSensor) << "[SensorService] onChannelOpenRequest()";
-    qDebug(lcServiceSensor) << "[SensorService] Channel Id: " << request.service_id() << ", Priority: "
-                        << request.priority();
+    qInfo(lcServiceSensor) << "channel open service_id=" << request.service_id() << " priority=" << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
@@ -99,8 +97,7 @@ namespace f1x::openauto::autoapp::service::sensor {
 
   void SensorService::onSensorStartRequest(
       const aap_protobuf::service::sensorsource::message::SensorRequest &request) {
-    qInfo(lcServiceSensor) << "[SensorService] onSensorStartRequest()";
-    qDebug(lcServiceSensor) << "[SensorService] Request Type: " << request.type();
+    qDebug(lcServiceSensor) << "sensor start request type=" << request.type();
 
     aap_protobuf::service::sensorsource::message::SensorStartResponseMessage response;
     response.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
@@ -123,7 +120,7 @@ namespace f1x::openauto::autoapp::service::sensor {
   }
 
   void SensorService::sendDrivingStatusUnrestricted() {
-    qInfo(lcServiceSensor) << "[SensorService] sendDrivingStatusUnrestricted()";
+    qDebug(lcServiceSensor) << "sending driving status unrestricted";
     aap_protobuf::service::sensorsource::message::SensorBatch indication;
     indication.add_driving_status_data()->set_status(
         aap_protobuf::service::sensorsource::message::DrivingStatus::DRIVE_STATUS_UNRESTRICTED);
@@ -135,14 +132,12 @@ namespace f1x::openauto::autoapp::service::sensor {
   }
 
   void SensorService::sendNightData() {
-    qInfo(lcServiceSensor) << "[SensorService] sendNightData()";
     aap_protobuf::service::sensorsource::message::SensorBatch indication;
+    qDebug(lcServiceSensor) << "night mode=" << SensorService::isNight;
 
     if (SensorService::isNight) {
-      qInfo(lcServiceSensor) << "[SensorService] Night Mode Triggered";
       indication.add_night_mode_data()->set_night_mode(true);
     } else {
-      qInfo(lcServiceSensor) << "[SensorService] Day Mode Triggered";
       indication.add_night_mode_data()->set_night_mode(false);
     }
 
@@ -157,7 +152,7 @@ namespace f1x::openauto::autoapp::service::sensor {
   }
 
   void SensorService::sendGPSLocationData() {
-    qInfo(lcServiceSensor) << "[SensorService] sendGPSLocationData()";
+    qDebug(lcServiceSensor) << "sending gps location";
 #ifdef Q_OS_LINUX
     aap_protobuf::service::sensorsource::message::SensorBatch indication;
 
@@ -193,7 +188,6 @@ namespace f1x::openauto::autoapp::service::sensor {
   }
 
   void SensorService::sensorPolling() {
-    qInfo(lcServiceSensor) << "[SensorService] sensorPolling()";
     if (!this->stopPolling) {
       strand_.dispatch([this, self = this->shared_from_this()]() {
         this->isNight = is_file_exist("/tmp/night_mode_enabled");
@@ -224,13 +218,12 @@ namespace f1x::openauto::autoapp::service::sensor {
   }
 
   bool SensorService::is_file_exist(const char *fileName) {
-    qInfo(lcServiceSensor) << "[SensorService] is_file_exist()";
     std::ifstream ifile(fileName, std::ios::in);
     return ifile.good();
   }
 
   void SensorService::onChannelError(const aasdk::error::Error &e) {
-    qCritical(lcServiceSensor) << "[SensorService] onChannelError(): " << e.what();
+    qWarning(lcServiceSensor) << "channel error msg=" << e.what();
   }
 }
 

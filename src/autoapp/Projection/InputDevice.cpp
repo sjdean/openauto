@@ -17,7 +17,7 @@ namespace f1x::openauto::autoapp::projection {
     void InputDevice::start(IInputDeviceEventHandler &eventHandler) {
         std::lock_guard<decltype(mutex_)> lock(mutex_);
 
-        qInfo(lcInput) << "[InputDevice] start()";
+        qInfo(lcInput) << "starting";
         eventHandler_ = &eventHandler;
         parent_.installEventFilter(this);
     }
@@ -25,7 +25,7 @@ namespace f1x::openauto::autoapp::projection {
     void InputDevice::stop() {
         std::lock_guard<decltype(mutex_)> lock(mutex_);
 
-        qInfo(lcInput) << "[InputDevice] stop()";
+        qInfo(lcInput) << "stopping";
         parent_.removeEventFilter(this);
         eventHandler_ = nullptr;
     }

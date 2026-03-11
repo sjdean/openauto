@@ -16,31 +16,31 @@ namespace f1x::openauto::autoapp::service::radio {
 
   void RadioService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qDebug(lcServiceRadio) << "[RadioService] start()";
+      qDebug(lcServiceRadio) << "starting";
     });
   }
 
   void RadioService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qDebug(lcServiceRadio) << "[RadioService] stop()";
+      qDebug(lcServiceRadio) << "stopping";
     });
   }
 
   void RadioService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qDebug(lcServiceRadio) << "[RadioService] pause()";
+      qDebug(lcServiceRadio) << "pausing";
     });
   }
 
   void RadioService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qDebug(lcServiceRadio) << "[RadioService] resume()";
+      qDebug(lcServiceRadio) << "resuming";
     });
   }
 
   void RadioService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    qInfo(lcServiceRadio) << "[RadioService] fillFeatures()";
+    qDebug(lcServiceRadio) << "filling features";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -49,9 +49,7 @@ namespace f1x::openauto::autoapp::service::radio {
   }
 
   void RadioService::onChannelOpenRequest(const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    qInfo(lcServiceRadio) << "[RadioService] onChannelOpenRequest()";
-    qDebug(lcServiceRadio) << "[RadioService] Channel Id: " << request.service_id() << ", Priority: "
-                        << request.priority();
+    qInfo(lcServiceRadio) << "channel open service_id=" << request.service_id() << " priority=" << request.priority();
 
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
@@ -67,7 +65,7 @@ namespace f1x::openauto::autoapp::service::radio {
   }
 
   void RadioService::onChannelError(const aasdk::error::Error &e) {
-    qCritical(lcServiceRadio) << "[RadioService] onChannelError(): " << e.what();
+    qWarning(lcServiceRadio) << "channel error msg=" << e.what();
   }
 
 

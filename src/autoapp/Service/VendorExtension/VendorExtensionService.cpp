@@ -17,31 +17,31 @@ namespace f1x::openauto::autoapp::service::vendorextension {
 
   void VendorExtensionService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceVendor) << "[VendorExtensionService] start()";
+      qDebug(lcServiceVendor) << "starting";
     });
   }
 
   void VendorExtensionService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceVendor) << "[VendorExtensionService] stop()";
+      qDebug(lcServiceVendor) << "stopping";
     });
   }
 
   void VendorExtensionService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceVendor) << "[VendorExtensionService] pause()";
+      qDebug(lcServiceVendor) << "pausing";
     });
   }
 
   void VendorExtensionService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceVendor) << "[VendorExtensionService] resume()";
+      qDebug(lcServiceVendor) << "resuming";
     });
   }
 
   void VendorExtensionService::fillFeatures(
     aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    qInfo(lcServiceVendor) << "[VendorExtensionService] fillFeatures()";
+    qDebug(lcServiceVendor) << "filling features";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -51,9 +51,7 @@ namespace f1x::openauto::autoapp::service::vendorextension {
 
   void VendorExtensionService::onChannelOpenRequest(
     const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    qInfo(lcServiceVendor) << "[VendorExtensionService] onChannelOpenRequest()";
-    qInfo(lcServiceVendor) << "[VendorExtensionService] Channel Id: " << request.service_id() << ", Priority: "
-                       << request.priority();
+    qInfo(lcServiceVendor) << "channel open service_id=" << request.service_id() << " priority=" << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
@@ -67,7 +65,7 @@ namespace f1x::openauto::autoapp::service::vendorextension {
   }
 
   void VendorExtensionService::onChannelError(const aasdk::error::Error &e) {
-    qCritical(lcServiceVendor) << "[VendorExtensionService] onChannelError(): " << e.what();
+    qWarning(lcServiceVendor) << "channel error msg=" << e.what();
   }
 }
 

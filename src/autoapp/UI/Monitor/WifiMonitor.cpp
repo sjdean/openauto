@@ -175,7 +175,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         auto *w = new QDBusPendingCallWatcher(wireless.asyncCall("RequestScan", options), this);
         connect(w, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
             if (call->isError())
-                qWarning(lcWifiMonitor) << "RequestScan failed:" << call->error().message();
+                qWarning(lcWifiMonitor) << "scan request failed error=" << call->error().message();
             else
                 QTimer::singleShot(2000, this, &WifiMonitor::refreshAccessPoints);
             call->deleteLater();
@@ -195,7 +195,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         QDBusReply<QList<QDBusObjectPath>> reply = wireless.call("GetAllAccessPoints");
         if (!reply.isValid()) {
-            qWarning(lcWifiMonitor) << "GetAllAccessPoints failed:" << reply.error().message();
+            qWarning(lcWifiMonitor) << "access points query failed error=" << reply.error().message();
             return;
         }
 
@@ -247,13 +247,13 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *w) {
             QDBusPendingReply<QDBusObjectPath> r = *w;
             if (r.isError()) {
-                qWarning(lcWifiMonitor) << "Wi-Fi device not found:" << r.error().message();
+                qWarning(lcWifiMonitor) << "device not found error=" << r.error().message();
                 w->deleteLater();
                 return;
             }
 
             m_wifiDevicePath = r.value().path();
-            qInfo(lcWifiMonitor) << "Monitoring Wi-Fi device:" << m_wifiDevicePath;
+            qInfo(lcWifiMonitor) << "monitoring device path=" << m_wifiDevicePath;
 
             // Watch state changes (connected/disconnected)
             m_bus.connect("org.freedesktop.NetworkManager",
@@ -333,7 +333,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         auto *watcher = new QDBusPendingCallWatcher(reply, this);
         connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, specificObject](QDBusPendingCallWatcher *w) {
             if (w->isError()) {
-                qWarning(lcWifiMonitor) << "Failed to get connection settings:" << w->error().message();
+                qWarning(lcWifiMonitor) << "failed to get connection settings error=" << w->error().message();
                 w->deleteLater();
                 return;
             }

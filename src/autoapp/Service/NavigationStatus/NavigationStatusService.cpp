@@ -17,31 +17,31 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
 
   void NavigationStatusService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceNavigation) << "[NavigationStatusService] start()";
+      qDebug(lcServiceNavigation) << "starting";
     });
   }
 
   void NavigationStatusService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceNavigation) << "[NavigationStatusService] stop()";
+      qDebug(lcServiceNavigation) << "stopping";
     });
   }
 
   void NavigationStatusService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceNavigation) << "[NavigationStatusService] pause()";
+      qDebug(lcServiceNavigation) << "pausing";
     });
   }
 
   void NavigationStatusService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceNavigation) << "[NavigationStatusService] resume()";
+      qDebug(lcServiceNavigation) << "resuming";
     });
   }
 
   void NavigationStatusService::fillFeatures(
     aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    qInfo(lcServiceNavigation) << "[NavigationStatusService] fillFeatures()";
+    qDebug(lcServiceNavigation) << "filling features";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -51,9 +51,7 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
 
   void NavigationStatusService::onChannelOpenRequest(
     const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    qInfo(lcServiceNavigation) << "[NavigationStatusService] onChannelOpenRequest()";
-    qInfo(lcServiceNavigation) << "[NavigationStatusService] Channel Id: " << request.service_id() << ", Priority: "
-                       << request.priority();
+    qInfo(lcServiceNavigation) << "channel open service_id=" << request.service_id() << " priority=" << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
@@ -68,7 +66,7 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
   }
 
   void NavigationStatusService::onChannelError(const aasdk::error::Error &e) {
-    qCritical(lcServiceNavigation) << "[NavigationStatusService] onChannelError(): " << e.what();
+    qWarning(lcServiceNavigation) << "channel error msg=" << e.what();
   }
 
 

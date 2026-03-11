@@ -15,33 +15,33 @@ namespace f1x::openauto::autoapp::service::inputsource {
 
   void InputSourceService::start() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcServiceInput) << "[InputSourceService] start()";
+      qInfo(lcServiceInput) << "starting";
       channel_->receive(this->shared_from_this());
     });
   }
 
   void InputSourceService::stop() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-      qInfo(lcServiceInput) << "[InputSourceService] stop()";
+      qInfo(lcServiceInput) << "stopping";
       inputDevice_->stop();
     });
   }
 
   void InputSourceService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceInput) << "[InputSourceService] pause()";
+      qDebug(lcServiceInput) << "pausing";
     });
   }
 
   void InputSourceService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceInput) << "[InputSourceService] resume()";
+      qDebug(lcServiceInput) << "resuming";
     });
   }
 
   void InputSourceService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    qInfo(lcServiceInput) << "[InputSourceService] fillFeatures()";
+    qDebug(lcServiceInput) << "filling features";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -60,17 +60,15 @@ namespace f1x::openauto::autoapp::service::inputsource {
       touchscreenConfig->set_type(aap_protobuf::service::inputsource::message::TouchScreenType::CAPACITIVE);
       touchscreenConfig->set_width(touchscreenSurface.width());
       touchscreenConfig->set_height(touchscreenSurface.height());
-      qInfo(lcServiceInput) << "[InputSourceService] Touchscreen Configured: " << touchscreenSurface.width();
+      qDebug(lcServiceInput) << "touchscreen configured width=" << touchscreenSurface.width();
     } else {
-      qInfo(lcServiceInput) << "[InputSourceService] No Touchscreen Available";
+      qDebug(lcServiceInput) << "no touchscreen";
     }
   }
 
   void
   InputSourceService::onChannelOpenRequest(const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    qInfo(lcServiceInput) << "[InputSourceService] onChannelOpenRequest()";
-    qDebug(lcServiceInput) << "[InputSourceService] Channel Id: " << request.service_id() << ", Priority: "
-                        << request.priority();
+    qInfo(lcServiceInput) << "channel open service_id=" << request.service_id() << " priority=" << request.priority();
 
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
@@ -86,8 +84,7 @@ namespace f1x::openauto::autoapp::service::inputsource {
 
   void InputSourceService::onKeyBindingRequest(
       const aap_protobuf::service::media::sink::message::KeyBindingRequest &request) {
-    qDebug(lcServiceInput) << "[InputSourceService] onKeyBindingRequest()";
-    qDebug(lcServiceInput) << "[InputSourceService] KeyCodes Count: " << request.keycodes_size();
+    qDebug(lcServiceInput) << "key binding request count=" << request.keycodes_size();
 
     aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
     const auto &supportedButtonCodes = inputDevice_->getSupportedButtonCodes();
@@ -95,8 +92,7 @@ namespace f1x::openauto::autoapp::service::inputsource {
     for (int i = 0; i < request.keycodes_size(); ++i) {
       if (std::find(supportedButtonCodes.begin(), supportedButtonCodes.end(), request.keycodes(i)) ==
           supportedButtonCodes.end()) {
-        qCritical(lcServiceInput) << "[InputSourceService] onKeyBindingRequest is not supported for KeyCode: "
-                            << request.keycodes(i);
+        qWarning(lcServiceInput) << "unsupported key code=" << request.keycodes(i);
         status = aap_protobuf::shared::MessageStatus::STATUS_KEYCODE_NOT_BOUND;
         break;
       }
@@ -109,8 +105,6 @@ namespace f1x::openauto::autoapp::service::inputsource {
       inputDevice_->start(*this);
     }
 
-    qDebug(lcServiceInput) << "[InputSourceService] Sending KeyBindingResponse with Status: " << status;
-
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {},
                   std::bind(&InputSourceService::onChannelError, this->shared_from_this(), std::placeholders::_1));
@@ -119,11 +113,10 @@ namespace f1x::openauto::autoapp::service::inputsource {
   }
 
   void InputSourceService::onChannelError(const aasdk::error::Error &e) {
-    qCritical(lcServiceInput) << "[InputSourceService] onChannelError(): " << e.what();
+    qWarning(lcServiceInput) << "channel error msg=" << e.what();
   }
 
   void InputSourceService::onButtonEvent(const projection::ButtonEvent &event) {
-    qCritical(lcServiceInput) << "[InputSourceService] onButtonEvent()";
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::high_resolution_clock::now().time_since_epoch());
 
@@ -152,7 +145,6 @@ namespace f1x::openauto::autoapp::service::inputsource {
   }
 
   void InputSourceService::onTouchEvent(const projection::TouchEvent &event) {
-    qCritical(lcServiceInput) << "[InputSourceService] onTouchEvent()";
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::high_resolution_clock::now().time_since_epoch());
 

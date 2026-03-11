@@ -16,31 +16,31 @@ namespace f1x::openauto::autoapp::service::phonestatus {
 
   void PhoneStatusService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServicePhoneStatus) << "[PhoneStatusService] start()";
+      qDebug(lcServicePhoneStatus) << "starting";
     });
   }
 
   void PhoneStatusService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServicePhoneStatus) << "[PhoneStatusService] stop()";
+      qDebug(lcServicePhoneStatus) << "stopping";
     });
   }
 
   void PhoneStatusService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServicePhoneStatus) << "[PhoneStatusService] pause()";
+      qDebug(lcServicePhoneStatus) << "pausing";
     });
   }
 
   void PhoneStatusService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServicePhoneStatus) << "[PhoneStatusService] resume()";
+      qDebug(lcServicePhoneStatus) << "resuming";
     });
   }
 
   void PhoneStatusService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    qInfo(lcServicePhoneStatus) << "[PhoneStatusService] fillFeatures()";
+    qDebug(lcServicePhoneStatus) << "filling features";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -50,9 +50,7 @@ namespace f1x::openauto::autoapp::service::phonestatus {
 
   void
   PhoneStatusService::onChannelOpenRequest(const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    qInfo(lcServicePhoneStatus) << "[PhoneStatusService] onChannelOpenRequest()";
-    qDebug(lcServicePhoneStatus) << "[PhoneStatusService] Channel Id: " << request.service_id() << ", Priority: "
-                        << request.priority();
+    qInfo(lcServicePhoneStatus) << "channel open service_id=" << request.service_id() << " priority=" << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
@@ -68,7 +66,7 @@ namespace f1x::openauto::autoapp::service::phonestatus {
 
 
   void PhoneStatusService::onChannelError(const aasdk::error::Error &e) {
-    qCritical(lcServicePhoneStatus) << "[PhoneStatusService] onChannelError(): " << e.what();
+    qWarning(lcServicePhoneStatus) << "channel error msg=" << e.what();
   }
 }
 

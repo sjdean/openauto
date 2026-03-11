@@ -59,8 +59,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
                 const int parsed = maxFile.readAll().trimmed().toInt();
                 if (parsed > 0) m_backlightMaxBrightness = parsed;
             }
-            qInfo(lcVmBrightness) << "Backlight device:" << m_backlightPath
-                                  << "max:" << m_backlightMaxBrightness;
+            qInfo(lcVmBrightness) << "backlight device=" << m_backlightPath
+                                  << " max=" << m_backlightMaxBrightness;
         }
 #endif
     }
@@ -92,9 +92,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         const int max = getCurrentMax();
         const int clamped = std::clamp(userBrightnessTarget, min, max);
 
-        qDebug(lcVmBrightness) << "Min" << min << "Max" << max
-                               << "Requested" << userBrightnessTarget
-                               << "Clamped" << clamped;
+        qDebug(lcVmBrightness) << "brightness min=" << min << " max=" << max
+                               << " requested=" << userBrightnessTarget << " clamped=" << clamped;
 
         if (m_calculatedBrightness != clamped) {
             m_calculatedBrightness = clamped;
@@ -124,7 +123,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
      * @return brightness value to set 0 to 255
      */
     int BrightnessViewModel::getTargetBrightness() const {
-        qInfo(lcVmBrightness) << "Target brightness: " << m_userBrightnessTarget;
         return m_userBrightnessTarget;
     }
 
@@ -133,7 +131,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
      * @return calculated brightness
      */
     int BrightnessViewModel::getScreenBrightness() const {
-        qInfo(lcVmBrightness) << "Calculated brightness: " << m_calculatedBrightness;
         return m_calculatedBrightness;
     }
 

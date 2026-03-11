@@ -29,7 +29,7 @@ Item {
             width: parent.width
             alternateColor: Constants.sliderAlternateColor
             value: volumePopupHandler.volumeSink
-            onValueChanged: volumePopupHandler.volumeSink = value
+            onMoved: volumePopupHandler.volumeSink = value
 
         }
 

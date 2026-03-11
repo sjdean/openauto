@@ -94,7 +94,12 @@ inline void set_qt_environment() {
     qputenv("QML_COMPAT_RESOLVE_URLS_ON_ASSIGNMENT", "1");
     qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "1");
     qputenv("QT_ENABLE_HIGHDPI_SCALING", "0");
+    // In release builds suppress verbose debug output; always silence QML connection noise
+#if defined(QT_NO_DEBUG)
+    qputenv("QT_LOGGING_RULES", "*.debug=false\nqt.qml.connections=false");
+#else
     qputenv("QT_LOGGING_RULES", "qt.qml.connections=false");
+#endif
     qputenv("QT_QUICK_CONTROLS_CONF", ":/qtquickcontrols2.conf");
 }
 
@@ -126,10 +131,10 @@ void startIOServiceWorkers(boost::asio::io_service &ioService, ThreadPool &threa
 
 int main(int argc, char *argv[]) {
     // Initial High Level Connectivity
-    qInfo(lcAutoapp) << "OpenAuto booting up";
+    qInfo(lcAutoapp) << "booting up";
     libusb_context *usbContext;
     if (libusb_init(&usbContext) != 0) {
-        qCritical(lcAutoapp) << "[AutoApp] libusb_init failed.";
+        qCritical(lcAutoapp) << "libusb_init failed";
         return 1;
     }
 
@@ -139,7 +144,7 @@ int main(int argc, char *argv[]) {
     std::vector<std::thread> threadPool;
 
     // Start Workers
-    qInfo(lcAutoapp) << "Starting Workers";
+    qInfo(lcAutoapp) << "starting workers";
     startUSBWorkers(ioService, usbContext, threadPool);
     startIOServiceWorkers(ioService, threadPool);
 
@@ -151,7 +156,7 @@ int main(int argc, char *argv[]) {
     audioHandler = std::make_shared<autoapp::UI::Monitor::CoreAudioHandler>();
 #endif
 
-    qInfo(lcAutoapp) << "Reading Configuration";
+    qInfo(lcAutoapp) << "reading configuration";
 
     auto configuration = std::make_shared<autoapp::configuration::Configuration>();
     set_qt_environment();
@@ -176,7 +181,7 @@ int main(int argc, char *argv[]) {
     QQmlContext *context = engine.rootContext();
     QQuickView oj;
 
-    qInfo(lcAutoapp) << "Initialising GUI";
+    qInfo(lcAutoapp) << "initialising GUI";
     // HardwareProfile singleton — exposes hardware.json flags to QML
     // (written at boot by journeyos-hardware-detect; falls back to safe defaults if absent)
     qmlRegisterSingletonType<f1x::openauto::autoapp::Hardware::HardwareProfile>(
@@ -311,13 +316,12 @@ int main(int argc, char *argv[]) {
     int width = 0;
     int height = 0;
 
-    qInfo(lcAutoapp) << "Reading Display Information";
+    qInfo(lcAutoapp) << "reading display information";
 
     for (QScreen *screen: app.screens()) {
-        qDebug(lcAutoapp) << "[AutoApp] Screen name: " << screen->name().toStdString();
-        qDebug(lcAutoapp) << "[AutoApp] Screen geometry: "
-                << screen->geometry().width(); // This includes position and size
-        qDebug(lcAutoapp) << "[AutoApp] Screen physical size: " << screen->physicalSize().width(); // Size in millimeters
+        qDebug(lcAutoapp) << "screen name=" << screen->name()
+                          << " geometry_w=" << screen->geometry().width()
+                          << " physical_mm_w=" << screen->physicalSize().width();
     }
 
     QScreen *primaryScreen = QGuiApplication::primaryScreen();
@@ -328,18 +332,15 @@ int main(int argc, char *argv[]) {
         QRect screenGeometry = primaryScreen->geometry();
         width = screenGeometry.width();
         height = screenGeometry.height();
-        qInfo(lcAutoapp) << "Using gemoetry from primary screen.";
-        qInfo(lcAutoapp) << "Display width: " << width;
-        qInfo(lcAutoapp) << "Display height: " << height;
+        qInfo(lcAutoapp) << "primary screen display_w=" << width << " display_h=" << height;
     } else {
-        qInfo(lcAutoapp) << "Unable to find primary screen, using default values.";
+        qWarning(lcAutoapp) << "no primary screen found, using defaults";
     }
 
-    qInfo(lcAutoapp) << "Initializing Media Infrastructure...";
+    qInfo(lcAutoapp) << "initialising media infrastructure";
 
     autoapp::projection::IVideoOutput::Pointer videoOutput;
     videoOutput = std::make_shared<autoapp::projection::QtVideoOutput>(configuration);
-    qInfo(lcAutoapp) << "Video Output: ";
     autoapp::projection::IAudioInput::Pointer audioInput;
     audioInput = std::make_shared<autoapp::projection::QtAudioInput>(1, 16, 16000, configuration);
 
@@ -365,15 +366,12 @@ int main(int argc, char *argv[]) {
     QRect videoGeometry;
     switch (configuration->getSettingByName<int>("AndroidAuto", "Resolution")) {
         case aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_1280x720:
-            qInfo(lcAutoapp) << "...Resolution 1280x720";
             videoGeometry = QRect(0, 0, 1280, 720);
             break;
         case aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_1920x1080:
-            qInfo(lcAutoapp) << "...Resolution 1920x1080";
             videoGeometry = QRect(0, 0, 1920, 1080);
             break;
         default:
-            qInfo(lcAutoapp) << "...Resolution 800x480";
             videoGeometry = QRect(0, 0, 800, 480);
             break;
     }
@@ -415,17 +413,17 @@ int main(int argc, char *argv[]) {
     auto connectedAccessoriesEnumerator(
         std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));
 
-    qInfo(lcAutoapp) << "Starting up Projection Manager";
+    qInfo(lcAutoapp) << "starting projection manager";
     auto oa = std::make_shared<autoapp::ProjectionManager>(configuration, ioService, usbWrapper, tcpWrapper, sessionFactory,
                                              std::move(usbHub), std::move(connectedAccessoriesEnumerator),
                                              androidAutoMonitor);
 
-    qInfo(lcAutoapp) << "Waiting for USB";
+    qInfo(lcAutoapp) << "waiting for USB device";
     oa->waitForUSBDevice();
 
     // FIX: Stop the background services when the GUI shuts down
     QObject::connect(&app, &QGuiApplication::aboutToQuit, [&ioService]() {
-        qInfo(lcAutoapp) << "Stopping IO Service...";
+        qInfo(lcAutoapp) << "stopping io service";
         ioService.stop();
     });
 

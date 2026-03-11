@@ -79,7 +79,6 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
   }
 
   int VolumeHandler::getVolumeSink() const {
-    qInfo(lcVolume) << "Volume sink: " << m_volumeSink;
     return m_volumeSink;
   }
 

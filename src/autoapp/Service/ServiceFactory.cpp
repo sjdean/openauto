@@ -73,7 +73,7 @@ namespace f1x::openauto::autoapp::service {
     }
 
     ServiceList ServiceFactory::create(aasdk::messenger::IMessenger::Pointer messenger) {
-        qInfo(lcServiceFactory) << "Configuring Available AndroidAuto Services:";
+        qInfo(lcServiceFactory) << ">>> building service list";
         ServiceList serviceList;
 
         this->createMediaSinkServices(serviceList, messenger);
@@ -82,22 +82,22 @@ namespace f1x::openauto::autoapp::service {
 
         serviceList.emplace_back(this->createBluetoothService(messenger));
         serviceList.emplace_back(this->createInputService(messenger));
-        serviceList.emplace_back(this->createNavigationStatusService(messenger));
-        serviceList.emplace_back(this->createWifiProjectionService(messenger));
+        //serviceList.emplace_back(this->createNavigationStatusService(messenger));
+        //serviceList.emplace_back(this->createWifiProjectionService(messenger));
 
         return serviceList;
     }
 
     IService::Pointer ServiceFactory::createBluetoothService(aasdk::messenger::IMessenger::Pointer messenger) {
-        qInfo(lcServiceFactory) << "...Bluetooth";
+        qInfo(lcServiceFactory) << "creating bluetooth service";
 
         projection::IBluetoothDevice::Pointer bluetoothDevice;
         // TODO: This is possibly a little messy. I mean, we fundamentally don't want to create a bluetooth service if we don't have a bluetooth device
         if (configuration_->getSettingByName<QString>("Bluetooth", "AdapterAddress") == "") {
-            qInfo(lcServiceFactory) << "......Using Dummy Bluetooth";
+            qInfo(lcServiceFactory) << "bluetooth=dummy (no adapter address configured)";
             bluetoothDevice = std::make_shared<projection::DummyBluetoothDevice>();
         } else {
-            qInfo(lcServiceFactory) << "......Using Local Bluetooth Adapter";
+            qInfo(lcServiceFactory) << "bluetooth=local";
 
             bluetoothDevice = projection::IBluetoothDevice::Pointer(
                 new projection::LocalBluetoothDevice(
@@ -117,11 +117,9 @@ namespace f1x::openauto::autoapp::service {
 
     void ServiceFactory::createMediaSinkServices(ServiceList &serviceList,
                                                  aasdk::messenger::IMessenger::Pointer messenger) {
-        qInfo(lcServiceFactory) << "...Sinks";
-
         if (configuration_->getSettingByName<bool>("AndroidAuto", "Media")) {
             if (audioOutputMedia_) {
-                qInfo(lcServiceFactory) << "......Media channel";
+                qInfo(lcServiceFactory) << "sink registered channel=media";
                 serviceList.emplace_back(
                     std::make_shared<mediasink::MediaAudioService>(ioService_, messenger, audioOutputMedia_));
             }
@@ -129,7 +127,7 @@ namespace f1x::openauto::autoapp::service {
 
         if (configuration_->getSettingByName<bool>("AndroidAuto", "Guidance")) {
             if (audioOutputGuidance_) {
-                qInfo(lcServiceFactory) << "......Guidance channel";
+                qInfo(lcServiceFactory) << "sink registered channel=guidance";
                 serviceList.emplace_back(
                     std::make_shared<mediasink::GuidanceAudioService>(ioService_, messenger, audioOutputGuidance_));
             }
@@ -147,20 +145,20 @@ namespace f1x::openauto::autoapp::service {
          * No Need to Check for systemAudioChannelEnabled - MUST be enabled by default.
          */
 
-        qInfo(lcServiceFactory) << "......System channel";
+        qInfo(lcServiceFactory) << "sink registered channel=system";
 
         serviceList.emplace_back(
             std::make_shared<mediasink::SystemAudioService>(ioService_, messenger, audioOutputSystem_));
 
 
-        qInfo(lcServiceFactory) << "......Video Channel";
+        qInfo(lcServiceFactory) << "sink registered channel=video";
         serviceList.emplace_back(
             std::make_shared<mediasink::VideoService>(ioService_, messenger, videoOutput_));
     }
 
     void ServiceFactory::createMediaSourceServices(f1x::openauto::autoapp::service::ServiceList &serviceList,
                                                    aasdk::messenger::IMessenger::Pointer messenger) {
-        qInfo(lcServiceFactory) << "...Sources";
+        qInfo(lcServiceFactory) << "source registered channel=microphone";
         // Use the pre-initialised audio input passed to this factory rather than
         // creating a new device on every session.
         serviceList.emplace_back(std::make_shared<mediasource::MicrophoneMediaSourceService>(ioService_, messenger,
@@ -168,17 +166,17 @@ namespace f1x::openauto::autoapp::service {
     }
 
     IService::Pointer ServiceFactory::createSensorService(aasdk::messenger::IMessenger::Pointer messenger) {
-        qInfo(lcServiceFactory) << "...Sensors";
+        qInfo(lcServiceFactory) << "service registered channel=sensors";
         return std::make_shared<sensor::SensorService>(ioService_, messenger);
     }
 
     IService::Pointer ServiceFactory::createNavigationStatusService(aasdk::messenger::IMessenger::Pointer messenger) {
-        qInfo(lcServiceFactory) << "...Navigation Status";
+        qInfo(lcServiceFactory) << "service registered channel=navigation-status";
         return std::make_shared<navigationstatus::NavigationStatusService>(ioService_, messenger);
     }
 
     IService::Pointer ServiceFactory::createWifiProjectionService(aasdk::messenger::IMessenger::Pointer messenger) {
-        qInfo(lcServiceFactory) << "...Wifi Projection";
+        qInfo(lcServiceFactory) << "service registered channel=wifi-projection";
         return std::make_shared<wifiprojection::WifiProjectionService>(ioService_, messenger, configuration_);
     }
 }

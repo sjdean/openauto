@@ -163,45 +163,72 @@ namespace f1x::openauto::autoapp::projection {
                     continue;
                 }
 
-                // Verify pixel format before copying
-                if (frame_->format != AV_PIX_FMT_YUV420P) {
-                    qWarning() << "[Video] Unexpected pixel format" << frame_->format
-                               << "— expected AV_PIX_FMT_YUV420P (" << AV_PIX_FMT_YUV420P << ")";
-                    // TODO: use swscale to convert if this triggers
-                    continue;
+                // Resolve the frame to copy from.
+                // YUVJ420P (JPEG/full-range) has identical memory layout to YUV420P — accept directly.
+                // Any other format gets converted to YUV420P via a lazy-initialised swscale context.
+                const AVFrame* srcFrame = frame_;
+                AVFrame* convertedFrame = nullptr;
+
+                if (frame_->format != AV_PIX_FMT_YUV420P && frame_->format != AV_PIX_FMT_YUVJ420P) {
+                    if (swsCtxSrcFmt_ != frame_->format) {
+                        if (swsCtx_) { sws_freeContext(swsCtx_); swsCtx_ = nullptr; }
+                        swsCtx_ = sws_getContext(
+                            frame_->width, frame_->height, static_cast<AVPixelFormat>(frame_->format),
+                            frame_->width, frame_->height, AV_PIX_FMT_YUV420P,
+                            SWS_BILINEAR, nullptr, nullptr, nullptr);
+                        swsCtxSrcFmt_ = frame_->format;
+                        if (swsCtx_)
+                            qInfo() << "[Video] swscale context created: fmt" << frame_->format << "→ YUV420P";
+                        else
+                            qWarning() << "[Video] sws_getContext failed for fmt" << frame_->format << "— dropping frame";
+                    }
+                    if (!swsCtx_) { continue; }
+
+                    convertedFrame = av_frame_alloc();
+                    convertedFrame->format = AV_PIX_FMT_YUV420P;
+                    convertedFrame->width  = frame_->width;
+                    convertedFrame->height = frame_->height;
+                    av_frame_get_buffer(convertedFrame, 32);
+                    sws_scale(swsCtx_,
+                              frame_->data,     frame_->linesize,     0, frame_->height,
+                              convertedFrame->data, convertedFrame->linesize);
+                    srcFrame = convertedFrame;
                 }
 
-                QVideoFrameFormat format(QSize(frame_->width, frame_->height),
+                QVideoFrameFormat format(QSize(srcFrame->width, srcFrame->height),
                                          QVideoFrameFormat::Format_YUV420P);
                 QVideoFrame qFrame(format);
 
                 if (!qFrame.map(QVideoFrame::WriteOnly)) {
                     qWarning() << "[Video] QVideoFrame::map(WriteOnly) failed for"
-                               << frame_->width << "x" << frame_->height;
+                               << srcFrame->width << "x" << srcFrame->height;
+                    if (convertedFrame) av_frame_free(&convertedFrame);
                     continue;
                 }
 
                 // Copy Y plane
-                for (int y = 0; y < frame_->height; ++y) {
+                for (int y = 0; y < srcFrame->height; ++y) {
                     memcpy(qFrame.bits(0) + y * qFrame.bytesPerLine(0),
-                           frame_->data[0] + y * frame_->linesize[0],
-                           frame_->width);
+                           srcFrame->data[0] + y * srcFrame->linesize[0],
+                           srcFrame->width);
                 }
                 // Copy U plane
-                for (int y = 0; y < frame_->height / 2; ++y) {
+                for (int y = 0; y < srcFrame->height / 2; ++y) {
                     memcpy(qFrame.bits(1) + y * qFrame.bytesPerLine(1),
-                           frame_->data[1] + y * frame_->linesize[1],
-                           frame_->width / 2);
+                           srcFrame->data[1] + y * srcFrame->linesize[1],
+                           srcFrame->width / 2);
                 }
                 // Copy V plane
-                for (int y = 0; y < frame_->height / 2; ++y) {
+                for (int y = 0; y < srcFrame->height / 2; ++y) {
                     memcpy(qFrame.bits(2) + y * qFrame.bytesPerLine(2),
-                           frame_->data[2] + y * frame_->linesize[2],
-                           frame_->width / 2);
+                           srcFrame->data[2] + y * srcFrame->linesize[2],
+                           srcFrame->width / 2);
                 }
 
                 qFrame.unmap();
-                qFrame.setStartTime(static_cast<qint64>(frame_->pts));
+                qFrame.setStartTime(static_cast<qint64>(srcFrame->pts));
+
+                if (convertedFrame) { av_frame_free(&convertedFrame); convertedFrame = nullptr; }
 
                 if (recvCount <= 3) {
                     qInfo() << "[Video] Calling setVideoFrame on sink" << localSink
@@ -227,5 +254,6 @@ namespace f1x::openauto::autoapp::projection {
         av_packet_free(&packet_);
         av_frame_free(&frame_);
         avcodec_free_context(&codecContext_);
+        if (swsCtx_) { sws_freeContext(swsCtx_); swsCtx_ = nullptr; }
     }
 }

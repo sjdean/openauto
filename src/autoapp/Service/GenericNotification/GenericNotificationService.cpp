@@ -17,31 +17,31 @@ namespace f1x::openauto::autoapp::service::genericnotification {
 
   void GenericNotificationService::start() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceNotify) << "[GenericNotificationService] start()";
+      qDebug(lcServiceNotify) << "starting";
     });
   }
 
   void GenericNotificationService::stop() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceNotify) << "[GenericNotificationService] stop()";
+      qDebug(lcServiceNotify) << "stopping";
     });
   }
 
   void GenericNotificationService::pause() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceNotify) << "[GenericNotificationService] pause()";
+      qDebug(lcServiceNotify) << "pausing";
     });
   }
 
   void GenericNotificationService::resume() {
     strand_.dispatch([self = this->shared_from_this()]() {
-      qInfo(lcServiceNotify) << "[GenericNotificationService] resume()";
+      qDebug(lcServiceNotify) << "resuming";
     });
   }
 
   void GenericNotificationService::fillFeatures(
       aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) {
-    qInfo(lcServiceNotify) << "[GenericNotificationService] fillFeatures()";
+    qDebug(lcServiceNotify) << "filling features";
 
     auto *service = response.add_channels();
     service->set_id(static_cast<uint32_t>(channel_->getId()));
@@ -51,9 +51,7 @@ namespace f1x::openauto::autoapp::service::genericnotification {
 
   void GenericNotificationService::onChannelOpenRequest(
       const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    qInfo(lcServiceNotify) << "[GenericNotificationService] onChannelOpenRequest()";
-    qDebug(lcServiceNotify) << "[GenericNotificationService] Channel Id: " << request.service_id() << ", Priority: "
-                        << request.priority();
+    qInfo(lcServiceNotify) << "channel open service_id=" << request.service_id() << " priority=" << request.priority();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
@@ -68,7 +66,7 @@ namespace f1x::openauto::autoapp::service::genericnotification {
   }
 
   void GenericNotificationService::onChannelError(const aasdk::error::Error &e) {
-    qCritical(lcServiceNotify) << "[GenericNotificationService] onChannelError(): " << e.what();
+    qWarning(lcServiceNotify) << "channel error msg=" << e.what();
   }
 }
 

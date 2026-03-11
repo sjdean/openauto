@@ -27,7 +27,7 @@ void UpdateManager::checkForUpdate()
     const QString serverUrl = m_config->getSettingByName<QString>(
         "Updates", "ServerUrl", "https://updates.example.com/ota/latest.json");
 
-    qInfo(lcUpdate) << "OTA check stub — server URL:" << serverUrl;
+    qInfo(lcUpdate) << "checking for update url=" << serverUrl;
 
     // Stub: no real HTTP request yet. Always reports no update available.
     m_updateAvailable = false;
@@ -42,20 +42,19 @@ void UpdateManager::checkForUpdate()
 void UpdateManager::downloadUpdate()
 {
     if (m_updateUrl.isEmpty()) {
-        qWarning(lcUpdate) << "downloadUpdate() called with no update URL — check for update first.";
+        qWarning(lcUpdate) << "download called with no update URL";
         return;
     }
-    qInfo(lcUpdate) << "OTA download stub — would fetch:" << m_updateUrl;
+    qInfo(lcUpdate) << "download url=" << m_updateUrl;
 }
 
 void UpdateManager::applyUpdate()
 {
     if (m_updateUrl.isEmpty()) {
-        qWarning(lcUpdate) << "applyUpdate() called with no update URL — check for update first.";
+        qWarning(lcUpdate) << "apply called with no update URL";
         return;
     }
-    // Stub: log the RAUC command but do NOT execute it.
-    qInfo(lcUpdate) << "OTA apply stub — would run: rauc install" << m_updateUrl;
+    qInfo(lcUpdate) << "apply url=" << m_updateUrl << " (would run: rauc install)";
 }
 
 } // namespace

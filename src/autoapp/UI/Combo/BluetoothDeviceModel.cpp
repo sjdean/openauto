@@ -1,7 +1,5 @@
 #include "f1x/openauto/autoapp/UI/Combo/BluetoothDeviceModel.hpp"
 #include <QProcess>
-#include <qloggingcategory.h>
-Q_LOGGING_CATEGORY(lcComboBtDevice, "journeyos.bluetooth.client.list")
 
 namespace f1x::openauto::autoapp::UI::Combo {
     BluetoothDeviceModel::BluetoothDeviceModel(Monitor::BluetoothHandler *bluetoothHandler,
@@ -19,10 +17,8 @@ namespace f1x::openauto::autoapp::UI::Combo {
      */
     void BluetoothDeviceModel::populateComboBoxItems() {
         m_comboBoxItems.clear();
-        qDebug(lcComboBtDevice) << "Emptying Combo box...";
 
         auto pairedDevices = m_bluetoothHandler->getPairedDeviceList();
-        qDebug(lcComboBtDevice) << "Queried QT Device List";
         if (!pairedDevices.empty()) {
             for (auto pairedDevice: pairedDevices) {
                 QVariantMap properties = pairedDevice.toMap();

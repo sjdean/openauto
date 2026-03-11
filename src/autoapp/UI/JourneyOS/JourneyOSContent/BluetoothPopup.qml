@@ -292,6 +292,7 @@ Item {
                     textRole: "name"
 
                     Component.onCompleted: {
+                        if (!adapterList || adapterList.length === 0) return
                         var savedAddr = bluetoothHandler.getAdapterAddress()
                         for (var i = 0; i < adapterList.length; i++) {
                             if (adapterList[i].address === savedAddr) {
