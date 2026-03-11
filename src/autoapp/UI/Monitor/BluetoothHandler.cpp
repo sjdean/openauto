@@ -210,7 +210,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             // Display name includes the address so adapters are distinguishable in the combo
             map["name"] = info.name().isEmpty()
                           ? addrStr
-                          : info.name() + u" \u2014 " + addrStr;
+                          : info.name() + QStringLiteral(" \u2014 ") + addrStr;
             map["address"] = addrStr;
 
             // 2. Probe the status of THIS specific adapter
