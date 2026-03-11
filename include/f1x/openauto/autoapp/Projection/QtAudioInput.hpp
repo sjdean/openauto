@@ -18,6 +18,13 @@ extern "C" {
 #include <libavfilter/buffersink.h>
 }
 
+// FFmpeg 5.1 (libavutil 57.28.100) introduced the new Channel Layout API
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 28, 100)
+    #define HAS_CH_LAYOUT 1
+#else
+    #define HAS_CH_LAYOUT 0
+#endif
+
 #include <f1x/openauto/autoapp/Projection/IAudioInput.hpp>
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 
