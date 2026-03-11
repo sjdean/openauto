@@ -1,4 +1,5 @@
 #include "f1x/openauto/autoapp/Hardware/Detect/RpiHardwareDetector.hpp"
+#include "f1x/openauto/autoapp/Hardware/Detect/HardwareDetector.hpp" // For hardwareDetect logging category
 
 #include <QDir>
 #include <QFile>
