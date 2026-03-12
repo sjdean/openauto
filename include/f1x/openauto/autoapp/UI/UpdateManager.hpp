@@ -29,6 +29,9 @@ namespace f1x::openauto::autoapp::UI {
         void updateAvailableChanged();
         void latestVersionChanged();
         void checkComplete(bool available, const QString &version);
+        void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+        void downloadFinished();
+        void installFinished(bool success, const QString &message);
         void errorOccurred(const QString &message);
 
     private:
