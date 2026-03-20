@@ -97,6 +97,7 @@ namespace f1x::openauto::autoapp::configuration {
     wirelessGroup.addSetting<QString>("ClientSSID", "");
     wirelessGroup.addSetting<QString>("ClientPassword", "");
     wirelessGroup.addSetting<QString>("Interface", "wlan0");
+    wirelessGroup.addSetting<QString>("InterfaceMAC", "00:00:00:00:00:00");
 
     wirelessGroup.addSetting<common::Enum::WirelessType::Value>("Type", f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT);
     wirelessGroup.load(m_settings);
