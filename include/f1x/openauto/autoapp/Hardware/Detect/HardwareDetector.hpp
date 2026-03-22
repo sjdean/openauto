@@ -39,6 +39,7 @@ struct HardwareInfo {
     bool hatCanBus{false};
     bool hatRtc{false};
     bool hatGps{false};
+    bool hatPimoroniAudio{false};
 };
 
 class HardwareDetector {
@@ -51,6 +52,7 @@ public:
     static QString journeyOsRuntimePath(const QString& filename);
     static QJsonObject toJson(const HardwareInfo& info);
     static bool writeOutputFiles(const HardwareInfo& info);
+    static bool manageBootOverlays(const HardwareInfo& info);
 };
 
 } // namespace f1x::openauto::autoapp::Hardware

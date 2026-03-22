@@ -9,6 +9,10 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QStandardPaths>
+#ifdef JOURNEYOS_RPI_DETECTION
+#include <unistd.h>
+#include <sys/reboot.h>
+#endif
 
 Q_LOGGING_CATEGORY(hardwareDetect, "journeyos.hardware")
 
@@ -72,10 +76,11 @@ QJsonObject HardwareDetector::toJson(const HardwareInfo& info)
     gps["device"]  = info.gpsDevice;
 
     QJsonObject hats;
-    hats["iqaudio_dac"] = info.hatIqaudioDac;
-    hats["can_bus"]     = info.hatCanBus;
-    hats["rtc"]         = info.hatRtc;
-    hats["gps_hat"]     = info.hatGps;
+    hats["iqaudio_dac"]    = info.hatIqaudioDac;
+    hats["can_bus"]        = info.hatCanBus;
+    hats["rtc"]            = info.hatRtc;
+    hats["gps_hat"]        = info.hatGps;
+    hats["pimoroni_audio"] = info.hatPimoroniAudio;
 
     QJsonObject root;
     root["display"]      = display;
@@ -85,6 +90,53 @@ QJsonObject HardwareDetector::toJson(const HardwareInfo& info)
     root["gps"]          = gps;
     root["hats"]         = hats;
     return root;
+}
+
+static void writeDisplayConf(const HardwareInfo& info)
+{
+    QString content;
+    content += QString("DISPLAY_TYPE=%1\n").arg(info.primaryDisplay);
+    content += QString("DSI_PRESENT=%1\n").arg(info.dsiPresent ? "1" : "0");
+    content += QString("HDMI_PRESENT=%1\n").arg(info.hdmiPresent ? "1" : "0");
+
+    const QString path = HardwareDetector::journeyOsRuntimePath("display.conf");
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qCWarning(hardwareDetect) << "Cannot write" << path << ":" << file.errorString();
+        return;
+    }
+    file.write(content.toUtf8());
+    file.close();
+    qCInfo(hardwareDetect) << "Written:" << path;
+}
+
+static void writeAudioConf(const HardwareInfo& info)
+{
+    QString hat = "none";
+    QString overlay;
+    if (info.hatIqaudioDac || info.iqaudioDac) {
+        hat = "iqaudio-dacplus";
+        overlay = "iqaudio-dacplus";
+    } else if (info.hatPimoroniAudio) {
+        hat = "pimoroni-audio";
+        // Overlay name depends on specific Pimoroni product — configure manually
+    }
+
+    QString content;
+    content += QString("AUDIO_HAT=%1\n").arg(hat);
+    content += QString("AUDIO_HAT_OVERLAY=%1\n").arg(overlay);
+    content += QString("ONBOARD_AUDIO=%1\n").arg(info.onboardAudio ? "1" : "0");
+    content += QString("USB_AUDIO=%1\n").arg(info.usbAudio.isEmpty() ? "0" : "1");
+
+    const QString path = HardwareDetector::journeyOsRuntimePath("audio.conf");
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qCWarning(hardwareDetect) << "Cannot write" << path << ":" << file.errorString();
+        return;
+    }
+    file.write(content.toUtf8());
+    file.close();
+    qCInfo(hardwareDetect) << "Written:" << path;
 }
 
 static void writeKmsJson(const HardwareInfo& info)
@@ -148,11 +200,98 @@ bool HardwareDetector::writeOutputFiles(const HardwareInfo& info)
     qCInfo(hardwareDetect) << "Written:" << hwPath;
 
 #ifdef JOURNEYOS_RPI_DETECTION
+    writeDisplayConf(info);
+    writeAudioConf(info);
     writeKmsJson(info);
     writeQtEnv(info);
 #endif
 
     return true;
+}
+
+bool HardwareDetector::manageBootOverlays(const HardwareInfo& info)
+{
+#ifndef JOURNEYOS_RPI_DETECTION
+    Q_UNUSED(info)
+    return false;
+#else
+    // Build the expected overlay list from detected hardware, in deterministic order.
+    // Each entry is a full dtoverlay= line as it would appear in /boot/hardware.txt.
+    QStringList overlays;
+    if (info.dsiPresent)
+        overlays << QStringLiteral("dtoverlay=vc4-kms-dsi-7inch");
+    if (info.hatIqaudioDac || info.iqaudioDac)
+        overlays << QStringLiteral("dtoverlay=iqaudio-dacplus");
+    if (info.hatCanBus)
+        overlays << QStringLiteral("dtoverlay=mcp2515-can0");
+    if (info.hatRtc)
+        overlays << QStringLiteral("dtoverlay=i2c-rtc,ds3231");
+    // hatPimoroniAudio: overlay name is product-specific — skip auto-generation
+    overlays.sort();
+
+    // Read and parse any existing /boot/hardware.txt
+    QStringList existingOverlays;
+    QFile hwFile("/boot/hardware.txt");
+    if (hwFile.open(QIODevice::ReadOnly)) {
+        const QString existing = QString::fromUtf8(hwFile.readAll());
+        hwFile.close();
+        for (const QString& line : existing.split('\n')) {
+            const QString trimmed = line.trimmed();
+            if (!trimmed.isEmpty() && !trimmed.startsWith('#'))
+                existingOverlays << trimmed;
+        }
+        existingOverlays.sort();
+        qCInfo(hardwareDetect) << "Existing /boot/hardware.txt overlays:" << existingOverlays;
+    } else {
+        qCInfo(hardwareDetect) << "/boot/hardware.txt absent (first boot)";
+    }
+
+    if (overlays == existingOverlays) {
+        qCInfo(hardwareDetect) << "Boot overlays unchanged — no reboot needed";
+        return false;
+    }
+
+    qCInfo(hardwareDetect) << "Boot overlays changed from" << existingOverlays << "to" << overlays;
+
+    // Write new /boot/hardware.txt; fsync required for FAT32 reliability
+    {
+        QFile outFile("/boot/hardware.txt");
+        if (!outFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            qCCritical(hardwareDetect) << "Cannot write /boot/hardware.txt:" << outFile.errorString();
+            return false;
+        }
+        QString content;
+        content += QStringLiteral("# JourneyOS hardware overlays — auto-generated by journeyos-hardware-detect\n");
+        content += QStringLiteral("# Do not edit manually; this file is overwritten on every boot.\n");
+        for (const QString& line : overlays)
+            content += line + '\n';
+        outFile.write(content.toUtf8());
+        outFile.flush();
+        ::fsync(outFile.handle());
+        outFile.close();
+        qCInfo(hardwareDetect) << "Written /boot/hardware.txt:" << overlays.size() << "overlay(s)";
+    }
+
+    // Write reboot-required flag so other units can check it
+    {
+        const QString flagPath = journeyOsRuntimePath("reboot-required");
+        QFile flagFile(flagPath);
+        if (flagFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            flagFile.write("1\n");
+            flagFile.close();
+            qCInfo(hardwareDetect) << "Written:" << flagPath;
+        }
+    }
+
+    // Flush all kernel buffers before the raw reboot
+    qCInfo(hardwareDetect) << "Triggering reboot for overlay changes to take effect";
+    ::sync();
+    ::reboot(RB_AUTOBOOT); // does not return on success; requires root
+
+    // Only reached if reboot(2) fails (should not happen as we run as root)
+    qCCritical(hardwareDetect) << "reboot(2) failed — reboot manually";
+    return true;
+#endif
 }
 
 } // namespace f1x::openauto::autoapp::Hardware

@@ -38,5 +38,11 @@ int main(int argc, char* argv[])
         qCWarning(hardwareDetect) << "Detection threw unknown exception — using defaults";
     }
 
-    return HardwareDetector::writeOutputFiles(info) ? 0 : 1;
+    const bool ok = HardwareDetector::writeOutputFiles(info);
+
+    // Compare detected overlays against /boot/hardware.txt; reboot if changed.
+    // This call does not return if a reboot is triggered.
+    HardwareDetector::manageBootOverlays(info);
+
+    return ok ? 0 : 1;
 }

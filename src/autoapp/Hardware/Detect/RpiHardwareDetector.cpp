@@ -265,10 +265,11 @@ void RpiHardwareDetector::detectHats(HardwareInfo& info)
     }
 
     if (!info.hatIqaudioDac) {
-        info.hatIqaudioDac = probeI2cAddress(1, 0x4C);
+        // PCM5122 is addressable at 0x4C or 0x4D depending on ADDR pin strapping
+        info.hatIqaudioDac = probeI2cAddress(1, 0x4C) || probeI2cAddress(1, 0x4D);
         if (info.hatIqaudioDac) {
             info.iqaudioDac = true;
-            qCInfo(hardwareDetect) << "IQAudio DAC+: detected via I2C 0x4C";
+            qCInfo(hardwareDetect) << "IQAudio DAC+: detected via I2C (0x4C/0x4D)";
         } else {
             qCInfo(hardwareDetect) << "IQAudio DAC+: not detected";
         }
@@ -287,6 +288,12 @@ void RpiHardwareDetector::detectHats(HardwareInfo& info)
     if (!info.hatGps) {
         info.hatGps = probeI2cAddress(1, 0x42);
         qCInfo(hardwareDetect) << "GPS HAT:" << (info.hatGps ? "detected via I2C 0x42" : "not detected");
+    }
+
+    if (!info.hatPimoroniAudio) {
+        info.hatPimoroniAudio = probeI2cAddress(1, 0x1A);
+        qCInfo(hardwareDetect) << "Pimoroni Audio:"
+                               << (info.hatPimoroniAudio ? "detected via I2C 0x1A" : "not detected");
     }
 }
 
