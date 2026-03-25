@@ -87,6 +87,7 @@ namespace f1x::openauto::autoapp::configuration {
 
     ConfigurationGroup systemGroup("System");
     systemGroup.addSetting<bool>("HeadUnitMode", true);
+    systemGroup.addSetting<bool>("DesktopMode", false);
     systemGroup.load(m_settings);
     m_configurationGroups.append(systemGroup);
 
