@@ -65,7 +65,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
     // --- HELPER CALLBACKS ---
     
-    void PulseAudioHandler::context_state_callback(pa_context *c, void *userdata) {
+    void PulseAudioHandler::context_state_callback(pa_context *c, void * /*userdata*/) {
         // Just logging state changes
         switch (pa_context_get_state(c)) {
             case PA_CONTEXT_READY: qInfo(lcAudioPulse) << "ready"; break;

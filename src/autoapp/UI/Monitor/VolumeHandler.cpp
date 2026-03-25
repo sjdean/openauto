@@ -26,7 +26,7 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
         if (!device.isEmpty()) {
             configuration_->updateSettingByName<QString>("Audio", "PlaybackDevice", device);
             settingsChanged = true;
-            qCInfo(lcVolume) << "PlaybackDevice auto-detected sink=" << device;
+            qInfo(lcVolume) << "PlaybackDevice auto-detected sink=" << device;
         }
     }
     const int volume = std::clamp(
@@ -40,7 +40,7 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
         if (!captureDevice.isEmpty()) {
             configuration_->updateSettingByName<QString>("Audio", "CaptureDevice", captureDevice);
             settingsChanged = true;
-            qCInfo(lcVolume) << "CaptureDevice auto-detected source=" << captureDevice;
+            qInfo(lcVolume) << "CaptureDevice auto-detected source=" << captureDevice;
         }
     }
     const int captureVolume = std::clamp(

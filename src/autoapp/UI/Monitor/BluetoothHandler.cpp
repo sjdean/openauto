@@ -2,6 +2,7 @@
 #include <aaw/MessageId.pb.h>
 
 #ifdef Q_OS_LINUX
+#include <QDBusMetaType>
 // BlueZ GetManagedObjects returns a{oa{sa{sv}}}:
 //   object path → interface name → property name → variant
 using BluezInterfaceList  = QMap<QString, QVariantMap>;   // a{sa{sv}}
