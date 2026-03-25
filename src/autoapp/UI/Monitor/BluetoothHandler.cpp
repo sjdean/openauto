@@ -1,6 +1,15 @@
 #include "f1x/openauto/autoapp/UI/Monitor/BluetoothHandler.hpp"
 #include <aaw/MessageId.pb.h>
 
+#ifdef Q_OS_LINUX
+// BlueZ GetManagedObjects returns a{oa{sa{sv}}}:
+//   object path → interface name → property name → variant
+using BluezInterfaceList  = QMap<QString, QVariantMap>;   // a{sa{sv}}
+using BluezManagedObjects = QMap<QDBusObjectPath, BluezInterfaceList>; // a{oa{sa{sv}}}
+Q_DECLARE_METATYPE(BluezInterfaceList)
+Q_DECLARE_METATYPE(BluezManagedObjects)
+#endif
+
 #include <aap_protobuf/service/bluetooth/message/BluetoothPairingRequest.pb.h>
 #include <aap_protobuf/service/control/message/ByeByeRequest.pb.h>
 
@@ -23,6 +32,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     , m_manager("org.bluez", "/", "org.freedesktop.DBus.ObjectManager", QDBusConnection::systemBus())
 #endif
     {
+#ifdef Q_OS_LINUX
+        qDBusRegisterMetaType<BluezInterfaceList>();
+        qDBusRegisterMetaType<BluezManagedObjects>();
+#endif
         // 1. Restore saved adapter preference; fall back to system default
         const QString savedAdapter = configuration_->getSettingByName<QString>("Bluetooth", "AdapterAddress");
         if (!savedAdapter.isEmpty()) {
@@ -40,7 +53,15 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             localDevice_->setHostMode(QBluetoothLocalDevice::HostDiscoverable);
             connect(localDevice_.get(), &QBluetoothLocalDevice::pairingFinished,
                     this, &BluetoothHandler::onPairingFinished);
-            qInfo(lcBtHandler) << "adapter ready address=" << localDevice_->address().toString();
+            // Persist auto-detected adapter so future boots use the same one
+            if (savedAdapter.isEmpty()) {
+                const QString addr = localDevice_->address().toString();
+                configuration_->updateSettingByName("Bluetooth", "AdapterAddress", addr);
+                configuration_->save();
+                qInfo(lcBtHandler) << "adapter auto-detected and saved address=" << addr;
+            } else {
+                qInfo(lcBtHandler) << "adapter ready address=" << localDevice_->address().toString();
+            }
         } else {
             qCritical(lcBtHandler) << "no valid adapter found";
         }
@@ -479,43 +500,41 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
 #ifdef Q_OS_LINUX
     QString BluetoothHandler::getBluezAdapterPath() {
-        // Ask BlueZ for all objects (Adapters, Devices, etc.)
-        QDBusReply<QVariantMap> reply = m_manager.call("GetManagedObjects");
+        QDBusReply<BluezManagedObjects> reply = m_manager.call("GetManagedObjects");
+        if (!reply.isValid()) {
+            qWarning(lcBtHandler) << "getBluezAdapterPath get managed objects failed error=" << reply.error().message();
+            return QStringLiteral("/org/bluez/hci0");
+        }
 
-        if (reply.isValid()) {
-            QVariantMap objects = reply.value();
-            QString localAddress = localDevice_->address().toString();
+        const BluezManagedObjects &objects = reply.value();
+        const QString localAddress = localDevice_->address().toString();
 
-            // Iterate to find the Adapter with our address
-            for (auto it = objects.begin(); it != objects.end(); ++it) {
-                const QVariantMap &interfaces = it.value().toMap();
-                if (interfaces.contains("org.bluez.Adapter1")) {
-                    QString adapterAddr = interfaces["org.bluez.Adapter1"].toMap()["Address"].toString();
-                    if (adapterAddr == localAddress) {
-                        return it.key(); // Returns "/org/bluez/hci0" (or hci1, etc.)
-                    }
-                }
+        for (auto it = objects.constBegin(); it != objects.constEnd(); ++it) {
+            const BluezInterfaceList &interfaces = it.value();
+            if (interfaces.contains("org.bluez.Adapter1")) {
+                const QString adapterAddr = interfaces["org.bluez.Adapter1"]["Address"].toString();
+                if (adapterAddr == localAddress)
+                    return it.key().path();
             }
         }
-        // Fallback if lookup fails (unlikely)
         return QStringLiteral("/org/bluez/hci0");
     }
 
     void BluetoothHandler::loadPairedDevicesFromBlueZ() {
-        QDBusReply<QVariantMap> reply = m_manager.call("GetManagedObjects");
+        QDBusReply<BluezManagedObjects> reply = m_manager.call("GetManagedObjects");
         if (!reply.isValid()) {
-            qWarning(lcBtHandler) << "get managed objects failed error=" << reply.error().message();
+            qWarning(lcBtHandler) << "loadPairedDevicesFromBlueZ get managed objects failed error=" << reply.error().message();
             return;
         }
 
-        const QVariantMap &objects = reply.value();
+        const BluezManagedObjects &objects = reply.value();
         bool changed = false;
 
         for (auto it = objects.constBegin(); it != objects.constEnd(); ++it) {
-            const QVariantMap &interfaces = it.value().toMap();
+            const BluezInterfaceList &interfaces = it.value();
             if (!interfaces.contains("org.bluez.Device1")) continue;
 
-            const QVariantMap &props = interfaces["org.bluez.Device1"].toMap();
+            const QVariantMap &props = interfaces["org.bluez.Device1"];
             if (!props.value("Paired", false).toBool()) continue;
 
             const QString address = props.value("Address").toString();
@@ -527,7 +546,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                 [&address](const Model::BluetoothDevice &d) { return d.address == address; });
             if (exists) continue;
 
-            Model::BluetoothDevice device(address, name, QDBusObjectPath(it.key()), true, connected);
+            Model::BluetoothDevice device(address, name, it.key(), true, connected);
             m_devices.append(device);
             changed = true;
             qInfo(lcBtHandler) << "paired device loaded name=" << name << " address=" << address;

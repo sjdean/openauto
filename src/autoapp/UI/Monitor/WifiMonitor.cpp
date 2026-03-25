@@ -54,13 +54,22 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             }
         }
 
-        // Persist MAC for stable future identification (separate key, does not overwrite name)
+        // Persist interface name and MAC so future boots skip auto-detection
         if (m_currentInterface.isValid()) {
-            const QString currentMac = m_currentInterface.hardwareAddress();
+            const QString currentName = m_currentInterface.name();
+            const QString currentMac  = m_currentInterface.hardwareAddress();
+            bool changed = false;
+            if (savedName != currentName) {
+                m_config->updateSettingByName<QString>("Wireless", "Interface", currentName);
+                changed = true;
+                qCInfo(lcWifiMonitor) << "Interface auto-detected and saved name=" << currentName;
+            }
             if (savedMac != currentMac) {
                 m_config->updateSettingByName<QString>("Wireless", "InterfaceMAC", currentMac);
-                m_config->save();
+                changed = true;
             }
+            if (changed)
+                m_config->save();
         }
 
 

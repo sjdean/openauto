@@ -85,10 +85,15 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         cv.channels = 2; // Default to stereo
         for(int i=0; i<cv.channels; i++) cv.values[i] = paVol;
 
-        pa_threaded_mainloop_lock(m_mainloop);
-        const char* name = deviceName.isEmpty() ? nullptr : deviceName.toUtf8().constData();
-        pa_operation* o = pa_context_set_sink_volume_by_name(m_context, name, &cv, nullptr, nullptr);
+        const QString resolvedName = deviceName.isEmpty() ? getDefaultSink() : deviceName;
+        if (resolvedName.isEmpty()) {
+            qWarning(lcAudioPulse) << "setSinkVolume: no sink name available, skipping";
+            return;
+        }
+        const QByteArray nameBytes = resolvedName.toUtf8();
 
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation* o = pa_context_set_sink_volume_by_name(m_context, nameBytes.constData(), &cv, nullptr, nullptr);
         if (o) pa_operation_unref(o);
         pa_threaded_mainloop_unlock(m_mainloop);
     }
@@ -102,27 +107,47 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         cv.channels = 1; // Mics usually mono
         for(int i=0; i<cv.channels; i++) cv.values[i] = paVol;
 
+        const QString resolvedName = deviceName.isEmpty() ? getDefaultSource() : deviceName;
+        if (resolvedName.isEmpty()) {
+            qWarning(lcAudioPulse) << "setSourceVolume: no source name available, skipping";
+            return;
+        }
+        const QByteArray nameBytes = resolvedName.toUtf8();
+
         pa_threaded_mainloop_lock(m_mainloop);
-        const char* name = deviceName.isEmpty() ? nullptr : deviceName.toUtf8().constData();
-        pa_operation* o = pa_context_set_source_volume_by_name(m_context, name, &cv, nullptr, nullptr);
+        pa_operation* o = pa_context_set_source_volume_by_name(m_context, nameBytes.constData(), &cv, nullptr, nullptr);
         if (o) pa_operation_unref(o);
         pa_threaded_mainloop_unlock(m_mainloop);
     }
 
     void PulseAudioHandler::setSinkMute(const QString& deviceName, bool mute) {
         if (!m_mainloop || !m_context) return;
+
+        const QString resolvedName = deviceName.isEmpty() ? getDefaultSink() : deviceName;
+        if (resolvedName.isEmpty()) {
+            qWarning(lcAudioPulse) << "setSinkMute: no sink name available, skipping";
+            return;
+        }
+        const QByteArray nameBytes = resolvedName.toUtf8();
+
         pa_threaded_mainloop_lock(m_mainloop);
-        const char* name = deviceName.isEmpty() ? nullptr : deviceName.toUtf8().constData();
-        pa_operation* o = pa_context_set_sink_mute_by_name(m_context, name, mute, nullptr, nullptr);
+        pa_operation* o = pa_context_set_sink_mute_by_name(m_context, nameBytes.constData(), mute, nullptr, nullptr);
         if (o) pa_operation_unref(o);
         pa_threaded_mainloop_unlock(m_mainloop);
     }
 
     void PulseAudioHandler::setSourceMute(const QString& deviceName, bool mute) {
         if (!m_mainloop || !m_context) return;
+
+        const QString resolvedName = deviceName.isEmpty() ? getDefaultSource() : deviceName;
+        if (resolvedName.isEmpty()) {
+            qWarning(lcAudioPulse) << "setSourceMute: no source name available, skipping";
+            return;
+        }
+        const QByteArray nameBytes = resolvedName.toUtf8();
+
         pa_threaded_mainloop_lock(m_mainloop);
-        const char* name = deviceName.isEmpty() ? nullptr : deviceName.toUtf8().constData();
-        pa_operation* o = pa_context_set_source_mute_by_name(m_context, name, mute, nullptr, nullptr);
+        pa_operation* o = pa_context_set_source_mute_by_name(m_context, nameBytes.constData(), mute, nullptr, nullptr);
         if (o) pa_operation_unref(o);
         pa_threaded_mainloop_unlock(m_mainloop);
     }

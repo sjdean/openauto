@@ -15,18 +15,41 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
     m_sourceMin = configuration_->getSettingByName<int>("Audio", "CaptureMin");
     m_sourceMax = configuration_->getSettingByName<int>("Audio", "CaptureMax");
 
-    // Clamp stored value to current [min,max] range and apply to hardware
+    // Clamp stored value to current [min,max] range and apply to hardware.
+    // If no device is configured, resolve from the audio system and persist so the
+    // UI shows a meaningful value on subsequent boots.
+    bool settingsChanged = false;
+
+    QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
+    if (device.isEmpty()) {
+        device = m_audioHandler->getDefaultSink();
+        if (!device.isEmpty()) {
+            configuration_->updateSettingByName<QString>("Audio", "PlaybackDevice", device);
+            settingsChanged = true;
+            qCInfo(lcVolume) << "PlaybackDevice auto-detected sink=" << device;
+        }
+    }
     const int volume = std::clamp(
         configuration_->getSettingByName<int>("Audio", "PlaybackVolume"), m_sinkMin, m_sinkMax);
-    const QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
     m_audioHandler->setSinkVolume(device, volume);
     m_volumeSink = volume;
 
+    QString captureDevice = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
+    if (captureDevice.isEmpty()) {
+        captureDevice = m_audioHandler->getDefaultSource();
+        if (!captureDevice.isEmpty()) {
+            configuration_->updateSettingByName<QString>("Audio", "CaptureDevice", captureDevice);
+            settingsChanged = true;
+            qCInfo(lcVolume) << "CaptureDevice auto-detected source=" << captureDevice;
+        }
+    }
     const int captureVolume = std::clamp(
         configuration_->getSettingByName<int>("Audio", "CaptureVolume"), m_sourceMin, m_sourceMax);
-    const QString captureDevice = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
     m_audioHandler->setSourceVolume(captureDevice, captureVolume);
     m_volumeSource = captureVolume;
+
+    if (settingsChanged)
+        configuration_->save();
   }
 
   void VolumeHandler::setVolumeSink(const int volume) {

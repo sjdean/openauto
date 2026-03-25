@@ -154,6 +154,8 @@ int main(int argc, char *argv[]) {
     audioHandler = std::make_shared<autoapp::UI::Monitor::PulseAudioHandler>();
 #elif defined(__APPLE__)
     audioHandler = std::make_shared<autoapp::UI::Monitor::CoreAudioHandler>();
+#else
+    audioHandler = std::make_shared<autoapp::UI::Monitor::NullAudioHandler>();
 #endif
 
     qInfo(lcAutoapp) << "reading configuration";
