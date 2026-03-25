@@ -43,8 +43,8 @@ void UpdateManager::checkForUpdate()
         return;
     }
 
-    const QString serverUrl = m_config->getSettingByName<QString>(
-        "Updates", "ServerUrl", "https://updates.journeyos.org/os/ota/stable.json");
+    const QString serverUrl = "https://updates.journeyos.org/os/ota/stable.json";
+    //m_config->getSettingByName<QString>("Updates", "ServerUrl", "https://updates.journeyos.org/os/ota/stable.json");
 
     qInfo(lcUpdate) << "checking for update url=" << serverUrl;
 
