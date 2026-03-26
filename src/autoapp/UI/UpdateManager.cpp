@@ -36,51 +36,88 @@ QString UpdateManager::getCurrentVersion() const
 
 void UpdateManager::checkForUpdate()
 {
-    const bool desktopMode = m_config->getSettingByName<bool>("System", "DesktopMode", false);
-    if (desktopMode) {
-        qInfo(lcUpdate) << "Desktop mode detected. Updates (RAUC) are disabled.";
+    try {
+        const bool desktopMode = m_config->getSettingByName<bool>("System", "DesktopMode", false);
+        if (desktopMode) {
+            qInfo(lcUpdate) << "desktop mode: OTA disabled";
+            emit checkComplete(false, getCurrentVersion());
+            return;
+        }
+    } catch (const std::exception &e) {
+        qWarning(lcUpdate) << "checkForUpdate: config read failed:" << e.what();
+        emit checkComplete(false, getCurrentVersion());
+        return;
+    } catch (...) {
+        qWarning(lcUpdate) << "checkForUpdate: config read threw unknown exception";
         emit checkComplete(false, getCurrentVersion());
         return;
     }
 
-    const QString serverUrl = "https://updates.journeyos.org/os/ota/stable.json";
-    //m_config->getSettingByName<QString>("Updates", "ServerUrl", "https://updates.journeyos.org/os/ota/stable.json");
-
+    const QString serverUrl = QStringLiteral("https://updates.journeyos.org/os/ota/stable.json");
     qInfo(lcUpdate) << "checking for update url=" << serverUrl;
 
+    QNetworkRequest request{QUrl(serverUrl)};
+    request.setTransferTimeout(15000); // never hang longer than 15 s
+
     auto* networkManager = new QNetworkAccessManager(this);
-    connect(networkManager, &QNetworkAccessManager::finished, this, [this, networkManager](QNetworkReply* reply) {
+    connect(networkManager, &QNetworkAccessManager::finished, this,
+            [this, networkManager](QNetworkReply* reply) {
+        // Schedule cleanup — deleteLater() defers to next event loop tick so
+        // reply remains valid for the entire body of this callback.
         networkManager->deleteLater();
         reply->deleteLater();
 
-        if (reply->error() != QNetworkReply::NoError) {
-            qWarning(lcUpdate) << "Update check failed:" << reply->errorString();
+        try {
+            if (reply->error() != QNetworkReply::NoError) {
+                qWarning(lcUpdate) << "update check network error:" << reply->errorString();
+                emit checkComplete(false, getCurrentVersion());
+                return;
+            }
+
+            // Reject non-200 HTTP responses
+            const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            if (httpStatus != 200) {
+                qWarning(lcUpdate) << "update check unexpected HTTP status=" << httpStatus;
+                emit checkComplete(false, getCurrentVersion());
+                return;
+            }
+
+            const QByteArray data = reply->readAll();
+            const QJsonDocument doc = QJsonDocument::fromJson(data);
+            if (doc.isNull() || !doc.isObject()) {
+                qWarning(lcUpdate) << "update check: malformed JSON response";
+                emit checkComplete(false, getCurrentVersion());
+                return;
+            }
+
+            const QJsonObject obj = doc.object();
+            const QString remoteVersion = obj.value(QStringLiteral("version")).toString();
+            const QString downloadUrl   = obj.value(QStringLiteral("url")).toString();
+
+            if (remoteVersion.isEmpty() || downloadUrl.isEmpty()) {
+                qWarning(lcUpdate) << "update check: manifest missing version or url";
+                emit checkComplete(false, getCurrentVersion());
+                return;
+            }
+
+            m_latestVersion    = remoteVersion;
+            m_updateUrl        = downloadUrl;
+            m_updateAvailable  = (m_latestVersion != getCurrentVersion());
+
+            emit updateAvailableChanged();
+            emit latestVersionChanged();
+            emit checkComplete(m_updateAvailable, m_latestVersion);
+
+        } catch (const std::exception &e) {
+            qCritical(lcUpdate) << "update check callback threw exception:" << e.what();
             emit checkComplete(false, getCurrentVersion());
-            return;
-        }
-
-        QJsonDocument jsonResponse = QJsonDocument::fromJson(reply->readAll());
-        QJsonObject jsonObject = jsonResponse.object();
-
-        QString remoteVersion = jsonObject["version"].toString();
-        QString downloadUrl = jsonObject["url"].toString();
-
-        if (remoteVersion.isEmpty() || downloadUrl.isEmpty()) {
-            qWarning(lcUpdate) << "Invalid update manifest received";
+        } catch (...) {
+            qCritical(lcUpdate) << "update check callback threw unknown exception";
             emit checkComplete(false, getCurrentVersion());
-            return;
         }
-
-        m_latestVersion = remoteVersion;
-        m_updateUrl = downloadUrl;
-        m_updateAvailable = (m_latestVersion != getCurrentVersion());
-
-        emit updateAvailableChanged();
-        emit latestVersionChanged();
-        emit checkComplete(m_updateAvailable, m_latestVersion);
     });
 
-    networkManager->get(QNetworkRequest(QUrl(serverUrl)));
+    networkManager->get(request);
 }
 
 void UpdateManager::downloadUpdate()
@@ -91,33 +128,47 @@ void UpdateManager::downloadUpdate()
     }
     qInfo(lcUpdate) << "download url=" << m_updateUrl;
 
+    QNetworkRequest request{QUrl(m_updateUrl)};
+    request.setTransferTimeout(300000); // 5 min — bundles can be large
+
     auto* networkManager = new QNetworkAccessManager(this);
 
-    connect(networkManager, &QNetworkAccessManager::finished, this, [this, networkManager](QNetworkReply* reply) {
+    connect(networkManager, &QNetworkAccessManager::finished, this,
+            [this, networkManager](QNetworkReply* reply) {
         networkManager->deleteLater();
         reply->deleteLater();
 
-        if (reply->error() != QNetworkReply::NoError) {
-            qWarning(lcUpdate) << "Download failed:" << reply->errorString();
-            emit errorOccurred(reply->errorString());
-            return;
-        }
+        try {
+            if (reply->error() != QNetworkReply::NoError) {
+                qWarning(lcUpdate) << "download failed:" << reply->errorString();
+                emit errorOccurred(reply->errorString());
+                return;
+            }
 
-        QString destPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/update.raucb";
-        QFile file(destPath);
-        if (file.open(QIODevice::WriteOnly)) {
+            const QString destPath = QStandardPaths::writableLocation(
+                                         QStandardPaths::TempLocation) + QStringLiteral("/update.raucb");
+            QFile file(destPath);
+            if (!file.open(QIODevice::WriteOnly)) {
+                const QString msg = QStringLiteral("Failed to open %1 for writing").arg(destPath);
+                qWarning(lcUpdate) << msg;
+                emit errorOccurred(msg);
+                return;
+            }
             file.write(reply->readAll());
             file.close();
-            qInfo(lcUpdate) << "Update downloaded successfully to" << destPath;
+            qInfo(lcUpdate) << "download complete path=" << destPath;
             emit downloadFinished();
-        } else {
-            const QString msg = QStringLiteral("Failed to save update bundle to %1").arg(destPath);
-            qWarning(lcUpdate) << msg;
-            emit errorOccurred(msg);
+
+        } catch (const std::exception &e) {
+            qCritical(lcUpdate) << "download callback threw exception:" << e.what();
+            emit errorOccurred(QString::fromUtf8(e.what()));
+        } catch (...) {
+            qCritical(lcUpdate) << "download callback threw unknown exception";
+            emit errorOccurred(QStringLiteral("Unknown error during download"));
         }
     });
 
-    QNetworkReply* reply = networkManager->get(QNetworkRequest(QUrl(m_updateUrl)));
+    QNetworkReply* reply = networkManager->get(request);
     connect(reply, &QNetworkReply::downloadProgress, this, &UpdateManager::downloadProgress);
 }
 
