@@ -4,6 +4,7 @@
 #include <QNetworkInterface>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QEventLoop>
 #include <QTimer>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -18,162 +19,168 @@ namespace f1x::openauto::autoapp::UI {
 // ---------------------------------------------------------------------------
 // UpdateCheckWorker
 //
-// Lives on its own QThread. Owns its QNetworkAccessManager (created on the
-// worker thread so it is affiliated to the correct thread).
-// Retries up to MAX_ATTEMPTS times with exponential back-off. Each attempt
-// checks network reachability first so we don't waste socket resources
-// on an interface that is clearly offline.
+// Runs a synchronous-style check loop on its own QThread (via moveToThread).
+// Uses a per-request QEventLoop so the network stack has an event loop to
+// drive it, while keeping the control flow linear and easy to reason about.
+//
+// Retry schedule: immediate → 30 s → 2 min
+// Every potential failure mode is caught — no exception may escape run().
 // ---------------------------------------------------------------------------
 class UpdateCheckWorker : public QObject {
     Q_OBJECT
-public:
-    static constexpr int    MAX_ATTEMPTS      = 3;
-    static constexpr int    TIMEOUT_MS        = 15000; // per-attempt connect/transfer timeout
-    static constexpr int    RETRY_DELAY_MS[3] = {0, 30000, 120000}; // backoff: immediate, 30 s, 2 min
 
+    static constexpr int MAX_ATTEMPTS  = 3;
+    static constexpr int TIMEOUT_MS    = 15000;
+    static constexpr int RETRY_DELAY[] = {0, 30000, 120000};
+
+public:
     explicit UpdateCheckWorker(QObject *parent = nullptr) : QObject(parent) {}
 
 signals:
-    // Success path — emit parsed manifest fields.
     void checkResult(bool available, const QString &latestVersion, const QString &downloadUrl);
-    // Failure path — emit human-readable reason (already logged).
     void checkFailed(const QString &reason);
 
 public slots:
     void run()
     {
-        m_attempt = 0;
-        m_nam     = new QNetworkAccessManager(this);
-        doAttempt();
+        try {
+            runImpl();
+        } catch (const std::exception &e) {
+            qCritical(lcUpdate) << "update check threw:" << e.what();
+            emit checkFailed(QString::fromUtf8(e.what()));
+        } catch (...) {
+            qCritical(lcUpdate) << "update check threw unknown exception";
+            emit checkFailed(QStringLiteral("unknown exception"));
+        }
     }
 
 private:
-    void doAttempt()
+    void runImpl()
     {
-        // ---- 1. Reachability guard ----
-        if (!hasUsableNetwork()) {
-            if (m_attempt + 1 < MAX_ATTEMPTS) {
-                scheduleRetry(QStringLiteral("no usable network interface"));
-            } else {
-                fail(QStringLiteral("no usable network interface after %1 attempt(s)")
-                         .arg(MAX_ATTEMPTS));
+        for (int attempt = 0; attempt < MAX_ATTEMPTS; ++attempt) {
+
+            // ---- Inter-attempt delay (skipped on first try) ----
+            if (attempt > 0) {
+                const int delayMs = RETRY_DELAY[attempt];
+                qInfo(lcUpdate) << "retry" << attempt << "/" << (MAX_ATTEMPTS - 1)
+                                << "— waiting" << delayMs << "ms";
+                interruptibleSleep(delayMs);
+                if (QThread::currentThread()->isInterruptionRequested()) {
+                    qInfo(lcUpdate) << "check interrupted during retry delay";
+                    emit checkFailed(QStringLiteral("interrupted"));
+                    return;
+                }
             }
-            return;
-        }
 
-        const QString url = QStringLiteral("https://updates.journeyos.org/os/ota/stable.json");
-        qInfo(lcUpdate) << "check attempt" << (m_attempt + 1) << "/" << MAX_ATTEMPTS
-                        << "url=" << url;
+            // ---- Network reachability guard ----
+            if (!hasUsableNetwork()) {
+                qInfo(lcUpdate) << "no usable network — attempt" << (attempt + 1)
+                                << "/" << MAX_ATTEMPTS;
+                continue; // count as an attempt, try again after back-off
+            }
 
-        QNetworkRequest req{QUrl(url)};
-        req.setTransferTimeout(TIMEOUT_MS);
+            qInfo(lcUpdate) << "check attempt" << (attempt + 1) << "/" << MAX_ATTEMPTS;
 
-        QNetworkReply *reply = m_nam->get(req);
+            // ---- HTTP GET with local event loop ----
+            // QNetworkAccessManager is created here so it is affiliated with
+            // the worker thread's event loop (the QEventLoop we exec below).
+            QNetworkAccessManager nam;
+            QNetworkRequest req{QUrl(
+                QStringLiteral("https://updates.journeyos.org/os/ota/stable.json"))};
+            req.setTransferTimeout(TIMEOUT_MS);
 
-        connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+            QNetworkReply *reply = nam.get(req);
+
+            QEventLoop loop;
+            connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+            loop.exec(); // blocks this thread; network I/O runs inside here
+
+            if (QThread::currentThread()->isInterruptionRequested()) {
+                reply->abort();
+                reply->deleteLater();
+                qInfo(lcUpdate) << "check interrupted during request";
+                emit checkFailed(QStringLiteral("interrupted"));
+                return;
+            }
+
+            // ---- Transport error ----
+            if (reply->error() != QNetworkReply::NoError) {
+                qWarning(lcUpdate) << "network error attempt" << (attempt + 1)
+                                   << ":" << reply->errorString();
+                reply->deleteLater();
+                continue;
+            }
+
+            // ---- HTTP status ----
+            const int httpStatus =
+                reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            if (httpStatus != 200) {
+                qWarning(lcUpdate) << "HTTP" << httpStatus << "— attempt" << (attempt + 1);
+                reply->deleteLater();
+                continue;
+            }
+
+            // ---- JSON parse ----
+            const QByteArray data = reply->readAll();
             reply->deleteLater();
-            try {
-                handleReply(reply);
-            } catch (const std::exception &e) {
-                qCritical(lcUpdate) << "check reply handler threw:" << e.what();
-                retryOrFail(QString::fromUtf8(e.what()));
-            } catch (...) {
-                qCritical(lcUpdate) << "check reply handler threw unknown exception";
-                retryOrFail(QStringLiteral("unknown exception in reply handler"));
+
+            QJsonParseError parseErr;
+            const QJsonDocument doc = QJsonDocument::fromJson(data, &parseErr);
+            if (doc.isNull() || !doc.isObject()) {
+                qWarning(lcUpdate) << "malformed JSON attempt" << (attempt + 1)
+                                   << ":" << parseErr.errorString();
+                continue;
             }
-        });
-    }
 
-    void handleReply(QNetworkReply *reply)
-    {
-        // ---- 2. Transport-level error ----
-        if (reply->error() != QNetworkReply::NoError) {
-            const QString msg = reply->errorString();
-            qWarning(lcUpdate) << "network error attempt" << (m_attempt + 1) << ":" << msg;
-            retryOrFail(msg);
+            // ---- Manifest validation ----
+            const QJsonObject obj         = doc.object();
+            const QString remoteVersion   = obj.value(QStringLiteral("version")).toString();
+            const QString downloadUrl     = obj.value(QStringLiteral("url")).toString();
+
+            if (remoteVersion.isEmpty() || downloadUrl.isEmpty()) {
+                qWarning(lcUpdate) << "manifest missing version or url — attempt" << (attempt + 1);
+                continue;
+            }
+
+            // ---- Success ----
+            qInfo(lcUpdate) << "check succeeded remote=" << remoteVersion
+                            << "url=" << downloadUrl;
+            emit checkResult(true, remoteVersion, downloadUrl);
             return;
         }
 
-        // ---- 3. HTTP status ----
-        const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (httpStatus != 200) {
-            const QString msg = QStringLiteral("unexpected HTTP status %1").arg(httpStatus);
-            qWarning(lcUpdate) << msg << "attempt" << (m_attempt + 1);
-            retryOrFail(msg);
-            return;
-        }
-
-        // ---- 4. JSON parse ----
-        const QByteArray data = reply->readAll();
-        QJsonParseError parseErr;
-        const QJsonDocument doc = QJsonDocument::fromJson(data, &parseErr);
-        if (doc.isNull() || !doc.isObject()) {
-            const QString msg = QStringLiteral("malformed JSON: %1").arg(parseErr.errorString());
-            qWarning(lcUpdate) << msg << "attempt" << (m_attempt + 1);
-            retryOrFail(msg);
-            return;
-        }
-
-        // ---- 5. Manifest validation ----
-        const QJsonObject obj = doc.object();
-        const QString remoteVersion = obj.value(QStringLiteral("version")).toString();
-        const QString downloadUrl   = obj.value(QStringLiteral("url")).toString();
-
-        if (remoteVersion.isEmpty() || downloadUrl.isEmpty()) {
-            const QString msg = QStringLiteral("manifest missing version or url");
-            qWarning(lcUpdate) << msg;
-            retryOrFail(msg);
-            return;
-        }
-
-        qInfo(lcUpdate) << "check succeeded remote=" << remoteVersion << "url=" << downloadUrl;
-        emit checkResult(/*available=*/true, remoteVersion, downloadUrl);
+        // All attempts exhausted without success.
+        qWarning(lcUpdate) << "check failed after" << MAX_ATTEMPTS << "attempt(s)";
+        emit checkFailed(QStringLiteral("all attempts exhausted"));
     }
 
-    void retryOrFail(const QString &reason)
+    // Sleeps for `ms` milliseconds but wakes early if the thread is interrupted.
+    // Polls every 200 ms so shutdown is responsive without tight-spinning.
+    static void interruptibleSleep(int ms)
     {
-        ++m_attempt;
-        if (m_attempt < MAX_ATTEMPTS) {
-            scheduleRetry(reason);
-        } else {
-            fail(reason);
+        constexpr int TICK_MS = 200;
+        for (int elapsed = 0; elapsed < ms; elapsed += TICK_MS) {
+            if (QThread::currentThread()->isInterruptionRequested()) return;
+            QThread::msleep(static_cast<unsigned long>(
+                std::min(TICK_MS, ms - elapsed)));
         }
     }
 
-    void scheduleRetry(const QString &reason)
-    {
-        const int delayMs = (m_attempt < 3) ? RETRY_DELAY_MS[m_attempt] : RETRY_DELAY_MS[2];
-        qInfo(lcUpdate) << "will retry in" << delayMs << "ms, reason:" << reason;
-        QTimer::singleShot(delayMs, this, &UpdateCheckWorker::doAttempt);
-    }
-
-    void fail(const QString &reason)
-    {
-        qWarning(lcUpdate) << "check failed after" << MAX_ATTEMPTS << "attempt(s):" << reason;
-        emit checkFailed(reason);
-    }
-
-    // Returns true if at least one non-loopback, non-VM interface is up
-    // with a valid unicast address — a lightweight proxy for "we might have internet".
+    // Returns true if at least one non-loopback interface is up with a
+    // non-null unicast address — a lightweight proxy for "internet possible".
     static bool hasUsableNetwork()
     {
         const auto ifaces = QNetworkInterface::allInterfaces();
         for (const QNetworkInterface &iface : ifaces) {
-            if (!(iface.flags() & QNetworkInterface::IsUp))
-                continue;
-            if (iface.flags() & QNetworkInterface::IsLoopBack)
-                continue;
-            const auto entries = iface.addressEntries();
-            for (const QNetworkAddressEntry &entry : entries) {
+            if (!(iface.flags() & QNetworkInterface::IsUp))       continue;
+            if (iface.flags()   & QNetworkInterface::IsLoopBack)  continue;
+            for (const QNetworkAddressEntry &entry : iface.addressEntries()) {
                 if (!entry.ip().isNull() && !entry.ip().isLoopback())
                     return true;
             }
         }
         return false;
     }
-
-    QNetworkAccessManager *m_nam{nullptr};
-    int                    m_attempt{0};
 };
 
 // ---------------------------------------------------------------------------
@@ -184,40 +191,36 @@ UpdateManager::UpdateManager(configuration::IConfiguration::Pointer config, QObj
     : QObject(parent)
     , m_config(std::move(config))
 {
-    // Create the worker and move it to a dedicated thread.
     m_checkThread = new QThread(this);
     m_checkThread->setObjectName(QStringLiteral("ota-check"));
 
     m_checkWorker = new UpdateCheckWorker();
     m_checkWorker->moveToThread(m_checkThread);
 
-    // Worker → manager connections (queued across thread boundary automatically).
     connect(m_checkWorker, &UpdateCheckWorker::checkResult,
             this, &UpdateManager::onCheckResult);
     connect(m_checkWorker, &UpdateCheckWorker::checkFailed,
             this, &UpdateManager::onCheckFailed);
 
-    // Manager → worker trigger (queued: safe to call from main thread).
     connect(this, &UpdateManager::startCheckRequested,
             m_checkWorker, &UpdateCheckWorker::run, Qt::QueuedConnection);
 
-    // Clean up the worker object when the thread finishes.
     connect(m_checkThread, &QThread::finished,
             m_checkWorker, &QObject::deleteLater);
 
     m_checkThread->start();
 
-    // Kick off the first check after the event loop starts so all signal
-    // connections in main.cpp are established before we emit anything.
+    // Deferred so all QML signal connections are established first.
     QTimer::singleShot(0, this, &UpdateManager::checkForUpdate);
 }
 
 UpdateManager::~UpdateManager()
 {
     if (m_checkThread) {
+        m_checkThread->requestInterruption(); // wake interruptibleSleep
         m_checkThread->quit();
-        if (!m_checkThread->wait(20000)) {
-            qWarning(lcUpdate) << "OTA check thread did not finish in time — terminating";
+        if (!m_checkThread->wait(5000)) {
+            qWarning(lcUpdate) << "OTA thread did not stop in time — terminating";
             m_checkThread->terminate();
             m_checkThread->wait(3000);
         }
@@ -241,7 +244,8 @@ void UpdateManager::checkForUpdate()
     }
 
     try {
-        const bool desktopMode = m_config->getSettingByName<bool>("System", "DesktopMode", false);
+        const bool desktopMode =
+            m_config->getSettingByName<bool>("System", "DesktopMode", false);
         if (desktopMode) {
             qInfo(lcUpdate) << "desktop mode: OTA disabled";
             emit checkComplete(false, getCurrentVersion());
@@ -289,12 +293,14 @@ void UpdateManager::downloadUpdate()
     }
     qInfo(lcUpdate) << "download url=" << m_updateUrl;
 
-    const QString destPath = QStandardPaths::writableLocation(
-                                 QStandardPaths::TempLocation) + QStringLiteral("/update.raucb");
+    const QString destPath =
+        QStandardPaths::writableLocation(QStandardPaths::TempLocation)
+        + QStringLiteral("/update.raucb");
 
     auto *file = new QFile(destPath, this);
     if (!file->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        const QString msg = QStringLiteral("Failed to open %1 for writing").arg(destPath);
+        const QString msg =
+            QStringLiteral("Failed to open %1 for writing").arg(destPath);
         qWarning(lcUpdate) << msg;
         file->deleteLater();
         emit errorOccurred(msg);
@@ -305,7 +311,7 @@ void UpdateManager::downloadUpdate()
     request.setTransferTimeout(300000); // 5 min global timeout
 
     auto *networkManager = new QNetworkAccessManager(this);
-    QNetworkReply *reply = networkManager->get(request);
+    QNetworkReply *reply  = networkManager->get(request);
 
     // Stream to disk — avoids buffering the entire bundle in RAM.
     connect(reply, &QNetworkReply::readyRead, this, [reply, file]() {
@@ -326,7 +332,7 @@ void UpdateManager::downloadUpdate()
             if (reply->error() != QNetworkReply::NoError) {
                 const QString msg = reply->errorString();
                 qWarning(lcUpdate) << "download failed:" << msg;
-                QFile::remove(destPath); // clean up partial file
+                QFile::remove(destPath);
                 emit errorOccurred(msg);
                 return;
             }
@@ -346,8 +352,10 @@ void UpdateManager::downloadUpdate()
 
 void UpdateManager::applyUpdate()
 {
-    const QString bundlePath = QStandardPaths::writableLocation(
-                                   QStandardPaths::TempLocation) + QStringLiteral("/update.raucb");
+    const QString bundlePath =
+        QStandardPaths::writableLocation(QStandardPaths::TempLocation)
+        + QStringLiteral("/update.raucb");
+
     if (!QFile::exists(bundlePath)) {
         qWarning(lcUpdate) << "apply called but bundle not found at" << bundlePath;
         emit errorOccurred(QStringLiteral("Update bundle not found."));
@@ -364,7 +372,8 @@ void UpdateManager::applyUpdate()
         process->deleteLater();
         if (exitCode == 0 && exitStatus == QProcess::NormalExit) {
             qInfo(lcUpdate) << "RAUC install success";
-            emit installFinished(true, QStringLiteral("Installation successful. System will reboot."));
+            emit installFinished(true,
+                QStringLiteral("Installation successful. System will reboot."));
         } else {
             qWarning(lcUpdate) << "RAUC install failed with code" << exitCode;
             emit installFinished(false,
@@ -385,6 +394,4 @@ void UpdateManager::applyUpdate()
 
 } // namespace
 
-// Required because UpdateCheckWorker is defined in this .cpp file
-// and uses Q_OBJECT.
 #include "UpdateManager.moc"
