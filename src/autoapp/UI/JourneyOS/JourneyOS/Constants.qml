@@ -1,6 +1,5 @@
 pragma Singleton
 import QtQuick
-import QtQuick.Studio.Application
 
 // ─────────────────────────────────────────────────────────────────────────────
 // JourneyOS Design Tokens
@@ -192,8 +191,4 @@ QtObject {
     readonly property color settingFooterPalette:           "#7A1010"
     readonly property color settingFooterColor:             "#557A1010"
 
-    // ── STUDIO APPLICATION ────────────────────────────────────────────────────
-    property StudioApplication application: StudioApplication {
-        fontPath: Qt.resolvedUrl("../JourneyOSContent/" + relativeFontDirectory)
-    }
 }

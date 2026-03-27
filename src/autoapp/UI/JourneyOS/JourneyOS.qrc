@@ -3,8 +3,6 @@
 <qresource>
 <file>JourneyOS.qmlproject</file>
 <file>JourneyOS/Constants.qml</file>
-<file>JourneyOS/EventListModel.qml</file>
-<file>JourneyOS/EventListSimulator.qml</file>
 <file>JourneyOS/qmldir</file>
 <file>JourneyOSContent/ClickOutsideHandler.qml</file>
 <file>JourneyOSContent/Header.ui.qml</file>
