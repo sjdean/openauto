@@ -5,3 +5,7 @@ build/
 .vscode/
 openauto.ini
 CMakeLists.txt.user
+/.claude/
+/src/debug/
+/p/
+/private/
