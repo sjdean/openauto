@@ -10,7 +10,7 @@ This is not a minor fork. The UI has been redesigned from the ground up using Qt
 
 ## Status
 
-Active development — targeting v4.1 for Raspberry Pi 5. The project compiles and runs on macOS for development purposes, but full functionality is Linux/Raspberry Pi only at this stage.
+v4.1 beta — targeting first public release for Raspberry Pi 5. The project compiles and runs on macOS for development purposes, but full functionality is Linux/Raspberry Pi only at this stage.
 
 ---
 
@@ -84,7 +84,7 @@ cmake --build build -j$(nproc)
 
 The roadmap below covers near-term targets only. Scope beyond that is being finalised and will be published when confirmed.
 
-### v4.1 — Raspberry Pi 5 Foundation *(in progress)*
+### v4.1 — Raspberry Pi 5 Foundation *(beta)*
 
 | Status | Item |
 |--------|------|
@@ -98,11 +98,11 @@ The roadmap below covers near-term targets only. Scope beyond that is being fina
 | ✅ | All status indicators correct |
 | ✅ | Power on / restart |
 | ✅ | System managed settings (locked in embedded mode) |
-| 🔲 | Bluetooth pairing and HFP/A2DP configuration |
-| 🔲 | Wi-Fi hotspot / client configuration |
-| 🔲 | "Hey Google" voice activation without freeze |
-| 🔲 | Video sizing — full screen and display-size aware |
-| 🔲 | OTA updates via RAUC |
+| ✅ | Bluetooth pairing and HFP/A2DP configuration |
+| ✅ | Wi-Fi hotspot / client configuration |
+| ✅ | "Hey Google" voice activation without freeze |
+| ✅ | Video sizing — full screen and display-size aware |
+| ✅ | OTA updates via RAUC |
 
 ### v4.2 — Polish *(planned)*
 
