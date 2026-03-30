@@ -14,11 +14,11 @@ namespace f1x::openauto::autoapp::projection {
         Q_OBJECT
 
     public:
-        QtAudioOutput(uint32_t channelCount, uint32_t sampleSize, uint32_t sampleRate,
-                      configuration::IConfiguration::Pointer config);
-        ~QtAudioOutput() override; // [ADDED] Destructor to stop thread
+        QtAudioOutput(configuration::IConfiguration::Pointer config);
+        ~QtAudioOutput() override;
 
         // -- IAudioOutput Interface --
+        void setFormat(uint32_t channelCount, uint32_t sampleSize, uint32_t sampleRate) override;
         bool open() override;
         void write(aasdk::messenger::Timestamp::ValueType timestamp, const aasdk::common::DataConstBuffer &buffer) override;
         void start() override;

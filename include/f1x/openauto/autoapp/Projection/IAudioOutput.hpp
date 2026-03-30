@@ -13,6 +13,8 @@ namespace f1x::openauto::autoapp::projection {
 
         virtual ~IAudioOutput() = default;
 
+        virtual void setFormat(uint32_t channelCount, uint32_t sampleSize, uint32_t sampleRate) = 0;
+
         virtual bool open() = 0;
 
         virtual void

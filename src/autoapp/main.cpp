@@ -354,17 +354,17 @@ int main(int argc, char *argv[]) {
     autoapp::projection::IAudioOutput::Pointer audioOutputSystem;
 
     if (configuration->getSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoMedia)) {
-        audioOutputMedia = std::make_shared<autoapp::projection::QtAudioOutput>(2, 16, 48000, configuration);
+        audioOutputMedia = std::make_shared<autoapp::projection::QtAudioOutput>(configuration);
     }
 
     if (configuration->getSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoGuidance)) {
-        audioOutputGuidance = std::make_shared<autoapp::projection::QtAudioOutput>(1, 16, 16000, configuration);
+        audioOutputGuidance = std::make_shared<autoapp::projection::QtAudioOutput>(configuration);
     }
 
     if (configuration->getSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoTelephony)) {
-        audioOutputTelephony = std::make_shared<autoapp::projection::QtAudioOutput>(1, 16, 16000, configuration);
+        audioOutputTelephony = std::make_shared<autoapp::projection::QtAudioOutput>(configuration);
     }
-    audioOutputSystem = std::make_shared<autoapp::projection::QtAudioOutput>(1, 16, 16000, configuration);
+    audioOutputSystem = std::make_shared<autoapp::projection::QtAudioOutput>(configuration);
 
     // Requested Video Size
     QRect videoGeometry;

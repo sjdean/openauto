@@ -77,15 +77,26 @@ namespace f1x::openauto::autoapp::service::mediasink {
 
     audioChannel->set_available_while_in_call(true);
 
-    auto *audioConfig = audioChannel->add_audio_configs();
-    audioConfig->set_sampling_rate(audioOutput_->getSampleRate());
-    audioConfig->set_number_of_bits(audioOutput_->getSampleSize());
-    audioConfig->set_number_of_channels(audioOutput_->getChannelCount());
+    // Advertise static supported configs. Sink creation is deferred until Setup
+    // (onMediaChannelSetupRequest), so these are not read from the output object.
+    const bool isMedia = (channel_->getId() == aasdk::messenger::ChannelId::MEDIA_SINK_MEDIA_AUDIO);
+    const uint32_t channels = isMedia ? 2 : 1;
+
+    // Config 0: 48000 Hz (primary — we always confirm this index in Setup response).
+    auto *cfg0 = audioChannel->add_audio_configs();
+    cfg0->set_sampling_rate(48000);
+    cfg0->set_number_of_bits(16);
+    cfg0->set_number_of_channels(channels);
+
+    // Config 1: lower-rate alternative (44100 for media, 16000 for voice channels).
+    auto *cfg1 = audioChannel->add_audio_configs();
+    cfg1->set_sampling_rate(isMedia ? 44100 : 16000);
+    cfg1->set_number_of_bits(16);
+    cfg1->set_number_of_channels(channels);
 
     qInfo(lcServiceSinkMediaAudio) << "channel=" << aasdk::messenger::channelIdToString(channel_->getId())
-                                   << " sample_rate=" << audioOutput_->getSampleRate()
-                                   << " sample_size=" << audioOutput_->getSampleSize()
-                                   << " channels=" << audioOutput_->getChannelCount();
+                                   << " advertising 48000+" << (isMedia ? 44100 : 16000)
+                                   << " Hz" << channels << "ch 16-bit";
   }
 
   /*
@@ -94,14 +105,11 @@ namespace f1x::openauto::autoapp::service::mediasink {
 
   void AudioMediaSinkService::onChannelOpenRequest(
       const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
-    const aap_protobuf::shared::MessageStatus status = audioOutput_->open()
-                                                       ? aap_protobuf::shared::MessageStatus::STATUS_SUCCESS
-                                                       : aap_protobuf::shared::MessageStatus::STATUS_INVALID_CHANNEL;
-    qInfo(lcServiceSinkMediaAudio) << "channel open service_id=" << request.service_id()
-                                   << " status=" << aap_protobuf::shared::MessageStatus_Name(status);
+    // Format negotiation happens in onMediaChannelSetupRequest; just acknowledge here.
+    qInfo(lcServiceSinkMediaAudio) << "channel open service_id=" << request.service_id();
 
     aap_protobuf::service::control::message::ChannelOpenResponse response;
-    response.set_status(status);
+    response.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
 
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {}, std::bind(&AudioMediaSinkService::onChannelError, this->shared_from_this(),
@@ -124,10 +132,15 @@ namespace f1x::openauto::autoapp::service::mediasink {
     qInfo(lcServiceSinkMediaAudio) << "setup channel=" << aasdk::messenger::channelIdToString(channel_->getId())
                                    << " codec=" << MediaCodecType_Name(request.type());
 
+    // Configure and open the sink now that the format is confirmed (index 0 = 48000 Hz).
+    const bool isMedia = (channel_->getId() == aasdk::messenger::ChannelId::MEDIA_SINK_MEDIA_AUDIO);
+    audioOutput_->setFormat(isMedia ? 2 : 1, 16, 48000);
+    audioOutput_->open();
+
     aap_protobuf::service::media::shared::message::Config response;
     response.set_status(aap_protobuf::service::media::shared::message::Config::STATUS_READY);
     response.set_max_unacked(1);
-    response.add_configuration_indices(0);
+    response.add_configuration_indices(0); // confirm index 0 (48000 Hz)
 
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {}, std::bind(&AudioMediaSinkService::onChannelError, this->shared_from_this(),

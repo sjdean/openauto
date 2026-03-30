@@ -10,44 +10,43 @@ namespace f1x::openauto::autoapp::projection {
 using configuration::ConfigGroup;
 using configuration::ConfigKey;
 
-  QtAudioOutput::QtAudioOutput(uint32_t channelCount, uint32_t sampleSize, uint32_t sampleRate,
-                               configuration::IConfiguration::Pointer config)
+  QtAudioOutput::QtAudioOutput(configuration::IConfiguration::Pointer config)
       : playbackStarted_(false),
         configuration_(std::move(config)) {
 
-    // 1. Setup Format
-    audioFormat_.setChannelCount(channelCount);
-    audioFormat_.setSampleRate(sampleRate);
-
-    if (sampleSize == 8) {
-      audioFormat_.setSampleFormat(QAudioFormat::UInt8);
-    } else if (sampleSize == 16) {
-      audioFormat_.setSampleFormat(QAudioFormat::Int16);
-    } else if (sampleSize == 32 || sampleSize == 24) {
-      audioFormat_.setSampleFormat(QAudioFormat::Int32);
-    } else {
-       audioFormat_.setSampleFormat(QAudioFormat::Int16);
-    }
-
-    // 2. Prepare Internal Buffer
-    // This buffer acts as the safe bridge between Network Thread and Audio Thread.
+    // Prepare the internal buffer bridge between network thread and audio thread.
     audioInternalBuffer_.open(QIODevice::ReadWrite);
 
-    // 3. Threading Magic
-    // Move THIS object to the worker thread.
+    // Move this object to the worker thread so all slot invocations run there.
     this->moveToThread(&workerThread_);
 
-    // When thread starts, create the sink (so the sink lives on the thread)
+    // When the thread starts, create the QAudioSink (which must live on the thread).
     connect(&workerThread_, &QThread::started, this, &QtAudioOutput::createAudioOutput);
 
-    // Wire up control signals (QueuedConnection is automatic across threads)
+    // Wire up control signals (QueuedConnection is automatic across threads).
     connect(this, &QtAudioOutput::startPlayback, this, &QtAudioOutput::onStartPlayback);
     connect(this, &QtAudioOutput::suspendPlayback, this, &QtAudioOutput::onSuspendPlayback);
     connect(this, &QtAudioOutput::stopPlayback, this, &QtAudioOutput::onStopPlayback);
     connect(this, &QtAudioOutput::requestSetVolume, this, &QtAudioOutput::onSetVolume);
 
-    // 4. Start the Thread
-    workerThread_.start();
+    // Thread is NOT started here. Call setFormat() then open() after AA negotiation.
+  }
+
+  void QtAudioOutput::setFormat(uint32_t channelCount, uint32_t sampleSize, uint32_t sampleRate) {
+    if (workerThread_.isRunning()) {
+      qCWarning(lcQtAudioOut) << "setFormat called while thread already running — ignored";
+      return;
+    }
+    audioFormat_.setChannelCount(static_cast<int>(channelCount));
+    audioFormat_.setSampleRate(static_cast<int>(sampleRate));
+    if (sampleSize == 8)
+      audioFormat_.setSampleFormat(QAudioFormat::UInt8);
+    else if (sampleSize == 32 || sampleSize == 24)
+      audioFormat_.setSampleFormat(QAudioFormat::Int32);
+    else
+      audioFormat_.setSampleFormat(QAudioFormat::Int16);
+    qInfo(lcQtAudioOut) << "format set: rate=" << sampleRate
+                        << " bits=" << sampleSize << " channels=" << channelCount;
   }
 
   QtAudioOutput::~QtAudioOutput() {
@@ -79,7 +78,12 @@ using configuration::ConfigKey;
     audioOutput_->setBufferSize(128000);
   }
 
-  bool QtAudioOutput::open() { return true; }
+  bool QtAudioOutput::open() {
+    if (!workerThread_.isRunning()) {
+      workerThread_.start();
+    }
+    return true;
+  }
 
   void QtAudioOutput::write(aasdk::messenger::Timestamp::ValueType, const aasdk::common::DataConstBuffer &buffer) {
     // [CRITICAL FIX]
