@@ -108,7 +108,7 @@ if(NOT "${QT6_INSTALL_DIR}" STREQUAL "")
 endif()
 
 find_package(Qt6 REQUIRED COMPONENTS
-        Core Gui Qml Quick Bluetooth DBus
+        Core Gui Qml Quick QuickEffects Bluetooth DBus
         Network Multimedia MultimediaWidgets Widgets
 )
 
@@ -290,6 +290,7 @@ target_link_libraries(autoapp PRIVATE
         Qt6::Core
         Qt6::Gui
         Qt6::Quick
+        Qt6::QuickEffects
         Qt6::Qml
         Qt6::DBus
         Qt6::Bluetooth

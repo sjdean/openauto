@@ -8,7 +8,7 @@ Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects
+import QtQuick.Effects
 import JourneyOS
 
 Button {
@@ -72,13 +72,13 @@ Button {
             anchors.horizontalCenter: itemButton.horizontalCenter
 
 
-            ColorOverlay {
-                id: colorOverlay
+            MultiEffect {
                 source: image
                 height: control.icon.height
                 width: control.icon.width
-                color: control.icon.color
                 anchors.horizontalCenter: parent.horizontalCenter
+                colorization: 1.0
+                colorizationColor: control.icon.color
             }
 
             Image {
@@ -122,14 +122,14 @@ Button {
                 height: (control.icon.height * 2) - (control.buttonPadding * 2)
                 width: (control.icon.width * 2) - (control.buttonPadding * 2)
 
-                ColorOverlay {
-                    id: horizontalIconOverlay
+                MultiEffect {
                     source: horizontalIconImage
                     height: control.icon.height
                     width: control.icon.width
-                    color: control.icon.color
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter
+                    colorization: 1.0
+                    colorizationColor: control.icon.color
                 }
 
                 Image {
