@@ -12,6 +12,8 @@
 Q_LOGGING_CATEGORY(lcVmBrightness, "journeyos.brightness")
 
 namespace f1x::openauto::autoapp::UI::ViewModel {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
     /**
      * Adjusts screen brightness or or backlight in response to light events
      * @param configuration A link to IConfiguration
@@ -30,11 +32,12 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
                          this, &BrightnessViewModel::onLightChange);
 
         // Load saved brightness and clamp to current day/night [min,max] range
-        const int savedBrightness = m_configuration->getSettingByName<int>("Screen", "Brightness");
-        const int min = m_configuration->getSettingByName<int>(
-            "Screen", m_lightHandler.getDay() || m_lightHandler.getLightsOn() ? "DayMin" : "NightMin");
-        const int max = m_configuration->getSettingByName<int>(
-            "Screen", m_lightHandler.getDay() || m_lightHandler.getLightsOn() ? "DayMax" : "NightMax");
+        const bool isDay = m_lightHandler.getDay() || m_lightHandler.getLightsOn();
+        const int savedBrightness = m_configuration->getSettingByName<int>(ConfigGroup::Screen, ConfigKey::ScreenBrightness);
+        const int min = m_configuration->getSettingByName<int>(ConfigGroup::Screen,
+            isDay ? ConfigKey::ScreenDayMin : ConfigKey::ScreenNightMin);
+        const int max = m_configuration->getSettingByName<int>(ConfigGroup::Screen,
+            isDay ? ConfigKey::ScreenDayMax : ConfigKey::ScreenNightMax);
         m_userBrightnessTarget = std::clamp(savedBrightness, min, max);
         m_calculatedBrightness = m_userBrightnessTarget;
 
@@ -66,13 +69,15 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     }
 
     int BrightnessViewModel::getCurrentMin() const {
-        return m_configuration->getSettingByName<int>(
-            "Screen", m_lightHandler.getDay() || m_lightHandler.getLightsOn() ? "DayMin" : "NightMin");
+        const bool isDay = m_lightHandler.getDay() || m_lightHandler.getLightsOn();
+        return m_configuration->getSettingByName<int>(ConfigGroup::Screen,
+            isDay ? ConfigKey::ScreenDayMin : ConfigKey::ScreenNightMin);
     }
 
     int BrightnessViewModel::getCurrentMax() const {
-        return m_configuration->getSettingByName<int>(
-            "Screen", m_lightHandler.getDay() || m_lightHandler.getLightsOn() ? "DayMax" : "NightMax");
+        const bool isDay = m_lightHandler.getDay() || m_lightHandler.getLightsOn();
+        return m_configuration->getSettingByName<int>(ConfigGroup::Screen,
+            isDay ? ConfigKey::ScreenDayMax : ConfigKey::ScreenNightMax);
     }
 
     void BrightnessViewModel::onLightChange() {
@@ -113,7 +118,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         }
         if (m_userBrightnessTarget != clamped) {
             m_userBrightnessTarget = clamped;
-            m_configuration->updateSettingByName("Screen", "Brightness", clamped);
+            m_configuration->updateSettingByName(ConfigGroup::Screen, ConfigKey::ScreenBrightness, clamped);
             emit targetBrightnessChanged();
         }
     }

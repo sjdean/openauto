@@ -5,6 +5,7 @@
 #include <aap_protobuf/service/media/sink/message/KeyCode.pb.h>
 #include <f1x/openauto/autoapp/Configuration/ConfigurationGroup.hpp>
 #include <f1x/openauto/autoapp/Configuration/ConfigurationSetting.hpp>
+#include <f1x/openauto/autoapp/Configuration/ConfigurationKeys.hpp>
 #include <stdio.h>
 
 #include <qloggingcategory.h>
@@ -18,6 +19,20 @@ namespace f1x::openauto::autoapp::configuration {
         typedef std::vector<aap_protobuf::service::media::sink::message::KeyCode> ButtonCodes;
 
         virtual ~IConfiguration() = default;
+
+        // --- Enum overloads (preferred) --------------------------------------
+
+        template<typename T>
+        T getSettingByName(ConfigGroup group, ConfigKey key, T defaultValue = T{}) {
+            return getSettingByName<T>(toQString(group), toQString(key), defaultValue);
+        }
+
+        template<typename T>
+        void updateSettingByName(ConfigGroup group, ConfigKey key, T value) {
+            updateSettingByName<T>(toQString(group), toQString(key), std::move(value));
+        }
+
+        // --- String overloads (internal / legacy) ----------------------------
 
         template<typename T>
         T getSettingByName(QString groupName, QString settingName, T defaultValue = T{}) {
@@ -35,19 +50,22 @@ namespace f1x::openauto::autoapp::configuration {
 
         template<typename T>
         void updateSettingByName(QString groupName, QString settingName, T value) {
-            qDebug() << "Updating group " << groupName << " setting " << settingName << " to " << value;
             auto groupIt = std::find_if(m_configurationGroups.begin(), m_configurationGroups.end(),
                                         [&groupName](const ConfigurationGroup &group) {
                                             return group.getName() == groupName;
                                         });
 
             if (groupIt != m_configurationGroups.end()) {
-                qInfo() << "Setting Found";
                 (*groupIt).setValueForSetting(settingName, value);
+                onSettingChanged(groupName, settingName, QVariant::fromValue(value));
             } else {
                 qWarning() << "updateSettingByName: group not found:" << groupName;
             }
         }
+
+        // Called after every successful updateSettingByName so subclasses can
+        // persist the individual key without rewriting the entire file.
+        virtual void onSettingChanged(const QString& /*group*/, const QString& /*key*/, const QVariant& /*value*/) {}
 
         virtual bool hasTouchScreen() const = 0;
 

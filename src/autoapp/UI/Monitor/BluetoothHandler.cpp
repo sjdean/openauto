@@ -21,6 +21,8 @@ Q_DECLARE_METATYPE(BluezManagedObjects)
 Q_LOGGING_CATEGORY(lcBtHandler, "journeyos.bluetooth")
 
 namespace f1x::openauto::autoapp::UI::Monitor {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
     /**
      * Interface between the UI and Local Hardware. To listen for Device Connectivity and advise UI when those details change.
      * @param configuration
@@ -38,7 +40,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         qDBusRegisterMetaType<BluezManagedObjects>();
 #endif
         // 1. Restore saved adapter preference; fall back to system default
-        const QString savedAdapter = configuration_->getSettingByName<QString>("Bluetooth", "AdapterAddress");
+        const QString savedAdapter = configuration_->getSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress);
         if (!savedAdapter.isEmpty()) {
             localDevice_ = std::make_unique<QBluetoothLocalDevice>(QBluetoothAddress(savedAdapter));
             if (!localDevice_->isValid()) {
@@ -57,7 +59,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             // Persist auto-detected adapter so future boots use the same one
             if (savedAdapter.isEmpty()) {
                 const QString addr = localDevice_->address().toString();
-                configuration_->updateSettingByName("Bluetooth", "AdapterAddress", addr);
+                configuration_->updateSettingByName(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress, addr);
                 configuration_->save();
                 qInfo(lcBtHandler) << "adapter auto-detected and saved address=" << addr;
             } else {
@@ -68,7 +70,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         }
 
         // 2. Load ignored-device list from config
-        const QString ignored = configuration_->getSettingByName<QString>("Bluetooth", "IgnoredDevices");
+        const QString ignored = configuration_->getSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothIgnoredDevices);
         if (!ignored.isEmpty())
             m_ignoredDevices = ignored.split(',', Qt::SkipEmptyParts);
 
@@ -110,7 +112,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         // 6. Auto-connect to last known device after the BT stack settles.
         //    If the saved device is unreachable, fall back to other paired devices.
         QTimer::singleShot(3000, this, [this]() {
-            const QString lastDevice = configuration_->getSettingByName<QString>("Bluetooth", "PairedDeviceAddress");
+            const QString lastDevice = configuration_->getSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothPairedDeviceAddress);
             if (!lastDevice.isEmpty()) {
                 qInfo(lcBtHandler) << "auto-connect device=" << lastDevice;
                 if (connectToDevice(lastDevice)) return;
@@ -190,7 +192,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         if (pairing == QBluetoothLocalDevice::Paired || pairing == QBluetoothLocalDevice::AuthorizedPaired) {
             qInfo(lcBtHandler) << "pairing successful address=" << address.toString();
 
-            configuration_->updateSettingByName("Bluetooth", "PairedDeviceAddress", address.toString());
+            configuration_->updateSettingByName(ConfigGroup::Bluetooth, ConfigKey::BluetoothPairedDeviceAddress, address.toString());
             configuration_->save();
 
             // Update internal list status
@@ -368,7 +370,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      */
     bool BluetoothHandler::connectToPairedDeviceImpl(Model::BluetoothDevice device) {
         disconnectCurrentDevice();
-        configuration_->updateSettingByName("Bluetooth", "PairedDeviceAddress", device.address);
+        configuration_->updateSettingByName(ConfigGroup::Bluetooth, ConfigKey::BluetoothPairedDeviceAddress, device.address);
         configuration_->save();
         return connectToDeviceImpl(device);
     }
@@ -438,7 +440,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             }
         }
 
-        configuration_->updateSettingByName("Bluetooth", "PairedDeviceAddress", "");
+        configuration_->updateSettingByName(ConfigGroup::Bluetooth, ConfigKey::BluetoothPairedDeviceAddress, QString(""));
         configuration_->save();
         return allSuccess;
     }
@@ -456,7 +458,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         if (m_ignoredDevices.contains(address))
             return;
         m_ignoredDevices.append(address);
-        configuration_->updateSettingByName("Bluetooth", "IgnoredDevices", m_ignoredDevices.join(','));
+        configuration_->updateSettingByName(ConfigGroup::Bluetooth, ConfigKey::BluetoothIgnoredDevices, m_ignoredDevices.join(','));
         configuration_->save();
         Q_EMIT unpairedDeviceListChanged();
         qInfo(lcBtHandler) << "device ignored address=" << address;
@@ -577,7 +579,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                     this, &BluetoothHandler::onPairingFinished);
 
             // Save preference
-            configuration_->updateSettingByName("Bluetooth", "AdapterAddress", address);
+            configuration_->updateSettingByName(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress, address);
             configuration_->save();
         }
     }

@@ -20,99 +20,98 @@ namespace f1x::openauto::autoapp::configuration {
     m_configurationGroups.clear();
 
     // Initialise and Configure Default Settings prior to loading...
-    ConfigurationGroup carGroup("Car");
-    carGroup.addSetting<QString>("Make", "Unknown");
-    carGroup.addSetting<QString>("Model", "Unknown");
-    carGroup.addSetting<int>("FuelType", aap_protobuf::service::sensorsource::message::FuelType::FUEL_TYPE_UNKNOWN);
-    carGroup.addSetting<int>("EvConnectorType", aap_protobuf::service::sensorsource::message::EvConnectorType::EV_CONNECTOR_TYPE_UNKNOWN);
-    carGroup.addSetting<int>("DriverPosition", aap_protobuf::service::control::message::DriverPosition::DRIVER_POSITION_RIGHT);
-    carGroup.addSetting<QString>("Id", generateRandomString(128));
+    ConfigurationGroup carGroup(toQString(ConfigGroup::Car));
+    carGroup.addSetting<QString>(toQString(ConfigKey::CarMake), "Unknown");
+    carGroup.addSetting<QString>(toQString(ConfigKey::CarModel), "Unknown");
+    carGroup.addSetting<int>(toQString(ConfigKey::CarFuelType), aap_protobuf::service::sensorsource::message::FuelType::FUEL_TYPE_UNKNOWN);
+    carGroup.addSetting<int>(toQString(ConfigKey::CarEvConnectorType), aap_protobuf::service::sensorsource::message::EvConnectorType::EV_CONNECTOR_TYPE_UNKNOWN);
+    carGroup.addSetting<int>(toQString(ConfigKey::CarDriverPosition), aap_protobuf::service::control::message::DriverPosition::DRIVER_POSITION_RIGHT);
+    carGroup.addSetting<QString>(toQString(ConfigKey::CarId), generateRandomString(128));
     carGroup.load(m_settings);
     m_configurationGroups.append(carGroup);
 
-    ConfigurationGroup screenGroup("Screen");
-    screenGroup.addSetting<int>("DayMin", 10);
-    screenGroup.addSetting<int>("DayMax", 150);
-    screenGroup.addSetting<int>("NightMin", 10);
-    screenGroup.addSetting<int>("NightMax", 150);
-    screenGroup.addSetting<int>("Brightness", 150);
-    screenGroup.addSetting<int>("DPI", 160);
-    screenGroup.addSetting<bool>("UseClockDayNight", false);
+    ConfigurationGroup screenGroup(toQString(ConfigGroup::Screen));
+    screenGroup.addSetting<int>(toQString(ConfigKey::ScreenDayMin), 10);
+    screenGroup.addSetting<int>(toQString(ConfigKey::ScreenDayMax), 150);
+    screenGroup.addSetting<int>(toQString(ConfigKey::ScreenNightMin), 10);
+    screenGroup.addSetting<int>(toQString(ConfigKey::ScreenNightMax), 150);
+    screenGroup.addSetting<int>(toQString(ConfigKey::ScreenBrightness), 150);
+    screenGroup.addSetting<int>(toQString(ConfigKey::ScreenDPI), 160);
+    screenGroup.addSetting<bool>(toQString(ConfigKey::ScreenUseClockDayNight), false);
     screenGroup.load(m_settings);
     m_configurationGroups.append(screenGroup);
 
-    ConfigurationGroup videoGroup("Video");
-    videoGroup.addSetting<int>("Height", 0);
-    videoGroup.addSetting<int>("Width", 0);
-    videoGroup.addSetting<bool>("Rotate", false);
+    ConfigurationGroup videoGroup(toQString(ConfigGroup::Video));
+    videoGroup.addSetting<int>(toQString(ConfigKey::VideoHeight), 0);
+    videoGroup.addSetting<int>(toQString(ConfigKey::VideoWidth), 0);
+    videoGroup.addSetting<bool>(toQString(ConfigKey::VideoRotate), false);
     videoGroup.load(m_settings);
     m_configurationGroups.append(videoGroup);
 
-    ConfigurationGroup audioGroup("Audio");
-    audioGroup.addSetting<int>("PlaybackMin", 0);
-    audioGroup.addSetting<int>("PlaybackMax", 255);
-    audioGroup.addSetting<int>("CaptureMin", 0);
-    audioGroup.addSetting<int>("CaptureMax", 255);
-    audioGroup.addSetting<int>("PlaybackVolume", 150);
-    audioGroup.addSetting<int>("CaptureVolume", 150);
-    audioGroup.addSetting<bool>("DebugRecord", true);
-    audioGroup.addSetting<QString>("PlaybackDevice", "");
-    audioGroup.addSetting<QString>("CaptureDevice", "");
+    ConfigurationGroup audioGroup(toQString(ConfigGroup::Audio));
+    audioGroup.addSetting<int>(toQString(ConfigKey::AudioPlaybackMin), 0);
+    audioGroup.addSetting<int>(toQString(ConfigKey::AudioPlaybackMax), 255);
+    audioGroup.addSetting<int>(toQString(ConfigKey::AudioCaptureMin), 0);
+    audioGroup.addSetting<int>(toQString(ConfigKey::AudioCaptureMax), 255);
+    audioGroup.addSetting<int>(toQString(ConfigKey::AudioPlaybackVolume), 150);
+    audioGroup.addSetting<int>(toQString(ConfigKey::AudioCaptureVolume), 150);
+    audioGroup.addSetting<bool>(toQString(ConfigKey::AudioDebugRecord), true);
+    audioGroup.addSetting<QString>(toQString(ConfigKey::AudioPlaybackDevice), "");
+    audioGroup.addSetting<QString>(toQString(ConfigKey::AudioCaptureDevice), "");
     audioGroup.load(m_settings);
     m_configurationGroups.append(audioGroup);
 
-    ConfigurationGroup mediaGroup("Media");
-    mediaGroup.addSetting<bool>("AutoPlayback", false);
-    mediaGroup.addSetting<bool>("AutoStart", false);
+    ConfigurationGroup mediaGroup(toQString(ConfigGroup::Media));
+    mediaGroup.addSetting<bool>(toQString(ConfigKey::MediaAutoPlayback), false);
+    mediaGroup.addSetting<bool>(toQString(ConfigKey::MediaAutoStart), false);
     mediaGroup.load(m_settings);
     m_configurationGroups.append(mediaGroup);
 
-    ConfigurationGroup aaGroup("AndroidAuto");
-    aaGroup.addSetting<bool>("Media", true);
-    aaGroup.addSetting<bool>("Guidance", true);
-    aaGroup.addSetting<bool>("Telephony", false);
-    aaGroup.addSetting<int>("FrameRate", aap_protobuf::service::media::sink::message::VideoFrameRateType::VIDEO_FPS_60);
-    aaGroup.addSetting<int>("Resolution", aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_800x480);
-    aaGroup.addSetting<QString>("HomeButtonVisibility", "touchToReveal"); // "touchToReveal" | "alwaysVisible"
+    ConfigurationGroup aaGroup(toQString(ConfigGroup::AndroidAuto));
+    aaGroup.addSetting<bool>(toQString(ConfigKey::AndroidAutoMedia), true);
+    aaGroup.addSetting<bool>(toQString(ConfigKey::AndroidAutoGuidance), true);
+    aaGroup.addSetting<bool>(toQString(ConfigKey::AndroidAutoTelephony), false);
+    aaGroup.addSetting<int>(toQString(ConfigKey::AndroidAutoFrameRate), aap_protobuf::service::media::sink::message::VideoFrameRateType::VIDEO_FPS_60);
+    aaGroup.addSetting<int>(toQString(ConfigKey::AndroidAutoResolution), aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_800x480);
+    aaGroup.addSetting<QString>(toQString(ConfigKey::AndroidAutoHomeButtonVisibility), "touchToReveal");
     aaGroup.load(m_settings);
     m_configurationGroups.append(aaGroup);
 
-    ConfigurationGroup bluetoothGroup("Bluetooth");
-    bluetoothGroup.addSetting<bool>("Enabled", true);
-    bluetoothGroup.addSetting<QString>("AdapterAddress", "");
-    bluetoothGroup.addSetting<QString>("PairedDeviceAddress", "");
-    bluetoothGroup.addSetting<QString>("IgnoredDevices", "");
+    ConfigurationGroup bluetoothGroup(toQString(ConfigGroup::Bluetooth));
+    bluetoothGroup.addSetting<bool>(toQString(ConfigKey::BluetoothEnabled), true);
+    bluetoothGroup.addSetting<QString>(toQString(ConfigKey::BluetoothAdapterAddress), "");
+    bluetoothGroup.addSetting<QString>(toQString(ConfigKey::BluetoothPairedDeviceAddress), "");
+    bluetoothGroup.addSetting<QString>(toQString(ConfigKey::BluetoothIgnoredDevices), "");
     bluetoothGroup.load(m_settings);
     m_configurationGroups.append(bluetoothGroup);
 
-    ConfigurationGroup systemGroup("System");
-    systemGroup.addSetting<bool>("HeadUnitMode", true);
-    systemGroup.addSetting<bool>("DesktopMode", false);
+    ConfigurationGroup systemGroup(toQString(ConfigGroup::System));
+    systemGroup.addSetting<bool>(toQString(ConfigKey::SystemHeadUnitMode), true);
+    systemGroup.addSetting<bool>(toQString(ConfigKey::SystemDesktopMode), false);
     systemGroup.load(m_settings);
     m_configurationGroups.append(systemGroup);
 
-    ConfigurationGroup wirelessGroup("Wireless");
-    wirelessGroup.addSetting<bool>("Enabled", true);
-    wirelessGroup.addSetting<QString>("HotspotSSID", "JourneyOS");
-    wirelessGroup.addSetting<QString>("HotspotPassword", generateRandomString(8));
-    wirelessGroup.addSetting<QString>("ClientSSID", "");
-    wirelessGroup.addSetting<QString>("ClientPassword", "");
-    wirelessGroup.addSetting<QString>("Interface", "");
-    wirelessGroup.addSetting<QString>("InterfaceMAC", "");
-
-    wirelessGroup.addSetting<common::Enum::WirelessType::Value>("Type", f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT);
+    ConfigurationGroup wirelessGroup(toQString(ConfigGroup::Wireless));
+    wirelessGroup.addSetting<bool>(toQString(ConfigKey::WirelessEnabled), true);
+    wirelessGroup.addSetting<QString>(toQString(ConfigKey::WirelessHotspotSSID), "JourneyOS");
+    wirelessGroup.addSetting<QString>(toQString(ConfigKey::WirelessHotspotPassword), generateRandomString(8));
+    wirelessGroup.addSetting<QString>(toQString(ConfigKey::WirelessClientSSID), "");
+    wirelessGroup.addSetting<QString>(toQString(ConfigKey::WirelessClientPassword), "");
+    wirelessGroup.addSetting<QString>(toQString(ConfigKey::WirelessInterface), "");
+    wirelessGroup.addSetting<QString>(toQString(ConfigKey::WirelessInterfaceMAC), "");
+    wirelessGroup.addSetting<common::Enum::WirelessType::Value>(toQString(ConfigKey::WirelessType), f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT);
     wirelessGroup.load(m_settings);
     m_configurationGroups.append(wirelessGroup);
-
   }
 
   void Configuration::save() const {
-    // Initialise Settings
-    QSettings settings("journey.conf", QSettings::IniFormat);
+    m_settings.sync();
+  }
 
-    for (const auto& group : m_configurationGroups) {
-      group.save(settings);
-    }
+  void Configuration::onSettingChanged(const QString& group, const QString& key, const QVariant& value) {
+    m_settings.beginGroup(group);
+    m_settings.setValue(key, value);
+    m_settings.endGroup();
   }
 
   /// To generate a random string for a wifi password of reqyested length

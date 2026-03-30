@@ -15,6 +15,8 @@
 Q_LOGGING_CATEGORY(lcUpdate, "journeyos.ota")
 
 namespace f1x::openauto::autoapp::UI {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
 
 // ---------------------------------------------------------------------------
 // UpdateCheckWorker
@@ -245,7 +247,7 @@ void UpdateManager::checkForUpdate()
 
     try {
         const bool desktopMode =
-            m_config->getSettingByName<bool>("System", "DesktopMode", false);
+            m_config->getSettingByName<bool>(ConfigGroup::System, ConfigKey::SystemDesktopMode, false);
         if (desktopMode) {
             qInfo(lcUpdate) << "desktop mode: OTA disabled";
             emit checkComplete(false, getCurrentVersion());

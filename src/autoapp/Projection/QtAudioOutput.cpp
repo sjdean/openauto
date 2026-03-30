@@ -7,6 +7,8 @@
 Q_LOGGING_CATEGORY(lcQtAudioOut, "journeyos.projection.audio.qt")
 
 namespace f1x::openauto::autoapp::projection {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
 
   QtAudioOutput::QtAudioOutput(uint32_t channelCount, uint32_t sampleSize, uint32_t sampleRate,
                                configuration::IConfiguration::Pointer config)
@@ -57,7 +59,7 @@ namespace f1x::openauto::autoapp::projection {
     qInfo(lcQtAudioOut) << "audio sink init thread=" << QThread::currentThread();
 
     QAudioDevice device = QMediaDevices::defaultAudioOutput();
-    QString configDeviceName = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
+    QString configDeviceName = configuration_->getSettingByName<QString>(ConfigGroup::Audio, ConfigKey::AudioPlaybackDevice);
     if(!configDeviceName.isEmpty()) {
         const auto devices = QMediaDevices::audioOutputs();
         for(const auto& d : devices) {
@@ -101,7 +103,7 @@ namespace f1x::openauto::autoapp::projection {
     if (!playbackStarted_) {
       qInfo(lcQtAudioOut) << "playback started";
       audioOutput_->start(&audioInternalBuffer_);
-      float vol = configuration_->getSettingByName<int>("Audio", "PlaybackVolume") / 100.0f;
+      float vol = configuration_->getSettingByName<int>(ConfigGroup::Audio, ConfigKey::AudioPlaybackVolume) / 100.0f;
       audioOutput_->setVolume(std::clamp(vol, 0.0f, 1.0f));
       playbackStarted_ = true;
     } else {

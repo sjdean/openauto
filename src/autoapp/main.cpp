@@ -70,6 +70,8 @@
 Q_LOGGING_CATEGORY(lcAutoapp, "journeyos")
 
 namespace autoapp = f1x::openauto::autoapp;
+using f1x::openauto::autoapp::configuration::ConfigGroup;
+using f1x::openauto::autoapp::configuration::ConfigKey;
 
 using ThreadPool = std::vector<std::thread>;
 
@@ -351,22 +353,22 @@ int main(int argc, char *argv[]) {
     autoapp::projection::IAudioOutput::Pointer audioOutputTelephony;
     autoapp::projection::IAudioOutput::Pointer audioOutputSystem;
 
-    if (configuration->getSettingByName<bool>("AndroidAuto", "Media")) {
+    if (configuration->getSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoMedia)) {
         audioOutputMedia = std::make_shared<autoapp::projection::QtAudioOutput>(2, 16, 48000, configuration);
     }
 
-    if (configuration->getSettingByName<bool>("AndroidAuto", "Guidance")) {
+    if (configuration->getSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoGuidance)) {
         audioOutputGuidance = std::make_shared<autoapp::projection::QtAudioOutput>(1, 16, 16000, configuration);
     }
 
-    if (configuration->getSettingByName<bool>("AndroidAuto", "Telephony")) {
+    if (configuration->getSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoTelephony)) {
         audioOutputTelephony = std::make_shared<autoapp::projection::QtAudioOutput>(1, 16, 16000, configuration);
     }
     audioOutputSystem = std::make_shared<autoapp::projection::QtAudioOutput>(1, 16, 16000, configuration);
 
     // Requested Video Size
     QRect videoGeometry;
-    switch (configuration->getSettingByName<int>("AndroidAuto", "Resolution")) {
+    switch (configuration->getSettingByName<int>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoResolution)) {
         case aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_1280x720:
             videoGeometry = QRect(0, 0, 1280, 720);
             break;

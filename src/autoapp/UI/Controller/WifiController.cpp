@@ -9,6 +9,8 @@
 Q_LOGGING_CATEGORY(lcWifi, "journeyos.wifi.controller")
 
 namespace f1x::openauto::autoapp::UI::Controller {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
 
 WifiController::WifiController(configuration::Configuration::Pointer config, QObject* parent)
     : IWiFiController(parent)
@@ -23,8 +25,8 @@ WifiController::WifiController(configuration::Configuration::Pointer config, QOb
 void WifiController::applyAllSettings()
 {
 #ifdef Q_OS_LINUX
-    const QString iface = m_config->getSettingByName<QString>("Wireless", "Interface", "wlan0");
-    const auto mode = m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", common::Enum::WirelessType::WIRELESS_CLIENT);
+    const QString iface = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessInterface, "wlan0");
+    const auto mode = m_config->getSettingByName<common::Enum::WirelessType::Value>(ConfigGroup::Wireless, ConfigKey::WirelessType, common::Enum::WirelessType::WIRELESS_CLIENT);
 
     setInterface(iface);
     setMode(mode);
@@ -73,13 +75,13 @@ void WifiController::setMode(common::Enum::WirelessType::Value mode)
     disconnect();
 
     if (mode == common::Enum::WirelessType::WIRELESS_HOTSPOT) {
-        const QString ssid = m_config->getSettingByName<QString>("Wireless", "HotspotSSID", "MyCarHotspot");
-        const QString pass = m_config->getSettingByName<QString>("Wireless", "HotspotPassword", "12345678");
+        const QString ssid = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID, "MyCarHotspot");
+        const QString pass = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword, "12345678");
         enableHotspotImpl(ssid, pass);
     } else {
         // Reconnect to saved client network if credentials exist.
-        const QString ssid = m_config->getSettingByName<QString>("Wireless", "ClientSSID");
-        const QString pass = m_config->getSettingByName<QString>("Wireless", "ClientPassword");
+        const QString ssid = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientSSID);
+        const QString pass = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientPassword);
         if (!ssid.isEmpty()) {
             connectToWifiImpl(ssid, pass);
         }
@@ -91,9 +93,9 @@ void WifiController::setHotspotCredentials(const QString& ssid, const QString& p
 {
 #ifdef Q_OS_LINUX
     if (m_currentIface.isEmpty()) return;
-    m_config->updateSettingByName<QString>("Wireless", "HotspotSSID", ssid);
-    m_config->updateSettingByName<QString>("Wireless", "HotspotPassword", password);
-    m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", common::Enum::WirelessType::WIRELESS_HOTSPOT);
+    m_config->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID, ssid);
+    m_config->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword, password);
+    m_config->updateSettingByName<common::Enum::WirelessType::Value>(ConfigGroup::Wireless, ConfigKey::WirelessType, common::Enum::WirelessType::WIRELESS_HOTSPOT);
     m_config->save();
 
     enableHotspotImpl(ssid, password);

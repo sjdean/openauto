@@ -12,6 +12,8 @@ Q_LOGGING_CATEGORY(lcWifiMonitor, "journeyos.wifi.monitor")
 
 namespace f1x::openauto::autoapp::UI::Monitor {
     using namespace f1x::openauto::common::Enum;
+    using configuration::ConfigGroup;
+    using configuration::ConfigKey;
 
     WifiMonitor::WifiMonitor(configuration::IConfiguration::Pointer config, QObject *parent)
         : IWiFiMonitor(parent)
@@ -20,8 +22,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         // === 1. Find current Wi-Fi interface (cross-platform) ===
         // "Interface" stores the interface name ("wlan0") - used by WifiController.
         // "InterfaceMAC" stores the hardware address for stable identification across renames.
-        const QString savedName = m_config->getSettingByName<QString>("Wireless", "Interface");
-        const QString savedMac  = m_config->getSettingByName<QString>("Wireless", "InterfaceMAC");
+        const QString savedName = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessInterface);
+        const QString savedMac  = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessInterfaceMAC);
 
         if (!savedName.isEmpty()) {
             // Primary: match by interface name
@@ -60,12 +62,12 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             const QString currentMac  = m_currentInterface.hardwareAddress();
             bool changed = false;
             if (savedName != currentName) {
-                m_config->updateSettingByName<QString>("Wireless", "Interface", currentName);
+                m_config->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessInterface, currentName);
                 changed = true;
                 qCInfo(lcWifiMonitor) << "Interface auto-detected and saved name=" << currentName;
             }
             if (savedMac != currentMac) {
-                m_config->updateSettingByName<QString>("Wireless", "InterfaceMAC", currentMac);
+                m_config->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessInterfaceMAC, currentMac);
                 changed = true;
             }
             if (changed)

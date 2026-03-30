@@ -9,6 +9,8 @@
 Q_LOGGING_CATEGORY(lcVmWifi, "journeyos.wifi")
 
 namespace f1x::openauto::autoapp::UI::ViewModel {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
 
     // 1. Accept Pointer in Constructor
     WifiViewModel::WifiViewModel(configuration::IConfiguration::Pointer config,
@@ -18,13 +20,13 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         : QObject(parent), m_config(std::move(config)), m_wifiController(controller), m_monitor(monitor)
     {
         // Load from config
-        m_selectedInterface = m_config->getSettingByName<QString>("Wireless", "Interface");
-        m_hotspotSsid       = m_config->getSettingByName<QString>("Wireless", "HotspotSSID");
-        m_hotspotPassword   = m_config->getSettingByName<QString>("Wireless", "HotspotPassword");
-        m_clientSsid        = m_config->getSettingByName<QString>("Wireless", "ClientSSID");
-        m_clientPassword    = m_config->getSettingByName<QString>("Wireless", "ClientPassword");
-        m_isEnabled         = m_config->getSettingByName<bool>("Wireless", "Enabled");
-        auto modeVal        = m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type");
+        m_selectedInterface = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessInterface);
+        m_hotspotSsid       = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID);
+        m_hotspotPassword   = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword);
+        m_clientSsid        = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientSSID);
+        m_clientPassword    = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientPassword);
+        m_isEnabled         = m_config->getSettingByName<bool>(ConfigGroup::Wireless, ConfigKey::WirelessEnabled);
+        auto modeVal        = m_config->getSettingByName<common::Enum::WirelessType::Value>(ConfigGroup::Wireless, ConfigKey::WirelessType);
         updateMode(modeVal);
 
         connect(m_monitor, &Monitor::IWiFiMonitor::signalStrengthChanged,this, &WifiViewModel::updateSignalStrength);
@@ -43,7 +45,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void WifiViewModel::setIsEnabled(bool enabled) {
         if (enabled != m_isEnabled) {
             m_isEnabled = enabled;
-            m_config->updateSettingByName<bool>("Wireless", "Enabled", enabled);
+            m_config->updateSettingByName<bool>(ConfigGroup::Wireless, ConfigKey::WirelessEnabled, enabled);
             m_config->save();
             emit isEnabledChanged();
         }
@@ -59,7 +61,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     QString WifiViewModel::getSelectedInterface() const { return m_selectedInterface; }
 
-    common::Enum::WirelessType::Value WifiViewModel::getMode() const { return m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type"); }
+    common::Enum::WirelessType::Value WifiViewModel::getMode() const { return m_config->getSettingByName<common::Enum::WirelessType::Value>(ConfigGroup::Wireless, ConfigKey::WirelessType); }
 
     bool WifiViewModel::getIsHotspot() const { return m_mode == common::Enum::WirelessType::WIRELESS_HOTSPOT; }
 
@@ -103,7 +105,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void WifiViewModel::setSelectedInterface(const QString& iface) {
         if (iface != m_selectedInterface) {
             m_selectedInterface = iface;
-            m_config->updateSettingByName<QString>("Wireless", "Interface", iface);
+            m_config->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessInterface, iface);
             m_config->save();
             m_wifiController->setInterface(iface);
             emit selectedInterfaceChanged();
@@ -112,7 +114,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void WifiViewModel::setMode(common::Enum::WirelessType::Value mode) {
         if (mode != this->m_mode) {
-            m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", mode);
+            m_config->updateSettingByName<common::Enum::WirelessType::Value>(ConfigGroup::Wireless, ConfigKey::WirelessType, mode);
             m_config->save();
             m_wifiController->setMode(mode);
             emit modeChanged();
@@ -122,7 +124,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void WifiViewModel::setHotspotSsid(const QString &ssid) {
         if (ssid != m_hotspotSsid) {
             m_hotspotSsid = ssid;
-            m_config->updateSettingByName<QString>("Wireless", "HotspotSSID", ssid);
+            m_config->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID, ssid);
             m_config->save();
             // Do not activate hotspot on credential edit — use applyHotspot() explicitly.
             emit hotspotSsidChanged();
@@ -132,7 +134,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void WifiViewModel::setHotspotPassword(const QString &pass) {
         if (pass != m_hotspotPassword) {
             m_hotspotPassword = pass;
-            m_config->updateSettingByName<QString>("Wireless", "HotspotPassword", pass);
+            m_config->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword, pass);
             m_config->save();
             // Do not activate hotspot on credential edit — use applyHotspot() explicitly.
             emit hotspotPasswordChanged();
@@ -142,7 +144,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void WifiViewModel::setClientSsid(const QString &ssid) {
         if (ssid != m_clientSsid) {
             m_clientSsid = ssid;
-            m_config->updateSettingByName<QString>("Wireless", "ClientSSID", ssid);
+            m_config->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientSSID, ssid);
             m_config->save();
             m_wifiController->setWirelessCredentials(m_clientSsid, m_clientPassword);
             emit clientSsidChanged();
@@ -152,7 +154,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void WifiViewModel::setClientPassword(const QString &pass) {
         if (pass != m_clientPassword) {
             m_clientPassword = pass;
-            m_config->updateSettingByName<QString>("Wireless", "ClientPassword", pass);
+            m_config->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientPassword, pass);
             m_config->save();
             m_wifiController->setWirelessCredentials(m_clientSsid, m_clientPassword);
             emit clientPasswordChanged();
@@ -167,8 +169,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         if (ssid.isEmpty()) return;
         m_clientSsid = ssid;
         m_clientPassword = password;
-        m_config->updateSettingByName<QString>("Wireless", "ClientSSID", ssid);
-        m_config->updateSettingByName<QString>("Wireless", "ClientPassword", password);
+        m_config->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientSSID, ssid);
+        m_config->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientPassword, password);
         m_config->save();
         emit clientSsidChanged();
         emit clientPasswordChanged();
@@ -188,7 +190,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void WifiViewModel::updateMode(common::Enum::WirelessType::Value m) {
         if (m != m_mode) {
             m_mode = m;
-            m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", m);
+            m_config->updateSettingByName<common::Enum::WirelessType::Value>(ConfigGroup::Wireless, ConfigKey::WirelessType, m);
             m_config->save();
             emit modeChanged();
             emit statusChanged();

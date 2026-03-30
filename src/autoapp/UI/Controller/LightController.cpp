@@ -6,6 +6,8 @@
 Q_LOGGING_CATEGORY(lcLight, "journeyos.light.controller")
 
 namespace f1x::openauto::autoapp::UI::Controller {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
     /**
      * LightController - Simple wrapper to centralise information around the time of day,
      * or whether the car headlights are on and therefore whether we should dim the screen.
@@ -20,7 +22,7 @@ namespace f1x::openauto::autoapp::UI::Controller {
     }
 
     bool LightController::getDay() const {
-        const bool useClock = configuration_->getSettingByName<int>("Screen","UseClockDayNight");
+        const bool useClock = configuration_->getSettingByName<int>(ConfigGroup::Screen, ConfigKey::ScreenUseClockDayNight);
         if (useClock) {
             //QDateTime local = QDateTime::currentDateTime();
             /** TODO - Establish Day/Night

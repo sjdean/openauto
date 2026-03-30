@@ -8,6 +8,8 @@
 Q_LOGGING_CATEGORY(lcQtAudioIn, "journeyos.projection.audio.input.qt")
 
 namespace f1x::openauto::autoapp::projection {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
 
   QtAudioInput::QtAudioInput(uint32_t channelCount, uint32_t sampleSize, uint32_t sampleRate,
                              configuration::IConfiguration::Pointer config)
@@ -337,7 +339,7 @@ namespace f1x::openauto::autoapp::projection {
                        << "| id:" << device.id();
 
     // Check config for a specific microphone name
-    QString configDeviceName = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
+    QString configDeviceName = configuration_->getSettingByName<QString>(ConfigGroup::Audio, ConfigKey::AudioCaptureDevice);
     if (!configDeviceName.isEmpty()) {
       bool found = false;
       for (const auto &d : allDevices) {
@@ -495,7 +497,7 @@ namespace f1x::openauto::autoapp::projection {
 
       // Open WAV debug files if enabled in config
       try {
-        const QString dbgRec = configuration_->getSettingByName<QString>("Audio", "DebugRecord");
+        const QString dbgRec = configuration_->getSettingByName<QString>(ConfigGroup::Audio, ConfigKey::AudioDebugRecord);
         debugRecordEnabled_ = (dbgRec == "true" || dbgRec == "1");
       } catch (const std::runtime_error& e) {
         qInfo(lcQtAudioIn) << "DebugRecord setting not found, defaulting to false.";

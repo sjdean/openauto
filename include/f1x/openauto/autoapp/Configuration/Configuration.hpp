@@ -11,10 +11,12 @@ namespace f1x::openauto::autoapp::configuration {
 
         void save() const override;
 
+        void onSettingChanged(const QString& group, const QString& key, const QVariant& value) override;
+
     private:
         static QString generateRandomString(size_t length);
 
-        QSettings m_settings;
+        mutable QSettings m_settings;
 
         mutable std::optional<bool> hasTouchScreenCache_;
     };

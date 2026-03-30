@@ -13,6 +13,8 @@
 Q_LOGGING_CATEGORY(lcProjectionManager, "journeyos.projection.manager")
 
 namespace f1x::openauto::autoapp {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
 
     ProjectionManager::ProjectionManager(configuration::IConfiguration::Pointer configuration,
              boost::asio::io_service &ioService,
@@ -38,7 +40,7 @@ namespace f1x::openauto::autoapp {
         qInfo(lcProjectionManager) << "Initializing ProjectionManager...";
         androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_STARTUP);
 
-        QString adapterAddress = configuration_->getSettingByName<QString>("Bluetooth", "AdapterAddress");
+        QString adapterAddress = configuration_->getSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress);
         QBluetoothAddress address(adapterAddress);
         androidBluetoothServer_ = std::make_shared<bootstrap::AndroidBluetoothServer>(configuration_);
 

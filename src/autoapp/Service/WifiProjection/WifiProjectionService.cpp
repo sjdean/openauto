@@ -5,8 +5,9 @@
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcServiceWifi, "journeyos.service.wifi")
 
-
 namespace f1x::openauto::autoapp::service::wifiprojection {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
   WifiProjectionService::WifiProjectionService(boost::asio::io_service &ioService,
                                                aasdk::messenger::IMessenger::Pointer messenger,
                                                configuration::IConfiguration::Pointer configuration)
@@ -51,7 +52,7 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
     // If the interface is absent (e.g. no hotspot on this host), skip advertising
     // the channel entirely — an empty BSSID causes phones to reject the whole
     // service discovery response and disconnect before opening any channels.
-    const QString interfaceName = configuration_->getSettingByName<QString>("Wireless", "Interface");
+    const QString interfaceName = configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessInterface);
     const QString bssid = QNetworkInterface::interfaceFromName(interfaceName).hardwareAddress();
     if (bssid.isEmpty()) {
       qWarning(lcServiceWifi) << "[WifiProjectionService] fillFeatures(): interface"
@@ -74,8 +75,8 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
     aap_protobuf::service::wifiprojection::message::WifiCredentialsResponse response;
 
     response.set_access_point_type(aap_protobuf::service::wifiprojection::message::AccessPointType::STATIC);
-    response.set_car_wifi_ssid(configuration_->getSettingByName<QString>("Wireless", "HotspotSSID").toStdString());
-    response.set_car_wifi_password(configuration_->getSettingByName<QString>("Wireless", "HotspotPassword").toStdString());
+    response.set_car_wifi_ssid(configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID).toStdString());
+    response.set_car_wifi_password(configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword).toStdString());
     response.set_car_wifi_security_mode(
         aap_protobuf::service::wifiprojection::message::WifiSecurityMode::WPA2_PERSONAL);
 

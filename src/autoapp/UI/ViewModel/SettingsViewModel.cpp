@@ -11,143 +11,145 @@
 Q_LOGGING_CATEGORY(lcVmSettings, "journeyos.settings")
 
 namespace f1x::openauto::autoapp::UI::ViewModel {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
     SettingsViewModel::SettingsViewModel(configuration::IConfiguration::Pointer configuration,
                                          QObject *parent) : QObject(parent),
                                                             configuration_(std::move(configuration)),
                                                             m_carId(configuration_->getSettingByName<QString>(
-                                                                "Car", "Id")),
+                                                                ConfigGroup::Car, ConfigKey::CarId)),
                                                             m_carMake(configuration_->getSettingByName<QString>(
-                                                                "Car", "Make")),
+                                                                ConfigGroup::Car, ConfigKey::CarMake)),
                                                             m_carModel(configuration_->getSettingByName<QString>(
-                                                                "Car", "Model")),
+                                                                ConfigGroup::Car, ConfigKey::CarModel)),
                                                             m_carFuelType(
                                                                 static_cast<
                                                                     aap_protobuf::service::sensorsource::message::FuelType>
                                                                 (configuration_->getSettingByName<int>(
-                                                                    "Car",
-                                                                    "FuelType"))),
+                                                                    ConfigGroup::Car, ConfigKey::CarFuelType))),
                                                             m_carEvConnectorType(
                                                                 static_cast<
                                                                     aap_protobuf::service::sensorsource::message::EvConnectorType>
                                                                 (configuration_->getSettingByName<int>(
-                                                                    "Car", "EvConnectorType"))),
+                                                                    ConfigGroup::Car, ConfigKey::CarEvConnectorType))),
                                                             m_carDriverPosition(
                                                                 static_cast<
                                                                     aap_protobuf::service::control::message::DriverPosition>
                                                                 (configuration_->getSettingByName<int>(
-                                                                    "Car", "DriverPosition"))),
+                                                                    ConfigGroup::Car, ConfigKey::CarDriverPosition))),
 
                                                             m_screenBrightnessDayMin(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Screen", "DayMin")),
+                                                                    ConfigGroup::Screen, ConfigKey::ScreenDayMin)),
                                                             m_screenBrightnessDayMax(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Screen", "DayMax")),
+                                                                    ConfigGroup::Screen, ConfigKey::ScreenDayMax)),
                                                             m_screenBrightnessNightMin(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Screen", "NightMin")),
+                                                                    ConfigGroup::Screen, ConfigKey::ScreenNightMin)),
                                                             m_screenBrightnessNightMax(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Screen", "NightMax")),
+                                                                    ConfigGroup::Screen, ConfigKey::ScreenNightMax)),
                                                             m_screenBrightness(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Screen", "Brightness")),
+                                                                    ConfigGroup::Screen, ConfigKey::ScreenBrightness)),
                                                             m_screenDPI(
-                                                                configuration_->getSettingByName<int>("Screen", "DPI")),
+                                                                configuration_->getSettingByName<int>(
+                                                                    ConfigGroup::Screen, ConfigKey::ScreenDPI)),
 
                                                             m_videoMarginHeight(
-                                                                configuration_->getSettingByName<
-                                                                    int>("Video", "Height")),
+                                                                configuration_->getSettingByName<int>(
+                                                                    ConfigGroup::Video, ConfigKey::VideoHeight)),
                                                             m_videoMarginWidth(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Video", "Width")),
+                                                                    ConfigGroup::Video, ConfigKey::VideoWidth)),
 
                                                             m_videoRotateDisplay(
                                                                 configuration_->getSettingByName<bool>(
-                                                                    "Video", "Rotate")),
+                                                                    ConfigGroup::Video, ConfigKey::VideoRotate)),
 
                                                             m_mediaAutoPlayback(
                                                                 configuration_->getSettingByName<bool>(
-                                                                    "Media", "AutoPlayback")),
+                                                                    ConfigGroup::Media, ConfigKey::MediaAutoPlayback)),
                                                             m_mediaAutoStart(
                                                                 configuration_->getSettingByName<bool>(
-                                                                    "Media", "AutoStart")),
+                                                                    ConfigGroup::Media, ConfigKey::MediaAutoStart)),
 
                                                             m_aaChannelMedia(
                                                                 configuration_->getSettingByName<bool>(
-                                                                    "AndroidAuto", "Media")),
+                                                                    ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoMedia)),
                                                             m_aaChannelGuidance(
                                                                 configuration_->getSettingByName<bool>(
-                                                                    "AndroidAuto", "Guidance")),
+                                                                    ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoGuidance)),
                                                             m_aaChannelTelephony(
                                                                 configuration_->getSettingByName<bool>(
-                                                                    "AndroidAuto", "Telephony")),
+                                                                    ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoTelephony)),
                                                             m_aaFrameRate(
                                                                 configuration_->getSettingByName<
                                                                     aap_protobuf::service::media::sink::message::VideoFrameRateType>(
-                                                                    "AndroidAuto", "FrameRate")),
+                                                                    ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoFrameRate)),
                                                             m_aaResolution(
                                                                 configuration_->getSettingByName<
                                                                     aap_protobuf::service::media::sink::message::VideoCodecResolutionType>(
-                                                                    "AndroidAuto", "Resolution")),
+                                                                    ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoResolution)),
 
                                                             m_audioVolumePlaybackMin(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Audio", "PlaybackMin")),
+                                                                    ConfigGroup::Audio, ConfigKey::AudioPlaybackMin)),
                                                             m_audioVolumePlaybackMax(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Audio", "PlaybackMax")),
+                                                                    ConfigGroup::Audio, ConfigKey::AudioPlaybackMax)),
                                                             m_audioVolumeCaptureMin(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Audio", "CaptureMin")),
+                                                                    ConfigGroup::Audio, ConfigKey::AudioCaptureMin)),
                                                             m_audioVolumeCaptureMax(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Audio", "CaptureMax")),
+                                                                    ConfigGroup::Audio, ConfigKey::AudioCaptureMax)),
                                                             m_audioVolumePlayback(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Audio", "PlaybackVolume")),
+                                                                    ConfigGroup::Audio, ConfigKey::AudioPlaybackVolume)),
                                                             m_audioVolumeCapture(
                                                                 configuration_->getSettingByName<int>(
-                                                                    "Audio", "CaptureVolume")),
+                                                                    ConfigGroup::Audio, ConfigKey::AudioCaptureVolume)),
                                                             m_audioCaptureDeviceValue(
                                                                 configuration_->getSettingByName<QString>(
-                                                                    "Audio", "CaptureDevice")),
+                                                                    ConfigGroup::Audio, ConfigKey::AudioCaptureDevice)),
                                                             m_audioPlaybackDeviceValue(
                                                                 configuration_->getSettingByName<QString>(
-                                                                    "Audio", "PlaybackDevice")),
+                                                                    ConfigGroup::Audio, ConfigKey::AudioPlaybackDevice)),
 
                                                             m_wirelessClientSSID(
                                                                 configuration_->getSettingByName<QString>(
-                                                                    "Wireless", "ClientSSID")),
+                                                                    ConfigGroup::Wireless, ConfigKey::WirelessClientSSID)),
                                                             m_wirelessClientPassword(
                                                                 configuration_->getSettingByName<QString>(
-                                                                    "Wireless", "ClientPassword")),
+                                                                    ConfigGroup::Wireless, ConfigKey::WirelessClientPassword)),
                                                             m_wirelessHotspotSSID(
                                                                 configuration_->getSettingByName<QString>(
-                                                                    "Wireless", "HotspotSSID")),
+                                                                    ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID)),
                                                             m_wirelessHotspotPassword(
                                                                 configuration_->getSettingByName<QString>(
-                                                                    "Wireless", "HotspotPassword")),
+                                                                    ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword)),
                                                             m_wirelessHotspotInterface(
                                                                 configuration_->getSettingByName<QString>(
-                                                                    "Wireless", "Interface")),
+                                                                    ConfigGroup::Wireless, ConfigKey::WirelessInterface)),
                                                             m_wirelessType(
                                                                 configuration_->getSettingByName<
                                                                     common::Enum::WirelessType::Value>(
-                                                                    "Wireless", "Type")),
+                                                                    ConfigGroup::Wireless, ConfigKey::WirelessType)),
                                                             m_wirelessEnabled(
                                                                 configuration_->getSettingByName<bool>(
-                                                                    "Wireless", "Enabled")),
+                                                                    ConfigGroup::Wireless, ConfigKey::WirelessEnabled)),
 #ifdef Q_OS_LINUX
                                                             m_headUnitMode(
                                                                 configuration_->getSettingByName<bool>(
-                                                                    "System", "HeadUnitMode"))
+                                                                    ConfigGroup::System, ConfigKey::SystemHeadUnitMode))
 #else
                                                             m_headUnitMode(false)
 #endif
     {
-        m_hwBluetoothAdapter = configuration_->getSettingByName<QString>("Bluetooth", "AdapterAddress");
-        m_androidAutoHomeButtonVisibility = configuration_->getSettingByName<QString>("AndroidAuto", "HomeButtonVisibility");
+        m_hwBluetoothAdapter = configuration_->getSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress);
+        m_androidAutoHomeButtonVisibility = configuration_->getSettingByName<QString>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoHomeButtonVisibility);
     }
 
     QString SettingsViewModel::getCarMake() const {
@@ -189,7 +191,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAudioPlaybackDevice(QString value) {
         if (m_audioPlaybackDeviceValue != value) {
-            configuration_->updateSettingByName<QString>("Audio", "PlaybackDevice", value);
+            configuration_->updateSettingByName<QString>(ConfigGroup::Audio, ConfigKey::AudioPlaybackDevice, value);
             configuration_->save();
             m_audioPlaybackDeviceValue = value;
             emit audioPlaybackDeviceChanged();
@@ -198,7 +200,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAudioCaptureDevice(QString value) {
         if (m_audioCaptureDeviceValue != value) {
-            configuration_->updateSettingByName<QString>("Audio", "CaptureDevice", value);
+            configuration_->updateSettingByName<QString>(ConfigGroup::Audio, ConfigKey::AudioCaptureDevice, value);
             configuration_->save();
             m_audioCaptureDeviceValue = value;
             emit audioCaptureDeviceChanged();
@@ -211,7 +213,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setHwBluetoothAdapter(QString value) {
         if (m_hwBluetoothAdapter != value) {
-            configuration_->updateSettingByName<QString>("Bluetooth", "AdapterAddress", value);
+            configuration_->updateSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress, value);
             configuration_->save();
             m_hwBluetoothAdapter = value;
             emit hwBluetoothAdapterChanged();
@@ -220,7 +222,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setCarMake(QString value) {
         if (m_carMake != value) {
-            configuration_->updateSettingByName<QString>("Car", "Make", value);
+            configuration_->updateSettingByName<QString>(ConfigGroup::Car, ConfigKey::CarMake, value);
             configuration_->save();
             m_carMake = value;
             emit carMakeChanged();
@@ -233,7 +235,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setCarModel(QString value) {
         if (m_carModel != value) {
-            configuration_->updateSettingByName<QString>("Car", "Model", value);
+            configuration_->updateSettingByName<QString>(ConfigGroup::Car, ConfigKey::CarModel, value);
             configuration_->save();
             m_carModel = value;
             emit carModelChanged();
@@ -246,7 +248,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setMediaAutoPlayback(bool value) {
         if (m_mediaAutoPlayback != value) {
-            configuration_->updateSettingByName<bool>("Media", "AutoPlayback", value);
+            configuration_->updateSettingByName<bool>(ConfigGroup::Media, ConfigKey::MediaAutoPlayback, value);
             configuration_->save();
             m_mediaAutoPlayback = value;
             emit mediaAutoPlaybackChanged();
@@ -259,7 +261,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setMediaAutoStart(bool value) {
         if (m_mediaAutoStart != value) {
-            configuration_->updateSettingByName<bool>("Media", "AutoStart", value);
+            configuration_->updateSettingByName<bool>(ConfigGroup::Media, ConfigKey::MediaAutoStart, value);
             configuration_->save();
             m_mediaAutoStart = value;
             emit mediaAutoStartChanged();
@@ -272,7 +274,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAAChannelMedia(bool value) {
         if (m_aaChannelMedia != value) {
-            configuration_->updateSettingByName<bool>("AndroidAuto", "Media", value);
+            configuration_->updateSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoMedia, value);
             configuration_->save();
             m_aaChannelMedia = value;
             emit aaChannelMediaChanged();
@@ -285,7 +287,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAAChannelGuidance(bool value) {
         if (m_aaChannelGuidance != value) {
-            configuration_->updateSettingByName<bool>("AndroidAuto", "Guidance", value);
+            configuration_->updateSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoGuidance, value);
             configuration_->save();
             m_aaChannelGuidance = value;
             emit aaChannelGuidanceChanged();
@@ -298,7 +300,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAAChannelTelephony(bool value) {
         if (m_aaChannelTelephony != value) {
-            configuration_->updateSettingByName<bool>("AndroidAuto", "Telephony", value);
+            configuration_->updateSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoTelephony, value);
             configuration_->save();
             m_aaChannelTelephony = value;
             emit aaChannelTelephonyChanged();
@@ -311,7 +313,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setVideoMarginHeight(int value) {
         if (value != m_videoMarginHeight) {
-            configuration_->updateSettingByName<int>("Video", "Height", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Video, ConfigKey::VideoHeight, value);
             configuration_->save();
             m_videoMarginHeight = value;
             emit videoMarginHeightChanged();
@@ -324,7 +326,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setVideoMarginWidth(int value) {
         if (value != m_videoMarginWidth) {
-            configuration_->updateSettingByName<int>("Video", "Width", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Video, ConfigKey::VideoWidth, value);
             configuration_->save();
             m_videoMarginWidth = value;
             emit videoMarginWidthChanged();
@@ -337,7 +339,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAudioVolumePlayback(int value) {
         if (value != m_audioVolumePlayback) {
-            configuration_->updateSettingByName<int>("Audio", "PlaybackVolume", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Audio, ConfigKey::AudioPlaybackVolume, value);
             configuration_->save();
             m_audioVolumePlayback = value;
             emit audioVolumePlaybackChanged();
@@ -350,7 +352,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAudioVolumeCapture(int value) {
         if (value != m_audioVolumeCapture) {
-            configuration_->updateSettingByName<int>("Audio", "CaptureVolume", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Audio, ConfigKey::AudioCaptureVolume, value);
             configuration_->save();
             m_audioVolumeCapture = value;
             emit audioVolumeCaptureChanged();
@@ -363,7 +365,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setScreenBrightnessDayMin(int value) {
         if (value != m_screenBrightnessDayMin) {
-            configuration_->updateSettingByName<int>("Screen", "DayMin", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Screen, ConfigKey::ScreenDayMin, value);
             configuration_->save();
             m_screenBrightnessDayMin = value;
             emit screenBrightnessDayMinChanged();
@@ -376,7 +378,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setScreenBrightnessDayMax(int value) {
         if (value != m_screenBrightnessDayMax) {
-            configuration_->updateSettingByName<int>("Screen", "DayMax", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Screen, ConfigKey::ScreenDayMax, value);
             configuration_->save();
             m_screenBrightnessDayMax = value;
             emit screenBrightnessDayMaxChanged();
@@ -389,7 +391,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setScreenBrightnessNightMin(int value) {
         if (value != m_screenBrightnessNightMin) {
-            configuration_->updateSettingByName<int>("Screen", "NightMin", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Screen, ConfigKey::ScreenNightMin, value);
             configuration_->save();
             m_screenBrightnessNightMin = value;
             emit screenBrightnessNightMinChanged();
@@ -402,7 +404,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setScreenBrightnessNightMax(int value) {
         if (value != m_screenBrightnessNightMax) {
-            configuration_->updateSettingByName<int>("Screen", "NightMax", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Screen, ConfigKey::ScreenNightMax, value);
             configuration_->save();
             m_screenBrightnessNightMax = value;
             emit screenBrightnessNightMaxChanged();
@@ -415,7 +417,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setVideoRotateDisplay(bool value) {
         if (m_videoRotateDisplay != value) {
-            configuration_->updateSettingByName<bool>("Video", "Rotate", value);
+            configuration_->updateSettingByName<bool>(ConfigGroup::Video, ConfigKey::VideoRotate, value);
             configuration_->save();
             m_videoRotateDisplay = value;
             emit videoRotateDisplayChanged();
@@ -428,7 +430,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setScreenDPI(int value) {
         if (value != m_screenDPI) {
-            configuration_->updateSettingByName<int>("Screen", "DPI", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Screen, ConfigKey::ScreenDPI, value);
             configuration_->save();
             m_screenDPI = value;
             emit screenDPIChanged();
@@ -437,7 +439,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAudioVolumeCaptureMax(int value) {
         if (value != m_audioVolumeCaptureMax) {
-            configuration_->updateSettingByName<int>("Audio", "CaptureMax", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Audio, ConfigKey::AudioCaptureMax, value);
             configuration_->save();
             m_audioVolumeCaptureMax = value;
             emit audioVolumeCaptureMaxChanged();
@@ -446,7 +448,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAudioVolumeCaptureMin(int value) {
         if (value != m_audioVolumeCaptureMin) {
-            configuration_->updateSettingByName<int>("Audio", "CaptureMin", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Audio, ConfigKey::AudioCaptureMin, value);
             configuration_->save();
             m_audioVolumeCaptureMin = value;
             emit audioVolumeCaptureMinChanged();
@@ -455,7 +457,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAudioVolumePlaybackMax(int value) {
         if (value != m_audioVolumePlaybackMax) {
-            configuration_->updateSettingByName<int>("Audio", "PlaybackMax", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Audio, ConfigKey::AudioPlaybackMax, value);
             configuration_->save();
             m_audioVolumePlaybackMax = value;
             emit audioVolumePlaybackMaxChanged();
@@ -464,7 +466,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAudioVolumePlaybackMin(int value) {
         if (value != m_audioVolumePlaybackMin) {
-            configuration_->updateSettingByName<int>("Audio", "PlaybackMin", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Audio, ConfigKey::AudioPlaybackMin, value);
             configuration_->save();
             m_audioVolumePlaybackMin = value;
             emit audioVolumePlaybackMinChanged();
@@ -489,7 +491,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setScreenBrightness(int value) {
         if (value != m_screenBrightness) {
-            configuration_->updateSettingByName<int>("Screen", "Brightness", value);
+            configuration_->updateSettingByName<int>(ConfigGroup::Screen, ConfigKey::ScreenBrightness, value);
             configuration_->save();
             m_screenBrightness = value;
             emit screenBrightnessChanged();
@@ -503,7 +505,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void SettingsViewModel::setCarDriverPosition(aap_protobuf::service::control::message::DriverPosition value) {
         if (value != m_carDriverPosition) {
             configuration_->updateSettingByName<aap_protobuf::service::control::message::DriverPosition>(
-                "Car", "DriverPosition", value);
+                ConfigGroup::Car, ConfigKey::CarDriverPosition, value);
             configuration_->save();
             m_carDriverPosition = value;
             emit carDriverPositionChanged();
@@ -513,7 +515,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void SettingsViewModel::setCarEvConnectorType(aap_protobuf::service::sensorsource::message::EvConnectorType value) {
         if (value != m_carEvConnectorType) {
             configuration_->updateSettingByName<aap_protobuf::service::sensorsource::message::EvConnectorType>(
-                "Car", "EvConnectorType", value);
+                ConfigGroup::Car, ConfigKey::CarEvConnectorType, value);
             configuration_->save();
             m_carEvConnectorType = value;
             emit carEvConnectorTypeChanged();
@@ -523,7 +525,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void SettingsViewModel::setCarFuelType(aap_protobuf::service::sensorsource::message::FuelType value) {
         if (value != m_carFuelType) {
             configuration_->updateSettingByName<aap_protobuf::service::sensorsource::message::FuelType>(
-                "Car", "FuelType", value);
+                ConfigGroup::Car, ConfigKey::CarFuelType, value);
             configuration_->save();
             m_carFuelType = value;
             emit carFuelTypeChanged();
@@ -544,7 +546,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setWirelessClientSSID(QString value) {
         if (m_wirelessClientSSID != value) {
-            configuration_->updateSettingByName<QString>("Wireless", "ClientSSID", value);
+            configuration_->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientSSID, value);
             configuration_->save();
 
             m_wirelessClientSSID = value;
@@ -574,7 +576,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setWirelessClientPassword(QString value) {
         if (m_wirelessClientPassword != value) {
-            configuration_->updateSettingByName<QString>("Wireless", "ClientPassword", value);
+            configuration_->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientPassword, value);
             configuration_->save();
             m_wirelessClientPassword = value;
 #ifdef Q_OS_LINUX
@@ -608,7 +610,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setWirelessHotspotSSID(QString value) {
         if (m_wirelessHotspotSSID != value) {
-            configuration_->updateSettingByName<QString>("Wireless", "HotspotSSID", value);
+            configuration_->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID, value);
             configuration_->save();
 
             m_wirelessHotspotSSID = value;
@@ -634,7 +636,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setWirelessHotspotPassword(QString value) {
         if (m_wirelessHotspotPassword != value) {
-            configuration_->updateSettingByName<QString>("Wireless", "HotspotPassword", value);
+            configuration_->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword, value);
             configuration_->save();
             m_wirelessHotspotPassword = value;
 
@@ -675,7 +677,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setWirelessHotspotInterface(QString value) {
         if (m_wirelessHotspotInterface != value) {
-            configuration_->updateSettingByName<QString>("Wireless", "Interface", value);
+            configuration_->updateSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessInterface, value);
             configuration_->save();
             m_wirelessHotspotInterface = value;
 
@@ -704,7 +706,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setWirelessEnabled(bool value) {
         if (value != m_wirelessEnabled) {
-            configuration_->updateSettingByName<int>("Wireless", "Enabled", value);
+            configuration_->updateSettingByName<bool>(ConfigGroup::Wireless, ConfigKey::WirelessEnabled, value);
             configuration_->save();
             m_wirelessEnabled = value;
 
@@ -719,7 +721,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void SettingsViewModel::setHeadUnitMode(bool value) {
 #ifdef Q_OS_LINUX
         if (m_headUnitMode != value) {
-            configuration_->updateSettingByName<bool>("System", "HeadUnitMode", value);
+            configuration_->updateSettingByName<bool>(ConfigGroup::System, ConfigKey::SystemHeadUnitMode, value);
             configuration_->save();
             m_headUnitMode = value;
             emit headUnitModeChanged();
@@ -731,7 +733,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setWirelessType(common::Enum::WirelessType::Value value) {
         if (value != m_wirelessType) {
-            configuration_->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", value);
+            configuration_->updateSettingByName<common::Enum::WirelessType::Value>(ConfigGroup::Wireless, ConfigKey::WirelessType, value);
             configuration_->save();
             m_wirelessType = value;
 
@@ -745,7 +747,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setAndroidAutoHomeButtonVisibility(QString value) {
         if (m_androidAutoHomeButtonVisibility != value) {
-            configuration_->updateSettingByName<QString>("AndroidAuto", "HomeButtonVisibility", value);
+            configuration_->updateSettingByName<QString>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoHomeButtonVisibility, value);
             configuration_->save();
             m_androidAutoHomeButtonVisibility = value;
             emit androidAutoHomeButtonVisibilityChanged();

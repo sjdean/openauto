@@ -28,6 +28,8 @@ using namespace google::protobuf::io;
 Q_LOGGING_CATEGORY(lcBsBtServer, "journeyos.bluetooth.bootstrap.server")
 
 namespace f1x::openauto::autoapp::bootstrap {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
 
   /**
    * Stage 1 Bootstrap - Handle iinitial RFCOMM connection to exchange WiFi credentials for Wireless AndroidAuto
@@ -64,7 +66,7 @@ namespace f1x::openauto::autoapp::bootstrap {
       // 1. Get the target MAC address from settings.
       // "InterfaceMAC" stores the hardware address (e.g. "B8:27:EB:...").
       // "Interface" stores the interface name and must not be used for MAC comparison.
-      QString targetMac = configuration_->getSettingByName<QString>("Wireless", "InterfaceMAC");
+      QString targetMac = configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessInterfaceMAC);
 
       // Normalize config MAC (remove dashes/colons, make uppercase) for safer comparison
       QString normalizedTarget = targetMac.toUpper();
@@ -207,8 +209,8 @@ namespace f1x::openauto::autoapp::bootstrap {
 
     aap_protobuf::aaw::WifiInfoResponse response;
 
-    response.set_ssid(configuration_->getSettingByName<QString>("Wireless", "HotspotSSID").toStdString());
-    response.set_password(configuration_->getSettingByName<QString>("Wireless", "HotspotPassword").toStdString());
+    response.set_ssid(configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID).toStdString());
+    response.set_password(configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword).toStdString());
 
     QNetworkInterface wifiInterface = findConfiguredInterface();
 

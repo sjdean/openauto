@@ -23,6 +23,8 @@
 Q_LOGGING_CATEGORY(lcServiceFactory, "journeyos.service.factory")
 
 namespace f1x::openauto::autoapp::service {
+using configuration::ConfigGroup;
+using configuration::ConfigKey;
     /**
      * @class ServiceFactory
      * @brief A factory class responsible for creating and managing instances of various services.
@@ -93,7 +95,7 @@ namespace f1x::openauto::autoapp::service {
 
         projection::IBluetoothDevice::Pointer bluetoothDevice;
         // TODO: This is possibly a little messy. I mean, we fundamentally don't want to create a bluetooth service if we don't have a bluetooth device
-        if (configuration_->getSettingByName<QString>("Bluetooth", "AdapterAddress") == "") {
+        if (configuration_->getSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress) == "") {
             qInfo(lcServiceFactory) << "bluetooth=dummy (no adapter address configured)";
             bluetoothDevice = std::make_shared<projection::DummyBluetoothDevice>();
         } else {
@@ -101,7 +103,7 @@ namespace f1x::openauto::autoapp::service {
 
             bluetoothDevice = projection::IBluetoothDevice::Pointer(
                 new projection::LocalBluetoothDevice(
-                    configuration_->getSettingByName<QString>("Bluetooth", "AdapterAddress")),
+                    configuration_->getSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress)),
                 std::bind(&QObject::deleteLater,
                           std::placeholders::_1));
         }
@@ -117,7 +119,7 @@ namespace f1x::openauto::autoapp::service {
 
     void ServiceFactory::createMediaSinkServices(ServiceList &serviceList,
                                                  aasdk::messenger::IMessenger::Pointer messenger) {
-        if (configuration_->getSettingByName<bool>("AndroidAuto", "Media")) {
+        if (configuration_->getSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoMedia)) {
             if (audioOutputMedia_) {
                 qInfo(lcServiceFactory) << "sink registered channel=media";
                 serviceList.emplace_back(
@@ -125,7 +127,7 @@ namespace f1x::openauto::autoapp::service {
             }
         }
 
-        if (configuration_->getSettingByName<bool>("AndroidAuto", "Guidance")) {
+        if (configuration_->getSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoGuidance)) {
             if (audioOutputGuidance_) {
                 qInfo(lcServiceFactory) << "sink registered channel=guidance";
                 serviceList.emplace_back(
@@ -133,7 +135,7 @@ namespace f1x::openauto::autoapp::service {
             }
         }
 /*
-        if (configuration_->getSettingByName<bool>("AndroidAuto", "Telephony")) {
+        if (configuration_->getSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoTelephony)) {
             if (audioOutputTelephony_) {
                 qInfo(lcServiceFactory) << "......Telephony channel";
                 serviceList.emplace_back(
