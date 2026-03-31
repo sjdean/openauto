@@ -9,6 +9,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
+#include <QSysInfo>
 #include <QFile>
 
 Q_LOGGING_CATEGORY(lcUpdate, "journeyos.ota")
@@ -230,11 +231,9 @@ UpdateManager::~UpdateManager()
 
 QString UpdateManager::getCurrentVersion() const
 {
-#ifdef OPENAUTO_VERSION_STRING
-    return QStringLiteral(OPENAUTO_VERSION_STRING);
-#else
-    return QStringLiteral("dev");
-#endif
+    // Read VERSION_ID from /etc/os-release (set by Yocto to the image version,
+    // e.g. "1.0.0"). This tracks the OS image, not the autoapp build version.
+    return QSysInfo::productVersion();
 }
 
 void UpdateManager::checkForUpdate()
