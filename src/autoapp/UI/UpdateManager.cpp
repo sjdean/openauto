@@ -9,7 +9,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
-#include <QStandardPaths>
 #include <QFile>
 
 Q_LOGGING_CATEGORY(lcUpdate, "journeyos.ota")
@@ -295,9 +294,7 @@ void UpdateManager::downloadUpdate()
     }
     qInfo(lcUpdate) << "download url=" << m_updateUrl;
 
-    const QString destPath =
-        QStandardPaths::writableLocation(QStandardPaths::TempLocation)
-        + QStringLiteral("/update.raucb");
+    const QString destPath = QStringLiteral("/storage/update.raucb");
 
     auto *file = new QFile(destPath, this);
     if (!file->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
@@ -354,9 +351,7 @@ void UpdateManager::downloadUpdate()
 
 void UpdateManager::applyUpdate()
 {
-    const QString bundlePath =
-        QStandardPaths::writableLocation(QStandardPaths::TempLocation)
-        + QStringLiteral("/update.raucb");
+    const QString bundlePath = QStringLiteral("/storage/update.raucb");
 
     if (!QFile::exists(bundlePath)) {
         qWarning(lcUpdate) << "apply called but bundle not found at" << bundlePath;
@@ -373,9 +368,11 @@ void UpdateManager::applyUpdate()
             [this, process](int exitCode, QProcess::ExitStatus exitStatus) {
         process->deleteLater();
         if (exitCode == 0 && exitStatus == QProcess::NormalExit) {
-            qInfo(lcUpdate) << "RAUC install success";
+            qInfo(lcUpdate) << "RAUC install success — requesting reboot";
             emit installFinished(true,
                 QStringLiteral("Installation successful. System will reboot."));
+            QProcess::startDetached(QStringLiteral("systemctl"),
+                                    QStringList{QStringLiteral("reboot")});
         } else {
             qWarning(lcUpdate) << "RAUC install failed with code" << exitCode;
             emit installFinished(false,
@@ -390,7 +387,7 @@ void UpdateManager::applyUpdate()
         emit installFinished(false, QStringLiteral("Failed to start installer process."));
     });
 
-    process->start(QStringLiteral("rauc"),
+    process->start(QStringLiteral("/usr/bin/rauc"),
                    QStringList() << QStringLiteral("install") << bundlePath);
 }
 

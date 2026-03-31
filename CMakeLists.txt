@@ -132,6 +132,24 @@ find_package(absl REQUIRED CONFIG)
 find_package(Boost REQUIRED COMPONENTS system log)
 
 # ─── OpenSSL ──────────────────────────────────────────────────────────────────
+# On macOS, Apple ships LibreSSL at the standard library paths. CMake 4.x's
+# FindOpenSSL may find it but fail to create IMPORTED targets (OpenSSL::SSL /
+# OpenSSL::Crypto) because LibreSSL is not a supported OpenSSL provider.
+# Steer CMake toward Homebrew's openssl@3 before the find_package call.
+# OPENSSL_ROOT_DIR can still be overridden from the command line / CLion settings.
+if(APPLE AND NOT DEFINED OPENSSL_ROOT_DIR)
+    foreach(_ossl_candidate
+            "/usr/local/opt/openssl@3"   # Homebrew Intel
+            "/opt/homebrew/opt/openssl@3" # Homebrew Apple Silicon
+            "/usr/local/opt/openssl"
+            "/opt/homebrew/opt/openssl")
+        if(EXISTS "${_ossl_candidate}")
+            set(OPENSSL_ROOT_DIR "${_ossl_candidate}" CACHE PATH "Homebrew OpenSSL root")
+            message(STATUS "OpenSSL root    : ${OPENSSL_ROOT_DIR} (auto-detected)")
+            break()
+        endif()
+    endforeach()
+endif()
 find_package(OpenSSL REQUIRED)
 
 # ─── libusb — three-tier: config → pkg-config → manual ───────────────────────
@@ -244,7 +262,7 @@ target_compile_definitions(autoapp PRIVATE
         BOOST_ALL_DYN_LINK
         $<$<CONFIG:Release>:NDEBUG>
         $<$<BOOL:${OPENAUTO_MACOS}>:MAC_OS>    # was add_definitions(-DMAC_OS) — now target-scoped
-        OPENAUTO_VERSION_STRING="${LIBRARY_BUILD_VERSION_STRING}"
+        OPENAUTO_VERSION_STRING="${LIBRARY_BUILD_MAJOR_RELEASE}.${LIBRARY_BUILD_MINOR_RELEASE}.${LIBRARY_BUILD_INCREMENTAL}"
 )
 
 # ─── Qt Design Studio subdirectories ─────────────────────────────────────────
