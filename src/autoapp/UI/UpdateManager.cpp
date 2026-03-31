@@ -368,7 +368,7 @@ void UpdateManager::applyUpdate()
             qInfo(lcUpdate) << "RAUC install success — requesting reboot";
             emit installFinished(true,
                 QStringLiteral("Installation successful. System will reboot."));
-            QProcess::startDetached(QStringLiteral("systemctl"),
+            QProcess::startDetached(QStringLiteral("/usr/bin/systemctl"),
                                     QStringList{QStringLiteral("reboot")});
         } else {
             qWarning(lcUpdate) << "RAUC install failed with code" << exitCode;
