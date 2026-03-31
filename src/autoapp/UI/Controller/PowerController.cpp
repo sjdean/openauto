@@ -13,12 +13,15 @@ namespace f1x::openauto::autoapp::System {
     void PowerController::reboot() {
         qInfo(lcPower) << "reboot requested";
 #ifdef Q_OS_LINUX
+        // Use systemd-logind directly — no custom helper service required.
+        // interactive=false: do not prompt via polkit; journeyos has the policy grant.
         QDBusMessage msg = QDBusMessage::createMethodCall(
-                "uk.co.cubeone.journeyos.helper",
-                "/uk/co/cubeone/journeyos/helper",
-                "uk.co.cubeone.journeyos.helper",
-                "reboot"
+                QStringLiteral("org.freedesktop.login1"),
+                QStringLiteral("/org/freedesktop/login1"),
+                QStringLiteral("org.freedesktop.login1.Manager"),
+                QStringLiteral("Reboot")
             );
+        msg.setArguments({false});
         QDBusConnection::systemBus().call(msg, QDBus::NoBlock);
 #endif
     }
@@ -27,11 +30,12 @@ namespace f1x::openauto::autoapp::System {
         qInfo(lcPower) << "power off requested";
 #ifdef Q_OS_LINUX
         QDBusMessage msg = QDBusMessage::createMethodCall(
-                "uk.co.cubeone.journeyos.helper",
-                "/uk/co/cubeone/journeyos/helper",
-                "uk.co.cubeone.journeyos.helper",
-                "powerOff"
+                QStringLiteral("org.freedesktop.login1"),
+                QStringLiteral("/org/freedesktop/login1"),
+                QStringLiteral("org.freedesktop.login1.Manager"),
+                QStringLiteral("PowerOff")
             );
+        msg.setArguments({false});
         QDBusConnection::systemBus().call(msg, QDBus::NoBlock);
 #endif
     }

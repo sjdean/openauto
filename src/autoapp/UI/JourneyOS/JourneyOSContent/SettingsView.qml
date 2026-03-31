@@ -416,23 +416,118 @@ Item {
             standardButtons: Dialog.Ok | Dialog.Cancel
 
             Label {
-                text: "Version " + updateManager.latestVersion + " is available.\n\nThe update will be downloaded and applied on next restart."
+                text: "Version " + updateManager.latestVersion + " is available.\n\nDownload and install now? The device will reboot automatically."
                 wrapMode: Text.WordWrap
                 width: 360
             }
 
             onAccepted: {
+                downloadingDialog.open()
                 updateManager.downloadUpdate()
-                updateManager.applyUpdate()
+                // applyUpdate() is triggered by onDownloadFinished below
             }
         }
 
-        // OTA update-found connection — must live in rootRect (not inside SettingsPage)
+        // Shown while the bundle is downloading — not dismissable.
+        Dialog {
+            id: downloadingDialog
+            title: "Downloading Update"
+            modal: true
+            closePolicy: Popup.NoAutoClose
+            anchors.centerIn: parent
+            standardButtons: Dialog.NoButton
+
+            Column {
+                spacing: 12
+                width: 360
+                Label {
+                    text: "Downloading version " + updateManager.latestVersion + "…"
+                    wrapMode: Text.WordWrap
+                    width: parent.width
+                }
+                ProgressBar {
+                    id: downloadProgressBar
+                    width: parent.width
+                    from: 0; to: 1; value: 0
+                }
+                Label {
+                    id: downloadProgressLabel
+                    text: "0 %"
+                    font.pixelSize: 12
+                    color: cTextDim
+                }
+            }
+        }
+
+        // Shown while RAUC applies the bundle — not dismissable.
+        Dialog {
+            id: installingDialog
+            title: "Installing Update"
+            modal: true
+            closePolicy: Popup.NoAutoClose
+            anchors.centerIn: parent
+            standardButtons: Dialog.NoButton
+
+            Label {
+                text: "Installing update. Please do not power off the device.\nThe system will reboot automatically when done."
+                wrapMode: Text.WordWrap
+                width: 360
+            }
+        }
+
+        // Shown on download error, network error, or install failure.
+        Dialog {
+            id: otaErrorDialog
+            title: "Update Failed"
+            modal: true
+            anchors.centerIn: parent
+            standardButtons: Dialog.Ok
+
+            Label {
+                id: otaErrorLabel
+                text: ""
+                wrapMode: Text.WordWrap
+                width: 360
+            }
+        }
+
+        // OTA signal connections — must live in rootRect (not inside SettingsPage)
         // because SettingsPage.userContent only accepts QQuickItem children.
         Connections {
             target: updateManager
+
             function onCheckComplete(available, version) {
                 if (available) updateFoundDialog.open()
+            }
+
+            function onDownloadProgress(bytesReceived, bytesTotal) {
+                if (bytesTotal > 0) {
+                    const frac = bytesReceived / bytesTotal
+                    downloadProgressBar.value = frac
+                    downloadProgressLabel.text = Math.round(frac * 100) + " %"
+                }
+            }
+
+            function onDownloadFinished() {
+                downloadingDialog.close()
+                installingDialog.open()
+                updateManager.applyUpdate()
+            }
+
+            function onInstallFinished(success, message) {
+                installingDialog.close()
+                if (!success) {
+                    otaErrorLabel.text = message
+                    otaErrorDialog.open()
+                }
+                // On success the C++ side has already called systemctl reboot.
+            }
+
+            function onErrorOccurred(message) {
+                downloadingDialog.close()
+                installingDialog.close()
+                otaErrorLabel.text = message
+                otaErrorDialog.open()
             }
         }
 
