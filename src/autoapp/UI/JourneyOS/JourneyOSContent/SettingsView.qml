@@ -380,13 +380,7 @@ Item {
                     Button {
                         text: "Check for Updates"
                         Layout.alignment: Qt.AlignVCenter
-                        onClicked: {
-                            if (!wifiViewModel.connected) {
-                                wifiWarningDialog.open()
-                            } else {
-                                updateManager.checkForUpdate()
-                            }
-                        }
+                        onClicked: updateManager.checkForUpdate()
                     }
                 }
 
@@ -394,20 +388,6 @@ Item {
         }
 
         // ── OTA dialogs — declared outside StackLayout so they overlay everything ──
-        Dialog {
-            id: wifiWarningDialog
-            title: "Wi-Fi Required"
-            modal: true
-            anchors.centerIn: parent
-            standardButtons: Dialog.Ok
-
-            Label {
-                text: "A Wi-Fi connection is required to check for updates.\nPlease connect to a network first."
-                wrapMode: Text.WordWrap
-                width: 360
-            }
-        }
-
         Dialog {
             id: updateFoundDialog
             title: "Update Available"
