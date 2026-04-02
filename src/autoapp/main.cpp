@@ -52,6 +52,7 @@
 #include "f1x/openauto/autoapp/UI/Combo/AudioDeviceModel.hpp"
 #include "f1x/openauto/autoapp/UI/Controller/LightController.hpp"
 #include "f1x/openauto/autoapp/UI/Controller/PowerController.hpp"
+#include "f1x/openauto/autoapp/UI/Controller/TimeController.hpp"
 #include "f1x/openauto/autoapp/UI/Monitor/VolumeHandler.hpp"
 #include "f1x/openauto/autoapp/UI/ViewModel/BrightnessViewModel.hpp"
 #include "f1x/openauto/autoapp/UI/ViewModel/SettingsViewModel.hpp"
@@ -291,10 +292,20 @@ int main(int argc, char *argv[]) {
     autoapp::System::PowerController powerController;
     context->setContextProperty("systemPower", &powerController);
 
+    // Time Controller — synchronises system clock from NTP, RTC, or Android Auto
+    auto* timeController = new autoapp::UI::Controller::TimeController(&app);
+    context->setContextProperty("timeController", timeController);
+
     // Monitors
     auto androidAutoMonitor = std::make_shared<autoapp::UI::Monitor::AndroidAutoMonitor>();
     context->setContextProperty("wifiMonitor", wifiMon);
     context->setContextProperty("androidAutoMonitor", androidAutoMonitor.get());
+
+    // Forward phone timestamp from AA session → TimeController (queued across thread boundary)
+    QObject::connect(androidAutoMonitor.get(),
+                     &autoapp::UI::Monitor::AndroidAutoMonitor::phoneTimestampReceived,
+                     timeController,
+                     &autoapp::UI::Controller::TimeController::offerTimeFromAndroidAuto);
 
     // OTA update manager (stub — no real HTTP yet)
     auto* updateManager = new f1x::openauto::autoapp::UI::UpdateManager(configuration, &app);

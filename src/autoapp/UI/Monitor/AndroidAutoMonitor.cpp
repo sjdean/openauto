@@ -75,4 +75,13 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             emit connectivityMethodChanged(value);
         }
     }
+
+    /**
+     * Forwards a phone-supplied timestamp to any connected TimeController.
+     * Safe to call from a non-Qt thread — the signal is queued to the main thread
+     * automatically because TimeController lives on the main thread.
+     */
+    void AndroidAutoMonitor::notifyPhoneTimestamp(quint64 epochMicroseconds) {
+        emit phoneTimestampReceived(epochMicroseconds);
+    }
 }

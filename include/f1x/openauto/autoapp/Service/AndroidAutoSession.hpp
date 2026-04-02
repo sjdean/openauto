@@ -82,5 +82,8 @@ namespace f1x::openauto::autoapp::service {
         IPinger::Pointer pinger_;
         IAndroidAutoSessionEventHandler *eventHandler_;
         std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor_;
+        // True after the first PingRequest timestamp has been forwarded to TimeController.
+        // Prevents offering the phone time on every subsequent ping interval.
+        bool m_phoneTimeOffered{false};
     };
 }

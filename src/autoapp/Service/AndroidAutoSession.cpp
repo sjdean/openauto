@@ -290,6 +290,13 @@ namespace f1x::openauto::autoapp::service {
   void AndroidAutoSession::onPingRequest(const aap_protobuf::service::control::message::PingRequest &request) {
     qDebug(lcSession) << "ping request ts=" << request.timestamp();
 
+    // On the very first ping, forward the phone's timestamp to TimeController via
+    // AndroidAutoMonitor. The signal is queued to the main Qt thread automatically.
+    if (!m_phoneTimeOffered && request.timestamp() > 0) {
+        androidAutoMonitor_->notifyPhoneTimestamp(static_cast<quint64>(request.timestamp()));
+        m_phoneTimeOffered = true;
+    }
+
     aap_protobuf::service::control::message::PingResponse response;
     response.set_timestamp(request.timestamp());
 

@@ -26,9 +26,17 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     void setState(common::Enum::AndroidAutoConnectivityState::Value value);
     void setMethod(common::Enum::AndroidAutoConnectivityMethod::Value value);
 
+    /**
+     * Called from the Android Auto session (IO thread) when the first PingRequest
+     * from the phone is received. Emits phoneTimestampReceived() queued to the main
+     * thread so that TimeController can consume it safely.
+     */
+    void notifyPhoneTimestamp(quint64 epochMicroseconds);
+
   signals:
     void connectivityStateChanged(common::Enum::AndroidAutoConnectivityState::Value state);
     void connectivityMethodChanged(common::Enum::AndroidAutoConnectivityMethod::Value method);
+    void phoneTimestampReceived(quint64 epochMicroseconds);
 
   private:
     common::Enum::AndroidAutoConnectivityMethod::Value m_connectivityMethod;
