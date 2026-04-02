@@ -17,7 +17,7 @@
 #include "f1x/openauto/autoapp/Service/Bluetooth/BluetoothService.hpp"
 #include "f1x/openauto/autoapp/Service/MediaSink/TelephonyAudioService.hpp"
 #include "f1x/openauto/autoapp/Service/NavigationStatus/NavigationStatusService.hpp"
-#include "f1x/openauto/autoapp/UI/Monitor/BluetoothHandler.hpp"
+#include "f1x/openauto/autoapp/UI/Monitor/LinuxBluetoothManager.hpp"
 
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcServiceFactory, "journeyos.service.factory")

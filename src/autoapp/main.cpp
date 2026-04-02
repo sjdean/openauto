@@ -17,27 +17,27 @@
 #include <f1x/openauto/autoapp/Service/ServiceFactory.hpp>
 
 // AASDK Backed Enum's
-#include <f1x/openauto/autoapp/UI/Combo/DriverPositionModel.hpp>
-#include <f1x/openauto/autoapp/UI/Combo/EvConnectorTypeModel.hpp>
-#include <f1x/openauto/autoapp/UI/Combo/FrameRateModel.hpp>
-#include <f1x/openauto/autoapp/UI/Combo/FuelTypeModel.hpp>
-#include <f1x/openauto/autoapp/UI/Combo/ResolutionModel.hpp>
+#include <f1x/openauto/autoapp/UI/Model/List/DriverPositionModel.hpp>
+#include <f1x/openauto/autoapp/UI/Model/List/EvConnectorTypeModel.hpp>
+#include <f1x/openauto/autoapp/UI/Model/List/FrameRateModel.hpp>
+#include <f1x/openauto/autoapp/UI/Model/List/FuelTypeModel.hpp>
+#include <f1x/openauto/autoapp/UI/Model/List/ResolutionModel.hpp>
 
 // Backed from System Calls
-#include <f1x/openauto/autoapp/UI/Combo/BluetoothAdapterModel.hpp>
+#include <f1x/openauto/autoapp/UI/Model/List/BluetoothAdapterModel.hpp>
 
 //
 #include <f1x/openauto/autoapp/UI/Monitor/AndroidAutoMonitor.hpp>
 
-#include <f1x/openauto/autoapp/UI/Combo/NetworkAdapterModel.hpp>
+#include <f1x/openauto/autoapp/UI/Model/List/NetworkAdapterModel.hpp>
 
 #include "f1x/openauto/autoapp/UI/ViewModel/WifiViewModel.hpp"
-#include "f1x/openauto/autoapp/UI/UpdateManager.hpp"
+#include "f1x/openauto/autoapp/UI/Manager/UpdateManager.hpp"
 #include "f1x/openauto/autoapp/Hardware/HardwareProfile.hpp"
 
 #ifdef Q_OS_LINUX
-#include <f1x/openauto/autoapp/UI/Combo/BluetoothDeviceModel.hpp>
-#include <f1x/openauto/autoapp/UI/Monitor/BluetoothHandler.hpp>
+#include <f1x/openauto/autoapp/UI/Model/List/BluetoothDeviceModel.hpp>
+#include <f1x/openauto/autoapp/UI/Monitor/LinuxBluetoothManager.hpp>
 #include "f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp"
 #include "f1x/openauto/autoapp/UI/Controller/WifiController.hpp"
 #else
@@ -49,11 +49,11 @@
 #include "f1x/openauto/autoapp/Configuration/Configuration.hpp"
 #include "f1x/openauto/autoapp/Projection/IInputDevice.hpp"
 #include "f1x/openauto/autoapp/Projection/InputDevice.hpp"
-#include "f1x/openauto/autoapp/UI/Combo/AudioDeviceModel.hpp"
+#include "f1x/openauto/autoapp/UI/Model/List/AudioDeviceModel.hpp"
 #include "f1x/openauto/autoapp/UI/Controller/LightController.hpp"
 #include "f1x/openauto/autoapp/UI/Controller/PowerController.hpp"
 #include "f1x/openauto/autoapp/UI/Controller/TimeController.hpp"
-#include "f1x/openauto/autoapp/UI/Monitor/VolumeHandler.hpp"
+#include "f1x/openauto/autoapp/UI/ViewModel/VolumeViewModel.hpp"
 #include "f1x/openauto/autoapp/UI/ViewModel/BrightnessViewModel.hpp"
 #include "f1x/openauto/autoapp/UI/ViewModel/SettingsViewModel.hpp"
 
@@ -62,9 +62,9 @@
 #include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"
 #ifdef Q_OS_LINUX
 #include <pulse/pulseaudio.h>
-#include <f1x/openauto/autoapp/UI/Monitor/PulseAudioHandler.hpp>
+#include <f1x/openauto/autoapp/UI/Backend/Audio/PulseAudioHandler.hpp>
 #elif defined(__APPLE__)
-#include "f1x/openauto/autoapp/UI/Monitor/CoreAudioHandler.hpp"
+#include "f1x/openauto/autoapp/UI/Backend/Audio/CoreAudioHandler.hpp"
 #endif
 
 #include <qloggingcategory.h>
@@ -152,13 +152,13 @@ int main(int argc, char *argv[]) {
     startIOServiceWorkers(ioService, threadPool);
 
     // Environment
-    std::shared_ptr<autoapp::UI::Monitor::IAudioHandler> audioHandler;
+    std::shared_ptr<autoapp::UI::Backend::Audio::IAudioHandler> audioHandler;
 #ifdef Q_OS_LINUX
-    audioHandler = std::make_shared<autoapp::UI::Monitor::PulseAudioHandler>();
+    audioHandler = std::make_shared<autoapp::UI::Backend::Audio::PulseAudioHandler>();
 #elif defined(__APPLE__)
-    audioHandler = std::make_shared<autoapp::UI::Monitor::CoreAudioHandler>();
+    audioHandler = std::make_shared<autoapp::UI::Backend::Audio::CoreAudioHandler>();
 #else
-    audioHandler = std::make_shared<autoapp::UI::Monitor::NullAudioHandler>();
+    audioHandler = std::make_shared<autoapp::UI::Backend::Audio::NullAudioHandler>();
 #endif
 
     qInfo(lcAutoapp) << "reading configuration";
@@ -216,11 +216,11 @@ int main(int argc, char *argv[]) {
         "common::Enum::WirelessType::Value");
 
     // Initialise ComboBox Items - Backed by AA Enum's
-    autoapp::UI::Combo::DriverPositionModel driverPositionModel;
-    autoapp::UI::Combo::EvConnectorTypeModel evConnectorTypeModel;
-    autoapp::UI::Combo::FrameRateModel frameRateModel;
-    autoapp::UI::Combo::FuelTypeModel fuelTypeModel;
-    autoapp::UI::Combo::ResolutionModel resolutionModel;
+    autoapp::UI::Model::List::DriverPositionModel driverPositionModel;
+    autoapp::UI::Model::List::EvConnectorTypeModel evConnectorTypeModel;
+    autoapp::UI::Model::List::FrameRateModel frameRateModel;
+    autoapp::UI::Model::List::FuelTypeModel fuelTypeModel;
+    autoapp::UI::Model::List::ResolutionModel resolutionModel;
 
 #ifdef Q_OS_LINUX
     bool isSystemManaged = false; // Pi is Self Contained. Can access device settings.
@@ -237,10 +237,10 @@ int main(int argc, char *argv[]) {
 
     // Pulse Audio Input/Output (Sound) Devices
 
-    autoapp::UI::Combo::AudioDeviceModel pulseAudioDeviceModelOutput(audioHandler,
-                                                                     autoapp::UI::Combo::AudioDeviceDirection::Output);
-    autoapp::UI::Combo::AudioDeviceModel pulseAudioDeviceModelInput(audioHandler,
-                                                                    autoapp::UI::Combo::AudioDeviceDirection::Input);
+    autoapp::UI::Model::List::AudioDeviceModel pulseAudioDeviceModelOutput(audioHandler,
+                                                                     autoapp::UI::Model::List::AudioDeviceDirection::Output);
+    autoapp::UI::Model::List::AudioDeviceModel pulseAudioDeviceModelInput(audioHandler,
+                                                                    autoapp::UI::Model::List::AudioDeviceDirection::Input);
     context->setContextProperty("pulseAudioDeviceModelOutput", &pulseAudioDeviceModelOutput);
     context->setContextProperty("pulseAudioDeviceModelInput", &pulseAudioDeviceModelInput);
 
@@ -253,15 +253,15 @@ int main(int argc, char *argv[]) {
 #endif
     auto* wifiViewModel = new f1x::openauto::autoapp::UI::ViewModel::WifiViewModel(configuration, wifiCtrl, wifiMon, &app);
 
-    autoapp::UI::Combo::NetworkAdapterModel networkAdapterModel;
+    autoapp::UI::Model::List::NetworkAdapterModel networkAdapterModel;
     context->setContextProperty("networkAdapterModel", &networkAdapterModel);
 
     // Connect to Bluetooth
     autoapp::UI::Monitor::IBluetoothManager* bluetoothManager = nullptr;
 #ifdef Q_OS_LINUX
-    auto* bluetoothHandlerConcrete = new autoapp::UI::Monitor::BluetoothHandler(configuration, &app);
+    auto* bluetoothHandlerConcrete = new autoapp::UI::Monitor::LinuxBluetoothManager(configuration, &app);
     bluetoothManager = bluetoothHandlerConcrete;
-    auto* bluetoothDeviceModel = new autoapp::UI::Combo::BluetoothDeviceModel(bluetoothHandlerConcrete, &app);
+    auto* bluetoothDeviceModel = new autoapp::UI::Model::List::BluetoothDeviceModel(bluetoothHandlerConcrete, &app);
     context->setContextProperty("bluetoothDeviceModel", bluetoothDeviceModel);
 #else
     bluetoothManager = new autoapp::UI::Monitor::NullBluetoothManager(&app);
@@ -269,7 +269,7 @@ int main(int argc, char *argv[]) {
 #endif
 
     // Bluetooth Adapters on Host
-    autoapp::UI::Combo::BluetoothAdapterModel bluetoothAdapterModel;
+    autoapp::UI::Model::List::BluetoothAdapterModel bluetoothAdapterModel;
     context->setContextProperty("bluetoothAdapterModel", &bluetoothAdapterModel);
 
     context->setContextProperty("bluetoothHandler", bluetoothManager);
@@ -279,7 +279,7 @@ int main(int argc, char *argv[]) {
 
     // Setting Handlers
     autoapp::UI::Controller::LightController lightHandler(configuration);
-    autoapp::UI::Monitor::VolumeHandler volumeHandler(configuration, audioHandler);
+    autoapp::UI::ViewModel::VolumeViewModel volumeHandler(configuration, audioHandler);
     autoapp::UI::ViewModel::BrightnessViewModel brightnessHandler(configuration, lightHandler);
 
     autoapp::UI::ViewModel::SettingsViewModel settingsViewModel(configuration);
