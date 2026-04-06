@@ -92,7 +92,7 @@ Item {
             }
         ]
 
-        MediaNotPlayingMenu {
+        HomeMenu {
             id: mainMenu
             width: parent.width
             height: parent.height
@@ -113,7 +113,7 @@ Item {
             }
         }
 
-        MediaPlayingMenu {
+        MediaSidebar {
             id: mediaMenu
             width: parent.width
             height: parent.height

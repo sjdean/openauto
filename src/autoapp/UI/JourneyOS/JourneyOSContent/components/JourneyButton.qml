@@ -1,10 +1,3 @@
-/*
-This is a UI file (.ui.qml) that is intended to be edited in Qt Design Studio only.
-It is supposed to be strictly declarative and only uses a subset of QML. If you edit
-this file manually, you might introduce QML code that is not supported by Qt Design Studio.
-Check out https://doc.qt.io/qtcreator/creator-quick-ui-forms.html for details on .ui.qml files.
-*/
-
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
@@ -33,7 +26,7 @@ Button {
     font.pointSize: textIsStatus ? iconSize / 1.3 : (iconSize / 10) * 3
     icon.height: iconSize
     icon.width: iconSize
-    icon.source: "images/settings.svg"
+    icon.source: "../images/settings.svg"
     display: AbstractButton.TextUnderIcon
     padding: buttonPadding
     bottomPadding: buttonPadding

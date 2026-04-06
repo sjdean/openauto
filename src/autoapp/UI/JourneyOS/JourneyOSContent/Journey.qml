@@ -104,192 +104,21 @@ Window {
         }
     }
 
-    Popup {
+    AndroidAutoStatusPopup {
         id: aaInfoPopup
-        anchors.centerIn: parent
-        width: 300
-        height: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED ? 210 : 175
-        modal: false
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-
-        background: Rectangle {
-            color: Constants.popupBackgroundTranslucent
-            radius: Constants.radiusPopup
-            border.color: Constants.popupBorder
-            border.width: 1
-        }
-
-        // Close ✕ button — top-right corner
-        Rectangle {
-            id: aaCloseBtn
-            width: 28; height: 28
-            radius: Constants.radiusCircle
-            color: aaCloseArea.pressed ? Constants.btnDangerBgPressed : Constants.btnDangerBg
-            anchors.top: parent.top
-            anchors.right: parent.right
-            anchors.topMargin: 8
-            anchors.rightMargin: 8
-            z: 1
-            Behavior on color { ColorAnimation { duration: 60 } }
-            Text {
-                anchors.centerIn: parent
-                text: "\u2715"
-                font.pixelSize: 14
-                font.bold: true
-                color: Constants.btnDangerFg
-            }
-            MouseArea {
-                id: aaCloseArea
-                anchors.fill: parent
-                onClicked: aaInfoPopup.close()
-            }
-        }
-
-        Column {
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: 10   // shift below the close button
-            spacing: 14
-
-            Text {
-                text: "Android Auto"
-                font.pixelSize: Constants.fontHeading
-                font.bold: true
-                color: Constants.textPrimary
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-
-            Text {
-                text: {
-                    if (androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED)
-                        "Connected via " + (androidAutoMonitor.method === AndroidAutoConnectivityMethod.AA_USB ? "USB" : "Wi-Fi")
-                    else if (androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTING)
-                        "Connecting\u2026"
-                    else
-                        "Not Connected"
-                }
-                font.pixelSize: Constants.fontBody
-                color: Constants.textSecondary
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-
-            JourneyButton {
-                text: "View Android Auto"
-                icon.source: "images/android-auto.svg"
-                iconSize: 20
-                visible: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED
-                width: 200
-                height: 40
-                anchors.horizontalCenter: parent.horizontalCenter
-                onClicked: {
-                    aaInfoPopup.close()
-                    if (stackView.currentItem.objectName !== "AndroidAutoView")
-                        stackView.push("AndroidAutoView.qml")
-                }
-            }
+        androidAutoConnected: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED
+        androidAutoConnecting: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTING
+        androidAutoMethodText: androidAutoMonitor.method === AndroidAutoConnectivityMethod.AA_USB ? "USB" : "Wi-Fi"
+        onViewAndroidAutoRequested: {
+            if (stackView.currentItem.objectName !== "AndroidAutoView")
+                stackView.push("AndroidAutoView.qml")
         }
     }
 
-    Popup {
+    PowerPopup {
         id: powerPopup
-        anchors.centerIn: parent
-        width: 420
-        height: 220
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-
-        background: Rectangle {
-            color: Constants.popupBackgroundTranslucent
-            radius: Constants.radiusPopup
-            border.color: Constants.popupBorder
-            border.width: 1
-        }
-
-        Column {
-            anchors.centerIn: parent
-            spacing: 16
-
-            Text {
-                text: "System Power"
-                font.pixelSize: Constants.fontTitle
-                font.bold: true
-                color: Constants.textPrimary
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-
-            Text {
-                text: "Choose an action or cancel."
-                font.pixelSize: Constants.fontBody
-                color: Constants.textSecondary
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-
-            Row {
-                spacing: 12
-                anchors.horizontalCenter: parent.horizontalCenter
-
-                // Cancel — red outline, closes popup without action
-                Button {
-                    text: "Cancel"
-                    width: 110; height: 48
-                    background: Rectangle {
-                        color: "transparent"
-                        radius: Constants.radiusButton
-                        border.color: Constants.btnCancelBorder
-                        border.width: 2
-                        opacity: parent.down ? 0.6 : 1.0
-                    }
-                    contentItem: Text {
-                        text: parent.text
-                        font.pixelSize: Constants.fontBody
-                        font.bold: true
-                        color: Constants.btnCancelFg
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        opacity: parent.parent.down ? 0.6 : 1.0
-                    }
-                    onClicked: powerPopup.close()
-                }
-
-                // Reboot — deep blue, safe action (system restarts)
-                Button {
-                    text: "Reboot"
-                    width: 110; height: 48
-                    background: Rectangle {
-                        color: parent.down ? Constants.btnActionBgPressed : Constants.btnActionBg
-                        radius: Constants.radiusButton
-                    }
-                    contentItem: Text {
-                        text: parent.text
-                        font.pixelSize: Constants.fontBody
-                        font.bold: true
-                        color: Constants.btnActionFg
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    onClicked: systemPower.reboot()
-                }
-
-                // Shutdown — dark red, destructive action (system stops)
-                Button {
-                    text: "Shutdown"
-                    width: 110; height: 48
-                    background: Rectangle {
-                        color: parent.down ? Constants.btnDangerBgPressed : Constants.btnDangerBg
-                        radius: Constants.radiusButton
-                    }
-                    contentItem: Text {
-                        text: parent.text
-                        font.pixelSize: Constants.fontBody
-                        font.bold: true
-                        color: Constants.btnDangerFg
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    onClicked: systemPower.powerOff()
-                }
-            }
-        }
+        onRebootRequested: systemPower.reboot()
+        onShutdownRequested: systemPower.powerOff()
     }
 
     // ---------------------------------------------------------
