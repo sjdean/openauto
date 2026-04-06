@@ -37,7 +37,7 @@ Item {
 
     Header {
         id: header
-        height: 100
+        height: parent.height * 0.2
 
         // Forward Header signals to MainView signals
         onViewVolume: mainView.viewVolume()

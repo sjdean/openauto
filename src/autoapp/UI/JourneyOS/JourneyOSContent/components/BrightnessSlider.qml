@@ -20,8 +20,8 @@ Slider {
         id: baseBackground
         x: brightnessSlider.leftPadding + brightnessSlider.availableWidth / 2 - width / 2
         y: brightnessSlider.topPadding
-        implicitWidth: 20
-        implicitHeight: 200
+        implicitWidth: Constants.sliderTrackWidth
+        implicitHeight: Constants.sliderTrackHeight
         width: implicitWidth
         height: brightnessSlider.availableHeight
         radius: Constants.radiusSlider
@@ -58,9 +58,9 @@ Slider {
     Rectangle {
         id: handleItem
         parent: brightnessSlider.handle
-        implicitWidth: 26
-        implicitHeight: 26
-        radius: 13
+        implicitWidth: Constants.sliderHandleSize
+        implicitHeight: Constants.sliderHandleSize
+        radius: Constants.sliderHandleSize / 2
         color: Constants.sliderHandle
         border.color: Constants.sliderHandleBorder
     }

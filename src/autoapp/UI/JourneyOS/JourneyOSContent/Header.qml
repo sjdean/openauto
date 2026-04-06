@@ -6,8 +6,8 @@ import AndroidAutoMonitor
 
 Item {
     id: headerItem
-    width: 800
-    height: 278
+    width: parent ? parent.width : 800
+    height: parent ? parent.height : 100
     clip: true
 
     signal viewBluetoothStatus
@@ -76,12 +76,12 @@ Item {
 
                     JourneyButton {
                         id: bluetoothButton
-                        height: 25
+                        height: Math.min(30, parent.height)
                         textIsStatus: true
                         text: headerItem.bluetoothStatusText
                         icon.source: "images/bluetooth.svg"
                         iconColor: !headerItem.bluetoothPaired ? Constants.waitColor : (headerItem.bluetoothConnecting ? Constants.actionColor : (!headerItem.bluetoothConnected ? Constants.badColor : Constants.okColor))
-                        iconSize: 12
+                        iconSize: height * 0.5
                         visible: headerItem.hasBluetooth
                         Connections {
                             target: bluetoothButton
@@ -90,12 +90,12 @@ Item {
                     }
                     JourneyButton {
                         id: wirelessButton
-                        height: 25
+                        height: Math.min(30, parent.height)
                         textIsStatus: true
                         text: headerItem.wifiStatusText
                         icon.source: "images/wifi.svg"
                         iconColor: !headerItem.wifiEnabled ? Constants.badColor : (!headerItem.wifiConnected ? Constants.waitColor : Constants.okColor)
-                        iconSize: 12
+                        iconSize: height * 0.5
                         visible: headerItem.hasWifi
                         Connections {
                             target: wirelessButton
@@ -104,12 +104,12 @@ Item {
                     }
                     JourneyButton {
                         id: androidAutoButton
-                        height: 25
+                        height: Math.min(30, parent.height)
                         textIsStatus: true
                         text: headerItem.androidAutoMethodText
                         icon.source: "images/android-auto.svg"
                         iconColor: headerItem.androidAutoConnecting ? Constants.actionColor : (headerItem.androidAutoConnected ? Constants.okColor : Constants.baseColor)
-                        iconSize: 12
+                        iconSize: height * 0.5
 
                         Connections {
                             target: androidAutoButton
@@ -121,9 +121,9 @@ Item {
 
             Image {
                 id: logoImage
-                y: -86
-                width: 366
-                height: 278
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width * 0.45
+                height: parent.height
                 source: "images/journey.jpg"
                 fillMode: Image.PreserveAspectFit
             }
@@ -141,11 +141,11 @@ Item {
 
                     JourneyButton {
                         id: brightnessButton
-                        width: 25
-                        height: 25
+                        height: Math.min(30, parent.height)
+                        width: height
                         text: ""
                         icon.source: "images/brightness.svg"
-                        iconSize: 12
+                        iconSize: height * 0.5
                         Connections {
                             target: brightnessButton
                             onClicked: headerItem.viewBrightness()
@@ -154,11 +154,11 @@ Item {
 
                     JourneyButton {
                         id: volumeButton
-                        width: 25
-                        height: 25
+                        height: Math.min(30, parent.height)
+                        width: height
                         text: ""
                         icon.source: "images/volume.svg"
-                        iconSize: 12
+                        iconSize: height * 0.5
                         Connections {
                             target: volumeButton
                             onClicked: headerItem.viewVolume()

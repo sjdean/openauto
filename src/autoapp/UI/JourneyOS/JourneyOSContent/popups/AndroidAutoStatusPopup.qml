@@ -6,8 +6,8 @@ import AndroidAutoMonitor
 Popup {
     id: aaInfoPopup
     anchors.centerIn: parent
-    width: 300
-    height: androidAutoConnected ? 210 : 175
+    width: Math.min(300, parent.width - 40)
+    height: Math.min(androidAutoConnected ? 210 : 175, parent.height - 40)
     modal: false
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
@@ -27,7 +27,7 @@ Popup {
     // Close ✕ button — top-right corner
     Rectangle {
         id: aaCloseBtn
-        width: 28; height: 28
+        width: Constants.radiusCircle * 2; height: Constants.radiusCircle * 2
         radius: Constants.radiusCircle
         color: aaCloseArea.pressed ? Constants.btnDangerBgPressed : Constants.btnDangerBg
         anchors.top: parent.top
@@ -39,7 +39,7 @@ Popup {
         Text {
             anchors.centerIn: parent
             text: "\u2715"
-            font.pixelSize: 14
+            font.pointSize: 14
             font.bold: true
             color: Constants.btnDangerFg
         }
@@ -54,10 +54,11 @@ Popup {
         anchors.centerIn: parent
         anchors.verticalCenterOffset: 10   // shift below the close button
         spacing: 14
+        width: parent.width - 20
 
         Text {
             text: "Android Auto"
-            font.pixelSize: Constants.fontHeading
+            font.pointSize: Constants.fontHeading
             font.bold: true
             color: Constants.textPrimary
             anchors.horizontalCenter: parent.horizontalCenter
@@ -72,7 +73,7 @@ Popup {
                 else
                     "Not Connected"
             }
-            font.pixelSize: Constants.fontBody
+            font.pointSize: Constants.fontBody
             color: Constants.textSecondary
             anchors.horizontalCenter: parent.horizontalCenter
         }
@@ -80,9 +81,9 @@ Popup {
         JourneyButton {
             text: "View Android Auto"
             icon.source: "../images/android-auto.svg"
-            iconSize: 20
+            iconSize: height * 0.5
             visible: aaInfoPopup.androidAutoConnected
-            width: 200
+            width: Math.min(200, parent.width)
             height: 40
             anchors.horizontalCenter: parent.horizontalCenter
             onClicked: {

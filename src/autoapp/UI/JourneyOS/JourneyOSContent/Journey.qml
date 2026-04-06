@@ -30,14 +30,14 @@ Window {
     Popup {
         id: volumePopup
         x: root.width - width
-        y: 100
-        width: 75
-        height: 380
+        y: root.height * 0.2
+        width: Math.min(75, root.width * 0.1)
+        height: root.height * 0.7
         modal: false // Don't block input to map while changing volume
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
             color: Constants.sliderPopupBackgroundColor
-            radius: 10
+            radius: Constants.radiusPopup
         }
         contentItem: VolumePopup {}
         onClosed: {
@@ -52,14 +52,14 @@ Window {
 
     Popup {
         id: brightnessPopup
-        x: root.width - width - 85 // Shift left of volume
-        y: 100
-        width: 75
-        height: 380
+        x: volumePopup.x - width - (root.width * 0.02) // Shift left of volume
+        y: root.height * 0.2
+        width: Math.min(75, root.width * 0.1)
+        height: root.height * 0.7
         modal: false
         background: Rectangle {
             color: Constants.sliderPopupBackgroundColor
-            radius: 10
+            radius: Constants.radiusPopup
         }
         contentItem: BrightnessPopup {}
         onClosed: {

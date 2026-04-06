@@ -31,6 +31,17 @@ QtObject {
     readonly property int radiusCircle:  14   // Circular elements (28 × 28 close button)
     readonly property int radiusSlider:  10   // Slider track and groove
 
+    // ── LAYOUT METRICS ───────────────────────────────────────────────────────
+    readonly property int settingsPaddingOuter: 30
+    readonly property int settingsLabelWidth:   280
+    readonly property int settingsControlHeight: 40
+    readonly property int settingsHeaderHeight:  70
+    readonly property int settingsFooterHeight:  70
+
+    readonly property int sliderTrackWidth:      20
+    readonly property int sliderTrackHeight:     200
+    readonly property int sliderHandleSize:      26
+
     // ── TYPOGRAPHY ───────────────────────────────────────────────────────────
     // Standardised pixel sizes — reference these rather than hardcoding numbers.
     readonly property int fontTitle:    20   // Popup / page title  e.g. "Bluetooth"

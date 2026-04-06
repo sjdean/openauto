@@ -5,8 +5,8 @@ import JourneyOS
 Popup {
     id: powerPopup
     anchors.centerIn: parent
-    width: 420
-    height: 220
+    width: Math.min(420, parent.width - 40)
+    height: Math.min(220, parent.height - 40)
     modal: true
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -24,10 +24,11 @@ Popup {
     Column {
         anchors.centerIn: parent
         spacing: 16
+        width: parent.width - 40
 
         Text {
             text: "System Power"
-            font.pixelSize: Constants.fontTitle
+            font.pointSize: Constants.fontTitle
             font.bold: true
             color: Constants.textPrimary
             anchors.horizontalCenter: parent.horizontalCenter
@@ -35,9 +36,12 @@ Popup {
 
         Text {
             text: "Choose an action or cancel."
-            font.pixelSize: Constants.fontBody
+            font.pointSize: Constants.fontBody
             color: Constants.textSecondary
             anchors.horizontalCenter: parent.horizontalCenter
+            wrapMode: Text.WordWrap
+            horizontalAlignment: Text.AlignHCenter
+            width: parent.width
         }
 
         Row {
@@ -47,7 +51,8 @@ Popup {
             // Cancel — red outline, closes popup without action
             Button {
                 text: "Cancel"
-                width: 110; height: 48
+                width: Math.min(110, (parent.parent.width - 24) / 3)
+                height: 48
                 background: Rectangle {
                     color: "transparent"
                     radius: Constants.radiusButton
@@ -57,7 +62,7 @@ Popup {
                 }
                 contentItem: Text {
                     text: parent.text
-                    font.pixelSize: Constants.fontBody
+                    font.pointSize: Constants.fontBody
                     font.bold: true
                     color: Constants.btnCancelFg
                     horizontalAlignment: Text.AlignHCenter
@@ -70,14 +75,15 @@ Popup {
             // Reboot — deep blue, safe action (system restarts)
             Button {
                 text: "Reboot"
-                width: 110; height: 48
+                width: Math.min(110, (parent.parent.width - 24) / 3)
+                height: 48
                 background: Rectangle {
                     color: parent.down ? Constants.btnActionBgPressed : Constants.btnActionBg
                     radius: Constants.radiusButton
                 }
                 contentItem: Text {
                     text: parent.text
-                    font.pixelSize: Constants.fontBody
+                    font.pointSize: Constants.fontBody
                     font.bold: true
                     color: Constants.btnActionFg
                     horizontalAlignment: Text.AlignHCenter
@@ -89,14 +95,15 @@ Popup {
             // Shutdown — dark red, destructive action (system stops)
             Button {
                 text: "Shutdown"
-                width: 110; height: 48
+                width: Math.min(110, (parent.parent.width - 24) / 3)
+                height: 48
                 background: Rectangle {
                     color: parent.down ? Constants.btnDangerBgPressed : Constants.btnDangerBg
                     radius: Constants.radiusButton
                 }
                 contentItem: Text {
                     text: parent.text
-                    font.pixelSize: Constants.fontBody
+                    font.pointSize: Constants.fontBody
                     font.bold: true
                     color: Constants.btnDangerFg
                     horizontalAlignment: Text.AlignHCenter

@@ -4,7 +4,7 @@ import JourneyOS
 
 Item {
     id: wirelessPopup
-    implicitWidth: 460
+    implicitWidth: Math.min(460, parent.width - 40)
     implicitHeight: contentColumn.implicitHeight + 40
 
     signal close
@@ -21,8 +21,8 @@ Item {
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.margins: 10
-        width: 28
-        height: 28
+        width: Constants.radiusCircle * 2
+        height: Constants.radiusCircle * 2
         radius: Constants.radiusCircle
         color: closeBtnArea.pressed ? Constants.btnDangerBgPressed : Constants.btnDangerBg
         z: 10
@@ -33,7 +33,7 @@ Item {
             anchors.centerIn: parent
             text: "\u2715"
             color: Constants.btnDangerFg
-            font.pixelSize: Constants.fontLabel
+            font.pointSize: Constants.fontLabel
             font.bold: true
         }
 
@@ -56,7 +56,7 @@ Item {
         // ── Title ─────────────────────────────────────────────────────────────
         Text {
             text: "Wi-Fi"
-            font.pixelSize: Constants.fontSubtitle
+            font.pointSize: Constants.fontSubtitle
             font.bold: true
             color: Constants.textPrimary
         }
@@ -76,19 +76,19 @@ Item {
                 Text {
                     text: wifiViewModel.connected ? "● Connected" : "○ Not Connected"
                     color: wifiViewModel.connected ? Constants.statusOk : Constants.statusBad
-                    font.pixelSize: Constants.fontCaption
+                    font.pointSize: Constants.fontCaption
                 }
                 Text {
                     visible: wifiViewModel.connected
                     text: wifiViewModel.currentSsid.length > 0 ? ("  " + wifiViewModel.currentSsid) : ""
                     color: Constants.textPrimary
-                    font.pixelSize: Constants.fontCaption
+                    font.pointSize: Constants.fontCaption
                 }
                 Text {
                     visible: wifiViewModel.connected && wifiViewModel.signalStrength > 0
                     text: wifiViewModel.signalStrength + "%"
                     color: Constants.textPrimary
-                    font.pixelSize: Constants.fontCaption
+                    font.pointSize: Constants.fontCaption
                 }
             }
         }
@@ -102,7 +102,7 @@ Item {
         }
 
         // ── Interface selection ───────────────────────────────────────────────
-        Text { text: "Interface"; color: Constants.textSecondary; font.pixelSize: Constants.fontCaption }
+        Text { text: "Interface"; color: Constants.textSecondary; font.pointSize: Constants.fontCaption }
         ComboBox {
             id: networkInterface
             width: parent.width
@@ -160,7 +160,7 @@ Item {
                 width: parent.width
                 spacing: 6
 
-                Text { text: qsTr("Hotspot SSID"); color: Constants.textSecondary; font.pixelSize: Constants.fontCaption }
+                Text { text: qsTr("Hotspot SSID"); color: Constants.textSecondary; font.pointSize: Constants.fontCaption }
                 TextField {
                     width: parent.width
                     placeholderText: qsTr("SSID")
@@ -169,7 +169,7 @@ Item {
                     onTextEdited: wifiViewModel.hotspotSsid = text
                 }
 
-                Text { text: qsTr("Hotspot Password"); color: Constants.textSecondary; font.pixelSize: Constants.fontCaption }
+                Text { text: qsTr("Hotspot Password"); color: Constants.textSecondary; font.pointSize: Constants.fontCaption }
                 TextField {
                     width: parent.width
                     placeholderText: qsTr("Password (min 8 chars)")
@@ -198,7 +198,7 @@ Item {
                 width: parent.width
                 spacing: 6
 
-                Text { text: qsTr("Network SSID"); color: Constants.textSecondary; font.pixelSize: Constants.fontCaption }
+                Text { text: qsTr("Network SSID"); color: Constants.textSecondary; font.pointSize: Constants.fontCaption }
                 TextField {
                     id: clientSsidField
                     width: parent.width
@@ -208,7 +208,7 @@ Item {
                     onTextEdited: wifiViewModel.clientSsid = text
                 }
 
-                Text { text: qsTr("Password"); color: Constants.textSecondary; font.pixelSize: Constants.fontCaption }
+                Text { text: qsTr("Password"); color: Constants.textSecondary; font.pointSize: Constants.fontCaption }
                 Row {
                     width: parent.width
                     spacing: 8
@@ -248,7 +248,7 @@ Item {
                               ? (wifiViewModel.accessPoints.length + " network(s) found")
                               : "No scan results"
                         color: Constants.textSecondary
-                        font.pixelSize: Constants.fontSmall
+                        font.pointSize: Constants.fontSmall
                         font.italic: true
                     }
                 }
@@ -283,13 +283,13 @@ Item {
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: modelData.secured ? "\uD83D\uDD12" : "\uD83D\uDCF6"
-                                    font.pixelSize: Constants.fontBody
+                                    font.pointSize: Constants.fontBody
                                 }
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: modelData.ssid
                                     color: Constants.textPrimary
-                                    font.pixelSize: Constants.fontLabel
+                                    font.pointSize: Constants.fontLabel
                                     elide: Text.ElideRight
                                     width: parent.width - 80
                                 }
@@ -299,7 +299,7 @@ Item {
                                     color: modelData.strength > 60 ? Constants.statusOk
                                          : modelData.strength > 30 ? Constants.statusWait
                                          : Constants.statusBad
-                                    font.pixelSize: Constants.fontCaption
+                                    font.pointSize: Constants.fontCaption
                                 }
                             }
 
@@ -327,7 +327,7 @@ Item {
             font.italic: true
             wrapMode: Text.WordWrap
             width: parent.width
-            font.pixelSize: Constants.fontCaption
+            font.pointSize: Constants.fontCaption
         }
 
         Item { width: 1; height: 4 } // bottom padding

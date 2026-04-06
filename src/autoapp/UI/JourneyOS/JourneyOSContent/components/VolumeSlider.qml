@@ -18,11 +18,11 @@ Slider {
         id: baseBackground
         x: volumeSlider.leftPadding + volumeSlider.availableWidth / 2 - width / 2
         y: volumeSlider.topPadding
-        implicitWidth: 20
-        implicitHeight: 200
+        implicitWidth: Constants.sliderTrackWidth
+        implicitHeight: Constants.sliderTrackHeight
         width: implicitWidth
         height: volumeSlider.availableHeight
-        radius: 10
+        radius: Constants.radiusSlider
         color: Constants.sliderBackgroundColor
 
         Rectangle {
@@ -30,7 +30,7 @@ Slider {
             id: groove
             height: volumeSlider.availableHeight - ((volumeSlider.availableHeight - handleItem.height) * volumeSlider.visualPosition) - volumeSlider.topPadding
             width: parent.width
-            radius: 10
+            radius: Constants.radiusSlider
 
             Behavior on color {
                 ColorAnimation { duration: 100 }
@@ -61,9 +61,9 @@ Slider {
     Rectangle {
         id: handleItem
         parent: volumeSlider.handle
-        implicitWidth: 26
-        implicitHeight: 26
-        radius: 13
+        implicitWidth: Constants.sliderHandleSize
+        implicitHeight: Constants.sliderHandleSize
+        radius: Constants.sliderHandleSize / 2
         color: Constants.sliderHandle
         border.color: Constants.sliderHandleBorder
     }

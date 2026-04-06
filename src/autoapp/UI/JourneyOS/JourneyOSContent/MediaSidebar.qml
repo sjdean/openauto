@@ -33,7 +33,7 @@ Item {
 
     Column {
         id: leftColumn
-        width: 110
+        width: parent.width * 0.15
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -47,7 +47,7 @@ Item {
         JourneyButton {
             id: settingsButton
             text: "Settings"
-            iconSize: 36
+            iconSize: parent.width * 0.4
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: "images/settings.svg"
             visible: mediaPlayingMenu.showSettings
@@ -61,7 +61,7 @@ Item {
         JourneyButton {
             id: androidAutoButton
             text: "Android Auto"
-            iconSize: 36
+            iconSize: parent.width * 0.4
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: "images/android-auto.svg"
             visible: mediaPlayingMenu.hasAndroidAuto
@@ -76,7 +76,7 @@ Item {
             id: radioButton
             icon.source: "images/radio.svg"
             text: "Radio"
-            iconSize: 36
+            iconSize: parent.width * 0.4
             anchors.horizontalCenter: parent.horizontalCenter
             visible: mediaPlayingMenu.hasRadio
             Connections {
@@ -88,7 +88,7 @@ Item {
         JourneyButton {
             id: navigationButton
             text: "Navigation"
-            iconSize: 36
+            iconSize: parent.width * 0.4
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: "images/map-marker.svg"
             visible: mediaPlayingMenu.hasNavigation
@@ -101,7 +101,7 @@ Item {
         JourneyButton {
             id: usbButton
             text: "USB"
-            iconSize: 36
+            iconSize: parent.width * 0.4
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: "images/usb.svg"
             visible: mediaPlayingMenu.hasUSB
@@ -114,8 +114,7 @@ Item {
 
     Column {
         id: rightColumn
-        x: 600
-        width: 110
+        width: parent.width * 0.15
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -128,7 +127,7 @@ Item {
         JourneyButton {
             id: obdButton
             text: "OBD"
-            iconSize: 36
+            iconSize: parent.width * 0.4
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: "images/chart-tree.svg"
             visible: mediaPlayingMenu.hasOBD
@@ -141,7 +140,7 @@ Item {
         JourneyButton {
             id: powerButton
             text: "Power"
-            iconSize: 36
+            iconSize: parent.width * 0.4
             anchors.horizontalCenter: parent.horizontalCenter
             icon.source: "images/power.svg"
             visible: mediaPlayingMenu.showPower

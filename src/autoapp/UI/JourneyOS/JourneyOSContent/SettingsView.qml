@@ -5,8 +5,8 @@ import JourneyOS
 
 Item {
     id: settingsView
-    width: 800
-    height: 480
+    width: parent ? parent.width : 800
+    height: parent ? parent.height : 480
 
     // -- SETTINGS PAGE THEME -- mapped from Constants for easy future theming
     readonly property color cTextMain: Constants.textOnSettings
@@ -17,11 +17,11 @@ Item {
     readonly property color cBorder:   Constants.settingsBorder
     readonly property color cBase:     Constants.settingsPageBackground
 
-    readonly property int paddingOuter: 30
-    readonly property int labelWidth: 280
-    readonly property int controlHeight: 40
-    readonly property int headerHeight: 70
-    readonly property int footerHeight: 70
+    readonly property int paddingOuter: Constants.settingsPaddingOuter
+    readonly property int labelWidth: Constants.settingsLabelWidth
+    readonly property int controlHeight: Constants.settingsControlHeight
+    readonly property int headerHeight: Constants.settingsHeaderHeight
+    readonly property int footerHeight: Constants.settingsFooterHeight
 
     Rectangle {
         id: rootRect
@@ -65,7 +65,7 @@ Item {
                         }
                         Text {
                             text: modelData.text
-                            font.pixelSize: 14
+                            font.pointSize: 14
                             font.bold: tabBtn.checked
                             color: tabBtn.checked ? cAccent : cTextDim
                             Layout.alignment: Qt.AlignHCenter
@@ -232,7 +232,7 @@ Item {
                 Label {
                     visible: !ConfigGate.showConfig
                     text: "Audio output device is managed by the operating system."
-                    font.pixelSize: 13
+                    font.pointSize: 13
                     color: cTextNote
                     font.italic: true
                 }
@@ -252,7 +252,7 @@ Item {
                 Label {
                     visible: !ConfigGate.showConfig
                     text: "Volume limits are managed by the operating system."
-                    font.pixelSize: 13
+                    font.pointSize: 13
                     color: cTextNote
                     font.italic: true
                 }
@@ -272,7 +272,7 @@ Item {
                 Label {
                     visible: !ConfigGate.showConfig
                     text: "Audio input device is managed by the operating system."
-                    font.pixelSize: 13
+                    font.pointSize: 13
                     color: cTextNote
                     font.italic: true
                 }
@@ -313,7 +313,7 @@ Item {
 
                         Label {
                             text: "Head Unit Mode"
-                            font.pixelSize: 15
+                            font.pointSize: 15
                             font.bold: true
                             color: cTextMain
                         }
@@ -321,7 +321,7 @@ Item {
                             text: settingsViewHandler.headUnitMode
                                   ? "Full hardware control enabled — Bluetooth, Wi-Fi, and audio devices are managed by this application."
                                   : "System-managed mode — hardware settings are controlled by the host operating system."
-                            font.pixelSize: 13
+                            font.pointSize: 13
                             color: cTextDim
                             wrapMode: Text.WordWrap
                             width: parent.width
@@ -340,7 +340,7 @@ Item {
                 Label {
                     visible: !ConfigGate.showConfig
                     text: "Head Unit Mode is not available on this platform. Hardware settings are always managed by the operating system."
-                    font.pixelSize: 13
+                    font.pointSize: 13
                     color: cTextNote
                     font.italic: true
                     wrapMode: Text.WordWrap
@@ -364,7 +364,7 @@ Item {
 
                         Label {
                             text: "Current version: " + updateManager.currentVersion
-                            font.pixelSize: 13
+                            font.pointSize: 13
                             color: cTextMain
                         }
                         Label {
@@ -372,7 +372,7 @@ Item {
                             text: updateManager.updateAvailable
                                   ? ("Update available: " + updateManager.latestVersion)
                                   : "Up to date"
-                            font.pixelSize: 13
+                            font.pointSize: 13
                             color: updateManager.updateAvailable ? cAccent : cTextDim
                         }
                     }
@@ -398,7 +398,7 @@ Item {
             Label {
                 text: "Version " + updateManager.latestVersion + " is available.\n\nDownload and install now? The device will reboot automatically."
                 wrapMode: Text.WordWrap
-                width: 360
+                width: Math.min(360, parent.width - 40)
             }
 
             onAccepted: {
@@ -419,7 +419,7 @@ Item {
 
             Column {
                 spacing: 12
-                width: 360
+                width: Math.min(360, parent.width - 40)
                 Label {
                     text: "Downloading version " + updateManager.latestVersion + "…"
                     wrapMode: Text.WordWrap
@@ -433,7 +433,7 @@ Item {
                 Label {
                     id: downloadProgressLabel
                     text: "0 %"
-                    font.pixelSize: 12
+                    font.pointSize: 12
                     color: cTextDim
                 }
             }
@@ -451,7 +451,7 @@ Item {
             Label {
                 text: "Installing update. Please do not power off the device.\nThe system will reboot automatically when done."
                 wrapMode: Text.WordWrap
-                width: 360
+                width: Math.min(360, parent.width - 40)
             }
         }
 
@@ -467,7 +467,7 @@ Item {
                 id: otaErrorLabel
                 text: ""
                 wrapMode: Text.WordWrap
-                width: 360
+                width: Math.min(360, parent.width - 40)
             }
         }
 
@@ -545,7 +545,7 @@ Item {
                     }
                     contentItem: Text {
                         text: parent.text
-                        font.pixelSize: 16
+                        font.pointSize: 16
                         color: Constants.btnCancelFg
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
@@ -569,7 +569,7 @@ Item {
                     }
                     contentItem: Text {
                         text: parent.text
-                        font.pixelSize: 16
+                        font.pointSize: 16
                         font.bold: true
                         color: Constants.btnConfirmFg
                         horizontalAlignment: Text.AlignHCenter
@@ -620,7 +620,7 @@ Item {
     }
 
     component SectionHeader : Label {
-        font.pixelSize: Constants.fontSubtitle
+        font.pointSize: Constants.fontSubtitle
         font.bold: true
         font.capitalization: Font.AllUppercase
         color: cTextMain
@@ -649,12 +649,12 @@ Item {
         Label {
             id: labelText
             text: rowRoot.label // Explicitly point to the property
-            font.pixelSize: 15
+            font.pointSize: 15
             color: cTextMain
             Layout.preferredWidth: settingsView.labelWidth
             Layout.alignment: Qt.AlignVCenter
             elide: Text.ElideRight
-            height: 20
+            height: implicitHeight
         }
 
         Item {
@@ -681,7 +681,7 @@ Item {
             leftPadding: 10
             text: parent.displayText
             color: cTextMain
-            font.pixelSize: Constants.fontBody
+            font.pointSize: Constants.fontBody
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
         }
@@ -727,7 +727,7 @@ Item {
         Layout.fillWidth: true
         Layout.preferredHeight: settingsView.controlHeight
         color: cTextMain
-        font.pixelSize: Constants.fontBody
+        font.pointSize: Constants.fontBody
         background: Rectangle {
             color: parent.activeFocus ? "#FAFAFA" : cSurface
             border.color: parent.activeFocus ? cAccent : cBorder
@@ -737,7 +737,7 @@ Item {
     }
 
     component ModernCheckBox : CheckBox {
-        font.pixelSize: Constants.fontBody
+        font.pointSize: Constants.fontBody
         indicator: Rectangle {
             implicitWidth: 24; implicitHeight: 24
             x: parent.leftPadding
@@ -765,9 +765,9 @@ Item {
     component ModernSpinBox : SpinBox {
         id: rootSpin
         Layout.preferredHeight: settingsView.controlHeight
-        font.pixelSize: Constants.fontBody
+        font.pointSize: Constants.fontBody
+        Layout.fillWidth: true
         background: Rectangle {
-            implicitWidth: 140
             border.color: cBorder
             color: cSurface
             radius: Constants.radiusInput
@@ -782,4 +782,3 @@ Item {
         return 0;
     }
 }
-

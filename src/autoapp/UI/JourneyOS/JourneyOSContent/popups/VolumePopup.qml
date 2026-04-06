@@ -5,8 +5,7 @@ import JourneyOS
 
 Item {
     id: volumePopup
-    width: 75
-    height: 380
+    anchors.fill: parent
 
     property bool isMuted: false
 
@@ -15,7 +14,7 @@ Item {
 
     Column {
         id: volumeColumn
-        width: 50
+        width: parent.width * 0.66
         height: volumePopup.height - 24
         anchors.top: parent.top
         anchors.topMargin: 10
@@ -35,7 +34,7 @@ Item {
 
         JourneyButton {
             id: muteButton
-            iconSize: 24
+            iconSize: height * 0.5
             icon.source: "../images/volume-mute.svg"
             height: parent.width
             text: "Mute"

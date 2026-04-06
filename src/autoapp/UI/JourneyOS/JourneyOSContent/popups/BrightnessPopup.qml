@@ -5,14 +5,13 @@ import JourneyOS
 
 Item {
     id: brightnessPopup
-    width: 75
-    height: 380
+    anchors.fill: parent
 
     property bool isDarkMode: false
 
     Column {
         id: brightnessColumn
-        width: 50
+        width: parent.width * 0.66
         height: brightnessPopup.height - 24
         anchors.top: parent.top
         anchors.topMargin: 10
@@ -32,7 +31,7 @@ Item {
         JourneyButton {
             id: darkModeButton
 
-            iconSize: 24
+            iconSize: height * 0.5
             icon.source: "../images/volume-mute.svg"
             height: parent.width
             text: "Dark Mode"

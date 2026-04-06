@@ -69,14 +69,14 @@ Item {
     RoundButton {
         id: homeBtn
         text: "⌂"
-        width: 72  // Slightly larger for easy car touch
-        height: 72
-        font.pixelSize: 36
+        width: Math.max(72, parent.width * 0.09)
+        height: width
+        font.pointSize: 24
 
         // Positioning
         anchors.bottom: parent.bottom
         anchors.left: parent.left
-        anchors.margins: 30
+        anchors.margins: Math.max(30, parent.width * 0.0375)
         z: 999
 
         // Visibility: alwaysVisible shows at full opacity, touchToReveal starts hidden

@@ -5,8 +5,7 @@ import AndroidAutoMonitor
 
 Item {
     id: root
-    width: 800
-    height: 480
+    anchors.fill: parent
 
     signal close
 
@@ -23,9 +22,10 @@ Item {
         Column {
             anchors.centerIn: parent
             spacing: 20
+            width: parent.width
 
             Rectangle {
-                width: 420
+                width: Math.min(420, parent.width - 40)
                 height: 180
                 radius: Constants.radiusPopup
                 color: Constants.popupBackground
@@ -36,14 +36,15 @@ Item {
                 Column {
                     anchors.centerIn: parent
                     spacing: 16
+                    width: parent.width
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: pinOverlay.promptText
                         color: Constants.textPrimary
-                        font.pixelSize: Constants.fontHeading
+                        font.pointSize: Constants.fontHeading
                         wrapMode: Text.WordWrap
-                        width: 380
+                        width: Math.min(380, parent.width - 40)
                         horizontalAlignment: Text.AlignHCenter
                     }
 
@@ -110,9 +111,10 @@ Item {
         Column {
             anchors.centerIn: parent
             spacing: 20
+            width: parent.width
 
             Rectangle {
-                width: 380
+                width: Math.min(380, parent.width - 40)
                 height: 160
                 radius: Constants.radiusPopup
                 color: Constants.popupBackground
@@ -123,15 +125,16 @@ Item {
                 Column {
                     anchors.centerIn: parent
                     spacing: 16
+                    width: parent.width
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: "Forget \"" + removeConfirmOverlay.deviceName + "\"?"
                         color: Constants.textPrimary
-                        font.pixelSize: Constants.fontSubtitle
+                        font.pointSize: Constants.fontSubtitle
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap
-                        width: 340
+                        width: Math.min(340, parent.width - 40)
                     }
 
                     Row {
@@ -169,8 +172,8 @@ Item {
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.margins: 10
-            width: 28
-            height: 28
+            width: Constants.radiusCircle * 2
+            height: Constants.radiusCircle * 2
             radius: Constants.radiusCircle
             color: closeBtnArea.pressed ? Constants.btnDangerBgPressed : Constants.btnDangerBg
             z: 1
@@ -181,7 +184,7 @@ Item {
                 anchors.centerIn: parent
                 text: "\u2715"
                 color: Constants.btnDangerFg
-                font.pixelSize: Constants.fontLabel
+                font.pointSize: Constants.fontLabel
                 font.bold: true
             }
 
@@ -216,7 +219,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "Bluetooth — " + bluetoothHandler.statusText
                 color: Constants.textPrimary
-                font.pixelSize: Constants.fontHeading
+                font.pointSize: Constants.fontHeading
                 font.bold: true
             }
 
@@ -224,10 +227,10 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "Bluetooth is managed by the operating system.\nEnable Head Unit Mode in Settings › System to manage it here."
                 color: Constants.textSecondary
-                font.pixelSize: Constants.fontLabel
+                font.pointSize: Constants.fontLabel
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
-                width: 500
+                width: Math.min(500, parent.width - 40)
             }
         }
 
@@ -247,7 +250,7 @@ Item {
                 Text {
                     text: "Bluetooth"
                     color: Constants.textPrimary
-                    font.pixelSize: Constants.fontTitle
+                    font.pointSize: Constants.fontTitle
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
                 }
@@ -270,7 +273,7 @@ Item {
                 Text {
                     text: bluetoothHandler.statusText
                     color: Constants.textSecondary
-                    font.pixelSize: Constants.fontBody
+                    font.pointSize: Constants.fontBody
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -284,7 +287,7 @@ Item {
                 Text {
                     text: "Adapter:"
                     color: Constants.textSecondary
-                    font.pixelSize: Constants.fontLabel
+                    font.pointSize: Constants.fontLabel
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -317,7 +320,7 @@ Item {
             Text {
                 text: "Paired Devices"
                 color: Constants.textSecondary
-                font.pixelSize: Constants.fontLabel
+                font.pointSize: Constants.fontLabel
                 font.bold: true
             }
 
@@ -341,7 +344,7 @@ Item {
                         Text {
                             text: model.name || model.address
                             color: Constants.textPrimary
-                            font.pixelSize: Constants.fontBody
+                            font.pointSize: Constants.fontBody
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
@@ -349,7 +352,7 @@ Item {
                             visible: model.connected
                             text: "(Connected)"
                             color: Constants.statusOk
-                            font.pixelSize: Constants.fontCaption
+                            font.pointSize: Constants.fontCaption
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -388,7 +391,7 @@ Item {
                     anchors.centerIn: parent
                     text: "No paired devices"
                     color: Constants.textDisabled
-                    font.pixelSize: Constants.fontLabel
+                    font.pointSize: Constants.fontLabel
                 }
             }
 
@@ -408,7 +411,7 @@ Item {
                     visible: bluetoothHandler.isScanning
                     text: "Searching for devices…"
                     color: Constants.statusWait
-                    font.pixelSize: Constants.fontLabel
+                    font.pointSize: Constants.fontLabel
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -421,7 +424,7 @@ Item {
                 Text {
                     text: "Pairing Mode"
                     color: Constants.textSecondary
-                    font.pixelSize: Constants.fontLabel
+                    font.pointSize: Constants.fontLabel
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -434,7 +437,7 @@ Item {
                 Text {
                     text: pairingModeSwitch.checked ? "On — device is discoverable" : "Off"
                     color: pairingModeSwitch.checked ? Constants.statusOk : Constants.textDisabled
-                    font.pixelSize: Constants.fontCaption
+                    font.pointSize: Constants.fontCaption
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -444,7 +447,7 @@ Item {
                 visible: availableList.count > 0 || bluetoothHandler.isScanning
                 text: "Available Devices"
                 color: Constants.textSecondary
-                font.pixelSize: Constants.fontLabel
+                font.pointSize: Constants.fontLabel
                 font.bold: true
             }
 
@@ -466,7 +469,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         text: model.name || model.address
                         color: Constants.textPrimary
-                        font.pixelSize: Constants.fontBody
+                        font.pointSize: Constants.fontBody
                     }
 
                     Row {
