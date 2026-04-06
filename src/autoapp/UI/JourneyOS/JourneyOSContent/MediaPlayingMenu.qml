@@ -49,7 +49,7 @@ Item {
             text: "Settings"
             iconSize: 36
             anchors.horizontalCenter: parent.horizontalCenter
-            icon.source: "images/gears.svg"
+            icon.source: "images/settings.svg"
             visible: mediaPlayingMenu.showSettings
 
             Connections {
@@ -63,7 +63,7 @@ Item {
             text: "Android Auto"
             iconSize: 36
             anchors.horizontalCenter: parent.horizontalCenter
-            icon.source: "images/gears.svg"
+            icon.source: "images/android-auto.svg"
             visible: mediaPlayingMenu.hasAndroidAuto
 
             Connections {
@@ -103,7 +103,7 @@ Item {
             text: "USB"
             iconSize: 36
             anchors.horizontalCenter: parent.horizontalCenter
-            icon.source: "images/usb-pendrive.svg"
+            icon.source: "images/usb.svg"
             visible: mediaPlayingMenu.hasUSB
             Connections {
                 target: usbButton

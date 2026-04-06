@@ -56,7 +56,7 @@ Item {
             // Media Sources
             JourneyButton {
                 id: androidAutoButton
-                icon.source: "images/radio.svg"
+                icon.source: "images/android-auto.svg"
                 text: "Android Auto"
                 visible: mediaNotPlayingMenu.hasAndroidAuto
                 Connections {
@@ -79,7 +79,7 @@ Item {
             JourneyButton {
                 id: bluetoothButton
                 text: "Bluetooth"
-                icon.source: "images/bluetooth-alt.svg"
+                icon.source: "images/bluetooth.svg"
                 visible: mediaNotPlayingMenu.hasBluetooth
                 Connections {
                     target: bluetoothButton
@@ -90,7 +90,7 @@ Item {
             JourneyButton {
                 id: usbButton
                 text: "USB"
-                icon.source: "images/usb-pendrive.svg"
+                icon.source: "images/usb.svg"
                 visible: mediaNotPlayingMenu.hasUSB
                 Connections {
                     target: usbButton
@@ -126,7 +126,7 @@ Item {
             JourneyButton {
                 id: settingsButton
                 text: "Settings"
-                icon.source: "images/gears.svg"
+                icon.source: "images/settings.svg"
                 visible: mediaNotPlayingMenu.showSettings
 
                 Connections {

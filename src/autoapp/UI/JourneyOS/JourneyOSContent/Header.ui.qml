@@ -86,7 +86,7 @@ Item {
                         height: 25
                         textIsStatus: true
                         text: headerItem.bluetoothStatusText
-                        icon.source: "images/bluetooth-alt.svg"
+                        icon.source: "images/bluetooth.svg"
                         iconColor: !headerItem.bluetoothPaired ? Constants.waitColor : (headerItem.bluetoothConnecting ? Constants.actionColor : (!headerItem.bluetoothConnected ? Constants.badColor : Constants.okColor))
                         iconSize: 12
                         visible: headerItem.hasBluetooth
@@ -100,7 +100,7 @@ Item {
                         height: 25
                         textIsStatus: true
                         text: headerItem.wifiStatusText
-                        icon.source: "images/fi-br-wifi.svg"
+                        icon.source: "images/wifi.svg"
                         iconColor: !headerItem.wifiEnabled ? Constants.badColor : (!headerItem.wifiConnected ? Constants.waitColor : Constants.okColor)
                         iconSize: 12
                         visible: headerItem.hasWifi
@@ -151,7 +151,7 @@ Item {
                         width: 25
                         height: 25
                         text: ""
-                        icon.source: "images/fi-br-brightness.svg"
+                        icon.source: "images/brightness.svg"
                         iconSize: 12
                         Connections {
                             target: brightnessButton

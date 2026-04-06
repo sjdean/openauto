@@ -174,6 +174,8 @@ Window {
 
             JourneyButton {
                 text: "View Android Auto"
+                icon.source: "images/android-auto.svg"
+                iconSize: 20
                 visible: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED
                 width: 200
                 height: 40

@@ -33,7 +33,7 @@ Button {
     font.pointSize: textIsStatus ? iconSize / 1.3 : (iconSize / 10) * 3
     icon.height: iconSize
     icon.width: iconSize
-    icon.source: "images/pen-clip.svg"
+    icon.source: "images/settings.svg"
     display: AbstractButton.TextUnderIcon
     padding: buttonPadding
     bottomPadding: buttonPadding

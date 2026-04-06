@@ -45,12 +45,12 @@ Item {
             Repeater {
                 id: tabRepeater
                 model: [
-                    {text: "Vehicle", icon: "images/fi-br-car-alt.svg"},
-                    {text: "Media", icon: "images/fi-br-desktop-wallpaper.svg"},
+                    {text: "Vehicle", icon: "images/settings-vehicle.svg"},
+                    {text: "Media", icon: "images/settings-media.svg"},
                     {text: "Auto", icon: "images/android-auto.svg"},
-                    {text: "Audio", icon: "images/fi-br-music-alt.svg"},
-                    {text: "Video", icon: "images/fi-br-screen.svg"},
-                    {text: "System", icon: "images/fi-br-settings.svg"}
+                    {text: "Audio", icon: "images/settings-audio.svg"},
+                    {text: "Video", icon: "images/settings-video.svg"},
+                    {text: "System", icon: "images/settings.svg"}
                 ]
                 TabButton {
                     id: tabBtn
