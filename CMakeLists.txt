@@ -152,6 +152,9 @@ if(APPLE AND NOT DEFINED OPENSSL_ROOT_DIR)
 endif()
 find_package(OpenSSL REQUIRED)
 
+# ─── pkg-config — used by taglib, blkid, gps, and libusb fallback ─────────────
+find_package(PkgConfig REQUIRED)
+
 # ─── libusb — three-tier: config → pkg-config → manual ───────────────────────
 # Yocto does not install CMake config files for libusb1, and pkg-config is a
 # native tool unavailable in the cross sysroot. The manual fallback using
@@ -162,10 +165,7 @@ if(libusb-1.0_FOUND OR TARGET libusb-1.0::libusb-1.0)
     set(LIBUSB_TARGET libusb-1.0::libusb-1.0)
     message(STATUS "libusb-1.0      : found via config mode")
 else()
-    find_package(PkgConfig QUIET)
-    if(PKG_CONFIG_FOUND)
-        pkg_check_modules(libusb QUIET IMPORTED_TARGET libusb-1.0)
-    endif()
+    pkg_check_modules(libusb QUIET IMPORTED_TARGET libusb-1.0)
     if(TARGET PkgConfig::libusb)
         set(LIBUSB_TARGET PkgConfig::libusb)
         message(STATUS "libusb-1.0      : found via pkg-config")
@@ -190,13 +190,12 @@ endif()
 find_package(FFMPEG REQUIRED)
 
 # ─── taglib ───────────────────────────────────────────────────────────────────
-find_package(taglib REQUIRED)
+pkg_check_modules(TAGLIB REQUIRED IMPORTED_TARGET taglib)
 
 # ─── Linux-only dependencies ──────────────────────────────────────────────────
 if(OPENAUTO_LINUX)
-    message(STATUS "Linux: searching for blkid and gps")
-    find_package(blkid REQUIRED)
-    find_package(gps   REQUIRED)
+    pkg_check_modules(BLKID REQUIRED IMPORTED_TARGET blkid)
+    pkg_check_modules(GPS   REQUIRED IMPORTED_TARGET libgps)
 endif()
 
 # ─── Windows-specific ─────────────────────────────────────────────────────────
@@ -330,7 +329,7 @@ target_link_libraries(autoapp PRIVATE
 
         # Media
         ${FFMPEG_LIBRARIES}
-        ${TAGLIB_LIBRARIES}
+        PkgConfig::TAGLIB
 
         # Platform (Winsock on Windows, empty elsewhere)
         ${PLATFORM_LINK_LIBS}
@@ -338,14 +337,10 @@ target_link_libraries(autoapp PRIVATE
 
 # ─── Linux-only links ─────────────────────────────────────────────────────────
 if(OPENAUTO_LINUX)
-    target_include_directories(autoapp PRIVATE
-            ${BLKID_INCLUDE_DIRS}
-            ${GPS_INCLUDE_DIRS}
-    )
     target_link_libraries(autoapp PRIVATE
             pulse
-            ${BLKID_LIBRARIES}
-            ${GPS_LIBRARIES}
+            PkgConfig::BLKID
+            PkgConfig::GPS
     )
 endif()
 
