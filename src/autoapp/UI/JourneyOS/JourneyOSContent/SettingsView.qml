@@ -458,7 +458,7 @@ Item {
                         }
                         Rectangle {
                             width: 32; height: 32; radius: Constants.radiusInput
-                            color: primaryAccentField.text !== "" ? primaryAccentField.text : Constants.primary
+                            color: primaryAccentField.text !== "" ? primaryAccentField.text : Constants.palettePrimary
                             border.color: cBorder; border.width: 1
                         }
                         Button {
@@ -482,7 +482,7 @@ Item {
                         }
                         Rectangle {
                             width: 32; height: 32; radius: Constants.radiusInput
-                            color: brand2AccentField.text !== "" ? brand2AccentField.text : Constants.brand2
+                            color: brand2AccentField.text !== "" ? brand2AccentField.text : Constants.paletteSecondary
                             border.color: cBorder; border.width: 1
                         }
                         Button {

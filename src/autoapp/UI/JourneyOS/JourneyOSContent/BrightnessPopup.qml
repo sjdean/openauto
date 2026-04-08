@@ -45,7 +45,7 @@ Item {
             when: settingsViewHandler.uiDarkMode
             PropertyChanges {
                 target: darkModeButton
-                icon.color: Constants.primary
+                icon.color: Constants.palettePrimary
             }
         },
         State {
@@ -53,7 +53,7 @@ Item {
             when: !settingsViewHandler.uiDarkMode
             PropertyChanges {
                 target: darkModeButton
-                icon.color: Constants.onSurfaceVariant
+                icon.color: Constants.textSecondary
             }
         }
     ]

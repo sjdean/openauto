@@ -77,7 +77,7 @@ Slider {
             PropertyChanges {
                 target: handleItem
                 color: Constants.sliderHandlePressed
-                border.color: Constants.onSurface
+                border.color: Constants.textPrimary
             }
         }
     ]
