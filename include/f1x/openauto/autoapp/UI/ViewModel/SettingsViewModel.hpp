@@ -83,6 +83,9 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     Q_PROPERTY(bool headUnitMode READ isHeadUnitMode WRITE setHeadUnitMode NOTIFY headUnitModeChanged)
     Q_PROPERTY(QString androidAutoHomeButtonVisibility READ getAndroidAutoHomeButtonVisibility WRITE setAndroidAutoHomeButtonVisibility NOTIFY androidAutoHomeButtonVisibilityChanged)
     Q_PROPERTY(bool uiDarkMode READ isUiDarkMode WRITE setUiDarkMode NOTIFY uiDarkModeChanged)
+    Q_PROPERTY(QString uiAccentPrimary READ getUiAccentPrimary WRITE setUiAccentPrimary NOTIFY uiAccentPrimaryChanged)
+    Q_PROPERTY(QString uiAccentBrand2  READ getUiAccentBrand2  WRITE setUiAccentBrand2  NOTIFY uiAccentBrand2Changed)
+    Q_PROPERTY(double  uiButtonOpacity READ getUiButtonOpacity WRITE setUiButtonOpacity NOTIFY uiButtonOpacityChanged)
   public:
     explicit SettingsViewModel(configuration::IConfiguration::Pointer configuration,
                           QObject *parent = nullptr);
@@ -167,6 +170,9 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void androidAutoHomeButtonVisibilityChanged();
     void uiDarkModeChanged();
+    void uiAccentPrimaryChanged();
+    void uiAccentBrand2Changed();
+    void uiButtonOpacityChanged();
 
   private:
     configuration::IConfiguration::Pointer configuration_;
@@ -374,6 +380,16 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     bool m_uiDarkMode{true};
     bool isUiDarkMode() const;
     void setUiDarkMode(bool value);
+
+    QString m_uiAccentPrimary;
+    QString m_uiAccentBrand2;
+    double  m_uiButtonOpacity{0.33};
+    QString getUiAccentPrimary() const;
+    QString getUiAccentBrand2()  const;
+    double  getUiButtonOpacity() const;
+    void setUiAccentPrimary(QString value);
+    void setUiAccentBrand2(QString value);
+    void setUiButtonOpacity(double value);
 
   };
 }

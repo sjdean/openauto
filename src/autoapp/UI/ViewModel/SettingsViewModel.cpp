@@ -151,6 +151,9 @@ using configuration::ConfigKey;
         m_hwBluetoothAdapter = configuration_->getSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress);
         m_androidAutoHomeButtonVisibility = configuration_->getSettingByName<QString>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoHomeButtonVisibility);
         m_uiDarkMode = configuration_->getSettingByName<bool>(ConfigGroup::Screen, ConfigKey::ScreenDarkMode);
+        m_uiAccentPrimary = configuration_->getSettingByName<QString>(ConfigGroup::Screen, ConfigKey::ScreenAccentPrimary);
+        m_uiAccentBrand2  = configuration_->getSettingByName<QString>(ConfigGroup::Screen, ConfigKey::ScreenAccentBrand2);
+        m_uiButtonOpacity = configuration_->getSettingByName<double>(ConfigGroup::Screen, ConfigKey::ScreenButtonOpacity);
     }
 
     QString SettingsViewModel::getCarMake() const {
@@ -765,6 +768,39 @@ using configuration::ConfigKey;
             configuration_->save();
             m_uiDarkMode = value;
             emit uiDarkModeChanged();
+        }
+    }
+
+    QString SettingsViewModel::getUiAccentPrimary() const { return m_uiAccentPrimary; }
+
+    void SettingsViewModel::setUiAccentPrimary(QString value) {
+        if (m_uiAccentPrimary != value) {
+            configuration_->updateSettingByName<QString>(ConfigGroup::Screen, ConfigKey::ScreenAccentPrimary, value);
+            configuration_->save();
+            m_uiAccentPrimary = value;
+            emit uiAccentPrimaryChanged();
+        }
+    }
+
+    QString SettingsViewModel::getUiAccentBrand2() const { return m_uiAccentBrand2; }
+
+    void SettingsViewModel::setUiAccentBrand2(QString value) {
+        if (m_uiAccentBrand2 != value) {
+            configuration_->updateSettingByName<QString>(ConfigGroup::Screen, ConfigKey::ScreenAccentBrand2, value);
+            configuration_->save();
+            m_uiAccentBrand2 = value;
+            emit uiAccentBrand2Changed();
+        }
+    }
+
+    double SettingsViewModel::getUiButtonOpacity() const { return m_uiButtonOpacity; }
+
+    void SettingsViewModel::setUiButtonOpacity(double value) {
+        if (m_uiButtonOpacity != value) {
+            configuration_->updateSettingByName<double>(ConfigGroup::Screen, ConfigKey::ScreenButtonOpacity, value);
+            configuration_->save();
+            m_uiButtonOpacity = value;
+            emit uiButtonOpacityChanged();
         }
     }
 }

@@ -50,7 +50,8 @@ Item {
                     {text: "Auto", icon: "images/android-auto.svg"},
                     {text: "Audio", icon: "images/settings-audio.svg"},
                     {text: "Video", icon: "images/settings-video.svg"},
-                    {text: "System", icon: "images/settings.svg"}
+                    {text: "System", icon: "images/settings.svg"},
+                    {text: "Look", icon: "images/day.svg"}
                 ]
                 TabButton {
                     id: tabBtn
@@ -384,6 +385,80 @@ Item {
                     }
                 }
 
+            }
+
+            // --- TAB 6: LOOK ---
+            SettingsPage {
+                SectionHeader { text: "Appearance" }
+
+                SettingRow {
+                    label: "Primary Accent"
+                    control: RowLayout {
+                        anchors.fill: parent
+                        spacing: 8
+                        ModernTextField {
+                            id: primaryAccentField
+                            Layout.fillWidth: true
+                            text: settingsViewHandler.uiAccentPrimary
+                            placeholderText: "e.g. #DEB3FF  (blank = default)"
+                            onEditingFinished: settingsViewHandler.uiAccentPrimary = text.trim()
+                        }
+                        Rectangle {
+                            width: 32; height: 32; radius: Constants.radiusInput
+                            color: primaryAccentField.text !== "" ? primaryAccentField.text : Constants.primary
+                            border.color: cBorder; border.width: 1
+                        }
+                        Button {
+                            text: "Reset"
+                            onClicked: { primaryAccentField.text = ""; settingsViewHandler.uiAccentPrimary = "" }
+                        }
+                    }
+                }
+
+                SettingRow {
+                    label: "Brand 2 Accent"
+                    control: RowLayout {
+                        anchors.fill: parent
+                        spacing: 8
+                        ModernTextField {
+                            id: brand2AccentField
+                            Layout.fillWidth: true
+                            text: settingsViewHandler.uiAccentBrand2
+                            placeholderText: "e.g. #7ED6FF  (blank = default)"
+                            onEditingFinished: settingsViewHandler.uiAccentBrand2 = text.trim()
+                        }
+                        Rectangle {
+                            width: 32; height: 32; radius: Constants.radiusInput
+                            color: brand2AccentField.text !== "" ? brand2AccentField.text : Constants.brand2
+                            border.color: cBorder; border.width: 1
+                        }
+                        Button {
+                            text: "Reset"
+                            onClicked: { brand2AccentField.text = ""; settingsViewHandler.uiAccentBrand2 = "" }
+                        }
+                    }
+                }
+
+                SettingRow {
+                    label: "Button Opacity"
+                    control: RowLayout {
+                        anchors.fill: parent
+                        spacing: 8
+                        Slider {
+                            Layout.fillWidth: true
+                            from: 0.0; to: 1.0; stepSize: 0.01
+                            value: settingsViewHandler.uiButtonOpacity
+                            onMoved: settingsViewHandler.uiButtonOpacity = value
+                        }
+                        Label {
+                            text: Math.round(settingsViewHandler.uiButtonOpacity * 100) + " %"
+                            color: cTextMain
+                            font.pointSize: Constants.fontBody
+                            Layout.preferredWidth: 44
+                            horizontalAlignment: Text.AlignRight
+                        }
+                    }
+                }
             }
         }
 

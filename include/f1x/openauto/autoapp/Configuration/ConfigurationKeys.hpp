@@ -41,6 +41,9 @@ namespace f1x::openauto::autoapp::configuration {
         ScreenDPI,
         ScreenUseClockDayNight,
         ScreenDarkMode,
+        ScreenAccentPrimary,     // stored as empty string = use M3 default
+        ScreenAccentBrand2,
+        ScreenButtonOpacity,     // stored as double, default 0.33
 
         // Video --------------------------------------------------------------
         VideoHeight,
@@ -125,6 +128,9 @@ namespace f1x::openauto::autoapp::configuration {
             case ConfigKey::ScreenDPI:                       return QStringLiteral("DPI");
             case ConfigKey::ScreenUseClockDayNight:          return QStringLiteral("UseClockDayNight");
             case ConfigKey::ScreenDarkMode:                  return QStringLiteral("DarkMode");
+            case ConfigKey::ScreenAccentPrimary:             return QStringLiteral("AccentPrimary");
+            case ConfigKey::ScreenAccentBrand2:              return QStringLiteral("AccentBrand2");
+            case ConfigKey::ScreenButtonOpacity:             return QStringLiteral("ButtonOpacity");
             case ConfigKey::VideoHeight:                     return QStringLiteral("Height");
             case ConfigKey::VideoWidth:                      return QStringLiteral("Width");
             case ConfigKey::VideoRotate:                     return QStringLiteral("Rotate");

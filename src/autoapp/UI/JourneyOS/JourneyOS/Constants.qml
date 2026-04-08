@@ -23,6 +23,13 @@ QtObject {
     // ── THEME MODE ────────────────────────────────────────────────────────────
     property bool isDarkMode: true
 
+    // ── USER-OVERRIDABLE ACCENT COLOURS ───────────────────────────────────────
+    // Empty string = use M3 default for current mode; set via settingsViewHandler
+    property string accentPrimary: ""
+    property string accentBrand2:  ""
+    // JourneyButton surface mist opacity (0.0 = invisible, 1.0 = opaque)
+    property double buttonSurfaceOpacity: 0.33
+
     // ── ALPHA HELPER ──────────────────────────────────────────────────────────
     // Usage: Constants.withAlpha(Constants.onSurface, 0.38)
     function withAlpha(color, alpha) {
@@ -76,7 +83,8 @@ QtObject {
     // ════════════════════════════════════════════════════════════════════════
 
     // ── PRIMARY (purple) ──────────────────────────────────────────────────────
-    readonly property color primary:             isDarkMode ? "#DEB3FF" : "#7E14BA"
+    readonly property color primary:             accentPrimary !== "" ? accentPrimary
+                                                                       : (isDarkMode ? "#DEB3FF" : "#7E14BA")
     readonly property color onPrimary:           isDarkMode ? "#4D0183" : "#FFFFFF"
     readonly property color primaryContainer:    isDarkMode ? "#640FA1" : "#F2D7FF"
     readonly property color onPrimaryContainer:  isDarkMode ? "#F2D7FF" : "#36006A"
@@ -142,7 +150,8 @@ QtObject {
     readonly property color onWarningContainer: isDarkMode ? "#FFED3C" : "#1D1C00"
 
     // Brand2 / Active — blue (second brand accent; used for connecting / in-progress state)
-    readonly property color brand2:            isDarkMode ? "#7ED6FF" : "#005F8A"
+    readonly property color brand2:            accentBrand2 !== "" ? accentBrand2
+                                                                    : (isDarkMode ? "#7ED6FF" : "#005F8A")
     readonly property color onBrand2:          isDarkMode ? "#003549" : "#FFFFFF"
     readonly property color brand2Container:   isDarkMode ? "#004D6A" : "#C3EAFF"
     readonly property color onBrand2Container: isDarkMode ? "#C3EAFF" : "#001E2D"
@@ -186,7 +195,7 @@ QtObject {
 
     // ── BUTTONS ───────────────────────────────────────────────────────────────
     // Default / neutral
-    readonly property color btnSurface:        withAlpha(onSurface, 0.33)
+    readonly property color btnSurface:        withAlpha(onSurface, buttonSurfaceOpacity)
     readonly property color btnSurfacePressed: withAlpha(onSurface, 0.73)
     readonly property color btnContent:        onSurface
     readonly property color btnContentPressed: withAlpha(onSurface, 0.50)

@@ -14,7 +14,10 @@ Window {
     title: "JourneyOS"
 
     // Bind the global dark/light mode toggle to the persisted setting
-    Binding { target: Constants; property: "isDarkMode"; value: settingsViewHandler.uiDarkMode }
+    Binding { target: Constants; property: "isDarkMode";            value: settingsViewHandler.uiDarkMode }
+    Binding { target: Constants; property: "accentPrimary";         value: settingsViewHandler.uiAccentPrimary }
+    Binding { target: Constants; property: "accentBrand2";          value: settingsViewHandler.uiAccentBrand2 }
+    Binding { target: Constants; property: "buttonSurfaceOpacity";  value: settingsViewHandler.uiButtonOpacity }
 
     // ---------------------------------------------------------
     // 1. APP NAVIGATION STACK
