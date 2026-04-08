@@ -9,7 +9,7 @@ Q_LOGGING_CATEGORY(lcVolume, "journeyos.volume")
 namespace f1x::openauto::autoapp::UI::ViewModel {
 using configuration::ConfigGroup;
 using configuration::ConfigKey;
-  VolumeViewModel::VolumeViewModel(configuration::IConfiguration::Pointer configuration, std::shared_ptr<IAudioHandler> audioHandler) :
+  VolumeViewModel::VolumeViewModel(configuration::IConfiguration::Pointer configuration, std::shared_ptr<Backend::Audio::IAudioHandler> audioHandler) :
   configuration_(std::move(configuration)),
   m_audioHandler(std::move(audioHandler)) {
     m_sinkMin   = configuration_->getSettingByName<int>(ConfigGroup::Audio, ConfigKey::AudioPlaybackMin);
