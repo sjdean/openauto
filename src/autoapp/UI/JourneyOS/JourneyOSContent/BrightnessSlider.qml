@@ -13,8 +13,8 @@ Slider {
     value: brightnessPopupHandler.targetBrightness
 
     // Single-hue intensity variation: dark purple (dim) → softer purple (bright)
-    property color sliderColor:    Constants.sliderBrightnessLow
-    property color alternateColor: Constants.sliderBrightnessHigh
+    property color sliderColor:    Constants.sliderBrightnessTrackLow
+    property color alternateColor: Constants.sliderBrightnessTrackHigh
 
     Rectangle {
         id: baseBackground
@@ -24,15 +24,15 @@ Slider {
         implicitHeight: Constants.sliderTrackHeight
         width: implicitWidth
         height: brightnessSlider.availableHeight
-        radius: Constants.radiusSlider
-        color: Constants.sliderTrackBg
+        radius: Constants.shapeSlider
+        color: Constants.sliderInactiveTrack
 
         Rectangle {
             y: ((brightnessSlider.availableHeight - handleItem.height) * brightnessSlider.visualPosition) + brightnessSlider.topPadding
             id: groove
             height: brightnessSlider.availableHeight - ((brightnessSlider.availableHeight - handleItem.height) * brightnessSlider.visualPosition) - brightnessSlider.topPadding
             width: parent.width
-            radius: Constants.radiusSlider
+            radius: Constants.shapeSlider
 
             Behavior on color {
                 ColorAnimation { duration: 100 }
@@ -62,7 +62,7 @@ Slider {
         implicitHeight: Constants.sliderHandleSize
         radius: Constants.sliderHandleSize / 2
         color: Constants.sliderHandle
-        border.color: Constants.sliderHandleBorder
+        border.color: Constants.sliderHandleOutline
     }
 
     states: [
@@ -77,7 +77,7 @@ Slider {
             PropertyChanges {
                 target: handleItem
                 color: Constants.sliderHandlePressed
-                border.color: Constants.textPrimary
+                border.color: Constants.onSurface
             }
         }
     ]

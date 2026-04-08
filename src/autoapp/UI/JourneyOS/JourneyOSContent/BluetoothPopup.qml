@@ -54,7 +54,7 @@ Item {
 
                         JourneyButton {
                             text: "Accept"
-                            icon.source: "../images/check.svg"
+                            icon.source: "images/check.svg"
                             onClicked: {
                                 if (bluetoothHandler.agent)
                                     bluetoothHandler.agent.accept()
@@ -64,7 +64,7 @@ Item {
 
                         JourneyButton {
                             text: "Decline"
-                            icon.source: "../images/close.svg"
+                            icon.source: "images/close.svg"
                             onClicked: {
                                 if (bluetoothHandler.agent)
                                     bluetoothHandler.agent.reject()
@@ -143,7 +143,7 @@ Item {
 
                         JourneyButton {
                             text: "Forget"
-                            icon.source: "../images/trash.svg"
+                            icon.source: "images/trash.svg"
                             onClicked: {
                                 bluetoothHandler.removePair(removeConfirmOverlay.deviceAddress)
                                 removeConfirmOverlay.visible = false
@@ -152,7 +152,7 @@ Item {
 
                         JourneyButton {
                             text: "Cancel"
-                            icon.source: "../images/close.svg"
+                            icon.source: "images/close.svg"
                             onClicked: removeConfirmOverlay.visible = false
                         }
                     }
@@ -364,7 +364,7 @@ Item {
 
                         JourneyButton {
                             text: model.connected ? "Disconnect" : "Connect"
-                            icon.source: model.connected ? "../images/link-off.svg" : "../images/link.svg"
+                            icon.source: model.connected ? "images/link-off.svg" : "images/link.svg"
                             onClicked: {
                                 if (model.connected)
                                     bluetoothHandler.disconnectDevice(model.address)
@@ -375,7 +375,7 @@ Item {
 
                         JourneyButton {
                             text: "Forget"
-                            icon.source: "../images/trash.svg"
+                            icon.source: "images/trash.svg"
                             onClicked: {
                                 removeConfirmOverlay.deviceAddress = model.address
                                 removeConfirmOverlay.deviceName = model.name || model.address
@@ -402,7 +402,7 @@ Item {
 
                 JourneyButton {
                     text: bluetoothHandler.isScanning ? "Scanning…" : "Scan for Devices"
-                    icon.source: "../images/search.svg"
+                    icon.source: "images/search.svg"
                     enabled: !bluetoothHandler.isScanning
                     onClicked: bluetoothHandler.startScan()
                 }
@@ -479,13 +479,13 @@ Item {
 
                         JourneyButton {
                             text: "Pair"
-                            icon.source: "../images/link.svg"
+                            icon.source: "images/link.svg"
                             onClicked: bluetoothHandler.pair(model.address)
                         }
 
                         JourneyButton {
                             text: "Ignore"
-                            icon.source: "../images/close.svg"
+                            icon.source: "images/close.svg"
                             onClicked: bluetoothHandler.ignoreDevice(model.address)
                         }
                     }

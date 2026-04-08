@@ -11,8 +11,8 @@ Slider {
     value: volumePopupHandler.volumeSink
     orientation: Qt.Vertical
     background: baseBackground
-    property color sliderColor: Constants.sliderPrimaryColor
-    property color alternateColor: Constants.sliderAlternateColor
+    property color sliderColor: Constants.sliderActiveTrackLow
+    property color alternateColor: Constants.sliderActiveTrackHigh
 
     Rectangle {
         id: baseBackground
@@ -22,15 +22,15 @@ Slider {
         implicitHeight: Constants.sliderTrackHeight
         width: implicitWidth
         height: volumeSlider.availableHeight
-        radius: Constants.radiusSlider
-        color: Constants.sliderBackgroundColor
+        radius: Constants.shapeSlider
+        color: Constants.sliderInactiveTrack
 
         Rectangle {
             y: ((volumeSlider.availableHeight - handleItem.height) * volumeSlider.visualPosition) + volumeSlider.topPadding
             id: groove
             height: volumeSlider.availableHeight - ((volumeSlider.availableHeight - handleItem.height) * volumeSlider.visualPosition) - volumeSlider.topPadding
             width: parent.width
-            radius: Constants.radiusSlider
+            radius: Constants.shapeSlider
 
             Behavior on color {
                 ColorAnimation { duration: 100 }
@@ -65,7 +65,7 @@ Slider {
         implicitHeight: Constants.sliderHandleSize
         radius: Constants.sliderHandleSize / 2
         color: Constants.sliderHandle
-        border.color: Constants.sliderHandleBorder
+        border.color: Constants.sliderHandleOutline
     }
 
     states: [
@@ -80,7 +80,7 @@ Slider {
             PropertyChanges {
                 target: handleItem
                 color: Constants.sliderHandlePressed
-                border.color: Constants.textPrimary
+                border.color: Constants.onSurface
             }
         }
     ]

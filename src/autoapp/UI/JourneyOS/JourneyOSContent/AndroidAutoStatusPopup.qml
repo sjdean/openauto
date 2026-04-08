@@ -80,7 +80,7 @@ Popup {
 
         JourneyButton {
             text: "View Android Auto"
-            icon.source: "../images/android-auto.svg"
+            icon.source: "images/android-auto.svg"
             iconSize: height * 0.5
             visible: aaInfoPopup.androidAutoConnected
             width: Math.min(200, parent.width)

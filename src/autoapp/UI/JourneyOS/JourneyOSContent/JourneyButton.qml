@@ -6,8 +6,8 @@ import JourneyOS
 
 Button {
     id: control
-    property color textColor: Constants.buttonColor
-    property color iconColor: Constants.buttonColor
+    property color textColor: Constants.btnContent
+    property color iconColor: Constants.btnContent
 
     property double iconSize: 48
     property double buttonPadding: iconSize / 10
@@ -26,7 +26,7 @@ Button {
     font.pointSize: textIsStatus ? iconSize / 1.3 : (iconSize / 10) * 3
     icon.height: iconSize
     icon.width: iconSize
-    icon.source: "../images/settings.svg"
+    icon.source: "images/settings.svg"
     display: AbstractButton.TextUnderIcon
     padding: buttonPadding
     bottomPadding: buttonPadding
@@ -38,9 +38,9 @@ Button {
 
     Rectangle {
         id: rectangleBackground
-        color: Constants.buttonBackgroundColor
+        color: Constants.btnSurface
         opacity: enabled ? 1 : 0.3
-        radius: Constants.radiusButton
+        radius: Constants.shapeButton
         border.width: 0
         anchors.fill: parent
     }
@@ -165,7 +165,7 @@ Button {
 
             PropertyChanges {
                 target: rectangleBackground
-                color: Constants.buttonBackgroundColor
+                color: Constants.btnSurface
             }
 
             PropertyChanges {
@@ -175,7 +175,7 @@ Button {
 
             PropertyChanges {
                 target: textItem
-                color: Constants.buttonColor
+                color: Constants.btnContent
             }
         },
         State {
@@ -183,17 +183,17 @@ Button {
             when: control.down
             PropertyChanges {
                 target: textItem
-                color: Constants.buttonPressedColor
+                color: Constants.btnContentPressed
             }
 
             PropertyChanges {
                 target: control
-                icon.color: Constants.buttonPressedColor
+                icon.color: Constants.btnContentPressed
             }
 
             PropertyChanges {
                 target: rectangleBackground
-                color: Constants.buttonPressedBackgroundColor
+                color: Constants.btnSurfacePressed
             }
         }
     ]

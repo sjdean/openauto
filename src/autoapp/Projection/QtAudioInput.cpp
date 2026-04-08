@@ -67,7 +67,6 @@ using configuration::ConfigKey;
     if (swrCtx_) { swr_free(&swrCtx_); swrCtx_ = nullptr; }
 
     int ret = 0;
-#if HAS_CH_LAYOUT
     AVChannelLayout inLayout, outLayout;
     av_channel_layout_default(&inLayout,  audioFormat_.channelCount());
     av_channel_layout_default(&outLayout, requestedFormat_.channelCount());
@@ -79,16 +78,6 @@ using configuration::ConfigKey;
 
     av_channel_layout_uninit(&inLayout);
     av_channel_layout_uninit(&outLayout);
-#else
-    uint64_t inLayout = av_get_default_channel_layout(audioFormat_.channelCount());
-    uint64_t outLayout = av_get_default_channel_layout(requestedFormat_.channelCount());
-
-    swrCtx_ = swr_alloc_set_opts(nullptr,
-        outLayout, qAudioFmtToAv(requestedFormat_.sampleFormat()), requestedFormat_.sampleRate(),
-        inLayout,  qAudioFmtToAv(audioFormat_.sampleFormat()),     audioFormat_.sampleRate(),
-        0, nullptr);
-    if (!swrCtx_) ret = AVERROR(ENOMEM);
-#endif
 
     if (ret < 0 || !swrCtx_) {
       char errbuf[AV_ERROR_MAX_STRING_SIZE];
@@ -132,15 +121,10 @@ using configuration::ConfigKey;
 
     char layout_buf[64];
 
-#if HAS_CH_LAYOUT
     AVChannelLayout ch_layout;
     av_channel_layout_default(&ch_layout, audioFormat_.channelCount());
     av_channel_layout_describe(&ch_layout, layout_buf, sizeof(layout_buf));
     av_channel_layout_uninit(&ch_layout);
-#else
-    uint64_t ch_layout = av_get_default_channel_layout(audioFormat_.channelCount());
-    av_get_channel_layout_string(layout_buf, sizeof(layout_buf), audioFormat_.channelCount(), ch_layout);
-#endif
 
     char args[512];
     snprintf(args, sizeof(args),
@@ -601,11 +585,7 @@ using configuration::ConfigKey;
         frame->format = qAudioFmtToAv(audioFormat_.sampleFormat());
         frame->sample_rate = audioFormat_.sampleRate();
 
-#if HAS_CH_LAYOUT
-      av_channel_layout_default(&frame->ch_layout, audioFormat_.channelCount());
-#else
-      frame->channel_layout = av_get_default_channel_layout(audioFormat_.channelCount());
-#endif
+        av_channel_layout_default(&frame->ch_layout, audioFormat_.channelCount());
 
         if (av_frame_get_buffer(frame, 0) >= 0) {
             // Copy data to frame
@@ -636,11 +616,7 @@ using configuration::ConfigKey;
 
                     // Append filtered data to output buffer
                     int bytesPerSample = av_get_bytes_per_sample(static_cast<AVSampleFormat>(filtFrame->format));
-#if HAS_CH_LAYOUT
-                  int channels = filtFrame->ch_layout.nb_channels;
-#else
-                  int channels = filtFrame->channels;
-#endif
+                    int channels = filtFrame->ch_layout.nb_channels;
                     int size = filtFrame->nb_samples * channels * bytesPerSample;
 
                     size_t oldSize = filteredData.size();

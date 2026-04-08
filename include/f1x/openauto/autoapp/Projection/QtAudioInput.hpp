@@ -18,11 +18,9 @@ extern "C" {
 #include <libavfilter/buffersink.h>
 }
 
-// FFmpeg 5.1 (libavutil 57.28.100) introduced the new Channel Layout API
-#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 28, 100)
-    #define HAS_CH_LAYOUT 1
-#else
-    #define HAS_CH_LAYOUT 0
+// Require FFmpeg >= 6.0 (libavutil >= 58.2.100) — AVChannelLayout API is mandatory
+#if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(58, 2, 100)
+#  error "FFmpeg >= 6.0 (libavutil 58.2.100) required. Update your FFmpeg installation."
 #endif
 
 #include <f1x/openauto/autoapp/Projection/IAudioInput.hpp>

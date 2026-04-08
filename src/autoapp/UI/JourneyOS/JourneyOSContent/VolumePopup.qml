@@ -35,7 +35,7 @@ Item {
         JourneyButton {
             id: muteButton
             iconSize: height * 0.5
-            icon.source: "../images/volume-mute.svg"
+            icon.source: "images/volume-mute.svg"
             height: parent.width
             text: "Mute"
             width: parent.width

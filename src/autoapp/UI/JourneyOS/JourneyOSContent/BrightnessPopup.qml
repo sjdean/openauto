@@ -32,7 +32,7 @@ Item {
             id: darkModeButton
 
             iconSize: height * 0.5
-            icon.source: "../images/volume-mute.svg"
+            icon.source: "images/volume-mute.svg"
             height: parent.width
             text: "Dark Mode"
             width: parent.width
