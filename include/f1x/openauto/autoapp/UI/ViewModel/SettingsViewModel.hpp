@@ -82,6 +82,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     Q_PROPERTY(QString hwBluetoothAdapter READ getHwBluetoothAdapter WRITE setHwBluetoothAdapter NOTIFY hwBluetoothAdapterChanged)
     Q_PROPERTY(bool headUnitMode READ isHeadUnitMode WRITE setHeadUnitMode NOTIFY headUnitModeChanged)
     Q_PROPERTY(QString androidAutoHomeButtonVisibility READ getAndroidAutoHomeButtonVisibility WRITE setAndroidAutoHomeButtonVisibility NOTIFY androidAutoHomeButtonVisibilityChanged)
+    Q_PROPERTY(bool   androidAutoShowHomeButton READ getAndroidAutoShowHomeButton WRITE setAndroidAutoShowHomeButton NOTIFY androidAutoShowHomeButtonChanged)
+    Q_PROPERTY(int    androidAutoHomeButtonPosition READ getAndroidAutoHomeButtonPosition WRITE setAndroidAutoHomeButtonPosition NOTIFY androidAutoHomeButtonPositionChanged)
     Q_PROPERTY(bool uiDarkMode READ isUiDarkMode WRITE setUiDarkMode NOTIFY uiDarkModeChanged)
     Q_PROPERTY(QString uiAccentPrimary READ getUiAccentPrimary WRITE setUiAccentPrimary NOTIFY uiAccentPrimaryChanged)
     Q_PROPERTY(QString uiAccentBrand2  READ getUiAccentBrand2  WRITE setUiAccentBrand2  NOTIFY uiAccentBrand2Changed)
@@ -169,6 +171,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void headUnitModeChanged();
 
     void androidAutoHomeButtonVisibilityChanged();
+    void androidAutoShowHomeButtonChanged();
+    void androidAutoHomeButtonPositionChanged();
     void uiDarkModeChanged();
     void uiAccentPrimaryChanged();
     void uiAccentBrand2Changed();
@@ -376,6 +380,14 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     QString m_androidAutoHomeButtonVisibility;
     QString getAndroidAutoHomeButtonVisibility() const;
     void setAndroidAutoHomeButtonVisibility(QString value);
+
+    bool m_androidAutoShowHomeButton{true};
+    bool getAndroidAutoShowHomeButton() const;
+    void setAndroidAutoShowHomeButton(bool value);
+
+    int m_androidAutoHomeButtonPosition{2};
+    int getAndroidAutoHomeButtonPosition() const;
+    void setAndroidAutoHomeButtonPosition(int value);
 
     bool m_uiDarkMode{true};
     bool isUiDarkMode() const;

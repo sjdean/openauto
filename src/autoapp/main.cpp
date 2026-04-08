@@ -1,4 +1,5 @@
 #include <thread>
+#include <QFile>
 #include <QScreen>
 #include <QApplication>
 #include <QQmlApplicationEngine>
@@ -223,9 +224,25 @@ int main(int argc, char *argv[]) {
     autoapp::UI::Model::List::ResolutionModel resolutionModel;
 
 #ifdef Q_OS_LINUX
-    bool isSystemManaged = false; // Pi is Self Contained. Can access device settings.
+    // Detect whether we are running on the JourneyOS Yocto image (head unit) or a
+    // generic Linux desktop.  Read /etc/os-release and look for NAME=JourneyOS.
+    // Any other Linux distribution is treated as a developer desktop (system managed).
+    auto isJourneyOSPlatform = []() -> bool {
+        QFile f(QStringLiteral("/etc/os-release"));
+        if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+            return false;
+        while (!f.atEnd()) {
+            const QString line = QString::fromUtf8(f.readLine()).trimmed();
+            if (line.startsWith(QLatin1String("NAME="), Qt::CaseInsensitive))
+                return line.contains(QLatin1String("JourneyOS"), Qt::CaseInsensitive);
+            if (line.startsWith(QLatin1String("ID="), Qt::CaseInsensitive))
+                return line.contains(QLatin1String("journeyos"), Qt::CaseInsensitive);
+        }
+        return false;
+    };
+    bool isSystemManaged = !isJourneyOSPlatform(); // JourneyOS = head unit; any other Linux = desktop
 #else
-    bool isSystemManaged = true; // Mac/Windows don't allow editing device settings.
+    bool isSystemManaged = true; // macOS / Windows — always desktop mode
 #endif
 
     context->setContextProperty("isSystemManaged", isSystemManaged);
@@ -308,7 +325,7 @@ int main(int argc, char *argv[]) {
                      &autoapp::UI::Controller::TimeController::offerTimeFromAndroidAuto);
 
     // OTA update manager (stub — no real HTTP yet)
-    auto* updateManager = new f1x::openauto::autoapp::UI::UpdateManager(configuration, &app);
+    auto* updateManager = new f1x::openauto::autoapp::UI::UpdateManager(configuration, isSystemManaged, &app);
     context->setContextProperty("updateManager", updateManager);
 
     // Bluetooth Status and Connectivity // DBus/BlueZ

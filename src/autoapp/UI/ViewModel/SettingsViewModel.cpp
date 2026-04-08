@@ -150,6 +150,8 @@ using configuration::ConfigKey;
     {
         m_hwBluetoothAdapter = configuration_->getSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress);
         m_androidAutoHomeButtonVisibility = configuration_->getSettingByName<QString>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoHomeButtonVisibility);
+        m_androidAutoShowHomeButton      = configuration_->getSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoShowHomeButton);
+        m_androidAutoHomeButtonPosition  = configuration_->getSettingByName<int>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoHomeButtonPosition);
         m_uiDarkMode = configuration_->getSettingByName<bool>(ConfigGroup::Screen, ConfigKey::ScreenDarkMode);
         m_uiAccentPrimary = configuration_->getSettingByName<QString>(ConfigGroup::Screen, ConfigKey::ScreenAccentPrimary);
         m_uiAccentBrand2  = configuration_->getSettingByName<QString>(ConfigGroup::Screen, ConfigKey::ScreenAccentBrand2);
@@ -755,6 +757,32 @@ using configuration::ConfigKey;
             configuration_->save();
             m_androidAutoHomeButtonVisibility = value;
             emit androidAutoHomeButtonVisibilityChanged();
+        }
+    }
+
+    bool SettingsViewModel::getAndroidAutoShowHomeButton() const {
+        return m_androidAutoShowHomeButton;
+    }
+
+    void SettingsViewModel::setAndroidAutoShowHomeButton(bool value) {
+        if (m_androidAutoShowHomeButton != value) {
+            configuration_->updateSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoShowHomeButton, value);
+            configuration_->save();
+            m_androidAutoShowHomeButton = value;
+            emit androidAutoShowHomeButtonChanged();
+        }
+    }
+
+    int SettingsViewModel::getAndroidAutoHomeButtonPosition() const {
+        return m_androidAutoHomeButtonPosition;
+    }
+
+    void SettingsViewModel::setAndroidAutoHomeButtonPosition(int value) {
+        if (m_androidAutoHomeButtonPosition != value) {
+            configuration_->updateSettingByName<int>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoHomeButtonPosition, value);
+            configuration_->save();
+            m_androidAutoHomeButtonPosition = value;
+            emit androidAutoHomeButtonPositionChanged();
         }
     }
 

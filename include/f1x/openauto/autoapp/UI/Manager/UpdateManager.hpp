@@ -19,6 +19,7 @@ class UpdateManager : public QObject {
 
 public:
     explicit UpdateManager(configuration::IConfiguration::Pointer config,
+                           bool isDesktopMode,
                            QObject *parent = nullptr);
     ~UpdateManager() override;
 
@@ -48,6 +49,7 @@ private slots:
 
 private:
     configuration::IConfiguration::Pointer m_config;
+    bool    m_isDesktopMode{false};
     bool    m_updateAvailable{false};
     QString m_latestVersion;
     QString m_updateUrl;

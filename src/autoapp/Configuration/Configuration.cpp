@@ -78,6 +78,8 @@ namespace f1x::openauto::autoapp::configuration {
     aaGroup.addSetting<int>(toQString(ConfigKey::AndroidAutoFrameRate), aap_protobuf::service::media::sink::message::VideoFrameRateType::VIDEO_FPS_60);
     aaGroup.addSetting<int>(toQString(ConfigKey::AndroidAutoResolution), aap_protobuf::service::media::sink::message::VideoCodecResolutionType::VIDEO_800x480);
     aaGroup.addSetting<QString>(toQString(ConfigKey::AndroidAutoHomeButtonVisibility), "touchToReveal");
+    aaGroup.addSetting<bool>(toQString(ConfigKey::AndroidAutoShowHomeButton), true);
+    aaGroup.addSetting<int>(toQString(ConfigKey::AndroidAutoHomeButtonPosition), 2); // 2 = BottomLeft
     aaGroup.load(m_settings);
     m_configurationGroups.append(aaGroup);
 

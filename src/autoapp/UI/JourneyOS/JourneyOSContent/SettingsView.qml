@@ -213,6 +213,59 @@ Item {
                         }
                     }
                 }
+
+                SectionHeader {
+                    text: "Home Button Overlay"
+                }
+                ModernCheckBox {
+                    Layout.leftMargin: settingsView.labelWidth + 20
+                    text: qsTr("Show home button overlay")
+                    checked: settingsViewHandler.androidAutoShowHomeButton
+                    onToggled: settingsViewHandler.androidAutoShowHomeButton = checked
+                }
+                SettingRow {
+                    label: "Visibility"
+                    control: ModernComboBox {
+                        model: [
+                            { text: qsTr("Touch to reveal"), value: "touchToReveal" },
+                            { text: qsTr("Always visible"),  value: "alwaysVisible"  }
+                        ]
+                        textRole: "text"
+                        currentIndex: {
+                            var v = settingsViewHandler.androidAutoHomeButtonVisibility
+                            for (var i = 0; i < model.length; ++i)
+                                if (model[i].value === v) return i
+                            return 0
+                        }
+                        onActivated: settingsViewHandler.androidAutoHomeButtonVisibility = model[currentIndex].value
+                    }
+                }
+                SettingRow {
+                    label: "Position"
+                    control: ModernComboBox {
+                        // Matches the enum in AndroidAutoView.qml:
+                        // 0=TopLeft 1=TopRight 2=BottomLeft 3=BottomRight
+                        // 4=TopCentre 5=BottomCentre 6=MiddleLeft 7=MiddleRight
+                        model: [
+                            { text: qsTr("Top Left"),      value: 0 },
+                            { text: qsTr("Top Centre"),    value: 4 },
+                            { text: qsTr("Top Right"),     value: 1 },
+                            { text: qsTr("Middle Left"),   value: 6 },
+                            { text: qsTr("Middle Right"),  value: 7 },
+                            { text: qsTr("Bottom Left"),   value: 2 },
+                            { text: qsTr("Bottom Centre"), value: 5 },
+                            { text: qsTr("Bottom Right"),  value: 3 }
+                        ]
+                        textRole: "text"
+                        currentIndex: {
+                            var v = settingsViewHandler.androidAutoHomeButtonPosition
+                            for (var i = 0; i < model.length; ++i)
+                                if (model[i].value === v) return i
+                            return 5 // fallback: Bottom Left
+                        }
+                        onActivated: settingsViewHandler.androidAutoHomeButtonPosition = model[currentIndex].value
+                    }
+                }
             }
 
             // --- TAB 3: AUDIO ---

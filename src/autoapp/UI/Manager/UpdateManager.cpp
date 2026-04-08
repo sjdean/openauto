@@ -189,9 +189,12 @@ private:
 // UpdateManager
 // ---------------------------------------------------------------------------
 
-UpdateManager::UpdateManager(configuration::IConfiguration::Pointer config, QObject *parent)
+UpdateManager::UpdateManager(configuration::IConfiguration::Pointer config,
+                             bool isDesktopMode,
+                             QObject *parent)
     : QObject(parent)
     , m_config(std::move(config))
+    , m_isDesktopMode(isDesktopMode)
 {
     m_checkThread = new QThread(this);
     m_checkThread->setObjectName(QStringLiteral("ota-check"));
@@ -243,20 +246,8 @@ void UpdateManager::checkForUpdate()
         return;
     }
 
-    try {
-        const bool desktopMode =
-            m_config->getSettingByName<bool>(ConfigGroup::System, ConfigKey::SystemDesktopMode, false);
-        if (desktopMode) {
-            qInfo(lcUpdate) << "desktop mode: OTA disabled";
-            emit checkComplete(false, getCurrentVersion());
-            return;
-        }
-    } catch (const std::exception &e) {
-        qWarning(lcUpdate) << "checkForUpdate: config read failed:" << e.what();
-        emit checkComplete(false, getCurrentVersion());
-        return;
-    } catch (...) {
-        qWarning(lcUpdate) << "checkForUpdate: config read threw unknown exception";
+    if (m_isDesktopMode) {
+        qInfo(lcUpdate) << "desktop mode: OTA disabled";
         emit checkComplete(false, getCurrentVersion());
         return;
     }

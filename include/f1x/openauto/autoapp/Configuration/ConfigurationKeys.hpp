@@ -72,6 +72,8 @@ namespace f1x::openauto::autoapp::configuration {
         AndroidAutoFrameRate,
         AndroidAutoResolution,
         AndroidAutoHomeButtonVisibility,
+        AndroidAutoShowHomeButton,
+        AndroidAutoHomeButtonPosition,
 
         // Bluetooth ----------------------------------------------------------
         BluetoothEnabled,
@@ -151,6 +153,8 @@ namespace f1x::openauto::autoapp::configuration {
             case ConfigKey::AndroidAutoFrameRate:            return QStringLiteral("FrameRate");
             case ConfigKey::AndroidAutoResolution:           return QStringLiteral("Resolution");
             case ConfigKey::AndroidAutoHomeButtonVisibility: return QStringLiteral("HomeButtonVisibility");
+            case ConfigKey::AndroidAutoShowHomeButton:       return QStringLiteral("ShowHomeButton");
+            case ConfigKey::AndroidAutoHomeButtonPosition:   return QStringLiteral("HomeButtonPosition");
             case ConfigKey::BluetoothEnabled:                return QStringLiteral("Enabled");
             case ConfigKey::BluetoothAdapterAddress:         return QStringLiteral("AdapterAddress");
             case ConfigKey::BluetoothPairedDeviceAddress:    return QStringLiteral("PairedDeviceAddress");

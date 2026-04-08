@@ -14,6 +14,7 @@ Item {
 
     // Show the home button and restart the idle hide timer
     function revealHomeBtn() {
+        if (!settingsViewHandler.androidAutoShowHomeButton) return
         if (settingsViewHandler.androidAutoHomeButtonVisibility !== "alwaysVisible") {
             homeBtn.opacity = 1
             homeBtnHideTimer.restart()
@@ -66,6 +67,10 @@ Item {
 
     // 4. OVERLAY LAYER (UI)
     // A subtle floating home button — fades in on touch, auto-hides after idle
+    //
+    // Position enum (androidAutoHomeButtonPosition):
+    //   0=TopLeft  1=TopRight  2=BottomLeft(default)  3=BottomRight
+    //   4=TopCentre  5=BottomCentre  6=MiddleLeft  7=MiddleRight
     RoundButton {
         id: homeBtn
         text: "⌂"
@@ -73,11 +78,22 @@ Item {
         height: width
         font.pointSize: 24
 
-        // Positioning
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.margins: Math.max(30, parent.width * 0.0375)
+        // Position
+        property int pos: settingsViewHandler.androidAutoHomeButtonPosition
+        property real pad: Math.max(30, Math.min(parent.width, parent.height) * 0.0375)
+
+        x: (pos === 1 || pos === 3 || pos === 7) ? parent.width  - width  - pad
+         : (pos === 4 || pos === 5)               ? (parent.width  - width)  / 2
+         :                                          pad
+
+        y: (pos === 0 || pos === 1 || pos === 4) ? pad
+         : (pos === 6 || pos === 7)               ? (parent.height - height) / 2
+         :                                          parent.height - height - pad
+
         z: 999
+
+        // Show/hide gate — completely hidden when the overlay is disabled
+        visible: settingsViewHandler.androidAutoShowHomeButton
 
         // Visibility: alwaysVisible shows at full opacity, touchToReveal starts hidden
         opacity: settingsViewHandler.androidAutoHomeButtonVisibility === "alwaysVisible" ? 1 : 0
