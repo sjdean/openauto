@@ -38,6 +38,7 @@ namespace f1x::openauto::autoapp::configuration {
     screenGroup.addSetting<int>(toQString(ConfigKey::ScreenBrightness), 150);
     screenGroup.addSetting<int>(toQString(ConfigKey::ScreenDPI), 160);
     screenGroup.addSetting<bool>(toQString(ConfigKey::ScreenUseClockDayNight), false);
+    screenGroup.addSetting<bool>(toQString(ConfigKey::ScreenDarkMode), true);
     screenGroup.load(m_settings);
     m_configurationGroups.append(screenGroup);
 

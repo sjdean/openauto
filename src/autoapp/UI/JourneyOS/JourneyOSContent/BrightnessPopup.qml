@@ -7,8 +7,6 @@ Item {
     id: brightnessPopup
     anchors.fill: parent
 
-    property bool isDarkMode: false
-
     Column {
         id: brightnessColumn
         width: parent.width * 0.66
@@ -20,54 +18,43 @@ Item {
 
         BrightnessSlider {
             id: brightnessSlider
-            height: parent.height
+            height: parent.height - darkModeButton.height - parent.spacing
             width: parent.width
-            alternateColor: Constants.sliderBrightnessHigh
+            alternateColor: Constants.sliderBrightnessTrackHigh
             onValueChanged: brightnessPopupHandler.targetBrightness = value
             value: brightnessPopupHandler.targetBrightness
         }
-        // TODO: Temporarily remove Dark mode Button
-/*
+
         JourneyButton {
             id: darkModeButton
-
             iconSize: height * 0.5
-            icon.source: "images/volume-mute.svg"
+            icon.source: settingsViewHandler.uiDarkMode ? "images/night.svg" : "images/day.svg"
             height: parent.width
-            text: "Dark Mode"
+            text: settingsViewHandler.uiDarkMode ? "Dark" : "Light"
             width: parent.width
             Connections {
                 target: darkModeButton
-                onClicked: {
-                    brightnessPopup.isDarkMode = !brightnessPopup.isDarkMode
-                }
+                onClicked: settingsViewHandler.uiDarkMode = !settingsViewHandler.uiDarkMode
             }
-        }*/
+        }
     }
-/*
+
     states: [
         State {
             name: "dark"
-            when: brightnessPopup.isDarkMode
+            when: settingsViewHandler.uiDarkMode
             PropertyChanges {
                 target: darkModeButton
-                icon.color: "#ff0000"
-            }
-            PropertyChanges {
-                target: brightnessSlider
-                sliderColor: Constants.sliderPrimaryColor
+                icon.color: Constants.primary
             }
         },
         State {
             name: "light"
-            when: !brightnessPopup.isDarkMode
+            when: !settingsViewHandler.uiDarkMode
             PropertyChanges {
                 target: darkModeButton
-                icon.color: "#ffffff"
-            }
-            PropertyChanges {
-                target: brightnessSlider
+                icon.color: Constants.onSurfaceVariant
             }
         }
-    ]*/
+    ]
 }

@@ -150,6 +150,7 @@ using configuration::ConfigKey;
     {
         m_hwBluetoothAdapter = configuration_->getSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress);
         m_androidAutoHomeButtonVisibility = configuration_->getSettingByName<QString>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoHomeButtonVisibility);
+        m_uiDarkMode = configuration_->getSettingByName<bool>(ConfigGroup::Screen, ConfigKey::ScreenDarkMode);
     }
 
     QString SettingsViewModel::getCarMake() const {
@@ -751,6 +752,19 @@ using configuration::ConfigKey;
             configuration_->save();
             m_androidAutoHomeButtonVisibility = value;
             emit androidAutoHomeButtonVisibilityChanged();
+        }
+    }
+
+    bool SettingsViewModel::isUiDarkMode() const {
+        return m_uiDarkMode;
+    }
+
+    void SettingsViewModel::setUiDarkMode(bool value) {
+        if (m_uiDarkMode != value) {
+            configuration_->updateSettingByName<bool>(ConfigGroup::Screen, ConfigKey::ScreenDarkMode, value);
+            configuration_->save();
+            m_uiDarkMode = value;
+            emit uiDarkModeChanged();
         }
     }
 }

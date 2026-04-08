@@ -13,6 +13,9 @@ Window {
     color: Constants.primaryBackgroundColor
     title: "JourneyOS"
 
+    // Bind the global dark/light mode toggle to the persisted setting
+    Binding { target: Constants; property: "isDarkMode"; value: settingsViewHandler.uiDarkMode }
+
     // ---------------------------------------------------------
     // 1. APP NAVIGATION STACK
     // ---------------------------------------------------------

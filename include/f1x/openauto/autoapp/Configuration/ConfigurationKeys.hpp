@@ -40,6 +40,7 @@ namespace f1x::openauto::autoapp::configuration {
         ScreenBrightness,
         ScreenDPI,
         ScreenUseClockDayNight,
+        ScreenDarkMode,
 
         // Video --------------------------------------------------------------
         VideoHeight,
@@ -123,6 +124,7 @@ namespace f1x::openauto::autoapp::configuration {
             case ConfigKey::ScreenBrightness:                return QStringLiteral("Brightness");
             case ConfigKey::ScreenDPI:                       return QStringLiteral("DPI");
             case ConfigKey::ScreenUseClockDayNight:          return QStringLiteral("UseClockDayNight");
+            case ConfigKey::ScreenDarkMode:                  return QStringLiteral("DarkMode");
             case ConfigKey::VideoHeight:                     return QStringLiteral("Height");
             case ConfigKey::VideoWidth:                      return QStringLiteral("Width");
             case ConfigKey::VideoRotate:                     return QStringLiteral("Rotate");
