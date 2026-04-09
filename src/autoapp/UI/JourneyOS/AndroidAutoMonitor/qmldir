@@ -1,0 +1,7 @@
+# DESIGN STUDIO MOCK — NOT used in the production build.
+# This module contains QML stubs of C++ enum types so Qt Design Studio can
+# preview the UI. The real types are registered as context properties in main.cpp.
+module AndroidAutoMonitor
+singleton AndroidAutoConnectivityState 1.0 AndroidAutoConnectivityState.qml
+singleton AndroidAutoConnectivityMethod 1.0 AndroidAutoConnectivityMethod.qml
+singleton BluetoothConnectionStatus 1.0 BluetoothConnectionStatus.qml
