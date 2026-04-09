@@ -449,9 +449,7 @@ Item {
                     control: RowLayout {
                         // anchors.fill: parent is unreliable after reparenting via children alias;
                         // use explicit property bindings which rebind on parentChanged instead.
-                        width: parent ? parent.width : 0
-                        height: parent ? parent.height : 0
-                        spacing: 8
+                        spacing: 10
                         ModernTextField {
                             id: primaryAccentField
                             Layout.fillWidth: true
@@ -474,9 +472,7 @@ Item {
                 SettingRow {
                     label: "Secondary Accent"
                     control: RowLayout {
-                        width: parent ? parent.width : 0
-                        height: parent ? parent.height : 0
-                        spacing: 8
+                        spacing: 10
                         ModernTextField {
                             id: brand2AccentField
                             Layout.fillWidth: true
@@ -499,9 +495,7 @@ Item {
                 SettingRow {
                     label: "Button Opacity"
                     control: RowLayout {
-                        width: parent ? parent.width : 0
-                        height: parent ? parent.height : 0
-                        spacing: 8
+                        spacing: 10
                         Slider {
                             Layout.fillWidth: true
                             from: 0.0; to: 1.0; stepSize: 0.01
@@ -711,9 +705,9 @@ Item {
                     onClicked: {
                         // Commit any text field edits that didn't trigger onEditingFinished
                         // (e.g. when the user types then immediately clicks Save)
+                        // Each setter calls configuration->save() internally — no explicit save needed.
                         settingsViewHandler.uiAccentPrimary = primaryAccentField.text.trim()
                         settingsViewHandler.uiAccentBrand2  = brand2AccentField.text.trim()
-                        settingsViewHandler.save()
                         stackView.pop()
                     }
                 }
