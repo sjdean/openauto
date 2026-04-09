@@ -7,6 +7,7 @@
 #include "qqmlextensionplugin.h"
 
 Q_IMPORT_QML_PLUGIN(JourneyOSContentPlugin)
+Q_IMPORT_QML_PLUGIN(AndroidAutoMonitorPlugin)
 Q_IMPORT_QML_PLUGIN(JourneyOSPlugin)
 
 const char mainQmlFile[] = "qrc:/qt/qml/JourneyOSContent/Journey.qml";
