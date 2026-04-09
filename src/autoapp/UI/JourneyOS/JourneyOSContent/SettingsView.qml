@@ -431,7 +431,7 @@ Item {
                         }
                     }
 
-                    Button {
+                    ModernButton {
                         text: "Check for Updates"
                         Layout.alignment: Qt.AlignVCenter
                         onClicked: updateManager.checkForUpdate()
@@ -447,7 +447,10 @@ Item {
                 SettingRow {
                     label: "Primary Accent"
                     control: RowLayout {
-                        anchors.fill: parent
+                        // anchors.fill: parent is unreliable after reparenting via children alias;
+                        // use explicit property bindings which rebind on parentChanged instead.
+                        width: parent ? parent.width : 0
+                        height: parent ? parent.height : 0
                         spacing: 8
                         ModernTextField {
                             id: primaryAccentField
@@ -461,7 +464,7 @@ Item {
                             color: primaryAccentField.text !== "" ? primaryAccentField.text : Constants.palettePrimary
                             border.color: cBorder; border.width: 1
                         }
-                        Button {
+                        ModernButton {
                             text: "Reset"
                             onClicked: { primaryAccentField.text = ""; settingsViewHandler.uiAccentPrimary = "" }
                         }
@@ -469,9 +472,10 @@ Item {
                 }
 
                 SettingRow {
-                    label: "Brand 2 Accent"
+                    label: "Secondary Accent"
                     control: RowLayout {
-                        anchors.fill: parent
+                        width: parent ? parent.width : 0
+                        height: parent ? parent.height : 0
                         spacing: 8
                         ModernTextField {
                             id: brand2AccentField
@@ -485,7 +489,7 @@ Item {
                             color: brand2AccentField.text !== "" ? brand2AccentField.text : Constants.paletteSecondary
                             border.color: cBorder; border.width: 1
                         }
-                        Button {
+                        ModernButton {
                             text: "Reset"
                             onClicked: { brand2AccentField.text = ""; settingsViewHandler.uiAccentBrand2 = "" }
                         }
@@ -495,7 +499,8 @@ Item {
                 SettingRow {
                     label: "Button Opacity"
                     control: RowLayout {
-                        anchors.fill: parent
+                        width: parent ? parent.width : 0
+                        height: parent ? parent.height : 0
                         spacing: 8
                         Slider {
                             Layout.fillWidth: true
@@ -704,6 +709,10 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                     }
                     onClicked: {
+                        // Commit any text field edits that didn't trigger onEditingFinished
+                        // (e.g. when the user types then immediately clicks Save)
+                        settingsViewHandler.uiAccentPrimary = primaryAccentField.text.trim()
+                        settingsViewHandler.uiAccentBrand2  = brand2AccentField.text.trim()
                         settingsViewHandler.save()
                         stackView.pop()
                     }
@@ -895,10 +904,83 @@ Item {
         Layout.preferredHeight: settingsView.controlHeight
         font.pointSize: Constants.fontBody
         Layout.fillWidth: true
+
         background: Rectangle {
             border.color: cBorder
             color: cSurface
             radius: Constants.radiusInput
+        }
+
+        // ── Increment (+) button ────────────────────────────────────────────
+        up.indicator: Rectangle {
+            x: rootSpin.mirrored ? 0 : parent.width - width
+            height: parent.height
+            implicitWidth: settingsView.controlHeight
+            implicitHeight: settingsView.controlHeight
+            color: rootSpin.up.pressed ? Qt.darker(cSurface, 1.25) : cSurface
+            border.color: cBorder
+            border.width: 1
+            radius: Constants.radiusInput
+            Text {
+                text: "+"
+                font.pointSize: Constants.fontBody + 2
+                font.bold: true
+                color: cTextMain
+                anchors.centerIn: parent
+            }
+        }
+
+        // ── Decrement (−) button ────────────────────────────────────────────
+        down.indicator: Rectangle {
+            x: rootSpin.mirrored ? parent.width - width : 0
+            height: parent.height
+            implicitWidth: settingsView.controlHeight
+            implicitHeight: settingsView.controlHeight
+            color: rootSpin.down.pressed ? Qt.darker(cSurface, 1.25) : cSurface
+            border.color: cBorder
+            border.width: 1
+            radius: Constants.radiusInput
+            Text {
+                text: "−"
+                font.pointSize: Constants.fontBody + 2
+                font.bold: true
+                color: cTextMain
+                anchors.centerIn: parent
+            }
+        }
+
+        // ── Value display ───────────────────────────────────────────────────
+        contentItem: TextInput {
+            z: 2
+            text: rootSpin.textFromValue(rootSpin.value, rootSpin.locale)
+            font: rootSpin.font
+            color: cTextMain
+            selectionColor: cAccent
+            selectedTextColor: "#ffffff"
+            horizontalAlignment: Qt.AlignHCenter
+            verticalAlignment: Qt.AlignVCenter
+            readOnly: !rootSpin.editable
+            validator: rootSpin.validator
+            inputMethodHints: Qt.ImhFormattedNumbersOnly
+        }
+    }
+
+    // Styled action button — used for in-row actions (Reset, Check for Updates)
+    component ModernButton : Button {
+        Layout.preferredHeight: settingsView.controlHeight
+        background: Rectangle {
+            color: parent.down ? Qt.darker(cSurface, 1.25) : cSurface
+            border.color: cBorder
+            border.width: 1
+            radius: Constants.radiusInput
+        }
+        contentItem: Text {
+            text: parent.text
+            font.pointSize: Constants.fontBody
+            font.bold: true
+            color: cTextMain
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
         }
     }
 

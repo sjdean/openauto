@@ -58,7 +58,7 @@ Window {
 
     Popup {
         id: brightnessPopup
-        x: volumePopup.x - width - (root.width * 0.02) // Shift left of volume
+        x: root.width - (Math.min(75, root.width * 0.1) * 2) - (root.width * 0.02) // Left of volume, no cross-popup dependency
         y: root.height * 0.2
         width: Math.min(75, root.width * 0.1)
         height: root.height * 0.7

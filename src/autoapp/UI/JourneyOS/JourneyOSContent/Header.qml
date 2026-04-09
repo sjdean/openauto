@@ -124,7 +124,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width * 0.45
                 height: parent.height
-                source: "images/journey.jpg"
+                source: "images/journey.png"
                 fillMode: Image.PreserveAspectFit
             }
             Item {

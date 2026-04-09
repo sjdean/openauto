@@ -198,10 +198,14 @@ QtObject {
 
     // ── BUTTONS ───────────────────────────────────────────────────────────────
     // Default / neutral
+    // btnSurface is always a semi-transparent _onSurface tint over the page bg:
+    //   dark mode: light tint on dark bg  →  medium-dark surface
+    //   light mode: dark tint on light bg →  medium-dark surface
+    // Both cases produce a darker surface, so content is always a fixed white.
     readonly property color btnSurface:        withAlpha(_onSurface, buttonSurfaceOpacity)
     readonly property color btnSurfacePressed: withAlpha(_onSurface, 0.73)
-    readonly property color btnContent:        _onSurface
-    readonly property color btnContentPressed: withAlpha(_onSurface, 0.50)
+    readonly property color btnContent:        "#FFFFFF"
+    readonly property color btnContentPressed: Qt.rgba(1, 1, 1, 0.65)
 
     // Danger — dark red bg, vivid red label
     readonly property color btnDangerSurface:        withAlpha(_errorContainer, 0.80)

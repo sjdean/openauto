@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/journey/stylesheet">
-        <file>background/journey.jpg</file>
+        <file>background/journey.png</file>
         <file>ui/icons/menu-burger.svg</file>
         <file>ui/icons/refresh.svg</file>
         <file>ui/icons/home.svg</file>

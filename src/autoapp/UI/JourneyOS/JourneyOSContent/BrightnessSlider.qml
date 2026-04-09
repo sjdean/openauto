@@ -38,12 +38,15 @@ Slider {
                 ColorAnimation { duration: 100 }
             }
 
+            // Swap weights so sliderColor (low/dim) maps to MIN and alternateColor
+            // (high/bright) maps to MAX.  visualPosition is inverted for Qt.Vertical
+            // (visualPosition=1 at handle bottom = minimum value).
             color: Qt.hsla(
-                       (Qt.hsla(sliderColor.hslHue, 0, 0, 1).hslHue * (1 - brightnessSlider.visualPosition)) +
-                       (Qt.hsla(alternateColor.hslHue, 0, 0, 1).hslHue * brightnessSlider.visualPosition),
-                       (sliderColor.hslSaturation * (1 - brightnessSlider.visualPosition)) + (alternateColor.hslSaturation * brightnessSlider.visualPosition),
-                       (sliderColor.hslLightness * (1 - brightnessSlider.visualPosition)) + (alternateColor.hslLightness * brightnessSlider.visualPosition),
-                       (sliderColor.a * (1 - brightnessSlider.visualPosition)) + (alternateColor.a * brightnessSlider.visualPosition)
+                       (Qt.hsla(sliderColor.hslHue, 0, 0, 1).hslHue * brightnessSlider.visualPosition) +
+                       (Qt.hsla(alternateColor.hslHue, 0, 0, 1).hslHue * (1 - brightnessSlider.visualPosition)),
+                       (sliderColor.hslSaturation * brightnessSlider.visualPosition) + (alternateColor.hslSaturation * (1 - brightnessSlider.visualPosition)),
+                       (sliderColor.hslLightness * brightnessSlider.visualPosition) + (alternateColor.hslLightness * (1 - brightnessSlider.visualPosition)),
+                       (sliderColor.a * brightnessSlider.visualPosition) + (alternateColor.a * (1 - brightnessSlider.visualPosition))
                    )
         }
     }

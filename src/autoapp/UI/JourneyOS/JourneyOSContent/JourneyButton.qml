@@ -65,22 +65,26 @@ Button {
             anchors.horizontalCenter: itemButton.horizontalCenter
 
 
-            MultiEffect {
-                source: image
-                height: control.icon.height
+            // Image + MultiEffect share the same Item so they overlap.
+            // The Image must be visible (declared first = painted bottom) for
+            // MultiEffect to have a texture to sample. MultiEffect is declared
+            // second (painted on top) and replaces the source colours entirely.
+            Item {
                 width: control.icon.width
+                height: control.icon.height
                 anchors.horizontalCenter: parent.horizontalCenter
-                colorization: 1.0
-                colorizationColor: control.icon.color
-            }
 
-            Image {
-                id: image
-                source: control.icon.source
-                height: control.icon.height
-                width: control.icon.width
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: false
+                Image {
+                    id: image
+                    source: control.icon.source
+                    anchors.fill: parent
+                }
+
+                MultiEffect {
+                    source: image
+                    anchors.fill: parent
+                    brightness: 1.0
+                }
             }
 
             Text {
@@ -115,16 +119,8 @@ Button {
                 height: (control.icon.height * 2) - (control.buttonPadding * 2)
                 width: (control.icon.width * 2) - (control.buttonPadding * 2)
 
-                MultiEffect {
-                    source: horizontalIconImage
-                    height: control.icon.height
-                    width: control.icon.width
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    colorization: 1.0
-                    colorizationColor: control.icon.color
-                }
-
+                // Image first (bottom), MultiEffect second (top) so the effect
+                // paints over the original and colourises it correctly.
                 Image {
                     id: horizontalIconImage
                     source: control.icon.source
@@ -132,7 +128,15 @@ Button {
                     width: control.icon.width
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter
-                    visible: false
+                }
+
+                MultiEffect {
+                    source: horizontalIconImage
+                    height: control.icon.height
+                    width: control.icon.width
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    brightness: 1.0
                 }
             }
 

@@ -62,6 +62,7 @@ qt6_add_qml_module(JourneyOSContent
         "images/wifi-2.svg"
         "images/link-off.svg"
         "images/settings.svg"
+        "images/journey.png"
 )
 
 

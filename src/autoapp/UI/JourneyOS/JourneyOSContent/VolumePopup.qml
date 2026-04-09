@@ -35,7 +35,7 @@ Item {
         JourneyButton {
             id: muteButton
             iconSize: height * 0.5
-            icon.source: "images/volume-mute.svg"
+            icon.source: "images/volume.svg"
             height: parent.width
             text: "Mute"
             width: parent.width
@@ -45,7 +45,6 @@ Item {
                     volumePopup.isMuted = !volumePopup.isMuted
                     volumePopupHandler.volumeSinkMute = volumePopup.isMuted
                 }
-
             }
         }
     }
@@ -56,7 +55,9 @@ Item {
             when: volumePopup.isMuted
             PropertyChanges {
                 target: muteButton
-                icon.color: "#ff0000"
+                icon.source: "images/volume-mute.svg"
+                textColor: "#ff0000"
+                text: "Unmute"
             }
             PropertyChanges {
                 target: volumeSlider
@@ -68,10 +69,9 @@ Item {
             when: !volumePopup.isMuted
             PropertyChanges {
                 target: muteButton
-                icon.color: "#ffffff"
-            }
-            PropertyChanges {
-                target: volumeSlider
+                icon.source: "images/volume.svg"
+                textColor: Constants.btnContent
+                text: "Mute"
             }
         }
     ]

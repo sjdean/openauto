@@ -21,8 +21,7 @@ Item {
             height: parent.height - darkModeButton.height - parent.spacing
             width: parent.width
             alternateColor: Constants.sliderBrightnessTrackHigh
-            onValueChanged: brightnessPopupHandler.targetBrightness = value
-            value: brightnessPopupHandler.targetBrightness
+            onMoved: brightnessPopupHandler.targetBrightness = value
         }
 
         JourneyButton {

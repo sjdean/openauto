@@ -36,17 +36,17 @@ Slider {
                 ColorAnimation { duration: 100 }
             }
 
-            // Calculate color based on slider position
+            // Color interpolates low→high as value increases.
+            // visualPosition = 1−position for Qt.Vertical, so visualPosition=1
+            // when handle is at MIN (bottom) and 0 when at MAX (top).
+            // Swap the weight so sliderColor (low) maps to MIN and alternateColor
+            // (high) maps to MAX.
             color: Qt.hsla(
-                       // Hue interpolation
-                       (Qt.hsla(sliderColor.hslHue, 0, 0, 1).hslHue * (1 - volumeSlider.visualPosition)) +
-                       (Qt.hsla(alternateColor.hslHue, 0, 0, 1).hslHue * volumeSlider.visualPosition),
-                       // Saturation interpolation
-                       (sliderColor.hslSaturation * (1 - volumeSlider.visualPosition)) + (alternateColor.hslSaturation * volumeSlider.visualPosition),
-                       // Lightness interpolation
-                       (sliderColor.hslLightness * (1 - volumeSlider.visualPosition)) + (alternateColor.hslLightness * volumeSlider.visualPosition),
-                       // Alpha interpolation
-                       (sliderColor.a * (1 - volumeSlider.visualPosition)) + (alternateColor.a * volumeSlider.visualPosition)
+                       (Qt.hsla(sliderColor.hslHue, 0, 0, 1).hslHue * volumeSlider.visualPosition) +
+                       (Qt.hsla(alternateColor.hslHue, 0, 0, 1).hslHue * (1 - volumeSlider.visualPosition)),
+                       (sliderColor.hslSaturation * volumeSlider.visualPosition) + (alternateColor.hslSaturation * (1 - volumeSlider.visualPosition)),
+                       (sliderColor.hslLightness * volumeSlider.visualPosition) + (alternateColor.hslLightness * (1 - volumeSlider.visualPosition)),
+                       (sliderColor.a * volumeSlider.visualPosition) + (alternateColor.a * (1 - volumeSlider.visualPosition))
                    )
         }
     }
