@@ -6,8 +6,9 @@
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 
 namespace f1x::openauto::autoapp::projection {
-    class InputDevice : public QObject, public IInputDevice, boost::noncopyable {
+    class InputDevice : public QObject, public IInputDevice {
         Q_OBJECT
+        Q_DISABLE_COPY(InputDevice)
 
     public:
         InputDevice(QObject &parent, configuration::IConfiguration::Pointer configuration,

@@ -1,3 +1,4 @@
+#include <chrono>
 #include <f1x/openauto/autoapp/Service/Pinger.hpp>
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcPinger, "journeyos.pinger")
@@ -20,7 +21,7 @@ namespace f1x::openauto::autoapp::service {
         qDebug(lcPinger) << "pings=" << pingsCount_;
 
         promise_ = std::move(promise);
-        timer_.expires_from_now(boost::posix_time::milliseconds(duration_));
+        timer_.expires_from_now(std::chrono::milliseconds(duration_));
         timer_.async_wait(
             strand_.wrap(std::bind(&Pinger::onTimerExceeded, this->shared_from_this(), std::placeholders::_1)));
       }

@@ -1,3 +1,4 @@
+#include <chrono>
 #include <f1x/openauto/autoapp/Service/Sensor/SensorService.hpp>
 #include <fstream>
 #include <cmath>
@@ -211,7 +212,7 @@ namespace f1x::openauto::autoapp::service::sensor {
         }
 #endif
 
-        timer_.expires_from_now(boost::posix_time::milliseconds(250));
+        timer_.expires_from_now(std::chrono::milliseconds(250));
         timer_.async_wait(strand_.wrap(std::bind(&SensorService::sensorPolling, this->shared_from_this())));
       });
     }

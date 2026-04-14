@@ -1,5 +1,4 @@
 
-#include <boost/algorithm/hex.hpp>
 #include <QNetworkInterface>
 #include <iostream>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
