@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QTcpServer>
 #include <aasdk/USB/IUSBHub.hpp>
 #include <aasdk/USB/IConnectedAccessoriesEnumerator.hpp>
 #include <aasdk/USB/USBWrapper.hpp>
@@ -55,15 +56,13 @@ namespace f1x::openauto::autoapp {
         void waitForDevice();
         void aoapDeviceHandler(aasdk::usb::DeviceHandle deviceHandle);
         void onUSBHubError(const aasdk::error::Error &error);
-        void startServerSocket();
-        void handleNewClient(std::shared_ptr<boost::asio::ip::tcp::socket> socket,
-                             const boost::system::error_code &err);
+        void handleNewClient();
 
         // Core Infrastructure
         boost::asio::io_service &ioService_;
         aasdk::usb::USBWrapper &usbWrapper_;
         aasdk::tcp::ITCPWrapper &tcpWrapper_;
-        boost::asio::ip::tcp::acceptor acceptor_;
+        QTcpServer tcpServer_;
         boost::asio::io_service::strand strand_;
 
         // Factory & Hardware

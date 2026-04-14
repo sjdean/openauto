@@ -1,4 +1,5 @@
 #pragma once
+#include <QTimer>
 #include <gps.h>
 #include <aap_protobuf/service/sensorsource/message/DrivingStatus.pb.h>
 #include <aap_protobuf/service/sensorsource/message/SensorType.pb.h>
@@ -53,7 +54,7 @@ namespace f1x::openauto::autoapp::service::sensor {
 
         bool firstRun = true;
 
-        boost::asio::steady_timer timer_;
+        QTimer timer_;
         boost::asio::io_service::strand strand_;
         aasdk::channel::sensorsource::SensorSourceService::Pointer channel_;
         struct gps_data_t gpsData_;

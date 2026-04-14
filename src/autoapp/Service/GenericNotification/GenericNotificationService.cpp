@@ -9,7 +9,6 @@ namespace f1x::openauto::autoapp::service::genericnotification {
   GenericNotificationService::GenericNotificationService(boost::asio::io_service &ioService,
                                                          aasdk::messenger::IMessenger::Pointer messenger)
       : strand_(ioService),
-        timer_(ioService),
         channel_(std::make_shared<aasdk::channel::genericnotification::GenericNotificationService>(strand_, std::move(
             messenger))) {
 

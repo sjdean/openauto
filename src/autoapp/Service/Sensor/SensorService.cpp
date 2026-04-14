@@ -1,4 +1,3 @@
-#include <chrono>
 #include <f1x/openauto/autoapp/Service/Sensor/SensorService.hpp>
 #include <fstream>
 #include <cmath>
@@ -10,9 +9,10 @@ namespace f1x::openauto::autoapp::service::sensor {
   SensorService::SensorService(boost::asio::io_service &ioService,
                                aasdk::messenger::IMessenger::Pointer messenger)
       : strand_(ioService),
-        timer_(ioService),
         channel_(std::make_shared<aasdk::channel::sensorsource::SensorSourceService>(strand_, std::move(messenger))) {
-
+    timer_.setSingleShot(true);
+    timer_.setInterval(250);
+    QObject::connect(&timer_, &QTimer::timeout, [this]() { sensorPolling(); });
   }
 
   void SensorService::start() {
@@ -40,6 +40,7 @@ namespace f1x::openauto::autoapp::service::sensor {
 
   void SensorService::stop() {
     this->stopPolling = true;
+    timer_.stop();
 
     strand_.dispatch([this, self = this->shared_from_this()]() {
 #ifdef Q_OS_LINUX
@@ -212,8 +213,7 @@ namespace f1x::openauto::autoapp::service::sensor {
         }
 #endif
 
-        timer_.expires_from_now(std::chrono::milliseconds(250));
-        timer_.async_wait(strand_.wrap(std::bind(&SensorService::sensorPolling, this->shared_from_this())));
+        timer_.start();
       });
     }
   }

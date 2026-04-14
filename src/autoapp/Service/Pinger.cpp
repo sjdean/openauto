@@ -1,4 +1,3 @@
-#include <chrono>
 #include <f1x/openauto/autoapp/Service/Pinger.hpp>
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcPinger, "journeyos.pinger")
@@ -6,8 +5,8 @@ Q_LOGGING_CATEGORY(lcPinger, "journeyos.pinger")
 namespace f1x::openauto::autoapp::service {
 
   Pinger::Pinger(boost::asio::io_service &ioService, time_t duration)
-      : strand_(ioService), timer_(ioService), duration_(duration), cancelled_(false), pingsCount_(0), pongsCount_(0) {
-
+      : strand_(ioService), duration_(duration), cancelled_(false), pingsCount_(0), pongsCount_(0) {
+    QObject::connect(&timer_, &QTimer::timeout, [this]() { onTimerExceeded(); });
   }
 
   void Pinger::ping(Promise::Pointer promise) {
@@ -21,9 +20,9 @@ namespace f1x::openauto::autoapp::service {
         qDebug(lcPinger) << "pings=" << pingsCount_;
 
         promise_ = std::move(promise);
-        timer_.expires_from_now(std::chrono::milliseconds(duration_));
-        timer_.async_wait(
-            strand_.wrap(std::bind(&Pinger::onTimerExceeded, this->shared_from_this(), std::placeholders::_1)));
+        timer_.setInterval(static_cast<int>(duration_));
+        timer_.setSingleShot(true);
+        timer_.start();
       }
     });
   }
@@ -35,10 +34,10 @@ namespace f1x::openauto::autoapp::service {
     });
   }
 
-  void Pinger::onTimerExceeded(const boost::system::error_code &error) {
+  void Pinger::onTimerExceeded() {
     if (promise_ == nullptr) {
       return;
-    } else if (error == boost::asio::error::operation_aborted || cancelled_) {
+    } else if (cancelled_) {
       promise_->reject(aasdk::error::Error(aasdk::error::ErrorCode::OPERATION_ABORTED));
     } else if (pingsCount_ - pongsCount_ > 4) {
       promise_->reject(aasdk::error::Error());
@@ -52,11 +51,12 @@ namespace f1x::openauto::autoapp::service {
   void Pinger::cancel() {
     strand_.dispatch([this, self = this->shared_from_this()]() {
       cancelled_ = true;
-      timer_.cancel();
+      timer_.stop();
+      if (promise_ != nullptr) {
+        promise_->reject(aasdk::error::Error(aasdk::error::ErrorCode::OPERATION_ABORTED));
+        promise_.reset();
+      }
     });
   }
 
 }
-
-
-

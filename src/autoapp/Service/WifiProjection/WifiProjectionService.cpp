@@ -12,7 +12,6 @@ using configuration::ConfigKey;
                                                aasdk::messenger::IMessenger::Pointer messenger,
                                                configuration::IConfiguration::Pointer configuration)
       : configuration_(std::move(configuration)),
-        timer_(ioService),
         strand_(ioService),
         channel_(
             std::make_shared<aasdk::channel::wifiprojection::WifiProjectionService>(strand_, std::move(messenger))) {

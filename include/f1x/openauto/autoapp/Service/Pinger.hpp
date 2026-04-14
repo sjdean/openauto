@@ -1,4 +1,5 @@
 #pragma once
+#include <QTimer>
 #include <f1x/openauto/autoapp/Service/IPinger.hpp>
 
 namespace f1x::openauto::autoapp::service {
@@ -15,10 +16,10 @@ namespace f1x::openauto::autoapp::service {
     private:
         using std::enable_shared_from_this<Pinger>::shared_from_this;
 
-        void onTimerExceeded(const boost::system::error_code &error);
+        void onTimerExceeded();
 
         boost::asio::io_service::strand strand_;
-        boost::asio::steady_timer timer_;
+        QTimer timer_;
         time_t duration_;
         bool cancelled_;
         Promise::Pointer promise_;

@@ -9,8 +9,7 @@ namespace f1x::openauto::autoapp::service::mediaplaybackstatus {
 
   MediaPlaybackStatusService::MediaPlaybackStatusService(boost::asio::io_service &ioService,
                                                          aasdk::messenger::IMessenger::Pointer messenger)
-      : timer_(ioService),
-        strand_(ioService),
+      : strand_(ioService),
         channel_(std::make_shared<aasdk::channel::mediaplaybackstatus::MediaPlaybackStatusService>(strand_, std::move(
           messenger))) {
 
