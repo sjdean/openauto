@@ -4,8 +4,8 @@
 #include <aasdk/USB/IUSBHub.hpp>
 #include <aasdk/USB/IConnectedAccessoriesEnumerator.hpp>
 #include <aasdk/USB/USBWrapper.hpp>
-#include <aasdk/TCP/ITCPWrapper.hpp>
 #include <aasdk/TCP/ITCPEndpoint.hpp>
+#include <aasdk/TCP/QtTCPEndpoint.hpp>
 
 // Core Interfaces
 #include <f1x/openauto/autoapp/Service/IAndroidAutoSessionEventHandler.hpp>
@@ -37,7 +37,7 @@ namespace f1x::openauto::autoapp {
 
         void waitForUSBDevice();
 
-        void start(aasdk::tcp::ITCPEndpoint::SocketPointer socket);
+        void start(aasdk::tcp::ITCPEndpoint::Pointer endpoint);
 
         void stop();
 
@@ -61,7 +61,6 @@ namespace f1x::openauto::autoapp {
         // Core Infrastructure
         boost::asio::io_service &ioService_;
         aasdk::usb::USBWrapper &usbWrapper_;
-        aasdk::tcp::ITCPWrapper &tcpWrapper_;
         QTcpServer tcpServer_;
         boost::asio::io_service::strand strand_;
 

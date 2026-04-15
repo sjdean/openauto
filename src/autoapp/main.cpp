@@ -11,7 +11,6 @@
 #include <aasdk/USB/ConnectedAccessoriesEnumerator.hpp>
 #include <aasdk/USB/AccessoryModeQueryChainFactory.hpp>
 #include <aasdk/USB/AccessoryModeQueryFactory.hpp>
-#include <aasdk/TCP/TCPWrapper.hpp>
 
 #include <f1x/openauto/autoapp/ProjectionManager.hpp>
 #include <f1x/openauto/autoapp/Service/SessionFactory.hpp>
@@ -434,7 +433,6 @@ int main(int argc, char *argv[]) {
     context->setContextProperty("audioBackendTelephony", audioOutputTelephony ? dynamic_cast<QObject*>(audioOutputTelephony.get()) : nullptr);
     context->setContextProperty("audioBackendSystem", dynamic_cast<QObject*>(audioOutputSystem.get()));
 
-    aasdk::tcp::TCPWrapper tcpWrapper;
     aasdk::usb::USBWrapper usbWrapper(usbContext);
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
     aasdk::usb::AccessoryModeQueryChainFactory queryChainFactory(usbWrapper, ioService, queryFactory);
@@ -446,7 +444,7 @@ int main(int argc, char *argv[]) {
         std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));
 
     qInfo(lcAutoapp) << "starting projection manager";
-    auto oa = std::make_shared<autoapp::ProjectionManager>(configuration, ioService, usbWrapper, tcpWrapper, sessionFactory,
+    auto oa = std::make_shared<autoapp::ProjectionManager>(configuration, ioService, usbWrapper, sessionFactory,
                                              std::move(usbHub), std::move(connectedAccessoriesEnumerator),
                                              androidAutoMonitor);
 

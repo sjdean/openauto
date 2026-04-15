@@ -4,7 +4,6 @@
 #include <QTcpSocket>
 #include <QHostAddress>
 #include <aasdk/USB/AOAPDevice.hpp>
-#include <aasdk/TCP/TCPEndpoint.hpp>
 #include <aap_protobuf/service/bluetooth/message/BluetoothAuthenticationData.pb.h>
 
 #include "f1x/openauto/autoapp/Bootstrap/AndroidBluetoothServer.hpp"
@@ -21,7 +20,6 @@ using configuration::ConfigKey;
     ProjectionManager::ProjectionManager(configuration::IConfiguration::Pointer configuration,
              boost::asio::io_service &ioService,
              aasdk::usb::USBWrapper &usbWrapper,
-             aasdk::tcp::ITCPWrapper &tcpWrapper,
              service::ISessionFactory &sessionFactory,
              aasdk::usb::IUSBHub::Pointer usbHub,
              aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator,
@@ -29,7 +27,6 @@ using configuration::ConfigKey;
     )
         : ioService_(ioService),
           usbWrapper_(usbWrapper),
-          tcpWrapper_(tcpWrapper),
           strand_(ioService_),
           sessionFactory_(sessionFactory),
           usbHub_(std::move(usbHub)),
@@ -78,7 +75,7 @@ using configuration::ConfigKey;
         }
     }
 
-    void ProjectionManager::start(aasdk::tcp::ITCPEndpoint::SocketPointer socket) {
+    void ProjectionManager::start(aasdk::tcp::ITCPEndpoint::Pointer endpoint) {
         qInfo(lcProjectionManager) << "Starting Wireless Session (TCP)";
 
         if (activeSession_ != nullptr) {
@@ -92,8 +89,7 @@ using configuration::ConfigKey;
         }
 
         try {
-            auto tcpEndpoint(std::make_shared<aasdk::tcp::TCPEndpoint>(tcpWrapper_, std::move(socket)));
-            activeSession_ = sessionFactory_.create(std::move(tcpEndpoint));
+            activeSession_ = sessionFactory_.create(std::move(endpoint));
             activeSession_->start(*this);
         } catch (const aasdk::error::Error &error) {
             qCritical(lcProjectionManager) << "Failed to create Wireless Session: " << error.what();
@@ -214,23 +210,13 @@ using configuration::ConfigKey;
     }
 
     void ProjectionManager::handleNewClient() {
-        auto *qtSocket = tcpServer_.nextPendingConnection();
+        QTcpSocket *qtSocket = tcpServer_.nextPendingConnection();
         if (!qtSocket) return;
 
         qInfo(lcProjectionManager) << "New WiFi Client Connected.";
 
-        auto socket = std::make_shared<boost::asio::ip::tcp::socket>(ioService_);
-        boost::system::error_code ec;
-        socket->assign(boost::asio::ip::tcp::v4(),
-            static_cast<boost::asio::ip::tcp::socket::native_handle_type>(qtSocket->socketDescriptor()), ec);
-
-        if (!ec) {
-            qtSocket->setSocketDescriptor(-1);
-            qtSocket->deleteLater();
-            start(std::move(socket));
-        } else {
-            qWarning(lcProjectionManager) << "Socket migration failed: " << ec.message().c_str();
-            qtSocket->deleteLater();
-        }
+        auto endpoint = std::make_shared<aasdk::tcp::QtTCPEndpoint>(
+            std::shared_ptr<QTcpSocket>(qtSocket));
+        start(std::move(endpoint));
     }
 }
