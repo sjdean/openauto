@@ -26,7 +26,9 @@ namespace f1x::openauto::autoapp::projection {
     qInfo(lcBuffer) << "Opening buffer mode:" << mode;
 
     // Ensure buffer is clear for this open
-    m_buffer.clear();
+    m_head = 0;
+    m_tail = 0;
+    m_size = 0;
 
     // Open Device in mode required
     return QIODevice::open(mode);
@@ -37,18 +39,25 @@ namespace f1x::openauto::autoapp::projection {
     QMutexLocker locker(&m_mutex);
 
     // Return 0 if Buffer is Empty
-    if (m_buffer.empty()) {
+    if (m_size == 0) {
       return 0;
     }
 
     // Otherwise get length of buffer
-    qint64 len = qMin(maxlen, (qint64)m_buffer.size());
+    qint64 len = qMin(maxlen, (qint64)m_size);
 
     // Copy Buffer to Data
-    std::copy(m_buffer.begin(), m_buffer.begin() + len, data);
+    size_t first_part = std::min((size_t)len, MAX_BUFFER_SIZE - m_head);
+    std::copy(m_buffer.begin() + m_head, m_buffer.begin() + m_head + first_part, data);
 
-    // Erase Buffer
-    m_buffer.erase_begin(len);
+    if (first_part < (size_t)len) {
+        size_t second_part = (size_t)len - first_part;
+        std::copy(m_buffer.begin(), m_buffer.begin() + second_part, data + first_part);
+    }
+
+    // Erase Buffer (advance head)
+    m_head = (m_head + len) % MAX_BUFFER_SIZE;
+    m_size -= len;
 
     // Return Length
     return len;
@@ -62,17 +71,34 @@ namespace f1x::openauto::autoapp::projection {
   qint64 SequentialBuffer::writeData(const char *data, qint64 len) {
     QMutexLocker locker(&m_mutex);
 
+    if (len <= 0) return 0;
+
     // Check space available in the buffer
-    qint64 space = m_buffer.capacity() - m_buffer.size();
+    qint64 space = MAX_BUFFER_SIZE - m_size;
     if (len > space) {
       // Drop oldest data if full (optional: log warning)
       qWarning(lcBuffer) << "Video buffer overflow! Dropping" << (len - space) << "bytes";
       size_t toDrop = len - space;
-      m_buffer.erase_begin(std::min(toDrop, m_buffer.size()));
+      size_t actualDrop = std::min(toDrop, m_size);
+      m_head = (m_head + actualDrop) % MAX_BUFFER_SIZE;
+      m_size -= actualDrop;
     }
 
+    // We only write up to MAX_BUFFER_SIZE bytes
+    size_t writeLen = std::min((size_t)len, MAX_BUFFER_SIZE);
+    const char* writeDataPtr = data + (len - writeLen);
+
     // Insert data into Buffer
-    m_buffer.insert(m_buffer.end(), data, data + len);
+    size_t first_part = std::min(writeLen, MAX_BUFFER_SIZE - m_tail);
+    std::copy(writeDataPtr, writeDataPtr + first_part, m_buffer.begin() + m_tail);
+
+    if (first_part < writeLen) {
+        size_t second_part = writeLen - first_part;
+        std::copy(writeDataPtr + first_part, writeDataPtr + writeLen, m_buffer.begin());
+    }
+
+    m_tail = (m_tail + writeLen) % MAX_BUFFER_SIZE;
+    m_size += writeLen;
 
     // Notify we have data
     emit readyRead();
@@ -91,7 +117,7 @@ namespace f1x::openauto::autoapp::projection {
     QMutexLocker locker(&m_mutex);
 
     // QIODevice::bytesAvailable() is always null, so all we care about is the size of our internal buffer
-    return std::max<qint64>(1, m_buffer.size());
+    return std::max<qint64>(1, m_size);
   }
 
   bool SequentialBuffer::canReadLine() const {
