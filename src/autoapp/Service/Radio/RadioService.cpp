@@ -6,10 +6,8 @@ Q_LOGGING_CATEGORY(lcServiceRadio, "journeyos.service.radio")
 
 namespace f1x::openauto::autoapp::service::radio {
 
-  RadioService::RadioService(boost::asio::io_service &ioService,
-                             aasdk::messenger::IMessenger::Pointer messenger)
-      : strand_(ioService),
-        channel_(std::make_shared<aasdk::channel::radio::RadioService>(std::move(messenger))) {
+  RadioService::RadioService(aasdk::messenger::IMessenger::Pointer messenger)
+      : channel_(std::make_shared<aasdk::channel::radio::RadioService>(std::move(messenger))) {
 
   }
 

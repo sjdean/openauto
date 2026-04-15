@@ -2,7 +2,6 @@
 #include <QTimer>
 #include <aasdk/Channel/MediaBrowser/MediaBrowserService.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
-#include <boost/asio/io_service.hpp>
 #include <aasdk/Messenger/IMessenger.hpp>
 
 namespace f1x::openauto::autoapp::service::mediabrowser {
@@ -11,7 +10,7 @@ namespace f1x::openauto::autoapp::service::mediabrowser {
             public IService,
             public std::enable_shared_from_this<MediaBrowserService> {
     public:
-        MediaBrowserService(boost::asio::io_service &ioService, aasdk::messenger::IMessenger::Pointer messenger);
+        MediaBrowserService(aasdk::messenger::IMessenger::Pointer messenger);
 
         void start() override;
 

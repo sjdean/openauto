@@ -18,16 +18,13 @@ using configuration::ConfigGroup;
 using configuration::ConfigKey;
 
     ProjectionManager::ProjectionManager(configuration::IConfiguration::Pointer configuration,
-             boost::asio::io_service &ioService,
              aasdk::usb::USBWrapper &usbWrapper,
              service::ISessionFactory &sessionFactory,
              aasdk::usb::IUSBHub::Pointer usbHub,
              aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator,
              std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor
     )
-        : ioService_(ioService),
-          usbWrapper_(usbWrapper),
-          strand_(ioService_),
+        : usbWrapper_(usbWrapper),
           sessionFactory_(sessionFactory),
           usbHub_(std::move(usbHub)),
           connectedAccessoriesEnumerator_(std::move(connectedAccessoriesEnumerator)),

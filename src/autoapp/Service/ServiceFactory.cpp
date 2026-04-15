@@ -54,8 +54,7 @@ using configuration::ConfigKey;
      * Note that this class assumes responsibility for ensuring efficient use of resources
      * and clean lifecycle management of the services it creates.
      */
-    ServiceFactory::ServiceFactory(boost::asio::io_service &ioService,
-                                   configuration::IConfiguration::Pointer configuration,
+    ServiceFactory::ServiceFactory(configuration::IConfiguration::Pointer configuration,
                                    projection::InputDevice::Pointer inputDevice,
                                    projection::IVideoOutput::Pointer videoOutput,
                                    projection::IAudioInput::Pointer audioInput,
@@ -63,8 +62,7 @@ using configuration::ConfigKey;
                                    projection::IAudioOutput::Pointer audioOutputMedia,
                                    projection::IAudioOutput::Pointer audioOutputGuidance,
                                    projection::IAudioOutput::Pointer audioOutputTelephony)
-        : ioService_(ioService)
-          , configuration_(std::move(configuration))
+        : configuration_(std::move(configuration))
           , inputDevice_(inputDevice)
           , videoOutput_(videoOutput)
           , audioOutputSystem_(audioOutputSystem)

@@ -15,8 +15,7 @@ namespace f1x::openauto::autoapp::service {
                               public aasdk::channel::control::IControlServiceChannelEventHandler,
                               public std::enable_shared_from_this<AndroidAutoSession> {
     public:
-        AndroidAutoSession(boost::asio::io_service &ioService,
-                          aasdk::messenger::ICryptor::Pointer cryptor,
+        AndroidAutoSession(aasdk::messenger::ICryptor::Pointer cryptor,
                           aasdk::transport::ITransport::Pointer transport,
                           aasdk::messenger::IMessenger::Pointer messenger,
                           configuration::IConfiguration::Pointer configuration,

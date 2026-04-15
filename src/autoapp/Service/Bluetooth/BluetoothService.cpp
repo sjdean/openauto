@@ -5,11 +5,9 @@ Q_LOGGING_CATEGORY(lcServiceBt, "journeyos.service.bluetooth")
 namespace f1x::openauto::autoapp::service::bluetooth {
 
   /// AndroidAuto channel to advise bluetooth availability and to manage HFP/A2DP pairing requests.
-  BluetoothService::BluetoothService(boost::asio::io_service &ioService,
-                                     aasdk::messenger::IMessenger::Pointer messenger,
+  BluetoothService::BluetoothService(aasdk::messenger::IMessenger::Pointer messenger,
                                      projection::IBluetoothDevice::Pointer bluetoothDevice)
-      : strand_(ioService),
-        channel_(std::make_shared<aasdk::channel::bluetooth::BluetoothService>(std::move(messenger))),
+      : channel_(std::make_shared<aasdk::channel::bluetooth::BluetoothService>(std::move(messenger))),
         bluetoothDevice_(std::move(bluetoothDevice)) {
 
   }

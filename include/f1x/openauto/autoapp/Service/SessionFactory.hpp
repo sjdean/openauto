@@ -10,8 +10,7 @@
 namespace f1x::openauto::autoapp::service {
     class SessionFactory : public ISessionFactory {
     public:
-        SessionFactory(boost::asio::io_service &ioService,
-                                 configuration::IConfiguration::Pointer configuration,
+        SessionFactory(configuration::IConfiguration::Pointer configuration,
                                  IServiceFactory &serviceFactory,
                                  std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor);
 
@@ -22,7 +21,7 @@ namespace f1x::openauto::autoapp::service {
     private:
         IAndroidAutoSession::Pointer create(aasdk::transport::ITransport::Pointer transport);
 
-        boost::asio::io_service &ioService_;
+        ;
         configuration::IConfiguration::Pointer configuration_;
         IServiceFactory &serviceFactory_;
         std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor_;

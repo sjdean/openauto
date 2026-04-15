@@ -12,7 +12,7 @@
 namespace f1x::openauto::autoapp::service {
     class ServiceFactory : public IServiceFactory {
     public:
-        ServiceFactory(boost::asio::io_service &ioService, configuration::IConfiguration::Pointer configuration,
+        ServiceFactory(configuration::IConfiguration::Pointer configuration,
             projection::InputDevice::Pointer inputDevice,
             projection::IVideoOutput::Pointer videoOutput,
             projection::IAudioInput::Pointer audioInput,
@@ -51,7 +51,7 @@ namespace f1x::openauto::autoapp::service {
 
         IService::Pointer createWifiProjectionService(aasdk::messenger::IMessenger::Pointer messenger);
 
-        boost::asio::io_service &ioService_;
+        ;
         configuration::IConfiguration::Pointer configuration_;
         projection::InputDevice::Pointer inputDevice_;
         projection::IVideoOutput::Pointer videoOutput_;

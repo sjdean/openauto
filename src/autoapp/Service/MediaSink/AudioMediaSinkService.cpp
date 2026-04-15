@@ -4,10 +4,9 @@ Q_LOGGING_CATEGORY(lcServiceSinkMediaAudio, "journeyos.service.mediasink.audiome
 
 namespace f1x::openauto::autoapp::service::mediasink {
 
-  AudioMediaSinkService::AudioMediaSinkService(boost::asio::io_service &ioService,
-                                               aasdk::channel::mediasink::audio::IAudioMediaSinkService::Pointer channel,
+  AudioMediaSinkService::AudioMediaSinkService(aasdk::channel::mediasink::audio::IAudioMediaSinkService::Pointer channel,
                                                projection::IAudioOutput::Pointer audioOutput)
-      : strand_(ioService), channel_(std::move(channel)), audioOutput_(std::move(audioOutput)), session_(-1) {
+      : channel_(std::move(channel)), audioOutput_(std::move(audioOutput)), session_(-1) {
 
   }
 

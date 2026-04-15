@@ -6,10 +6,8 @@
 Q_LOGGING_CATEGORY(lcServiceSensor, "journeyos.service.sensor")
 
 namespace f1x::openauto::autoapp::service::sensor {
-  SensorService::SensorService(boost::asio::io_service &ioService,
-                               aasdk::messenger::IMessenger::Pointer messenger)
-      : strand_(ioService),
-        channel_(std::make_shared<aasdk::channel::sensorsource::SensorSourceService>(std::move(messenger))) {
+  SensorService::SensorService(aasdk::messenger::IMessenger::Pointer messenger)
+      : channel_(std::make_shared<aasdk::channel::sensorsource::SensorSourceService>(std::move(messenger))) {
     timer_.setSingleShot(true);
     timer_.setInterval(250);
     QObject::connect(&timer_, &QTimer::timeout, [this]() { sensorPolling(); });

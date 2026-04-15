@@ -2,7 +2,6 @@
 #include <QTimer>
 #include <aasdk/Channel/GenericNotification/GenericNotificationService.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
-#include <boost/asio/io_service.hpp>
 #include <aasdk/Messenger/IMessenger.hpp>
 
 namespace f1x::openauto::autoapp::service::genericnotification {
@@ -11,7 +10,7 @@ namespace f1x::openauto::autoapp::service::genericnotification {
             public IService,
             public std::enable_shared_from_this<GenericNotificationService> {
     public:
-        GenericNotificationService(boost::asio::io_service &ioService, aasdk::messenger::IMessenger::Pointer messenger);
+        GenericNotificationService(aasdk::messenger::IMessenger::Pointer messenger);
 
         void start() override;
 

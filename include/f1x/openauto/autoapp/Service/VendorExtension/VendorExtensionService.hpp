@@ -2,7 +2,6 @@
 #include <QTimer>
 #include <aasdk/Channel/VendorExtension/VendorExtensionService.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
-#include <boost/asio/io_service.hpp>
 #include <aasdk/Messenger/IMessenger.hpp>
 
 
@@ -12,7 +11,7 @@ namespace f1x::openauto::autoapp::service::vendorextension {
             public IService,
             public std::enable_shared_from_this<VendorExtensionService> {
     public:
-        VendorExtensionService(boost::asio::io_service &ioService, aasdk::messenger::IMessenger::Pointer messenger);
+        VendorExtensionService(aasdk::messenger::IMessenger::Pointer messenger);
 
         void start() override;
 

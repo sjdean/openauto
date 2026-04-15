@@ -7,10 +7,8 @@ Q_LOGGING_CATEGORY(lcServiceBrowser, "journeyos.service.mediabrowser")
 
 namespace f1x::openauto::autoapp::service::mediabrowser {
 
-  MediaBrowserService::MediaBrowserService(boost::asio::io_service &ioService,
-                                           aasdk::messenger::IMessenger::Pointer messenger)
-      : strand_(ioService),
-        channel_(std::make_shared<aasdk::channel::mediabrowser::MediaBrowserService>(std::move(messenger))) {
+  MediaBrowserService::MediaBrowserService(aasdk::messenger::IMessenger::Pointer messenger)
+      : channel_(std::make_shared<aasdk::channel::mediabrowser::MediaBrowserService>(std::move(messenger))) {
 
   }
 

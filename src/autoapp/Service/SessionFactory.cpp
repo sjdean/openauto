@@ -16,11 +16,9 @@ Q_LOGGING_CATEGORY(lcSessionFactory, "journeyos.session.factory")
 
 namespace f1x::openauto::autoapp::service {
 
-  SessionFactory::SessionFactory(boost::asio::io_service &ioService,
-                                                     configuration::IConfiguration::Pointer configuration,
+  SessionFactory::SessionFactory(configuration::IConfiguration::Pointer configuration,
                                                      IServiceFactory &serviceFactory,
                                                      std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor) :
-                                                     ioService_(ioService),
                                                      configuration_(std::move(configuration)),
                                                      serviceFactory_(serviceFactory),
                                                      androidAutoMonitor_(std::move(androidAutoMonitor)) {

@@ -12,7 +12,7 @@ namespace f1x::openauto::autoapp::service::inputsource {
             public projection::IInputDeviceEventHandler,
             public std::enable_shared_from_this<InputSourceService> {
     public:
-        InputSourceService(boost::asio::io_service &ioService, aasdk::messenger::IMessenger::Pointer messenger,
+        InputSourceService(aasdk::messenger::IMessenger::Pointer messenger,
                            projection::IInputDevice::Pointer inputDevice);
 
         void start() override;

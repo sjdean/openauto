@@ -2,7 +2,6 @@
 #include <QTimer>
 #include <aasdk/Channel/PhoneStatus/PhoneStatusService.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
-#include <boost/asio/io_service.hpp>
 #include <aasdk/Messenger/IMessenger.hpp>
 
 namespace f1x::openauto::autoapp::service::phonestatus {
@@ -11,8 +10,7 @@ namespace f1x::openauto::autoapp::service::phonestatus {
             public IService,
             public std::enable_shared_from_this<PhoneStatusService> {
     public:
-        PhoneStatusService(boost::asio::io_service &ioService,
-                           aasdk::messenger::IMessenger::Pointer messenger);
+        PhoneStatusService(aasdk::messenger::IMessenger::Pointer messenger);
 
         void start() override;
 

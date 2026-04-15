@@ -26,7 +26,6 @@ namespace f1x::openauto::autoapp {
         typedef std::shared_ptr<ProjectionManager> Pointer;
 
         ProjectionManager(configuration::IConfiguration::Pointer configuration,
-            boost::asio::io_service &ioService,
             aasdk::usb::USBWrapper &usbWrapper,
             aasdk::tcp::ITCPWrapper &tcpWrapper,
             service::ISessionFactory &sessionFactory,
@@ -59,7 +58,7 @@ namespace f1x::openauto::autoapp {
         void handleNewClient();
 
         // Core Infrastructure
-        boost::asio::io_service &ioService_;
+        ;
         aasdk::usb::USBWrapper &usbWrapper_;
         QTcpServer tcpServer_;
         boost::asio::io_service::strand strand_;

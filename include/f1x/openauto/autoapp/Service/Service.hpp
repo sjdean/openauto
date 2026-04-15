@@ -7,7 +7,7 @@ namespace f1x::openauto::autoapp::service {
     class Service
             : public IService {
     public:
-        Service(boost::asio::io_service &ioService);
+        Service();
 
         void start() override;
 

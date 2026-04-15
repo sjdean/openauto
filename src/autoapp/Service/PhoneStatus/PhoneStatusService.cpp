@@ -6,10 +6,8 @@ Q_LOGGING_CATEGORY(lcServicePhoneStatus, "journeyos.service.phonestatus")
 
 namespace f1x::openauto::autoapp::service::phonestatus {
 
-  PhoneStatusService::PhoneStatusService(boost::asio::io_service &ioService,
-                                         aasdk::messenger::IMessenger::Pointer messenger)
-      : strand_(ioService),
-        channel_(std::make_shared<aasdk::channel::phonestatus::PhoneStatusService>(std::move(messenger))) {
+  PhoneStatusService::PhoneStatusService(aasdk::messenger::IMessenger::Pointer messenger)
+      : channel_(std::make_shared<aasdk::channel::phonestatus::PhoneStatusService>(std::move(messenger))) {
 
   }
 

@@ -73,9 +73,6 @@ Q_LOGGING_CATEGORY(lcAutoapp, "journeyos")
 namespace autoapp = f1x::openauto::autoapp;
 using f1x::openauto::autoapp::configuration::ConfigGroup;
 using f1x::openauto::autoapp::configuration::ConfigKey;
-
-using ThreadPool = std::vector<std::thread>;
-
 Q_IMPORT_QML_PLUGIN(JourneyOSPlugin)
 Q_IMPORT_QML_PLUGIN(JourneyOSContentPlugin)
 
@@ -106,13 +103,6 @@ inline void set_qt_environment() {
     qputenv("QT_QUICK_CONTROLS_CONF", ":/qtquickcontrols2.conf");
 }
 
-void startUSBWorkers(boost::asio::io_service &ioService, libusb_context *usbContext, ThreadPool &threadPool) {
-    auto usbWorker = [&ioService, usbContext]() {
-        timeval libusbEventTimeout{5, 0};
-
-        while (!ioService.stopped()) {
-            libusb_handle_events_timeout_completed(usbContext, &libusbEventTimeout, nullptr);
-        }
     };
 
     threadPool.emplace_back(usbWorker);
@@ -121,16 +111,6 @@ void startUSBWorkers(boost::asio::io_service &ioService, libusb_context *usbCont
     threadPool.emplace_back(usbWorker);
 }
 
-void startIOServiceWorkers(boost::asio::io_service &ioService, ThreadPool &threadPool) {
-    auto ioServiceWorker = [&ioService]() {
-        ioService.run();
-    };
-
-    threadPool.emplace_back(ioServiceWorker);
-    threadPool.emplace_back(ioServiceWorker);
-    threadPool.emplace_back(ioServiceWorker);
-    threadPool.emplace_back(ioServiceWorker);
-}
 
 int main(int argc, char *argv[]) {
     // Initial High Level Connectivity
@@ -140,17 +120,6 @@ int main(int argc, char *argv[]) {
         qCritical(lcAutoapp) << "libusb_init failed";
         return 1;
     }
-
-    // IO
-    boost::asio::io_service ioService;
-    boost::asio::io_service::work work(ioService);
-    std::vector<std::thread> threadPool;
-
-    // Start Workers
-    qInfo(lcAutoapp) << "starting workers";
-    startUSBWorkers(ioService, usbContext, threadPool);
-    startIOServiceWorkers(ioService, threadPool);
-
     // Environment
     std::shared_ptr<autoapp::UI::Backend::Audio::IAudioHandler> audioHandler;
 #ifdef Q_OS_LINUX
@@ -434,36 +403,26 @@ int main(int argc, char *argv[]) {
     context->setContextProperty("audioBackendSystem", dynamic_cast<QObject*>(audioOutputSystem.get()));
 
     aasdk::usb::USBWrapper usbWrapper(usbContext);
-    aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
+    aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper);
     aasdk::usb::AccessoryModeQueryChainFactory queryChainFactory(usbWrapper, queryFactory);
-    autoapp::service::ServiceFactory serviceFactory(ioService, configuration, inputDevice, videoOutput, audioInput, audioOutputSystem, audioOutputMedia, audioOutputGuidance, audioOutputTelephony);
-    autoapp::service::SessionFactory sessionFactory(ioService, configuration, serviceFactory, androidAutoMonitor);
+    autoapp::service::ServiceFactory serviceFactory(configuration, inputDevice, videoOutput, audioInput, audioOutputSystem, audioOutputMedia, audioOutputGuidance, audioOutputTelephony);
+    autoapp::service::SessionFactory sessionFactory(configuration, serviceFactory, androidAutoMonitor);
 
     auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, queryChainFactory));
     auto connectedAccessoriesEnumerator(
         std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, queryChainFactory));
 
     qInfo(lcAutoapp) << "starting projection manager";
-    auto oa = std::make_shared<autoapp::ProjectionManager>(configuration, ioService, usbWrapper, sessionFactory,
+    auto oa = std::make_shared<autoapp::ProjectionManager>(configuration, usbWrapper, sessionFactory,
                                              std::move(usbHub), std::move(connectedAccessoriesEnumerator),
                                              androidAutoMonitor);
 
     qInfo(lcAutoapp) << "waiting for USB device";
     oa->waitForUSBDevice();
-
-    // FIX: Stop the background services when the GUI shuts down
-    QObject::connect(&app, &QGuiApplication::aboutToQuit, [&ioService]() {
-        qInfo(lcAutoapp) << "stopping io service";
-        ioService.stop();
-    });
-
     // Explicitly ensure the app quits when the last window closes
     app.setQuitOnLastWindowClosed(true);
 
     auto result = app.exec();
-
-    std::for_each(threadPool.begin(), threadPool.end(), std::bind(&std::thread::join, std::placeholders::_1));
-
     libusb_exit(usbContext);
     return result;
 }

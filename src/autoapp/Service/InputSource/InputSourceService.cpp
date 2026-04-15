@@ -4,11 +4,9 @@ Q_LOGGING_CATEGORY(lcServiceInput, "journeyos.service.input")
 
 
 namespace f1x::openauto::autoapp::service::inputsource {
-  InputSourceService::InputSourceService(boost::asio::io_service &ioService,
-                                         aasdk::messenger::IMessenger::Pointer messenger,
+  InputSourceService::InputSourceService(aasdk::messenger::IMessenger::Pointer messenger,
                                          projection::IInputDevice::Pointer inputDevice)
-      : strand_(ioService),
-        channel_(std::make_shared<aasdk::channel::inputsource::InputSourceService>(std::move(messenger))),
+      : channel_(std::make_shared<aasdk::channel::inputsource::InputSourceService>(std::move(messenger))),
         inputDevice_(std::move(inputDevice)) {
 
   }

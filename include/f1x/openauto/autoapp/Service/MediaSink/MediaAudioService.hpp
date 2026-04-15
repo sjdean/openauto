@@ -6,8 +6,7 @@
 namespace f1x::openauto::autoapp::service::mediasink {
     class MediaAudioService : public AudioMediaSinkService {
     public:
-        MediaAudioService(boost::asio::io_service &ioService,
-                          aasdk::messenger::IMessenger::Pointer messenger,
+        MediaAudioService(aasdk::messenger::IMessenger::Pointer messenger,
                           projection::IAudioOutput::Pointer audioOutput);
     };
 }

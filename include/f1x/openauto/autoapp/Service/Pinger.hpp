@@ -5,7 +5,7 @@
 namespace f1x::openauto::autoapp::service {
     class Pinger : public IPinger, public std::enable_shared_from_this<Pinger> {
     public:
-        Pinger(boost::asio::io_service &ioService, time_t duration);
+        Pinger(time_t duration);
 
         void ping(Promise::Pointer promise) override;
 

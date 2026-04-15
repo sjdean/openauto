@@ -10,8 +10,7 @@ namespace f1x::openauto::autoapp::service::bluetooth {
         public IService,
         public std::enable_shared_from_this<BluetoothService> {
   public:
-    BluetoothService(boost::asio::io_service &ioService,
-                     aasdk::messenger::IMessenger::Pointer messenger,
+    BluetoothService(aasdk::messenger::IMessenger::Pointer messenger,
                      projection::IBluetoothDevice::Pointer bluetoothDevice);
 
     void start() override;

@@ -6,8 +6,7 @@
 namespace f1x::openauto::autoapp::service::mediasource {
     class MicrophoneMediaSourceService : public MediaSourceService {
     public:
-        MicrophoneMediaSourceService(boost::asio::io_service &ioService,
-                                     aasdk::messenger::IMessenger::Pointer messenger,
+        MicrophoneMediaSourceService(aasdk::messenger::IMessenger::Pointer messenger,
                                      projection::IAudioInput::Pointer audioInput);
 
     protected:

@@ -8,11 +8,9 @@ Q_LOGGING_CATEGORY(lcServiceWifi, "journeyos.service.wifi")
 namespace f1x::openauto::autoapp::service::wifiprojection {
 using configuration::ConfigGroup;
 using configuration::ConfigKey;
-  WifiProjectionService::WifiProjectionService(boost::asio::io_service &ioService,
-                                               aasdk::messenger::IMessenger::Pointer messenger,
+  WifiProjectionService::WifiProjectionService(aasdk::messenger::IMessenger::Pointer messenger,
                                                configuration::IConfiguration::Pointer configuration)
       : configuration_(std::move(configuration)),
-        strand_(ioService),
         channel_(
             std::make_shared<aasdk::channel::wifiprojection::WifiProjectionService>(std::move(messenger))) {
 

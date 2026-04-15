@@ -4,8 +4,8 @@ Q_LOGGING_CATEGORY(lcPinger, "journeyos.pinger")
 
 namespace f1x::openauto::autoapp::service {
 
-  Pinger::Pinger(boost::asio::io_service &ioService, time_t duration)
-      : strand_(ioService), duration_(duration), cancelled_(false), pingsCount_(0), pongsCount_(0) {
+  Pinger::Pinger(time_t duration)
+      : duration_(duration), cancelled_(false), pingsCount_(0), pongsCount_(0) {
     QObject::connect(&timer_, &QTimer::timeout, [this]() { onTimerExceeded(); });
   }
 

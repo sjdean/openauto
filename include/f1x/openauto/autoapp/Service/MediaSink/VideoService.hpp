@@ -6,8 +6,7 @@
 namespace f1x::openauto::autoapp::service::mediasink {
     class VideoService : public VideoMediaSinkService {
     public:
-        VideoService(boost::asio::io_service &ioService,
-                     aasdk::messenger::IMessenger::Pointer messenger,
+        VideoService(aasdk::messenger::IMessenger::Pointer messenger,
                      projection::IVideoOutput::Pointer videoOutput);
 
     protected:

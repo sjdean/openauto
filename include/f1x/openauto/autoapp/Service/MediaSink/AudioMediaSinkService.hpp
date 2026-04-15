@@ -14,8 +14,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
         typedef std::shared_ptr<AudioMediaSinkService> Pointer;
 
         // General Constructor
-        AudioMediaSinkService(boost::asio::io_service &ioService,
-                              aasdk::channel::mediasink::audio::IAudioMediaSinkService::Pointer channel,
+        AudioMediaSinkService(aasdk::channel::mediasink::audio::IAudioMediaSinkService::Pointer channel,
                               projection::IAudioOutput::Pointer audioOutput);
 
         void start() override;

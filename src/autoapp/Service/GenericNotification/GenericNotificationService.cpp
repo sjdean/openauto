@@ -6,10 +6,8 @@ Q_LOGGING_CATEGORY(lcServiceNotify, "journeyos.service.notification")
 
 namespace f1x::openauto::autoapp::service::genericnotification {
 
-  GenericNotificationService::GenericNotificationService(boost::asio::io_service &ioService,
-                                                         aasdk::messenger::IMessenger::Pointer messenger)
-      : strand_(ioService),
-        channel_(std::make_shared<aasdk::channel::genericnotification::GenericNotificationService>(std::move(
+  GenericNotificationService::GenericNotificationService(aasdk::messenger::IMessenger::Pointer messenger)
+      : channel_(std::make_shared<aasdk::channel::genericnotification::GenericNotificationService>(std::move(
             messenger))) {
 
   }

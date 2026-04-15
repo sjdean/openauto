@@ -4,11 +4,10 @@
 Q_LOGGING_CATEGORY(lcServiceSinkMediaVideo, "journeyos.service.mediasink.videomedia")
 
 namespace f1x::openauto::autoapp::service::mediasink {
-    VideoMediaSinkService::VideoMediaSinkService(boost::asio::io_service &ioService,
-                                                 aasdk::channel::mediasink::video::IVideoMediaSinkService::Pointer
+    VideoMediaSinkService::VideoMediaSinkService(aasdk::channel::mediasink::video::IVideoMediaSinkService::Pointer
                                                  channel,
                                                  projection::IVideoOutput::Pointer videoOutput)
-        : strand_(ioService), channel_(std::move(channel)), videoOutput_(std::move(videoOutput)), session_(-1) {
+        : channel_(std::move(channel)), videoOutput_(std::move(videoOutput)), session_(-1) {
     }
 
     void VideoMediaSinkService::start() {

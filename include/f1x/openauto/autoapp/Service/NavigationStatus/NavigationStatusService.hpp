@@ -2,7 +2,6 @@
 #include <QTimer>
 #include <aasdk/Channel/NavigationStatus/NavigationStatusService.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
-#include <boost/asio/io_service.hpp>
 #include <aasdk/Messenger/IMessenger.hpp>
 
 namespace f1x::openauto::autoapp::service::navigationstatus {
@@ -11,7 +10,7 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
             public IService,
             public std::enable_shared_from_this<NavigationStatusService> {
     public:
-        NavigationStatusService(boost::asio::io_service &ioService, aasdk::messenger::IMessenger::Pointer messenger);
+        NavigationStatusService(aasdk::messenger::IMessenger::Pointer messenger);
 
         void start() override;
 

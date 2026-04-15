@@ -6,10 +6,8 @@ Q_LOGGING_CATEGORY(lcServiceVendor, "journeyos.service.vendor")
 
 namespace f1x::openauto::autoapp::service::vendorextension {
 
-  VendorExtensionService::VendorExtensionService(boost::asio::io_service &ioService,
-                                                 aasdk::messenger::IMessenger::Pointer messenger)
-    : strand_(ioService),
-      channel_(
+  VendorExtensionService::VendorExtensionService(aasdk::messenger::IMessenger::Pointer messenger)
+    : channel_(
         std::make_shared<aasdk::channel::vendorextension::VendorExtensionService>(std::move(messenger))) {
 
   }

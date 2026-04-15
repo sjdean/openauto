@@ -7,15 +7,14 @@ Q_LOGGING_CATEGORY(lcSession, "journeyos.session")
 
 namespace f1x::openauto::autoapp::service {
 
-  AndroidAutoSession::AndroidAutoSession(boost::asio::io_service &ioService,
-                                       aasdk::messenger::ICryptor::Pointer cryptor,
+  AndroidAutoSession::AndroidAutoSession(aasdk::messenger::ICryptor::Pointer cryptor,
                                        aasdk::transport::ITransport::Pointer transport,
                                        aasdk::messenger::IMessenger::Pointer messenger,
                                        configuration::IConfiguration::Pointer configuration,
                                        ServiceList serviceList,
                                        IPinger::Pointer pinger,
                                        std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor)
-      : strand_(ioService), cryptor_(std::move(cryptor)), transport_(std::move(transport)),
+      : cryptor_(std::move(cryptor)), transport_(std::move(transport)),
         messenger_(std::move(messenger)), controlServiceChannel_(
           std::make_shared<aasdk::channel::control::ControlServiceChannel>(messenger_)),
         configuration_(std::move(configuration)), serviceList_(std::move(serviceList)),

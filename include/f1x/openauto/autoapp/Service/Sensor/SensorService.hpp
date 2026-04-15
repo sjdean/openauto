@@ -5,7 +5,6 @@
 #include <aap_protobuf/service/sensorsource/message/SensorType.pb.h>
 #include <aasdk/Channel/SensorSource/SensorSourceService.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
-#include <boost/asio/io_service.hpp>
 #include <aasdk/Messenger/IMessenger.hpp>
 
 
@@ -15,8 +14,7 @@ namespace f1x::openauto::autoapp::service::sensor {
             public IService,
             public std::enable_shared_from_this<SensorService> {
     public:
-        SensorService(boost::asio::io_service &ioService,
-                      aasdk::messenger::IMessenger::Pointer messenger);
+        SensorService(aasdk::messenger::IMessenger::Pointer messenger);
 
         bool isNight = false;
         bool previous = false;

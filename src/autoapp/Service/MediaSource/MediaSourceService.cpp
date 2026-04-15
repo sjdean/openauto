@@ -5,10 +5,9 @@ Q_LOGGING_CATEGORY(lcServiceSourceMedia, "journeyos.service.mediasource.media")
 
 namespace f1x::openauto::autoapp::service::mediasource {
 
-  MediaSourceService::MediaSourceService(boost::asio::io_service &ioService,
-                                         aasdk::channel::mediasource::IMediaSourceService::Pointer channel,
+  MediaSourceService::MediaSourceService(aasdk::channel::mediasource::IMediaSourceService::Pointer channel,
                                          projection::IAudioInput::Pointer audioInput)
-      : strand_(ioService), channel_(std::move(channel)), audioInput_(std::move(audioInput)), session_(-1) {
+      : channel_(std::move(channel)), audioInput_(std::move(audioInput)), session_(-1) {
 
   }
 
