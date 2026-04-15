@@ -128,9 +128,6 @@ find_package(aasdk        REQUIRED CONFIG)   # → AASDK::aasdk
 # so any TU that includes protobuf headers fails to link without this.
 find_package(absl REQUIRED CONFIG)
 
-# ─── Boost ────────────────────────────────────────────────────────────────────
-find_package(Boost REQUIRED COMPONENTS system log)
-
 # ─── OpenSSL ──────────────────────────────────────────────────────────────────
 # On macOS, Apple ships LibreSSL at the standard library paths. CMake 4.x's
 # FindOpenSSL may find it but fail to create IMPORTED targets (OpenSSL::SSL /
@@ -258,7 +255,6 @@ target_compile_options(autoapp PRIVATE
 
 target_compile_definitions(autoapp PRIVATE
         QT_MESSAGELOGCONTEXT
-        BOOST_ALL_DYN_LINK
         $<$<CONFIG:Release>:NDEBUG>
         $<$<BOOL:${OPENAUTO_MACOS}>:MAC_OS>    # was add_definitions(-DMAC_OS) — now target-scoped
         OPENAUTO_VERSION_STRING="${LIBRARY_BUILD_MAJOR_RELEASE}.${LIBRARY_BUILD_MINOR_RELEASE}.${LIBRARY_BUILD_INCREMENTAL}"
@@ -322,8 +318,6 @@ target_link_libraries(autoapp PRIVATE
 
         # System
         ${LIBUSB_TARGET}
-        Boost::system
-        Boost::log
         OpenSSL::SSL
         OpenSSL::Crypto
 
