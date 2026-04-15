@@ -7,8 +7,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
                                        aasdk::messenger::IMessenger::Pointer messenger,
                                        projection::IAudioOutput::Pointer audioOutput)
       : AudioMediaSinkService(ioService,
-                              std::make_shared<aasdk::channel::mediasink::audio::channel::MediaAudioChannel>(strand_,
-                                                                                                             std::move(
+                              std::make_shared<aasdk::channel::mediasink::audio::channel::MediaAudioChannel>(std::move(
                                                                                                                  messenger)),
                               std::move(audioOutput)) {
 

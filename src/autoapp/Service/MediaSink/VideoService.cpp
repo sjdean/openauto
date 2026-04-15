@@ -8,8 +8,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
                              aasdk::messenger::IMessenger::Pointer messenger,
                              projection::IVideoOutput::Pointer videoOutput)
       : VideoMediaSinkService(ioService,
-                              std::make_shared<aasdk::channel::mediasink::video::channel::VideoChannel>(strand_,
-                                                                                                        std::move(
+                              std::make_shared<aasdk::channel::mediasink::video::channel::VideoChannel>(std::move(
                                                                                                             messenger)),
                               std::move(videoOutput)) {
 

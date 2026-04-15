@@ -17,7 +17,7 @@ namespace f1x::openauto::autoapp::service {
                                        std::shared_ptr<UI::Monitor::AndroidAutoMonitor> androidAutoMonitor)
       : strand_(ioService), cryptor_(std::move(cryptor)), transport_(std::move(transport)),
         messenger_(std::move(messenger)), controlServiceChannel_(
-          std::make_shared<aasdk::channel::control::ControlServiceChannel>(strand_, messenger_)),
+          std::make_shared<aasdk::channel::control::ControlServiceChannel>(messenger_)),
         configuration_(std::move(configuration)), serviceList_(std::move(serviceList)),
         pinger_(std::move(pinger)),
         eventHandler_(nullptr),

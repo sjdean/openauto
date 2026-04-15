@@ -192,7 +192,7 @@ using configuration::ConfigKey;
                 qInfo(lcProjectionManager) << "Autostarting USB Session.";
                 connectedAccessoriesEnumerator_->cancel();
 
-                auto aoapDevice(aasdk::usb::AOAPDevice::create(usbWrapper_, ioService_, deviceHandle));
+                auto aoapDevice(aasdk::usb::AOAPDevice::create(usbWrapper_, deviceHandle));
                 activeSession_ = sessionFactory_.create(std::move(aoapDevice));
                 activeSession_->start(*this);
             } else {

@@ -10,7 +10,7 @@ namespace f1x::openauto::autoapp::service::mediabrowser {
   MediaBrowserService::MediaBrowserService(boost::asio::io_service &ioService,
                                            aasdk::messenger::IMessenger::Pointer messenger)
       : strand_(ioService),
-        channel_(std::make_shared<aasdk::channel::mediabrowser::MediaBrowserService>(strand_, std::move(messenger))) {
+        channel_(std::make_shared<aasdk::channel::mediabrowser::MediaBrowserService>(std::move(messenger))) {
 
   }
 

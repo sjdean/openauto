@@ -10,7 +10,7 @@ namespace f1x::openauto::autoapp::service::vendorextension {
                                                  aasdk::messenger::IMessenger::Pointer messenger)
     : strand_(ioService),
       channel_(
-        std::make_shared<aasdk::channel::vendorextension::VendorExtensionService>(strand_, std::move(messenger))) {
+        std::make_shared<aasdk::channel::vendorextension::VendorExtensionService>(std::move(messenger))) {
 
   }
 

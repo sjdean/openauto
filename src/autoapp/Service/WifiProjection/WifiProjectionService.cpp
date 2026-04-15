@@ -14,7 +14,7 @@ using configuration::ConfigKey;
       : configuration_(std::move(configuration)),
         strand_(ioService),
         channel_(
-            std::make_shared<aasdk::channel::wifiprojection::WifiProjectionService>(strand_, std::move(messenger))) {
+            std::make_shared<aasdk::channel::wifiprojection::WifiProjectionService>(std::move(messenger))) {
 
   }
 

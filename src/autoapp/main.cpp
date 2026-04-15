@@ -435,13 +435,13 @@ int main(int argc, char *argv[]) {
 
     aasdk::usb::USBWrapper usbWrapper(usbContext);
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
-    aasdk::usb::AccessoryModeQueryChainFactory queryChainFactory(usbWrapper, ioService, queryFactory);
+    aasdk::usb::AccessoryModeQueryChainFactory queryChainFactory(usbWrapper, queryFactory);
     autoapp::service::ServiceFactory serviceFactory(ioService, configuration, inputDevice, videoOutput, audioInput, audioOutputSystem, audioOutputMedia, audioOutputGuidance, audioOutputTelephony);
     autoapp::service::SessionFactory sessionFactory(ioService, configuration, serviceFactory, androidAutoMonitor);
 
-    auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, ioService, queryChainFactory));
+    auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, queryChainFactory));
     auto connectedAccessoriesEnumerator(
-        std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));
+        std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, queryChainFactory));
 
     qInfo(lcAutoapp) << "starting projection manager";
     auto oa = std::make_shared<autoapp::ProjectionManager>(configuration, ioService, usbWrapper, sessionFactory,

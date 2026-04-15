@@ -8,7 +8,7 @@ namespace f1x::openauto::autoapp::service::inputsource {
                                          aasdk::messenger::IMessenger::Pointer messenger,
                                          projection::IInputDevice::Pointer inputDevice)
       : strand_(ioService),
-        channel_(std::make_shared<aasdk::channel::inputsource::InputSourceService>(strand_, std::move(messenger))),
+        channel_(std::make_shared<aasdk::channel::inputsource::InputSourceService>(std::move(messenger))),
         inputDevice_(std::move(inputDevice)) {
 
   }

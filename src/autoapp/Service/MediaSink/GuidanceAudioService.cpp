@@ -12,7 +12,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
                                              projection::IAudioOutput::Pointer audioOutput)
       : AudioMediaSinkService(
       ioService,
-      std::make_shared<GuidanceAudioChannel>(strand_, std::move(messenger)),
+      std::make_shared<GuidanceAudioChannel>(std::move(messenger)),
       std::move(audioOutput)) {
 
   }

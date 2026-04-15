@@ -9,7 +9,7 @@ namespace f1x::openauto::autoapp::service::bluetooth {
                                      aasdk::messenger::IMessenger::Pointer messenger,
                                      projection::IBluetoothDevice::Pointer bluetoothDevice)
       : strand_(ioService),
-        channel_(std::make_shared<aasdk::channel::bluetooth::BluetoothService>(strand_, std::move(messenger))),
+        channel_(std::make_shared<aasdk::channel::bluetooth::BluetoothService>(std::move(messenger))),
         bluetoothDevice_(std::move(bluetoothDevice)) {
 
   }

@@ -9,8 +9,7 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
   NavigationStatusService::NavigationStatusService(boost::asio::io_service &ioService,
                                                    aasdk::messenger::IMessenger::Pointer messenger)
     : strand_(ioService),
-      channel_(std::make_shared<aasdk::channel::navigationstatus::NavigationStatusService>(strand_,
-        std::move(messenger))) {
+      channel_(std::make_shared<aasdk::channel::navigationstatus::NavigationStatusService>(std::move(messenger))) {
 
   }
 
