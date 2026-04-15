@@ -29,7 +29,6 @@ namespace f1x::openauto::autoapp::service::genericnotification {
     private:
         using std::enable_shared_from_this<GenericNotificationService>::shared_from_this;
         QTimer timer_;
-        boost::asio::io_service::strand strand_;
         aasdk::channel::genericnotification::GenericNotificationService::Pointer channel_;
     };
 }

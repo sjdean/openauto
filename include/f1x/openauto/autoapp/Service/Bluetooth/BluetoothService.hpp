@@ -33,8 +33,6 @@ namespace f1x::openauto::autoapp::service::bluetooth {
     using std::enable_shared_from_this<BluetoothService>::shared_from_this;
 
     void sendBluetoothAuthenticationData();
-
-    boost::asio::io_service::strand strand_;
     aasdk::channel::bluetooth::BluetoothService::Pointer channel_;
     projection::IBluetoothDevice::Pointer bluetoothDevice_;
   };

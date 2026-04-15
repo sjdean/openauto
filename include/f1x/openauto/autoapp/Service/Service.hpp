@@ -20,6 +20,5 @@ namespace f1x::openauto::autoapp::service {
         void fillFeatures(aap_protobuf::service::control::message::ServiceDiscoveryResponse &response) override;
 
     private:
-        boost::asio::io_service::strand strand_;
     };
 }

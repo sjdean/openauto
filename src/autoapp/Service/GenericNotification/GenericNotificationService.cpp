@@ -13,27 +13,19 @@ namespace f1x::openauto::autoapp::service::genericnotification {
   }
 
   void GenericNotificationService::start() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceNotify) << "starting";
-    });
   }
 
   void GenericNotificationService::stop() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceNotify) << "stopping";
-    });
   }
 
   void GenericNotificationService::pause() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceNotify) << "pausing";
-    });
   }
 
   void GenericNotificationService::resume() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceNotify) << "resuming";
-    });
   }
 
   void GenericNotificationService::fillFeatures(
@@ -54,7 +46,7 @@ namespace f1x::openauto::autoapp::service::genericnotification {
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
     response.set_status(status);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&GenericNotificationService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));

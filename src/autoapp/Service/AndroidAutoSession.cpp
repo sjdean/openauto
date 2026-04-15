@@ -30,20 +30,18 @@ namespace f1x::openauto::autoapp::service {
   void AndroidAutoSession::start(IAndroidAutoSessionEventHandler &eventHandler) {
     androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_CONNECTING);
 
-    strand_.dispatch([this, self = this->shared_from_this(), eventHandler = &eventHandler]() {
       qInfo(lcSession) << ">>> session starting";
 
-      eventHandler_ = eventHandler;
-      std::for_each(serviceList_.begin(), serviceList_.end(), std::bind(&IService::start, std::placeholders::_1));
+  eventHandler_ = eventHandler;
+  std::for_each(serviceList_.begin(), serviceList_.end(), std::bind(&IService::start, std::placeholders::_1));
 
-      auto versionRequestPromise = aasdk::channel::SendPromise::defer(strand_);
-      versionRequestPromise->then([]() {}, std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(),
-                                                     std::placeholders::_1));
+  auto versionRequestPromise = aasdk::channel::SendPromise::defer();
+  versionRequestPromise->then([]() {}, std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(),
+                                                 std::placeholders::_1));
 
-      qDebug(lcSession) << "sending version request";
-      controlServiceChannel_->sendVersionRequest(std::move(versionRequestPromise));
-      controlServiceChannel_->receive(this->shared_from_this());
-    });
+  qDebug(lcSession) << "sending version request";
+  controlServiceChannel_->sendVersionRequest(std::move(versionRequestPromise));
+  controlServiceChannel_->receive(this->shared_from_this());
   }
 
   void AndroidAutoSession::stop() {
@@ -51,47 +49,41 @@ namespace f1x::openauto::autoapp::service {
     androidAutoMonitor_->onConnectionStateUpdate(common::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED);
 
 
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcSession) << ">>> session stopping";
 
-      try {
-        eventHandler_ = nullptr;
-        std::for_each(serviceList_.begin(), serviceList_.end(),
-                      std::bind(&IService::stop, std::placeholders::_1));
+  try {
+    eventHandler_ = nullptr;
+    std::for_each(serviceList_.begin(), serviceList_.end(),
+                  std::bind(&IService::stop, std::placeholders::_1));
 
-        messenger_->stop();
-        transport_->stop();
-        cryptor_->deinit();
-      } catch (...) {
-        qCritical(lcSession) << "exception while stopping session";
-      }
-    });
+    messenger_->stop();
+    transport_->stop();
+    cryptor_->deinit();
+  } catch (...) {
+    qCritical(lcSession) << "exception while stopping session";
+  }
   }
 
   void AndroidAutoSession::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcSession) << ">>> session pausing";
 
-      try {
-        std::for_each(serviceList_.begin(), serviceList_.end(),
-                      std::bind(&IService::pause, std::placeholders::_1));
-      } catch (...) {
-        qCritical(lcSession) << "exception while pausing session";
-      }
-    });
+  try {
+    std::for_each(serviceList_.begin(), serviceList_.end(),
+                  std::bind(&IService::pause, std::placeholders::_1));
+  } catch (...) {
+    qCritical(lcSession) << "exception while pausing session";
+  }
   }
 
   void AndroidAutoSession::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcSession) << ">>> session resuming";
 
-      try {
-        std::for_each(serviceList_.begin(), serviceList_.end(),
-                      std::bind(&IService::resume, std::placeholders::_1));
-      } catch (...) {
-        qCritical(lcSession) << "exception while resuming session";
-      }
-    });
+  try {
+    std::for_each(serviceList_.begin(), serviceList_.end(),
+                  std::bind(&IService::resume, std::placeholders::_1));
+  } catch (...) {
+    qCritical(lcSession) << "exception while resuming session";
+  }
   }
 
   void AndroidAutoSession::onVersionResponse(uint16_t majorCode, uint16_t minorCode,
@@ -111,7 +103,7 @@ namespace f1x::openauto::autoapp::service {
         qInfo(lcSession) << "SSL handshake starting";
         cryptor_->doHandshake();
 
-        auto handshakePromise = aasdk::channel::SendPromise::defer(strand_);
+        auto handshakePromise = aasdk::channel::SendPromise::defer();
         handshakePromise->then([]() {}, std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(),
                                                   std::placeholders::_1));
         controlServiceChannel_->sendHandshake(cryptor_->readHandshakeBuffer(), std::move(handshakePromise));
@@ -133,7 +125,7 @@ namespace f1x::openauto::autoapp::service {
       if (!cryptor_->doHandshake()) {
         qInfo(lcSession) << "SSL handshake continuing";
 
-        auto handshakePromise = aasdk::channel::SendPromise::defer(strand_);
+        auto handshakePromise = aasdk::channel::SendPromise::defer();
         handshakePromise->then([]() {}, std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(),
                                                   std::placeholders::_1));
         controlServiceChannel_->sendHandshake(cryptor_->readHandshakeBuffer(), std::move(handshakePromise));
@@ -143,7 +135,7 @@ namespace f1x::openauto::autoapp::service {
         aap_protobuf::service::control::message::AuthResponse authCompleteIndication;
         authCompleteIndication.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
 
-        auto authCompletePromise = aasdk::channel::SendPromise::defer(strand_);
+        auto authCompletePromise = aasdk::channel::SendPromise::defer();
         authCompletePromise->then([]() {}, std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(),
                                                      std::placeholders::_1));
         controlServiceChannel_->sendAuthComplete(authCompleteIndication, std::move(authCompletePromise));
@@ -191,7 +183,7 @@ namespace f1x::openauto::autoapp::service {
     std::for_each(serviceList_.begin(), serviceList_.end(),
                   std::bind(&IService::fillFeatures, std::placeholders::_1, std::ref(serviceDiscoveryResponse)));
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(), std::placeholders::_1));
 
@@ -230,7 +222,7 @@ namespace f1x::openauto::autoapp::service {
     aap_protobuf::service::control::message::AudioFocusNotification response;
     response.set_focus_state(audioFocusStateType);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   [capture0 = this->shared_from_this()](auto &&PH1) {
                     capture0->onChannelError(std::forward<decltype(PH1)>(PH1));
@@ -244,7 +236,7 @@ namespace f1x::openauto::autoapp::service {
     qInfo(lcSession) << "bye-bye request reason=" << request.reason();
 
     aap_protobuf::service::control::message::ByeByeResponse response;
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then(std::bind(&AndroidAutoSession::triggerQuit, this->shared_from_this()),
                   std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(), std::placeholders::_1));
 
@@ -273,7 +265,7 @@ namespace f1x::openauto::autoapp::service {
     response.set_focus_type(
         aap_protobuf::service::control::message::NavFocusType::NAV_FOCUS_PROJECTED);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(), std::placeholders::_1));
     controlServiceChannel_->sendNavigationFocusResponse(response, std::move(promise));
@@ -299,7 +291,7 @@ namespace f1x::openauto::autoapp::service {
     aap_protobuf::service::control::message::PingResponse response;
     response.set_timestamp(request.timestamp());
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     controlServiceChannel_->sendPingResponse(response, std::move(promise));
@@ -332,7 +324,7 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoSession::schedulePing() {
     qDebug(lcSession) << "ping scheduled";
-    auto promise = IPinger::Promise::defer(strand_);
+    auto promise = IPinger::Promise::defer();
     promise->then([this, self = this->shared_from_this()]() {
                     this->sendPing();
                     this->schedulePing();
@@ -350,7 +342,7 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoSession::sendPing() {
     qDebug(lcSession) << "sending ping";
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&AndroidAutoSession::onChannelError, this->shared_from_this(), std::placeholders::_1));
 

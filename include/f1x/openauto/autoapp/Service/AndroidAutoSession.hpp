@@ -70,8 +70,6 @@ namespace f1x::openauto::autoapp::service {
         void schedulePing();
 
         void sendPing();
-
-        boost::asio::io_service::strand strand_;
         aasdk::messenger::ICryptor::Pointer cryptor_;
         aasdk::transport::ITransport::Pointer transport_;
         aasdk::messenger::IMessenger::Pointer messenger_;

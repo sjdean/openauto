@@ -17,28 +17,20 @@ using configuration::ConfigKey;
   }
 
   void WifiProjectionService::start() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceWifi) << "[WifiProjectionService] start() — arming channel receive";
-      channel_->receive(this->shared_from_this());
-    });
+  channel_->receive(this->shared_from_this());
   }
 
   void WifiProjectionService::stop() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceWifi) << "[WifiProjectionService] stop()";
-    });
   }
 
   void WifiProjectionService::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceWifi) << "[WifiProjectionService] pause()";
-    });
   }
 
   void WifiProjectionService::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceWifi) << "[WifiProjectionService] resume()";
-    });
   }
 
   void WifiProjectionService::fillFeatures(
@@ -77,7 +69,7 @@ using configuration::ConfigKey;
     response.set_car_wifi_security_mode(
         aap_protobuf::service::wifiprojection::message::WifiSecurityMode::WPA2_PERSONAL);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&WifiProjectionService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendWifiCredentialsResponse(response, std::move(promise));
@@ -95,7 +87,7 @@ using configuration::ConfigKey;
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
     response.set_status(status);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&WifiProjectionService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));

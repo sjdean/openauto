@@ -12,29 +12,21 @@ namespace f1x::openauto::autoapp::service::inputsource {
   }
 
   void InputSourceService::start() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceInput) << "starting";
-      channel_->receive(this->shared_from_this());
-    });
+  channel_->receive(this->shared_from_this());
   }
 
   void InputSourceService::stop() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceInput) << "stopping";
-      inputDevice_->stop();
-    });
+  inputDevice_->stop();
   }
 
   void InputSourceService::pause() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceInput) << "pausing";
-    });
   }
 
   void InputSourceService::resume() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceInput) << "resuming";
-    });
   }
 
   void InputSourceService::fillFeatures(
@@ -73,7 +65,7 @@ namespace f1x::openauto::autoapp::service::inputsource {
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
     response.set_status(status);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&InputSourceService::onChannelError, this->shared_from_this(), std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));
@@ -103,7 +95,7 @@ namespace f1x::openauto::autoapp::service::inputsource {
       inputDevice_->start(*this);
     }
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&InputSourceService::onChannelError, this->shared_from_this(), std::placeholders::_1));
     channel_->sendKeyBindingResponse(response, std::move(promise));
@@ -118,51 +110,47 @@ namespace f1x::openauto::autoapp::service::inputsource {
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::high_resolution_clock::now().time_since_epoch());
 
-    strand_.dispatch(
-        [this, self = this->shared_from_this(), event = std::move(event), timestamp = std::move(timestamp)]() {
           aap_protobuf::service::inputsource::message::InputReport inputReport;
-          inputReport.set_timestamp(timestamp.count());
+      inputReport.set_timestamp(timestamp.count());
 
-          if (event.code == aap_protobuf::service::media::sink::message::KeyCode::KEYCODE_ROTARY_CONTROLLER) {
-            auto relativeEvent = inputReport.mutable_relative_event()->add_data();
-            relativeEvent->set_delta(event.wheelDirection == projection::WheelDirection::LEFT ? -1 : 1);
-            relativeEvent->set_keycode(event.code);
-          } else {
-            auto buttonEvent = inputReport.mutable_key_event()->add_keys();
-            buttonEvent->set_metastate(0);
-            buttonEvent->set_down(event.type == projection::ButtonEventType::PRESS);
-            buttonEvent->set_longpress(false);
-            buttonEvent->set_keycode(event.code);
-          }
+      if (event.code == aap_protobuf::service::media::sink::message::KeyCode::KEYCODE_ROTARY_CONTROLLER) {
+        auto relativeEvent = inputReport.mutable_relative_event()->add_data();
+        relativeEvent->set_delta(event.wheelDirection == projection::WheelDirection::LEFT ? -1 : 1);
+        relativeEvent->set_keycode(event.code);
+      } else {
+        auto buttonEvent = inputReport.mutable_key_event()->add_keys();
+        buttonEvent->set_metastate(0);
+        buttonEvent->set_down(event.type == projection::ButtonEventType::PRESS);
+        buttonEvent->set_longpress(false);
+        buttonEvent->set_keycode(event.code);
+      }
 
-          auto promise = aasdk::channel::SendPromise::defer(strand_);
-          promise->then([]() {}, std::bind(&InputSourceService::onChannelError, this->shared_from_this(),
-                                           std::placeholders::_1));
-          channel_->sendInputReport(inputReport, std::move(promise));
-        });
+      auto promise = aasdk::channel::SendPromise::defer();
+      promise->then([]() {}, std::bind(&InputSourceService::onChannelError, this->shared_from_this(),
+                                       std::placeholders::_1));
+      channel_->sendInputReport(inputReport, std::move(promise));
+    
   }
 
   void InputSourceService::onTouchEvent(const projection::TouchEvent &event) {
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::high_resolution_clock::now().time_since_epoch());
 
-    strand_.dispatch(
-        [this, self = this->shared_from_this(), event = std::move(event), timestamp = std::move(timestamp)]() {
           aap_protobuf::service::inputsource::message::InputReport inputReport;
-          inputReport.set_timestamp(timestamp.count());
+      inputReport.set_timestamp(timestamp.count());
 
-          auto touchEvent = inputReport.mutable_touch_event();
-          touchEvent->set_action(event.type);
-          auto touchLocation = touchEvent->add_pointer_data();
-          touchLocation->set_x(event.x);
-          touchLocation->set_y(event.y);
-          touchLocation->set_pointer_id(0);
+      auto touchEvent = inputReport.mutable_touch_event();
+      touchEvent->set_action(event.type);
+      auto touchLocation = touchEvent->add_pointer_data();
+      touchLocation->set_x(event.x);
+      touchLocation->set_y(event.y);
+      touchLocation->set_pointer_id(0);
 
-          auto promise = aasdk::channel::SendPromise::defer(strand_);
-          promise->then([]() {}, std::bind(&InputSourceService::onChannelError, this->shared_from_this(),
-                                           std::placeholders::_1));
-          channel_->sendInputReport(inputReport, std::move(promise));
-        });
+      auto promise = aasdk::channel::SendPromise::defer();
+      promise->then([]() {}, std::bind(&InputSourceService::onChannelError, this->shared_from_this(),
+                                       std::placeholders::_1));
+      channel_->sendInputReport(inputReport, std::move(promise));
+    
   }
 }
 

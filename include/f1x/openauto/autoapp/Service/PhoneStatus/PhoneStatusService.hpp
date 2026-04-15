@@ -31,7 +31,6 @@ namespace f1x::openauto::autoapp::service::phonestatus {
     private:
         using std::enable_shared_from_this<PhoneStatusService>::shared_from_this;
         QTimer timer_;
-        boost::asio::io_service::strand strand_;
         aasdk::channel::phonestatus::PhoneStatusService::Pointer channel_;
     };
 }

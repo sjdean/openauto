@@ -61,7 +61,6 @@ namespace f1x::openauto::autoapp {
         ;
         aasdk::usb::USBWrapper &usbWrapper_;
         QTcpServer tcpServer_;
-        boost::asio::io_service::strand strand_;
 
         // Factory & Hardware
         service::ISessionFactory &sessionFactory_;

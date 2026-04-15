@@ -53,7 +53,6 @@ namespace f1x::openauto::autoapp::service::sensor {
         bool firstRun = true;
 
         QTimer timer_;
-        boost::asio::io_service::strand strand_;
         aasdk::channel::sensorsource::SensorSourceService::Pointer channel_;
         struct gps_data_t gpsData_;
         bool gpsEnabled_ = false;

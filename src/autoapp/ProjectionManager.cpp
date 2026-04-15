@@ -150,7 +150,7 @@ using configuration::ConfigKey;
     }
 
     void ProjectionManager::enumerateDevices() {
-        auto promise = aasdk::usb::IConnectedAccessoriesEnumerator::Promise::defer(strand_);
+        auto promise = aasdk::usb::IConnectedAccessoriesEnumerator::Promise::defer();
         promise->then([self = this->shared_from_this()](auto result) {
                           qInfo(lcProjectionManager) << "Enumeration result: " << result;
                       },
@@ -169,7 +169,7 @@ using configuration::ConfigKey;
 
         qInfo(lcProjectionManager) << "Waiting for USB connection...";
 
-        auto promise = aasdk::usb::IUSBHub::Promise::defer(strand_);
+        auto promise = aasdk::usb::IUSBHub::Promise::defer();
         promise->then(std::bind(&ProjectionManager::aoapDeviceHandler, this->shared_from_this(), std::placeholders::_1),
                       std::bind(&ProjectionManager::onUSBHubError, this->shared_from_this(), std::placeholders::_1));
 

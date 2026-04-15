@@ -29,7 +29,6 @@ namespace f1x::openauto::autoapp::service::mediaplaybackstatus {
     private:
         using std::enable_shared_from_this<MediaPlaybackStatusService>::shared_from_this;
         QTimer timer_;
-        boost::asio::io_service::strand strand_;
         aasdk::channel::mediaplaybackstatus::MediaPlaybackStatusService::Pointer channel_;
     };
 }

@@ -11,29 +11,25 @@ namespace f1x::openauto::autoapp::service::mediasink {
     }
 
     void VideoMediaSinkService::start() {
-        strand_.dispatch([this, self = this->shared_from_this()]() {
-            qInfo(lcServiceSinkMediaVideo) << "starting channel=" << aasdk::messenger::channelIdToString(channel_->getId());
-            channel_->receive(this->shared_from_this());
-        });
+                qInfo(lcServiceSinkMediaVideo) << "starting channel=" << aasdk::messenger::channelIdToString(channel_->getId());
+        channel_->receive(this->shared_from_this());
+    
     }
 
     void VideoMediaSinkService::stop() {
-        strand_.dispatch([this, self = this->shared_from_this()]() {
-            qInfo(lcServiceSinkMediaVideo) << "stopping channel=" << aasdk::messenger::channelIdToString(channel_->getId());
-            videoOutput_->stop();
-        });
+                qInfo(lcServiceSinkMediaVideo) << "stopping channel=" << aasdk::messenger::channelIdToString(channel_->getId());
+        videoOutput_->stop();
+    
     }
 
     void VideoMediaSinkService::pause() {
-        strand_.dispatch([this, self = this->shared_from_this()]() {
-            qInfo(lcServiceSinkMediaVideo) << "paused channel=" << aasdk::messenger::channelIdToString(channel_->getId());
-        });
+                qInfo(lcServiceSinkMediaVideo) << "paused channel=" << aasdk::messenger::channelIdToString(channel_->getId());
+    
     }
 
     void VideoMediaSinkService::resume() {
-        strand_.dispatch([this, self = this->shared_from_this()]() {
-            qInfo(lcServiceSinkMediaVideo) << "resumed channel=" << aasdk::messenger::channelIdToString(channel_->getId());
-        });
+                qInfo(lcServiceSinkMediaVideo) << "resumed channel=" << aasdk::messenger::channelIdToString(channel_->getId());
+    
     }
 
     void VideoMediaSinkService::fillFeatures(
@@ -78,7 +74,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
         response.set_max_unacked(4);
         response.add_configuration_indices(0);
 
-        auto promise = aasdk::channel::SendPromise::defer(strand_);
+        auto promise = aasdk::channel::SendPromise::defer();
         promise->then(std::bind(&VideoMediaSinkService::sendVideoFocusIndication, this->shared_from_this()),
                       std::bind(&VideoMediaSinkService::onChannelError, this->shared_from_this(),
                                 std::placeholders::_1));
@@ -100,7 +96,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
         aap_protobuf::service::control::message::ChannelOpenResponse response;
         response.set_status(status);
 
-        auto promise = aasdk::channel::SendPromise::defer(strand_);
+        auto promise = aasdk::channel::SendPromise::defer();
         promise->then([]() {
         }, std::bind(&VideoMediaSinkService::onChannelError, this->shared_from_this(),
                      std::placeholders::_1));
@@ -136,7 +132,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
         indication.set_session_id(session_);
         indication.set_ack(1);
 
-        auto promise = aasdk::channel::SendPromise::defer(strand_);
+        auto promise = aasdk::channel::SendPromise::defer();
         promise->then([]() {
         }, std::bind(&VideoMediaSinkService::onChannelError, this->shared_from_this(),
                      std::placeholders::_1));
@@ -184,7 +180,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
             aap_protobuf::service::media::video::message::VideoFocusMode::VIDEO_FOCUS_PROJECTED);
         videoFocusIndication.set_unsolicited(false);
 
-        auto promise = aasdk::channel::SendPromise::defer(strand_);
+        auto promise = aasdk::channel::SendPromise::defer();
         promise->then([]() {}, std::bind(&VideoMediaSinkService::onChannelError, this->shared_from_this(),
                      std::placeholders::_1));
         channel_->sendVideoFocusIndication(videoFocusIndication, std::move(promise));

@@ -11,29 +11,21 @@ namespace f1x::openauto::autoapp::service::mediasink {
   }
 
   void AudioMediaSinkService::start() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceSinkMediaAudio) << "starting channel=" << aasdk::messenger::channelIdToString(channel_->getId());
-      channel_->receive(this->shared_from_this());
-    });
+  channel_->receive(this->shared_from_this());
   }
 
   void AudioMediaSinkService::stop() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceSinkMediaAudio) << "stopping channel=" << aasdk::messenger::channelIdToString(channel_->getId());
-      audioOutput_->stop();
-    });
+  audioOutput_->stop();
   }
 
   void AudioMediaSinkService::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceSinkMediaAudio) << "paused channel=" << aasdk::messenger::channelIdToString(channel_->getId());
-    });
   }
 
   void AudioMediaSinkService::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceSinkMediaAudio) << "resumed channel=" << aasdk::messenger::channelIdToString(channel_->getId());
-    });
   }
 
   /*
@@ -110,7 +102,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
     aap_protobuf::service::control::message::ChannelOpenResponse response;
     response.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&AudioMediaSinkService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));
@@ -141,7 +133,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
     response.set_max_unacked(1);
     response.add_configuration_indices(0); // confirm index 0 (48000 Hz)
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&AudioMediaSinkService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendChannelSetupResponse(response, std::move(promise));
@@ -174,7 +166,7 @@ namespace f1x::openauto::autoapp::service::mediasink {
     indication.set_session_id(session_);
     indication.set_ack(1);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&AudioMediaSinkService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendMediaAckIndication(indication, std::move(promise));

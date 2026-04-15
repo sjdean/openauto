@@ -47,7 +47,6 @@ namespace f1x::openauto::autoapp::service::mediasink {
 
     protected:
         using std::enable_shared_from_this<AudioMediaSinkService>::shared_from_this;
-        boost::asio::io_service::strand strand_;
         aasdk::channel::mediasink::audio::IAudioMediaSinkService::Pointer channel_;
         projection::IAudioOutput::Pointer audioOutput_;
         int32_t session_;

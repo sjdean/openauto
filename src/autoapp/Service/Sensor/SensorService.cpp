@@ -15,24 +15,22 @@ namespace f1x::openauto::autoapp::service::sensor {
 
   void SensorService::start() {
 
-    strand_.dispatch([this, self = this->shared_from_this()]() {
-#ifdef Q_OS_LINUX
-      if (gps_open("127.0.0.1", "2947", &this->gpsData_)) {
-        qWarning(lcServiceSensor) << "gpsd connect failed";
-      } else {
-        qInfo(lcServiceSensor) << "gpsd connected";
-        gps_stream(&this->gpsData_, WATCH_ENABLE | WATCH_JSON, NULL);
-        this->gpsEnabled_ = true;
-      }
+    #ifdef Q_OS_LINUX
+  if (gps_open("127.0.0.1", "2947", &this->gpsData_)) {
+    qWarning(lcServiceSensor) << "gpsd connect failed";
+  } else {
+    qInfo(lcServiceSensor) << "gpsd connected";
+    gps_stream(&this->gpsData_, WATCH_ENABLE | WATCH_JSON, NULL);
+    this->gpsEnabled_ = true;
+  }
 
-      if (is_file_exist("/tmp/night_mode_enabled")) {
-        this->isNight = true;
-      }
-      this->sensorPolling();
+  if (is_file_exist("/tmp/night_mode_enabled")) {
+    this->isNight = true;
+  }
+  this->sensorPolling();
 #endif
-      qInfo(lcServiceSensor) << "starting";
-      channel_->receive(this->shared_from_this());
-    });
+  qInfo(lcServiceSensor) << "starting";
+  channel_->receive(this->shared_from_this());
 
   }
 
@@ -40,28 +38,22 @@ namespace f1x::openauto::autoapp::service::sensor {
     this->stopPolling = true;
     timer_.stop();
 
-    strand_.dispatch([this, self = this->shared_from_this()]() {
-#ifdef Q_OS_LINUX
-      if (this->gpsEnabled_) {
-        gps_stream(&this->gpsData_, WATCH_DISABLE, NULL);
-        gps_close(&this->gpsData_);
-        this->gpsEnabled_ = false;
-      }
+    #ifdef Q_OS_LINUX
+  if (this->gpsEnabled_) {
+    gps_stream(&this->gpsData_, WATCH_DISABLE, NULL);
+    gps_close(&this->gpsData_);
+    this->gpsEnabled_ = false;
+  }
 #endif
-      qInfo(lcServiceSensor) << "stopping";
-    });
+  qInfo(lcServiceSensor) << "stopping";
   }
 
   void SensorService::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qDebug(lcServiceSensor) << "pausing";
-    });
   }
 
   void SensorService::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qDebug(lcServiceSensor) << "resuming";
-    });
   }
 
   void SensorService::fillFeatures(
@@ -87,7 +79,7 @@ namespace f1x::openauto::autoapp::service::sensor {
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
     response.set_status(status);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&SensorService::onChannelError, this->shared_from_this(), std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));
@@ -102,7 +94,7 @@ namespace f1x::openauto::autoapp::service::sensor {
     aap_protobuf::service::sensorsource::message::SensorStartResponseMessage response;
     response.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
 
     if (request.type() == aap_protobuf::service::sensorsource::message::SENSOR_DRIVING_STATUS_DATA) {
       promise->then(std::bind(&SensorService::sendDrivingStatusUnrestricted, this->shared_from_this()),
@@ -125,7 +117,7 @@ namespace f1x::openauto::autoapp::service::sensor {
     indication.add_driving_status_data()->set_status(
         aap_protobuf::service::sensorsource::message::DrivingStatus::DRIVE_STATUS_UNRESTRICTED);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&SensorService::onChannelError, this->shared_from_this(), std::placeholders::_1));
     channel_->sendSensorEventIndication(indication, std::move(promise));
@@ -141,7 +133,7 @@ namespace f1x::openauto::autoapp::service::sensor {
       indication.add_night_mode_data()->set_night_mode(false);
     }
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&SensorService::onChannelError, this->shared_from_this(), std::placeholders::_1));
     channel_->sendSensorEventIndication(indication, std::move(promise));
@@ -179,7 +171,7 @@ namespace f1x::openauto::autoapp::service::sensor {
       // degrees
       locInd->set_bearing_e6(this->gpsData_.fix.track * 1e6);
     }
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&SensorService::onChannelError, this->shared_from_this(), std::placeholders::_1));
     channel_->sendSensorEventIndication(indication, std::move(promise));
@@ -189,30 +181,29 @@ namespace f1x::openauto::autoapp::service::sensor {
 
   void SensorService::sensorPolling() {
     if (!this->stopPolling) {
-      strand_.dispatch([this, self = this->shared_from_this()]() {
-        this->isNight = is_file_exist("/tmp/night_mode_enabled");
-        if (this->previous != this->isNight && !this->firstRun) {
-          this->previous = this->isNight;
-          this->sendNightData();
-        }
+          this->isNight = is_file_exist("/tmp/night_mode_enabled");
+    if (this->previous != this->isNight && !this->firstRun) {
+      this->previous = this->isNight;
+      this->sendNightData();
+    }
 #ifdef Q_OS_LINUX
-        if ((this->gpsEnabled_) &&
-            (gps_waiting(&this->gpsData_, 0)) &&
+    if ((this->gpsEnabled_) &&
+        (gps_waiting(&this->gpsData_, 0)) &&
 #if GPSD_API_MAJOR_VERSION >= 11
-            (gps_read(&this->gpsData_, NULL, 0) > 0) &&
+        (gps_read(&this->gpsData_, NULL, 0) > 0) &&
 #else
-            (gps_read(&this->gpsData_) > 0) &&
-            (this->gpsData_.status != STATUS_NO_FIX) &&
+        (gps_read(&this->gpsData_) > 0) &&
+        (this->gpsData_.status != STATUS_NO_FIX) &&
 #endif
-            (this->gpsData_.fix.mode == MODE_2D || this->gpsData_.fix.mode == MODE_3D) &&
-            (this->gpsData_.set & TIME_SET) &&
-            (this->gpsData_.set & LATLON_SET)) {
-          this->sendGPSLocationData();
-        }
+        (this->gpsData_.fix.mode == MODE_2D || this->gpsData_.fix.mode == MODE_3D) &&
+        (this->gpsData_.set & TIME_SET) &&
+        (this->gpsData_.set & LATLON_SET)) {
+      this->sendGPSLocationData();
+    }
 #endif
 
-        timer_.start();
-      });
+    timer_.start();
+  
     }
   }
 

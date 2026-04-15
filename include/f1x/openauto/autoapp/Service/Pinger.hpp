@@ -17,8 +17,6 @@ namespace f1x::openauto::autoapp::service {
         using std::enable_shared_from_this<Pinger>::shared_from_this;
 
         void onTimerExceeded();
-
-        boost::asio::io_service::strand strand_;
         QTimer timer_;
         time_t duration_;
         bool cancelled_;

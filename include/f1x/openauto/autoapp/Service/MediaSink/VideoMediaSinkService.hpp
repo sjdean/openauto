@@ -52,7 +52,6 @@ namespace f1x::openauto::autoapp::service::mediasink {
 
     protected:
         using std::enable_shared_from_this<VideoMediaSinkService>::shared_from_this;
-        boost::asio::io_service::strand strand_;
         aasdk::channel::mediasink::video::IVideoMediaSinkService::Pointer channel_;
         projection::IVideoOutput::Pointer videoOutput_;
         int32_t session_;

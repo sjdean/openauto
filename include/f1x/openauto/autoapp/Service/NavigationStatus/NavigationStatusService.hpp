@@ -39,7 +39,6 @@ namespace f1x::openauto::autoapp::service::navigationstatus {
     private:
         using std::enable_shared_from_this<NavigationStatusService>::shared_from_this;
         QTimer timer_;
-        boost::asio::io_service::strand strand_;
         aasdk::channel::navigationstatus::NavigationStatusService::Pointer channel_;
     };
 }

@@ -29,7 +29,6 @@ namespace f1x::openauto::autoapp::service::radio {
     private:
         using std::enable_shared_from_this<RadioService>::shared_from_this;
         QTimer timer_;
-        boost::asio::io_service::strand strand_;
         aasdk::channel::radio::RadioService::Pointer channel_;
     };
 }

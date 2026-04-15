@@ -13,29 +13,21 @@ namespace f1x::openauto::autoapp::service::bluetooth {
   }
 
   void BluetoothService::start() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceBt) << "starting";
-      channel_->receive(this->shared_from_this());
-    });
+  channel_->receive(this->shared_from_this());
   }
 
   void BluetoothService::stop() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceBt) << "stopping";
-      bluetoothDevice_->stop();
-    });
+  bluetoothDevice_->stop();
   }
 
   void BluetoothService::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceBt) << "paused";
-    });
   }
 
   void BluetoothService::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceBt) << "resumed";
-    });
   }
 
   void BluetoothService::fillFeatures(
@@ -71,7 +63,7 @@ namespace f1x::openauto::autoapp::service::bluetooth {
     aap_protobuf::service::control::message::ChannelOpenResponse response;
     response.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&BluetoothService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));
@@ -94,7 +86,7 @@ namespace f1x::openauto::autoapp::service::bluetooth {
     response.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
     response.set_already_paired(isPaired);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then(std::bind(&BluetoothService::sendBluetoothAuthenticationData, this->shared_from_this()),
                   std::bind(&BluetoothService::onChannelError, this->shared_from_this(),
                             std::placeholders::_1));
@@ -110,7 +102,7 @@ namespace f1x::openauto::autoapp::service::bluetooth {
     data.set_auth_data("123456");
     data.set_pairing_method(
         aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_PIN);
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&BluetoothService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendBluetoothAuthenticationData(data, std::move(promise));

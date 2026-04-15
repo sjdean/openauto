@@ -12,29 +12,21 @@ namespace f1x::openauto::autoapp::service::mediasource {
   }
 
   void MediaSourceService::start() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceSourceMedia) << "starting";
-      channel_->receive(this->shared_from_this());
-    });
+  channel_->receive(this->shared_from_this());
   }
 
   void MediaSourceService::stop() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceSourceMedia) << "stopping";
-      audioInput_->stop();
-    });
+  audioInput_->stop();
   }
 
   void MediaSourceService::pause() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceSourceMedia) << "paused";
-    });
   }
 
   void MediaSourceService::resume() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       qInfo(lcServiceSourceMedia) << "resumed";
-    });
   }
 
   /*
@@ -72,7 +64,7 @@ namespace f1x::openauto::autoapp::service::mediasource {
     aap_protobuf::service::control::message::ChannelOpenResponse response;
     response.set_status(status);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&MediaSourceService::onChannelError, this->shared_from_this(),
                             std::placeholders::_1));
@@ -99,7 +91,7 @@ namespace f1x::openauto::autoapp::service::mediasource {
     response.set_max_unacked(1);
     response.add_configuration_indices(0);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&MediaSourceService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendChannelSetupResponse(response, std::move(promise));
@@ -123,7 +115,7 @@ namespace f1x::openauto::autoapp::service::mediasource {
                                 << " max_unacked=" << request.max_unacked();
 
     if (request.open()) {
-      auto startPromise = projection::IAudioInput::StartPromise::defer(strand_);
+      auto startPromise = projection::IAudioInput::StartPromise::defer();
       startPromise->then(std::bind(&MediaSourceService::onMediaSourceOpenSuccess, this->shared_from_this()),
                          [this, self = this->shared_from_this()]() {
                            qCritical(lcServiceSourceMedia) << "mic open failed";
@@ -132,7 +124,7 @@ namespace f1x::openauto::autoapp::service::mediasource {
                            response.set_session_id(session_);
                            response.set_status(aap_protobuf::shared::MessageStatus::STATUS_INTERNAL_ERROR);
 
-                           auto sendPromise = aasdk::channel::SendPromise::defer(strand_);
+                           auto sendPromise = aasdk::channel::SendPromise::defer();
                            sendPromise->then([]() {},
                                              std::bind(&MediaSourceService::onChannelError,
                                                        this->shared_from_this(),
@@ -148,7 +140,7 @@ namespace f1x::openauto::autoapp::service::mediasource {
       response.set_session_id(session_);
       response.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
 
-      auto sendPromise = aasdk::channel::SendPromise::defer(strand_);
+      auto sendPromise = aasdk::channel::SendPromise::defer();
       sendPromise->then([]() {}, std::bind(&MediaSourceService::onChannelError, this->shared_from_this(),
                                            std::placeholders::_1));
       channel_->sendMicrophoneOpenResponse(response, std::move(sendPromise));
@@ -164,7 +156,7 @@ namespace f1x::openauto::autoapp::service::mediasource {
     response.set_session_id(session_);
     response.set_status(aap_protobuf::shared::MessageStatus::STATUS_SUCCESS);
 
-    auto sendPromise = aasdk::channel::SendPromise::defer(strand_);
+    auto sendPromise = aasdk::channel::SendPromise::defer();
     sendPromise->then([]() {}, std::bind(&MediaSourceService::onChannelError, this->shared_from_this(),
                                          std::placeholders::_1));
 
@@ -174,7 +166,7 @@ namespace f1x::openauto::autoapp::service::mediasource {
   }
 
   void MediaSourceService::onMediaSourceDataReady(aasdk::common::Data data) {
-    auto sendPromise = aasdk::channel::SendPromise::defer(strand_);
+    auto sendPromise = aasdk::channel::SendPromise::defer();
     sendPromise->then(std::bind(&MediaSourceService::readMediaSource, this->shared_from_this()),
                       std::bind(&MediaSourceService::onChannelError, this->shared_from_this(),
                                 std::placeholders::_1));
@@ -186,7 +178,7 @@ namespace f1x::openauto::autoapp::service::mediasource {
 
   void MediaSourceService::readMediaSource() {
     if (audioInput_->isActive()) {
-      auto readPromise = projection::IAudioInput::ReadPromise::defer(strand_);
+      auto readPromise = projection::IAudioInput::ReadPromise::defer();
       readPromise->then(
           std::bind(&MediaSourceService::onMediaSourceDataReady, this->shared_from_this(),
                     std::placeholders::_1),

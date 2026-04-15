@@ -12,27 +12,19 @@ namespace f1x::openauto::autoapp::service::phonestatus {
   }
 
   void PhoneStatusService::start() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServicePhoneStatus) << "starting";
-    });
   }
 
   void PhoneStatusService::stop() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServicePhoneStatus) << "stopping";
-    });
   }
 
   void PhoneStatusService::pause() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServicePhoneStatus) << "pausing";
-    });
   }
 
   void PhoneStatusService::resume() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServicePhoneStatus) << "resuming";
-    });
   }
 
   void PhoneStatusService::fillFeatures(
@@ -53,7 +45,7 @@ namespace f1x::openauto::autoapp::service::phonestatus {
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
     response.set_status(status);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&PhoneStatusService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));

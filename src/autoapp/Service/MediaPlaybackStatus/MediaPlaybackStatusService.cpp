@@ -14,27 +14,19 @@ namespace f1x::openauto::autoapp::service::mediaplaybackstatus {
   }
 
   void MediaPlaybackStatusService::start() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServicePlayback) << "starting";
-    });
   }
 
   void MediaPlaybackStatusService::stop() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServicePlayback) << "stopping";
-    });
   }
 
   void MediaPlaybackStatusService::pause() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServicePlayback) << "pausing";
-    });
   }
 
   void MediaPlaybackStatusService::resume() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServicePlayback) << "resuming";
-    });
   }
 
   void MediaPlaybackStatusService::fillFeatures(
@@ -55,7 +47,7 @@ namespace f1x::openauto::autoapp::service::mediaplaybackstatus {
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
     response.set_status(status);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&MediaPlaybackStatusService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));

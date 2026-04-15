@@ -39,8 +39,6 @@ namespace f1x::openauto::autoapp::service::inputsource {
 
     private:
         using std::enable_shared_from_this<InputSourceService>::shared_from_this;
-
-        boost::asio::io_service::strand strand_;
         aasdk::channel::inputsource::InputSourceService::Pointer channel_;
         projection::IInputDevice::Pointer inputDevice_;
     };

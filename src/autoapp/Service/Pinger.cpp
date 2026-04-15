@@ -10,28 +10,24 @@ namespace f1x::openauto::autoapp::service {
   }
 
   void Pinger::ping(Promise::Pointer promise) {
-    strand_.dispatch([this, self = this->shared_from_this(), promise = std::move(promise)]() mutable {
       cancelled_ = false;
 
-      if (promise_ != nullptr) {
-        promise_->reject(aasdk::error::Error(aasdk::error::ErrorCode::OPERATION_IN_PROGRESS));
-      } else {
-        ++pingsCount_;
-        qDebug(lcPinger) << "pings=" << pingsCount_;
+  if (promise_ != nullptr) {
+    promise_->reject(aasdk::error::Error(aasdk::error::ErrorCode::OPERATION_IN_PROGRESS));
+  } else {
+    ++pingsCount_;
+    qDebug(lcPinger) << "pings=" << pingsCount_;
 
-        promise_ = std::move(promise);
-        timer_.setInterval(static_cast<int>(duration_));
-        timer_.setSingleShot(true);
-        timer_.start();
-      }
-    });
+    promise_ = std::move(promise);
+    timer_.setInterval(static_cast<int>(duration_));
+    timer_.setSingleShot(true);
+    timer_.start();
+  }
   }
 
   void Pinger::pong() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       ++pongsCount_;
-      qDebug(lcPinger) << "[Pinger] Pong counter: " << pongsCount_;
-    });
+  qDebug(lcPinger) << "[Pinger] Pong counter: " << pongsCount_;
   }
 
   void Pinger::onTimerExceeded() {
@@ -49,14 +45,12 @@ namespace f1x::openauto::autoapp::service {
   }
 
   void Pinger::cancel() {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
       cancelled_ = true;
-      timer_.stop();
-      if (promise_ != nullptr) {
-        promise_->reject(aasdk::error::Error(aasdk::error::ErrorCode::OPERATION_ABORTED));
-        promise_.reset();
-      }
-    });
+  timer_.stop();
+  if (promise_ != nullptr) {
+    promise_->reject(aasdk::error::Error(aasdk::error::ErrorCode::OPERATION_ABORTED));
+    promise_.reset();
+  }
   }
 
 }

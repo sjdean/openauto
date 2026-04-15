@@ -37,7 +37,6 @@ namespace f1x::openauto::autoapp::service::wifiprojection {
         using std::enable_shared_from_this<WifiProjectionService>::shared_from_this;
         configuration::IConfiguration::Pointer configuration_;
         QTimer timer_;
-        boost::asio::io_service::strand strand_;
         aasdk::channel::wifiprojection::WifiProjectionService::Pointer channel_;
     };
 }

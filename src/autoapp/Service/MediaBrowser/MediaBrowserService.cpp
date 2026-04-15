@@ -13,27 +13,19 @@ namespace f1x::openauto::autoapp::service::mediabrowser {
   }
 
   void MediaBrowserService::start() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceBrowser) << "starting";
-    });
   }
 
   void MediaBrowserService::stop() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceBrowser) << "stopping";
-    });
   }
 
   void MediaBrowserService::pause() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceBrowser) << "pausing";
-    });
   }
 
   void MediaBrowserService::resume() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceBrowser) << "resuming";
-    });
   }
 
   void MediaBrowserService::fillFeatures(
@@ -54,7 +46,7 @@ namespace f1x::openauto::autoapp::service::mediabrowser {
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
     response.set_status(status);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&MediaBrowserService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));

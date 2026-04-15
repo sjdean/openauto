@@ -13,27 +13,19 @@ namespace f1x::openauto::autoapp::service::vendorextension {
   }
 
   void VendorExtensionService::start() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceVendor) << "starting";
-    });
   }
 
   void VendorExtensionService::stop() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceVendor) << "stopping";
-    });
   }
 
   void VendorExtensionService::pause() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceVendor) << "pausing";
-    });
   }
 
   void VendorExtensionService::resume() {
-    strand_.dispatch([self = this->shared_from_this()]() {
       qDebug(lcServiceVendor) << "resuming";
-    });
   }
 
   void VendorExtensionService::fillFeatures(
@@ -54,7 +46,7 @@ namespace f1x::openauto::autoapp::service::vendorextension {
     const aap_protobuf::shared::MessageStatus status = aap_protobuf::shared::MessageStatus::STATUS_SUCCESS;
     response.set_status(status);
 
-    auto promise = aasdk::channel::SendPromise::defer(strand_);
+    auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {}, std::bind(&VendorExtensionService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));

@@ -49,8 +49,6 @@ namespace f1x::openauto::autoapp::service::mediasource {
         void onMediaSourceDataReady(aasdk::common::Data data);
 
         void readMediaSource();
-
-        boost::asio::io_service::strand strand_;
         aasdk::channel::mediasource::IMediaSourceService::Pointer channel_;
         projection::IAudioInput::Pointer audioInput_;
         int32_t session_;
