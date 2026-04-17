@@ -51,7 +51,8 @@ Item {
                     {text: "Audio", icon: "images/settings-audio.svg"},
                     {text: "Video", icon: "images/settings-video.svg"},
                     {text: "System", icon: "images/settings.svg"},
-                    {text: "Look", icon: "images/day.svg"}
+                    {text: "Look", icon: "images/day.svg"},
+                    {text: "CAN Bus", icon: "images/settings.svg"}
                 ]
                 TabButton {
                     id: tabBtn
@@ -510,6 +511,101 @@ Item {
                             horizontalAlignment: Text.AlignRight
                         }
                     }
+                }
+            }
+
+            // --- TAB 7: CAN BUS ---
+            SettingsPage {
+
+                SectionHeader { text: "Signal Mapping File" }
+
+                SettingRow {
+                    label: "Mapping File"
+                    control: RowLayout {
+                        spacing: 10
+                        ModernTextField {
+                            id: mappingFileField
+                            Layout.fillWidth: true
+                            text: settingsViewHandler.canBusMappingFile
+                            placeholderText: "e.g. /home/pi/.local/share/journeyos/canbus/renault.json"
+                            onEditingFinished: settingsViewHandler.canBusMappingFile = text.trim()
+                        }
+                    }
+                }
+
+                Label {
+                    text: "Point to the JSON signal mapping file for your vehicle. "
+                        + "The file will be sent to connected CAN bus peripherals on next connection."
+                    font.pointSize: 13
+                    color: cTextDim
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                }
+
+                SectionHeader { text: "Connected Devices" }
+
+                Repeater {
+                    model: canBusDeviceModel.devices
+
+                    delegate: Rectangle {
+                        Layout.fillWidth: true
+                        height: deviceColumn.implicitHeight + 24
+                        color: cSurface
+                        radius: Constants.radiusInput
+                        border.color: cBorder
+                        border.width: 1
+
+                        Column {
+                            id: deviceColumn
+                            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 12 }
+                            spacing: 6
+
+                            RowLayout {
+                                width: parent.width
+                                spacing: 8
+
+                                Label {
+                                    text: modelData.deviceId
+                                    font.pointSize: 14
+                                    font.bold: true
+                                    color: cTextMain
+                                    Layout.fillWidth: true
+                                }
+                                Label {
+                                    text: modelData.status === "ok" ? "Ready" : "Updating…"
+                                    font.pointSize: 12
+                                    color: modelData.status === "ok" ? "#4CAF50" : cTextDim
+                                }
+                            }
+
+                            Label {
+                                text: "Firmware: " + modelData.firmwareVersion
+                                font.pointSize: 12
+                                color: cTextDim
+                            }
+
+                            Repeater {
+                                model: modelData.canPorts
+                                delegate: Label {
+                                    text: "\u2022 Port " + modelData.portId
+                                        + " — " + (modelData.bitrate / 1000) + " kbit/s"
+                                        + (modelData.fdCapable ? "  FD" : "")
+                                        + (modelData.linkActive ? "  \u25CF" : "  \u25CB")
+                                    font.pointSize: 12
+                                    color: modelData.linkActive ? cTextMain : cTextDim
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Label {
+                    visible: canBusDeviceModel.devices.length === 0
+                    text: "No CAN bus peripherals connected."
+                    font.pointSize: 13
+                    font.italic: true
+                    color: cTextDim
+                    Layout.fillWidth: true
                 }
             }
         }

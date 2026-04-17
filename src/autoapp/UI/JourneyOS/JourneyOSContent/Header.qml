@@ -139,6 +139,29 @@ Item {
                     anchors.rightMargin: 0
                     spacing: 5
 
+                    // Battery voltage — visible only when canBusReceiver reports a non-zero value.
+                    // canBusReceiver may be null on desktop (non-CAN) builds.
+                    JourneyButton {
+                        id: batteryPill
+                        height: Math.min(30, parent.height)
+                        textIsStatus: true
+                        text: (canBusReceiver && canBusReceiver.batteryVoltage > 0)
+                              ? (canBusReceiver.batteryVoltage / 10).toFixed(1) + " V"
+                              : ""
+                        icon.source: "images/battery.svg"
+                        iconColor: {
+                            if (!canBusReceiver || canBusReceiver.batteryVoltage <= 0)
+                                return Constants.baseColor
+                            const v = canBusReceiver.batteryVoltage / 10
+                            return v < 11.8 ? Constants.badColor
+                                 : v < 12.4 ? Constants.waitColor
+                                 : Constants.okColor
+                        }
+                        iconSize: height * 0.5
+                        visible: canBusReceiver !== null && canBusReceiver !== undefined
+                                 && canBusReceiver.batteryVoltage > 0
+                    }
+
                     JourneyButton {
                         id: brightnessButton
                         height: Math.min(30, parent.height)

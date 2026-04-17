@@ -16,6 +16,7 @@ namespace f1x::openauto::autoapp::configuration {
         Bluetooth,
         System,
         Wireless,
+        CanBus,
     };
 
     // -------------------------------------------------------------------------
@@ -94,6 +95,9 @@ namespace f1x::openauto::autoapp::configuration {
         WirelessInterface,
         WirelessInterfaceMAC,
         WirelessType,
+
+        // CanBus -------------------------------------------------------------
+        CanBusMappingFile,
     };
 
     // -------------------------------------------------------------------------
@@ -110,6 +114,7 @@ namespace f1x::openauto::autoapp::configuration {
             case ConfigGroup::Bluetooth:   return QStringLiteral("Bluetooth");
             case ConfigGroup::System:      return QStringLiteral("System");
             case ConfigGroup::Wireless:    return QStringLiteral("Wireless");
+            case ConfigGroup::CanBus:      return QStringLiteral("CanBus");
         }
         return {};
     }
@@ -169,6 +174,7 @@ namespace f1x::openauto::autoapp::configuration {
             case ConfigKey::WirelessInterface:               return QStringLiteral("Interface");
             case ConfigKey::WirelessInterfaceMAC:            return QStringLiteral("InterfaceMAC");
             case ConfigKey::WirelessType:                    return QStringLiteral("Type");
+            case ConfigKey::CanBusMappingFile:               return QStringLiteral("MappingFile");
         }
         return {};
     }

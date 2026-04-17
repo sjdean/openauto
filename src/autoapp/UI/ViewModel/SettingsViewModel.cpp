@@ -148,6 +148,7 @@ using configuration::ConfigKey;
                                                             m_headUnitMode(false)
 #endif
     {
+        m_canBusMappingFile = configuration_->getSettingByName<QString>(ConfigGroup::CanBus, ConfigKey::CanBusMappingFile);
         m_hwBluetoothAdapter = configuration_->getSettingByName<QString>(ConfigGroup::Bluetooth, ConfigKey::BluetoothAdapterAddress);
         m_androidAutoHomeButtonVisibility = configuration_->getSettingByName<QString>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoHomeButtonVisibility);
         m_androidAutoShowHomeButton      = configuration_->getSettingByName<bool>(ConfigGroup::AndroidAuto, ConfigKey::AndroidAutoShowHomeButton);
@@ -829,6 +830,19 @@ using configuration::ConfigKey;
             configuration_->save();
             m_uiButtonOpacity = value;
             emit uiButtonOpacityChanged();
+        }
+    }
+
+    QString SettingsViewModel::getCanBusMappingFile() const {
+        return m_canBusMappingFile;
+    }
+
+    void SettingsViewModel::setCanBusMappingFile(QString value) {
+        if (m_canBusMappingFile != value) {
+            configuration_->updateSettingByName<QString>(ConfigGroup::CanBus, ConfigKey::CanBusMappingFile, value);
+            configuration_->save();
+            m_canBusMappingFile = value;
+            emit canBusMappingFileChanged();
         }
     }
 }

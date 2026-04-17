@@ -88,6 +88,8 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     Q_PROPERTY(QString uiAccentPrimary READ getUiAccentPrimary WRITE setUiAccentPrimary NOTIFY uiAccentPrimaryChanged)
     Q_PROPERTY(QString uiAccentBrand2  READ getUiAccentBrand2  WRITE setUiAccentBrand2  NOTIFY uiAccentBrand2Changed)
     Q_PROPERTY(double  uiButtonOpacity READ getUiButtonOpacity WRITE setUiButtonOpacity NOTIFY uiButtonOpacityChanged)
+    Q_PROPERTY(QString canBusMappingFile READ getCanBusMappingFile WRITE setCanBusMappingFile NOTIFY canBusMappingFileChanged)
+
   public:
     explicit SettingsViewModel(configuration::IConfiguration::Pointer configuration,
                           QObject *parent = nullptr);
@@ -177,6 +179,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void uiAccentPrimaryChanged();
     void uiAccentBrand2Changed();
     void uiButtonOpacityChanged();
+    void canBusMappingFileChanged();
 
   private:
     configuration::IConfiguration::Pointer configuration_;
@@ -402,6 +405,11 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void setUiAccentPrimary(QString value);
     void setUiAccentBrand2(QString value);
     void setUiButtonOpacity(double value);
+
+    // CAN Bus
+    QString m_canBusMappingFile;
+    QString getCanBusMappingFile() const;
+    void setCanBusMappingFile(QString value);
 
   };
 }

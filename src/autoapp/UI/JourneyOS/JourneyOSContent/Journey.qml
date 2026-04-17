@@ -127,6 +127,47 @@ Window {
         onShutdownRequested: systemPower.powerOff()
     }
 
+    // Steering-wheel button toast — auto-dismisses after 2 s.
+    // canBusReceiver may be null on desktop (non-CAN) builds.
+    Rectangle {
+        id: buttonToast
+        visible: false
+        z: 9998
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: parent.height * 0.08
+        width: toastLabel.implicitWidth + 32
+        height: toastLabel.implicitHeight + 16
+        radius: height / 2
+        color: Qt.rgba(0, 0, 0, 0.72)
+
+        Text {
+            id: toastLabel
+            anchors.centerIn: parent
+            color: "white"
+            font.pixelSize: 14
+            text: (canBusReceiver && canBusReceiver.lastButtonPressed) || ""
+        }
+
+        Timer {
+            id: toastTimer
+            interval: 2000
+            repeat: false
+            onTriggered: buttonToast.visible = false
+        }
+    }
+
+    Connections {
+        target: canBusReceiver
+        ignoreUnknownSignals: true
+        function onLastButtonPressedChanged() {
+            if (canBusReceiver && canBusReceiver.lastButtonPressed !== "") {
+                buttonToast.visible = true
+                toastTimer.restart()
+            }
+        }
+    }
+
     // ---------------------------------------------------------
     // 3. LOGIC & CONNECTIONS
     // ---------------------------------------------------------
@@ -157,11 +198,12 @@ Window {
         function onViewBrightness() { brightnessPopup.open() }
     }
 
-    // Restart slider auto-close timers on each interaction so they only
-    // close 5 s after the user stops touching the slider.
+    // Volume popup: open (or stay open) whenever volume or mute changes —
+    // covers both touch-slider interactions and CAN steering-wheel buttons.
     Connections {
         target: volumePopupHandler
-        function onVolumeSinkChanged() { if (volumePopup.opened) volTimer.restart() }
+        function onVolumeSinkChanged()     { volumePopup.open(); volTimer.restart() }
+        function onVolumeSinkMuteChanged() { volumePopup.open(); volTimer.restart() }
     }
     Connections {
         target: brightnessPopupHandler

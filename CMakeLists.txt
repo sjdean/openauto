@@ -200,6 +200,38 @@ if(OPENAUTO_WINDOWS)
     set(PLATFORM_LINK_LIBS ws2_32)
 endif()
 
+# ─── cubeone-canbus-receiver ─────────────────────────────────────────────────
+# Optional sibling project — CAN bus device management + telemetry.
+# Build it first with:  cd ../cubeone-canbus-receiver && cmake -B build && cmake --build build
+# Disable with:  -DCANBUS_RECEIVER_ROOT=OFF
+set(CANBUS_RECEIVER_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../cubeone-canbus-receiver"
+    CACHE PATH "Root of the cubeone-canbus-receiver sibling project (set to OFF to disable)")
+
+if(CANBUS_RECEIVER_ROOT AND NOT CANBUS_RECEIVER_ROOT STREQUAL "OFF")
+    find_library(CANBUS_RECEIVER_LIB
+        NAMES cubeone-canbus-receiver
+        HINTS "${CANBUS_RECEIVER_ROOT}/lib"
+              "${CANBUS_RECEIVER_ROOT}/build/lib"
+              "${CANBUS_RECEIVER_ROOT}/cmake-build-debug/lib"
+        NO_DEFAULT_PATH)
+
+    if(CANBUS_RECEIVER_LIB)
+        message(STATUS "canbus-receiver : ${CANBUS_RECEIVER_LIB}")
+        add_library(JourneyOS::CanBusReceiver SHARED IMPORTED)
+        set_target_properties(JourneyOS::CanBusReceiver PROPERTIES
+            IMPORTED_LOCATION             "${CANBUS_RECEIVER_LIB}"
+            INTERFACE_INCLUDE_DIRECTORIES "${CANBUS_RECEIVER_ROOT}/include"
+        )
+        set(CANBUS_RECEIVER_FOUND TRUE)
+    else()
+        message(STATUS "canbus-receiver : NOT FOUND under ${CANBUS_RECEIVER_ROOT} — CAN bus device management disabled")
+        set(CANBUS_RECEIVER_FOUND FALSE)
+    endif()
+else()
+    message(STATUS "canbus-receiver : DISABLED")
+    set(CANBUS_RECEIVER_FOUND FALSE)
+endif()
+
 # ─── Qt Design Studio components (network fetch) ─────────────────────────────
 # qmlcomponents.cmake uses FetchContent to download from GitHub at configure
 # time. This works on desktop but will fail in Yocto's network-isolated build.
@@ -259,6 +291,12 @@ target_compile_definitions(autoapp PRIVATE
         $<$<BOOL:${OPENAUTO_MACOS}>:MAC_OS>    # was add_definitions(-DMAC_OS) — now target-scoped
         OPENAUTO_VERSION_STRING="${LIBRARY_BUILD_MAJOR_RELEASE}.${LIBRARY_BUILD_MINOR_RELEASE}.${LIBRARY_BUILD_INCREMENTAL}"
 )
+
+# Propagate canbus-receiver availability into C++ so main.cpp can #ifdef it.
+if(CANBUS_RECEIVER_FOUND)
+    target_compile_definitions(autoapp PRIVATE JOURNEYOS_CANBUS_RECEIVER)
+    target_link_libraries(autoapp PRIVATE JourneyOS::CanBusReceiver)
+endif()
 
 # ─── Qt Design Studio subdirectories ─────────────────────────────────────────
 set(UI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/autoapp/UI/JourneyOS")

@@ -56,6 +56,14 @@
 #include "f1x/openauto/autoapp/UI/ViewModel/VolumeViewModel.hpp"
 #include "f1x/openauto/autoapp/UI/ViewModel/BrightnessViewModel.hpp"
 #include "f1x/openauto/autoapp/UI/ViewModel/SettingsViewModel.hpp"
+#include <f1x/openauto/autoapp/UI/Model/List/CanBusDeviceModel.hpp>
+#include <f1x/openauto/autoapp/Service/CanBusInputAdapter.hpp>
+
+#ifdef JOURNEYOS_CANBUS_RECEIVER
+#include <JourneyOS/CanBus/CanBusPortConfig.h>
+#include <JourneyOS/CanBus/CanBusReceiver.h>
+#include <JourneyOS/CanBus/DeviceManager.h>
+#endif
 
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityMethod.hpp"
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityState.hpp"
@@ -295,6 +303,58 @@ int main(int argc, char *argv[]) {
     // OTA update manager (stub — no real HTTP yet)
     auto* updateManager = new f1x::openauto::autoapp::UI::UpdateManager(configuration, isSystemManaged, &app);
     context->setContextProperty("updateManager", updateManager);
+
+    // ── CAN Bus device management ──────────────────────────────────────────────
+    auto* canBusDeviceModel = new autoapp::UI::Model::List::CanBusDeviceModel(&app);
+    context->setContextProperty("canBusDeviceModel", canBusDeviceModel);
+
+#ifdef JOURNEYOS_CANBUS_RECEIVER
+    {
+        // Pass the full mapping file path directly; DeviceManager falls back to its
+        // installed template when the path is empty or the file doesn't exist.
+        const QString mappingFile = configuration->getSettingByName<QString>(
+            ConfigGroup::CanBus, ConfigKey::CanBusMappingFile);
+
+        auto* canBusReceiver = new JourneyOS::CanBusReceiver(mappingFile, &app);
+        context->setContextProperty("canBusReceiver", canBusReceiver);
+
+        JourneyOS::CanBusPortConfig canPortConfig;   // loads ~/.config/journeyos/canbus_ports.json
+        auto* deviceManager = new JourneyOS::DeviceManager(
+            canPortConfig.portConfigs(),
+            mappingFile,
+            JourneyOS::DeviceManager::DEFAULT_PORT,
+            &app);
+
+        // DeviceManager emits from its worker thread — use QueuedConnection.
+        QObject::connect(deviceManager, &JourneyOS::DeviceManager::deviceAnnounced,
+                         canBusDeviceModel,
+                         &autoapp::UI::Model::List::CanBusDeviceModel::onDeviceAnnounced,
+                         Qt::QueuedConnection);
+        QObject::connect(deviceManager, &JourneyOS::DeviceManager::deviceDisconnected,
+                         canBusDeviceModel,
+                         &autoapp::UI::Model::List::CanBusDeviceModel::onDeviceDisconnected,
+                         Qt::QueuedConnection);
+
+        // When a bus is confirmed ready, bind the receiver to that UDP port.
+        // busReady is emitted from DeviceManager's worker thread — QueuedConnection
+        // delivers it on canBusReceiver's worker thread (both use AutoConnection default).
+        QObject::connect(deviceManager, &JourneyOS::DeviceManager::busReady,
+                         canBusReceiver, &JourneyOS::CanBusReceiver::bindBus,
+                         Qt::QueuedConnection);
+
+        // Steering-wheel button events → volume control + AA key injection.
+        auto* canBusInputAdapter = new f1x::openauto::autoapp::service::CanBusInputAdapter(
+            volumeHandler, 10, &app);
+        canBusInputAdapter->connectReceiver(canBusReceiver);
+
+        qInfo(lcAutoapp) << "CAN bus device manager listening on port"
+                         << JourneyOS::DeviceManager::DEFAULT_PORT;
+    }
+#else
+    // Expose a null placeholder so QML bindings don't crash on desktop builds.
+    context->setContextProperty("canBusReceiver", QVariant());
+    qInfo(lcAutoapp) << "CAN bus device management: disabled (library not found at build time)";
+#endif
 
     // Bluetooth Status and Connectivity // DBus/BlueZ
     // Wifi Status // Other

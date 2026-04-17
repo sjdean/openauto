@@ -108,6 +108,11 @@ namespace f1x::openauto::autoapp::configuration {
     wirelessGroup.addSetting<common::Enum::WirelessType::Value>(toQString(ConfigKey::WirelessType), f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT);
     wirelessGroup.load(m_settings);
     m_configurationGroups.append(wirelessGroup);
+
+    ConfigurationGroup canBusGroup(toQString(ConfigGroup::CanBus));
+    canBusGroup.addSetting<QString>(toQString(ConfigKey::CanBusMappingFile), "");
+    canBusGroup.load(m_settings);
+    m_configurationGroups.append(canBusGroup);
   }
 
   void Configuration::save() const {
