@@ -167,7 +167,13 @@ using configuration::ConfigKey;
 
     IService::Pointer ServiceFactory::createSensorService(aasdk::messenger::IMessenger::Pointer messenger) {
         qInfo(lcServiceFactory) << "service registered channel=sensors";
-        return std::make_shared<sensor::SensorService>(ioService_, messenger);
+        auto service = std::make_shared<sensor::SensorService>(messenger);
+#ifdef JOURNEYOS_CANBUS_RECEIVER
+        if (canBusBridge_) {
+            service->setCanBusBridge(canBusBridge_);
+        }
+#endif
+        return service;
     }
 
     IService::Pointer ServiceFactory::createNavigationStatusService(aasdk::messenger::IMessenger::Pointer messenger) {

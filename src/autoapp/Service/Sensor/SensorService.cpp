@@ -3,6 +3,16 @@
 #include <cmath>
 #include <gps.h>
 #include <qloggingcategory.h>
+
+#ifdef JOURNEYOS_CANBUS_RECEIVER
+#include <aap_protobuf/service/sensorsource/message/SensorBatch.pb.h>
+#include <aap_protobuf/service/sensorsource/message/SpeedData.pb.h>
+#include <aap_protobuf/service/sensorsource/message/RpmData.pb.h>
+#include <aap_protobuf/service/sensorsource/message/OdometerData.pb.h>
+#include <aap_protobuf/service/sensorsource/message/EnvironmentData.pb.h>
+#include <aap_protobuf/service/sensorsource/message/SensorType.pb.h>
+#endif
+
 Q_LOGGING_CATEGORY(lcServiceSensor, "journeyos.service.sensor")
 
 namespace f1x::openauto::autoapp::service::sensor {
@@ -64,12 +74,21 @@ namespace f1x::openauto::autoapp::service::sensor {
     service->set_id(static_cast<uint32_t>(channel_->getId()));
 
     auto *sensorChannel = service->mutable_sensor_source_service();
-    sensorChannel->add_sensors()->set_sensor_type(
-        aap_protobuf::service::sensorsource::message::SensorType::SENSOR_DRIVING_STATUS_DATA);
-    sensorChannel->add_sensors()->set_sensor_type(
-        aap_protobuf::service::sensorsource::message::SensorType::SENSOR_LOCATION);
-    sensorChannel->add_sensors()->set_sensor_type(
-        aap_protobuf::service::sensorsource::message::SensorType::SENSOR_NIGHT_MODE);
+
+    using ST = aap_protobuf::service::sensorsource::message::SensorType;
+    sensorChannel->add_sensors()->set_sensor_type(ST::SENSOR_DRIVING_STATUS_DATA);
+    sensorChannel->add_sensors()->set_sensor_type(ST::SENSOR_LOCATION);
+    sensorChannel->add_sensors()->set_sensor_type(ST::SENSOR_NIGHT_MODE);
+
+#ifdef JOURNEYOS_CANBUS_RECEIVER
+    if (canBusBridge_) {
+        sensorChannel->add_sensors()->set_sensor_type(ST::SENSOR_SPEED);
+        sensorChannel->add_sensors()->set_sensor_type(ST::SENSOR_RPM);
+        sensorChannel->add_sensors()->set_sensor_type(ST::SENSOR_ODOMETER);
+        sensorChannel->add_sensors()->set_sensor_type(ST::SENSOR_ENVIRONMENT_DATA);
+        qInfo(lcServiceSensor) << "CAN bridge active: advertising speed/rpm/odometer/environment sensors";
+    }
+#endif
   }
 
   void SensorService::onChannelOpenRequest(const aap_protobuf::service::control::message::ChannelOpenRequest &request) {
@@ -111,16 +130,21 @@ namespace f1x::openauto::autoapp::service::sensor {
     channel_->receive(this->shared_from_this());
   }
 
-  void SensorService::sendDrivingStatusUnrestricted() {
-    qDebug(lcServiceSensor) << "sending driving status unrestricted";
+  void SensorService::sendDrivingStatus(int flags) {
+    qDebug(lcServiceSensor) << "sending driving status flags=" << flags;
     aap_protobuf::service::sensorsource::message::SensorBatch indication;
     indication.add_driving_status_data()->set_status(
-        aap_protobuf::service::sensorsource::message::DrivingStatus::DRIVE_STATUS_UNRESTRICTED);
+        static_cast<aap_protobuf::service::sensorsource::message::DrivingStatus>(flags));
 
     auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&SensorService::onChannelError, this->shared_from_this(), std::placeholders::_1));
     channel_->sendSensorEventIndication(indication, std::move(promise));
+  }
+
+  void SensorService::sendDrivingStatusUnrestricted() {
+    sendDrivingStatus(
+        static_cast<int>(aap_protobuf::service::sensorsource::message::DrivingStatus::DRIVE_STATUS_UNRESTRICTED));
   }
 
   void SensorService::sendNightData() {
@@ -181,7 +205,35 @@ namespace f1x::openauto::autoapp::service::sensor {
 
   void SensorService::sensorPolling() {
     if (!this->stopPolling) {
+
+#ifdef JOURNEYOS_CANBUS_RECEIVER
+    if (canBusBridge_) {
+        // Night mode from CAN dimmer/lights overrides the file-based check
+        this->isNight = canBusBridge_->nightMode();
+
+        // Push any changed CAN sensor values (speed, rpm, odometer, temperature)
+        aap_protobuf::service::sensorsource::message::SensorBatch canBatch;
+        if (canBusBridge_->fillSensorBatch(canBatch)) {
+            auto promise = aasdk::channel::SendPromise::defer();
+            promise->then([]() {},
+                          std::bind(&SensorService::onChannelError,
+                                    this->shared_from_this(), std::placeholders::_1));
+            channel_->sendSensorEventIndication(canBatch, std::move(promise));
+        }
+
+        // Driving status: update when speed crosses the 5 mph threshold
+        const int flags = canBusBridge_->drivingStatusFlags();
+        if (flags != lastDrivingStatus_) {
+            lastDrivingStatus_ = flags;
+            sendDrivingStatus(flags);
+        }
+    } else {
+        this->isNight = is_file_exist("/tmp/night_mode_enabled");
+    }
+#else
           this->isNight = is_file_exist("/tmp/night_mode_enabled");
+#endif
+
     if (this->previous != this->isNight && !this->firstRun) {
       this->previous = this->isNight;
       this->sendNightData();

@@ -63,6 +63,7 @@
 #include <JourneyOS/CanBus/CanBusPortConfig.h>
 #include <JourneyOS/CanBus/CanBusReceiver.h>
 #include <JourneyOS/CanBus/DeviceManager.h>
+#include <f1x/openauto/autoapp/Service/Sensor/CanBusSensorBridge.hpp>
 #endif
 
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityMethod.hpp"
@@ -309,6 +310,7 @@ int main(int argc, char *argv[]) {
     context->setContextProperty("canBusDeviceModel", canBusDeviceModel);
 
 #ifdef JOURNEYOS_CANBUS_RECEIVER
+    f1x::openauto::autoapp::service::sensor::CanBusSensorBridge* canBusSensorBridge = nullptr;
     {
         // Pass the full mapping file path directly; DeviceManager falls back to its
         // installed template when the path is empty or the file doesn't exist.
@@ -346,6 +348,11 @@ int main(int argc, char *argv[]) {
         auto* canBusInputAdapter = new f1x::openauto::autoapp::service::CanBusInputAdapter(
             volumeHandler, 10, &app);
         canBusInputAdapter->connectReceiver(canBusReceiver);
+
+        // Pipe CAN telemetry into AASDK sensor channel (Stage 13).
+        // Bridge is set on serviceFactory after it is constructed below.
+        canBusSensorBridge =
+            new f1x::openauto::autoapp::service::sensor::CanBusSensorBridge(canBusReceiver);
 
         qInfo(lcAutoapp) << "CAN bus device manager listening on port"
                          << JourneyOS::DeviceManager::DEFAULT_PORT;
@@ -466,6 +473,12 @@ int main(int argc, char *argv[]) {
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper);
     aasdk::usb::AccessoryModeQueryChainFactory queryChainFactory(usbWrapper, queryFactory);
     autoapp::service::ServiceFactory serviceFactory(configuration, inputDevice, videoOutput, audioInput, audioOutputSystem, audioOutputMedia, audioOutputGuidance, audioOutputTelephony);
+#ifdef JOURNEYOS_CANBUS_RECEIVER
+    if (canBusSensorBridge) {
+        serviceFactory.setCanBusBridge(canBusSensorBridge);
+        qInfo(lcAutoapp) << "CAN sensor bridge registered with ServiceFactory";
+    }
+#endif
     autoapp::service::SessionFactory sessionFactory(configuration, serviceFactory, androidAutoMonitor);
 
     auto usbHub(std::make_shared<aasdk::usb::USBHub>(usbWrapper, queryChainFactory));

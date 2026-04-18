@@ -9,6 +9,10 @@
 #include "f1x/openauto/autoapp/Projection/QtAudioOutput.hpp"
 #include "f1x/openauto/autoapp/Projection/QtVideoOutput.hpp"
 
+#ifdef JOURNEYOS_CANBUS_RECEIVER
+#include <f1x/openauto/autoapp/Service/Sensor/CanBusSensorBridge.hpp>
+#endif
+
 namespace f1x::openauto::autoapp::service {
     class ServiceFactory : public IServiceFactory {
     public:
@@ -52,6 +56,12 @@ namespace f1x::openauto::autoapp::service {
         IService::Pointer createWifiProjectionService(aasdk::messenger::IMessenger::Pointer messenger);
 
         ;
+#ifdef JOURNEYOS_CANBUS_RECEIVER
+        sensor::CanBusSensorBridge* canBusBridge_ = nullptr;
+public:
+        void setCanBusBridge(sensor::CanBusSensorBridge* bridge) { canBusBridge_ = bridge; }
+private:
+#endif
         configuration::IConfiguration::Pointer configuration_;
         projection::InputDevice::Pointer inputDevice_;
         projection::IVideoOutput::Pointer videoOutput_;
