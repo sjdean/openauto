@@ -100,6 +100,7 @@ Item {
             clip: true
             opacity: mainView.isMediaPlaying ? 0 : 1 // Initial opacity based on isMediaPlaying
             hasAndroidAuto: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED
+            hasOBD: canBusReceiver !== null && canBusReceiver !== undefined && canBusReceiver.configured
             Connections {
                 target: mainMenu
                 onViewSettings: mainView.viewSettings()
@@ -121,6 +122,7 @@ Item {
             clip: true
             opacity: mainView.isMediaPlaying ? 1 : 0 // Initial opacity based on isMediaPlaying
             hasAndroidAuto: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED
+            hasOBD: canBusReceiver !== null && canBusReceiver !== undefined && canBusReceiver.configured
             Connections {
                 target: mediaMenu
                 onViewSettings: mainView.viewSettings()

@@ -27,6 +27,10 @@ qt6_add_qml_module(JourneyOSContent
         "AndroidAutoStatusPopup.qml"
         "VolumePopup.qml"
         "VolumeSlider.qml"
+        "CanBusDashboard.qml"
+        "CanBusGauge.qml"
+        "CanBusBar.qml"
+        "CanBusSteeringBar.qml"
     RESOURCES
         "images/home.svg"
         "images/settings-vehicle.svg"
@@ -63,6 +67,7 @@ qt6_add_qml_module(JourneyOSContent
         "images/link-off.svg"
         "images/settings.svg"
         "images/journey.png"
+        "images/battery.svg"
 )
 
 

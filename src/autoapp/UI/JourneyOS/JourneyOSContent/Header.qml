@@ -139,6 +139,27 @@ Item {
                     anchors.rightMargin: 0
                     spacing: 5
 
+                    // Outside temperature — visible only when CAN is configured.
+                    JourneyButton {
+                        id: tempPill
+                        height: Math.min(30, parent.height)
+                        textIsStatus: true
+                        text: (canBusReceiver && canBusReceiver.configured)
+                              ? canBusReceiver.outsideTemp + "°C" : ""
+                        icon.source: "images/day.svg"
+                        iconColor: {
+                            if (!canBusReceiver) return Constants.baseColor
+                            const t = canBusReceiver.outsideTemp
+                            return t <= 0  ? "#42A5F5"          // blue = freezing
+                                 : t < 10  ? Constants.waitColor
+                                 : t < 30  ? Constants.okColor
+                                 : Constants.badColor            // hot
+                        }
+                        iconSize: height * 0.5
+                        visible: canBusReceiver !== null && canBusReceiver !== undefined
+                                 && canBusReceiver.configured
+                    }
+
                     // Battery voltage — visible only when canBusReceiver reports a non-zero value.
                     // canBusReceiver may be null on desktop (non-CAN) builds.
                     JourneyButton {

@@ -179,7 +179,7 @@ Window {
 
         // Navigation
         function onViewPower()       { powerPopup.open() }
-        function onViewOBD()         { console.log("OBD Clicked") }       // TODO: OBD screen
+        function onViewOBD()         { stackView.push("CanBusDashboard.qml") }
         function onViewNavigation()  { console.log("Navigation Clicked") } // TODO: Nav screen
         function onViewRadio()       { console.log("Radio Clicked") }     // TODO: Radio screen
         function onViewUSB()         { console.log("USB Clicked") }       // TODO: USB browser

@@ -118,7 +118,7 @@ Item {
                 visible: mediaNotPlayingMenu.hasOBD
                 Connections {
                     target: obdButton
-                    onClicked: mediaNotPlayingMenu.viewODB()
+                    onClicked: mediaNotPlayingMenu.viewOBD()
                 }
             }
 
