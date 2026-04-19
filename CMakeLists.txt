@@ -311,6 +311,12 @@ qt_add_resources(autoapp "configuration"
         FILES  "${UI_DIR}/qtquickcontrols2.conf"
 )
 
+qt_add_resources(autoapp "canbus_assets"
+        PREFIX "/assets/canbus"
+        BASE   "${CMAKE_CURRENT_SOURCE_DIR}/assets/canbus"
+        FILES  "${CMAKE_CURRENT_SOURCE_DIR}/assets/canbus/wmi_table.json"
+)
+
 # ─── QDS component plugins ────────────────────────────────────────────────────
 if(OPENAUTO_QDS_COMPONENTS)
     include(qmlcomponents)   # fetches QuickStudio* plugins from GitHub

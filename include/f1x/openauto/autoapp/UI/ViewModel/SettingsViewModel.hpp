@@ -16,6 +16,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     Q_PROPERTY(QString carId READ getCarId WRITE setCarId NOTIFY carIdChanged)
     Q_PROPERTY(QString carMake READ getCarMake WRITE setCarMake NOTIFY carMakeChanged)
     Q_PROPERTY(QString carModel READ getCarModel WRITE setCarModel NOTIFY carModelChanged)
+    Q_PROPERTY(QString carYear READ getCarYear WRITE setCarYear NOTIFY carYearChanged)
     Q_PROPERTY(aap_protobuf::service::sensorsource::message::FuelType carFuelType READ getCarFuelType WRITE setCarFuelType NOTIFY carFuelTypeChanged)
     Q_PROPERTY(
         aap_protobuf::service::sensorsource::message::EvConnectorType carEvConnectorType READ getCarEvConnectorType WRITE setCarEvConnectorType NOTIFY carEvConnectorTypeChanged)
@@ -180,6 +181,13 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void uiAccentBrand2Changed();
     void uiButtonOpacityChanged();
     void canBusMappingFileChanged();
+    void carYearChanged();
+
+  public slots:
+    // Slot connected to VinDecodeService::decoded.
+    // Populates carMake/carModel/carYear only if the corresponding field is
+    // currently empty, to avoid overwriting user-entered data.
+    void applyVinDecode(const QString& make, const QString& model, int year);
 
   private:
     configuration::IConfiguration::Pointer configuration_;
@@ -188,6 +196,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     QString m_carId;
     QString m_carMake;
     QString m_carModel;
+    QString m_carYear;
     aap_protobuf::service::sensorsource::message::FuelType m_carFuelType;
     aap_protobuf::service::sensorsource::message::EvConnectorType m_carEvConnectorType;
     aap_protobuf::service::control::message::DriverPosition m_carDriverPosition;
@@ -197,6 +206,10 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     QString getCarMake() const;
 
     QString getCarModel() const;
+
+    QString getCarYear() const;
+
+    void setCarYear(QString value);
 
     aap_protobuf::service::sensorsource::message::FuelType getCarFuelType() const;
 

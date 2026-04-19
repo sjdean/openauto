@@ -64,6 +64,7 @@
 #include <JourneyOS/CanBus/CanBusReceiver.h>
 #include <JourneyOS/CanBus/DeviceManager.h>
 #include <f1x/openauto/autoapp/Service/Sensor/CanBusSensorBridge.hpp>
+#include <f1x/openauto/autoapp/Service/VinDecodeService.hpp>
 #endif
 
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityMethod.hpp"
@@ -356,6 +357,19 @@ int main(int argc, char *argv[]) {
 
         qInfo(lcAutoapp) << "CAN bus device manager listening on port"
                          << JourneyOS::DeviceManager::DEFAULT_PORT;
+
+        // VIN decode: bridge announces VIN → decode make/model/year → auto-populate Car tab.
+        auto* vinDecodeService =
+            new f1x::openauto::autoapp::service::VinDecodeService(configuration, &app);
+        QObject::connect(deviceManager, &JourneyOS::DeviceManager::vinReceived,
+                         vinDecodeService,
+                         &f1x::openauto::autoapp::service::VinDecodeService::lookupVin,
+                         Qt::QueuedConnection);
+        QObject::connect(vinDecodeService,
+                         &f1x::openauto::autoapp::service::VinDecodeService::decoded,
+                         &settingsViewModel,
+                         &autoapp::UI::ViewModel::SettingsViewModel::applyVinDecode,
+                         Qt::QueuedConnection);
     }
 #else
     // Expose a null placeholder so QML bindings don't crash on desktop builds.

@@ -28,6 +28,7 @@ namespace f1x::openauto::autoapp::configuration {
         // Car ----------------------------------------------------------------
         CarMake,
         CarModel,
+        CarYear,
         CarFuelType,
         CarEvConnectorType,
         CarDriverPosition,
@@ -123,6 +124,7 @@ namespace f1x::openauto::autoapp::configuration {
         switch (key) {
             case ConfigKey::CarMake:                         return QStringLiteral("Make");
             case ConfigKey::CarModel:                        return QStringLiteral("Model");
+            case ConfigKey::CarYear:                         return QStringLiteral("Year");
             case ConfigKey::CarFuelType:                     return QStringLiteral("FuelType");
             case ConfigKey::CarEvConnectorType:              return QStringLiteral("EvConnectorType");
             case ConfigKey::CarDriverPosition:               return QStringLiteral("DriverPosition");

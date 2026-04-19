@@ -22,6 +22,8 @@ using configuration::ConfigKey;
                                                                 ConfigGroup::Car, ConfigKey::CarMake)),
                                                             m_carModel(configuration_->getSettingByName<QString>(
                                                                 ConfigGroup::Car, ConfigKey::CarModel)),
+                                                            m_carYear(configuration_->getSettingByName<QString>(
+                                                                ConfigGroup::Car, ConfigKey::CarYear)),
                                                             m_carFuelType(
                                                                 static_cast<
                                                                     aap_protobuf::service::sensorsource::message::FuelType>
@@ -247,6 +249,30 @@ using configuration::ConfigKey;
             m_carModel = value;
             emit carModelChanged();
         }
+    }
+
+    QString SettingsViewModel::getCarYear() const {
+        return m_carYear;
+    }
+
+    void SettingsViewModel::setCarYear(QString value) {
+        if (m_carYear != value) {
+            configuration_->updateSettingByName<QString>(ConfigGroup::Car, ConfigKey::CarYear, value);
+            configuration_->save();
+            m_carYear = value;
+            emit carYearChanged();
+        }
+    }
+
+    void SettingsViewModel::applyVinDecode(const QString& make, const QString& model, int year) {
+        // Only populate fields that are currently empty — don't overwrite user data.
+        if (m_carMake.isEmpty() && !make.isEmpty())
+            setCarMake(make);
+        if (m_carModel.isEmpty() && !model.isEmpty())
+            setCarModel(model);
+        const QString yearStr = year > 0 ? QString::number(year) : QString{};
+        if (m_carYear.isEmpty() && !yearStr.isEmpty())
+            setCarYear(yearStr);
     }
 
     bool SettingsViewModel::getMediaAutoPlayback() const {

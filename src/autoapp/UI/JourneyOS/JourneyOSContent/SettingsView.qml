@@ -139,6 +139,14 @@ Item {
                         onEditingFinished: settingsViewHandler.carModel = text
                     }
                 }
+                SettingRow {
+                    label: "Year"
+                    control: ModernTextField {
+                        placeholderText: "e.g. 2003"
+                        text: settingsViewHandler.carYear
+                        onEditingFinished: settingsViewHandler.carYear = text
+                    }
+                }
             }
 
             // --- TAB 1: MEDIA ---
