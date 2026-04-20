@@ -538,6 +538,10 @@ Item {
                             placeholderText: "e.g. /home/pi/.local/share/journeyos/canbus/renault.json"
                             onEditingFinished: settingsViewHandler.canBusMappingFile = text.trim()
                         }
+                        ModernButton {
+                            text: "Browse…"
+                            onClicked: mappingLibrarySheet.open()
+                        }
                     }
                 }
 
@@ -548,6 +552,155 @@ Item {
                     color: cTextDim
                     wrapMode: Text.WordWrap
                     Layout.fillWidth: true
+                }
+
+                // ── Community map library sheet ───────────────────────────────
+                Popup {
+                    id: mappingLibrarySheet
+                    modal: true
+                    anchors.centerIn: parent
+                    width: Math.min(560, parent.width - 40)
+                    height: Math.min(500, parent.height - 40)
+                    padding: 20
+
+                    background: Rectangle {
+                        color: cSurface
+                        radius: Constants.radiusInput
+                        border.color: cBorder
+                        border.width: 1
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        spacing: 12
+
+                        Label {
+                            text: "Community Mapping Library"
+                            font.pointSize: 16
+                            font.bold: true
+                            color: cTextMain
+                        }
+
+                        RowLayout {
+                            spacing: 8
+                            Layout.fillWidth: true
+
+                            ModernTextField {
+                                id: libSearchMake
+                                Layout.fillWidth: true
+                                placeholderText: "Make (e.g. Renault)"
+                                text: settingsViewHandler.carMake
+                            }
+                            ModernTextField {
+                                id: libSearchModel
+                                Layout.fillWidth: true
+                                placeholderText: "Model (e.g. Laguna)"
+                                text: settingsViewHandler.carModel
+                            }
+                            ModernTextField {
+                                id: libSearchYear
+                                Layout.preferredWidth: 90
+                                placeholderText: "Year"
+                                text: settingsViewHandler.carYear
+                                inputMethodHints: Qt.ImhDigitsOnly
+                            }
+                            ModernButton {
+                                text: "Search"
+                                onClicked: {
+                                    if (mappingLibrary)
+                                        mappingLibrary.search(
+                                            libSearchMake.text.trim(),
+                                            libSearchModel.text.trim(),
+                                            parseInt(libSearchYear.text) || 0)
+                                }
+                            }
+                        }
+
+                        Label {
+                            text: mappingLibrary ? mappingLibrary.statusMessage : ""
+                            font.pointSize: 12
+                            color: cTextDim
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                            visible: text.length > 0
+                        }
+
+                        BusyIndicator {
+                            visible: mappingLibrary && mappingLibrary.loading
+                            running: visible
+                            Layout.alignment: Qt.AlignHCenter
+                        }
+
+                        ListView {
+                            id: libResultsView
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            clip: true
+                            model: mappingLibrary ? mappingLibrary.results : []
+                            spacing: 6
+
+                            delegate: Rectangle {
+                                width: libResultsView.width
+                                height: libEntryCol.implicitHeight + 16
+                                color: cBackground
+                                radius: Constants.radiusInput
+                                border.color: cBorder
+                                border.width: 1
+
+                                Column {
+                                    id: libEntryCol
+                                    anchors { left: parent.left; right: parent.right;
+                                              top: parent.top; margins: 8 }
+                                    spacing: 4
+
+                                    RowLayout {
+                                        width: parent.width
+                                        spacing: 6
+
+                                        Label {
+                                            text: modelData.name || (modelData.make + " " + modelData.model)
+                                            font.pointSize: 13
+                                            font.bold: true
+                                            color: cTextMain
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Label {
+                                            visible: modelData.validated === true
+                                            text: "✓ Validated"
+                                            font.pointSize: 11
+                                            color: "#4CAF50"
+                                        }
+                                    }
+
+                                    Label {
+                                        text: {
+                                            let s = modelData.year_from + "–" + modelData.year_to
+                                            if (modelData.platform) s += "  ·  " + modelData.platform
+                                            return s
+                                        }
+                                        font.pointSize: 12
+                                        color: cTextDim
+                                    }
+
+                                    ModernButton {
+                                        text: "Download & Use"
+                                        onClicked: {
+                                            if (mappingLibrary)
+                                                mappingLibrary.download(index)
+                                            mappingLibrarySheet.close()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        ModernButton {
+                            text: "Close"
+                            Layout.alignment: Qt.AlignRight
+                            onClicked: mappingLibrarySheet.close()
+                        }
+                    }
                 }
 
                 SectionHeader { text: "Connected Devices" }

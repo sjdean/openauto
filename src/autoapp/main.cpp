@@ -65,6 +65,7 @@
 #include <JourneyOS/CanBus/DeviceManager.h>
 #include <f1x/openauto/autoapp/Service/Sensor/CanBusSensorBridge.hpp>
 #include <f1x/openauto/autoapp/Service/VinDecodeService.hpp>
+#include <f1x/openauto/autoapp/Service/MappingLibraryService.hpp>
 #endif
 
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityMethod.hpp"
@@ -370,10 +371,23 @@ int main(int argc, char *argv[]) {
                          &settingsViewModel,
                          &autoapp::UI::ViewModel::SettingsViewModel::applyVinDecode,
                          Qt::QueuedConnection);
+
+        // Community mapping library — exposes "mappingLibrary" to QML.
+        auto* mappingLibrary =
+            new f1x::openauto::autoapp::service::MappingLibraryService(&app);
+        context->setContextProperty("mappingLibrary", mappingLibrary);
+
+        // When the user downloads a map, auto-update the mapping file setting.
+        QObject::connect(mappingLibrary,
+                         &f1x::openauto::autoapp::service::MappingLibraryService::downloadComplete,
+                         &settingsViewModel,
+                         &autoapp::UI::ViewModel::SettingsViewModel::setCanBusMappingFile,
+                         Qt::QueuedConnection);
     }
 #else
-    // Expose a null placeholder so QML bindings don't crash on desktop builds.
+    // Expose null placeholders so QML bindings don't crash on desktop builds.
     context->setContextProperty("canBusReceiver", QVariant());
+    context->setContextProperty("mappingLibrary", QVariant());
     qInfo(lcAutoapp) << "CAN bus device management: disabled (library not found at build time)";
 #endif
 
