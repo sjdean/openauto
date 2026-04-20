@@ -55,9 +55,48 @@ Each subsystem has an interface + Linux implementation + Null stub:
 | Bluetooth | `IBluetoothManager` | `BluetoothHandler` (D-Bus/BlueZ) | `NullBluetoothManager` |
 | WiFi monitor | `IWiFiMonitor` | `WifiMonitor` (NetworkManager D-Bus) | `NullWiFiMonitor` |
 | WiFi control | `IWiFiController` | `WifiController` (NM D-Bus) | `NullWiFiController` |
-| Audio | — | `PulseAudioHandler` | `CoreAudioHandler` / `NullAudioHandler` |
+| Audio | `IAudioHandler` | `PipeWireAudioHandler` (libpipewire-0.3) | `CoreAudioHandler` / `NullAudioHandler` |
 
 Selection happens at construction time in `main.cpp` via `#ifdef Q_OS_LINUX` etc.
+
+### Audio Architecture
+
+**Two independent volume systems operate simultaneously — this is intentional:**
+
+- **Device-level volume** (`PipeWireAudioHandler` → `VolumeViewModel`): sets `SPA_PROP_volume` on the PipeWire sink node. This is the master volume; it scales all audio going to the hardware output. The user-visible slider controls this.
+- **Stream-level volume** (`QAudioSink::setVolume()` in `QtAudioOutput`): a per-stream soft multiplier applied to each Android Auto PCM stream. Set once at session start from config.
+
+**Audio sources and mixing model:**
+
+The HU is a mixer. Sources feed into WirePlumber which routes to the hardware output:
+```
+Android Auto (4 PCM streams)  ─┐
+MP3 Player (future — 5.1)     ─┤→ WirePlumber → hardware output
+Radio (future — 5.1)          ─┤         ↑
+System sounds                 ─┘    master volume
+```
+
+WirePlumber policy scripts (shipped in the Yocto layer, not in this repo) handle source mixing and ducking. The app does not implement ducking internally — it signals intent via the AA audio focus protocol and WirePlumber acts on it.
+
+**Android Auto audio focus protocol** (`AndroidAutoSession::onAudioFocusRequest`):
+
+AA sends `AudioFocusRequest` on the Control channel when it wants to play audio:
+- `GAIN` → AA owns audio; HU media should pause
+- `GAIN_TRANSIENT_MAY_DUCK` → AA wants audio; HU media should duck ~40% (navigation guidance)
+- `GAIN_TRANSIENT` → AA wants brief exclusive audio; HU media should pause
+- `RELEASE` → AA done; HU media may resume
+
+`AndroidAutoMonitor::audioFocusState` (`Q_PROPERTY`) reflects this in real time.
+QML can observe it. When HU media players exist (5.1), they connect to `audioFocusStateChanged`.
+
+**PhoneStatus channel** (`PhoneStatusService`) is currently a stub. It carries call state
+(IN_CALL, INCOMING, ON_HOLD, caller ID, duration) but the aasdk `IPhoneStatusServiceEventHandler`
+has no `onPhoneStatus()` callback yet. Full implementation is scoped to 5.1. See the TODO
+comment in `PhoneStatusService.cpp` for the exact steps required.
+
+**NavFocus** (`AndroidAutoSession::onNavigationFocusRequest`) is hardcoded to `NAV_FOCUS_PROJECTED`
+(AA always owns navigation). When JourneyOS has its own nav source this must become stateful.
+See the TODO comment in that function.
 
 ### MVVM Pattern
 

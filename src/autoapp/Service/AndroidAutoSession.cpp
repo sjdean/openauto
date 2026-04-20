@@ -1,6 +1,7 @@
 #include <aasdk/Channel/Control/ControlServiceChannel.hpp>
 #include <f1x/openauto/autoapp/Service/AndroidAutoSession.hpp>
 #include "f1x/openauto/Common/Enum/AndroidAutoConnectivityState.hpp"
+#include "f1x/openauto/Common/Enum/AndroidAutoAudioFocusState.hpp"
 #include <qloggingcategory.h>
 #include <QtEndian>
 Q_LOGGING_CATEGORY(lcSession, "journeyos.session")
@@ -195,32 +196,66 @@ namespace f1x::openauto::autoapp::service {
 
   void AndroidAutoSession::onAudioFocusRequest(
       const aap_protobuf::service::control::message::AudioFocusRequest &request) {
+    using ReqType   = aap_protobuf::service::control::message::AudioFocusRequestType;
+    using StateType = aap_protobuf::service::control::message::AudioFocusStateType;
+    using FocusState = common::Enum::AndroidAutoAudioFocusState;
+
     qDebug(lcSession) << "audio focus request=" << AudioFocusRequestType_Name(request.audio_focus_type());
 
-    /*
-     * When the MD starts playing music for example, it sends a gain request. The HU replies:
-     * STATE_GAIN - no restrictions
-     * STATE_GAIN_MEDIA_ONLY when using a guidance channel
-     * STATE_LOSS when vehicle is playing high priority sound after stopping native media (ie USB, RADIO)
-     *
-     * When HU starts playing music, we should send a STATE LOSS to stop MD music and guidance.
-     */
+    // Map the AA focus request to our monitor state and the response we send back.
+    //
+    // AA sends focus requests when it wants to play audio; the HU grants or denies
+    // and signals its own media players to pause/duck/resume accordingly.
+    //
+    // Response meanings:
+    //   GAIN             — HU grants exclusive focus, no restrictions.
+    //   GAIN_TRANSIENT   — HU grants temporary focus; will reclaim shortly.
+    //   LOSS             — HU withdraws focus (used for RELEASE).
+    //
+    // TODO(audio-focus — 5.1): When HU media players exist, respond with
+    //   GAIN_MEDIA_ONLY when HU is playing guidance of its own (native nav).
+    //   Send AUDIO_FOCUS_STATE_LOSS proactively to AA when HU starts playing media,
+    //   so AA pauses its own media stream while the HU source has priority.
 
-    // If release, we should stop all playback
-    // MD wants to play a sound, get a notifiation regarding GAIN
-    // HU grants focus - to enable MD to send audio over both MEDIA and GUIDANCE channels.
-    // MD can then play guidance over the MEDIA or GUIDANCE streams
-    // HU should send STATE_LOSS to stop MD playing (ie if user starts radio player)
-    aap_protobuf::service::control::message::AudioFocusStateType audioFocusStateType =
-        request.audio_focus_type() ==
-        aap_protobuf::service::control::message::AudioFocusRequestType::AUDIO_FOCUS_RELEASE
-        ? aap_protobuf::service::control::message::AudioFocusStateType::AUDIO_FOCUS_STATE_LOSS
-        : aap_protobuf::service::control::message::AudioFocusStateType::AUDIO_FOCUS_STATE_GAIN;
+    StateType responseState;
+    FocusState::Value monitorState;
 
-    qDebug(lcSession) << "audio focus response=" << AudioFocusStateType_Name(audioFocusStateType);
+    switch (request.audio_focus_type()) {
+      case ReqType::AUDIO_FOCUS_GAIN:
+        // AA wants exclusive audio — stop any HU media.
+        monitorState  = FocusState::Gained;
+        responseState = StateType::AUDIO_FOCUS_STATE_GAIN;
+        break;
+
+      case ReqType::AUDIO_FOCUS_GAIN_TRANSIENT:
+        // AA wants brief exclusive audio — pause HU media, expect resume soon.
+        monitorState  = FocusState::GainedTransient;
+        responseState = StateType::AUDIO_FOCUS_STATE_GAIN_TRANSIENT;
+        break;
+
+      case ReqType::AUDIO_FOCUS_GAIN_TRANSIENT_MAY_DUCK:
+        // AA wants audio but HU may duck instead of stopping (e.g. navigation guidance).
+        monitorState  = FocusState::GainedCanDuck;
+        responseState = StateType::AUDIO_FOCUS_STATE_GAIN_TRANSIENT;
+        break;
+
+      case ReqType::AUDIO_FOCUS_RELEASE:
+        // AA is done — HU media may resume.
+        monitorState  = FocusState::Released;
+        responseState = StateType::AUDIO_FOCUS_STATE_LOSS;
+        break;
+
+      default:
+        monitorState  = FocusState::Gained;
+        responseState = StateType::AUDIO_FOCUS_STATE_GAIN;
+        break;
+    }
+
+    androidAutoMonitor_->onAudioFocusChanged(monitorState);
+    qDebug(lcSession) << "audio focus response=" << AudioFocusStateType_Name(responseState);
 
     aap_protobuf::service::control::message::AudioFocusNotification response;
-    response.set_focus_state(audioFocusStateType);
+    response.set_focus_state(responseState);
 
     auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
@@ -255,12 +290,11 @@ namespace f1x::openauto::autoapp::service {
       const aap_protobuf::service::control::message::NavFocusRequestNotification &request) {
     qDebug(lcSession) << "nav focus request type=" << NavFocusType_Name(request.focus_type());
 
-    /*
-     * If the MD sends NAV_FOCUS_PROJECTED in the request, we should stop any local navigation on the HU and grant NAV_FOCUS_NATIVE in the response.
-     * If the HU starts its own Nav, we should send NAV_FOCUS_NATIVE.
-     *
-     * For now, this is fine to be hardcoded as OpenAuto does not provide any local navigation, only that provided through Android Auto.
-     */
+    // TODO(nav-focus — post-5.1): Hardcoded to NAV_FOCUS_PROJECTED (AA owns navigation).
+    // When JourneyOS has its own navigation source, this must become stateful:
+    //   - If HU nav is active → respond NAV_FOCUS_NATIVE (HU keeps nav; AA nav suppressed)
+    //   - If AA nav requested → respond NAV_FOCUS_PROJECTED (AA takes nav; suppress HU nav)
+    // The HU should also proactively send NAV_FOCUS_NATIVE when starting its own navigation.
     aap_protobuf::service::control::message::NavFocusNotification response;
     response.set_focus_type(
         aap_protobuf::service::control::message::NavFocusType::NAV_FOCUS_PROJECTED);

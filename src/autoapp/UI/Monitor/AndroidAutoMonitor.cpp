@@ -13,7 +13,9 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                                                               m_connectivityMethod(
                                                                   common::Enum::AndroidAutoConnectivityMethod::AA_INDETERMINATE),
                                                               m_connectivityState(
-                                                                  common::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED) {
+                                                                  common::Enum::AndroidAutoConnectivityState::AA_DISCONNECTED),
+                                                              m_audioFocusState(
+                                                                  common::Enum::AndroidAutoAudioFocusState::Idle) {
     }
 
     /**
@@ -81,6 +83,17 @@ namespace f1x::openauto::autoapp::UI::Monitor {
      * Safe to call from a non-Qt thread — the signal is queued to the main thread
      * automatically because TimeController lives on the main thread.
      */
+    common::Enum::AndroidAutoAudioFocusState::Value AndroidAutoMonitor::getAudioFocusState() const {
+        return m_audioFocusState;
+    }
+
+    void AndroidAutoMonitor::onAudioFocusChanged(common::Enum::AndroidAutoAudioFocusState::Value state) {
+        if (m_audioFocusState != state) {
+            m_audioFocusState = state;
+            emit audioFocusStateChanged(state);
+        }
+    }
+
     void AndroidAutoMonitor::notifyPhoneTimestamp(quint64 epochMicroseconds) {
         emit phoneTimestampReceived(epochMicroseconds);
     }

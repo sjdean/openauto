@@ -11,8 +11,29 @@ namespace f1x::openauto::autoapp::service::phonestatus {
 
   }
 
+  // TODO(phone-status — 5.1): This service is a stub. Full implementation requires:
+  //
+  // 1. aasdk change — add onPhoneStatus() callback to IPhoneStatusServiceEventHandler:
+  //      virtual void onPhoneStatus(
+  //          const aap_protobuf::service::phonestatus::message::PhoneStatus&) = 0;
+  //    The channel already receives messages; they currently have nowhere to go.
+  //
+  // 2. Call channel_->receive(shared_from_this()) in start() so messages are actually read.
+  //
+  // 3. Implement onPhoneStatus() here to forward call state to AndroidAutoMonitor
+  //    (or a dedicated PhoneStatusMonitor). PhoneStatus.Call.State carries:
+  //      IN_CALL, INCOMING, ON_HOLD, CONFERENCED, MUTED, INACTIVE
+  //    plus caller_number, caller_id, caller_thumbnail, call_duration_seconds.
+  //
+  // 4. Expose call state as a Q_PROPERTY on AndroidAutoMonitor (or new PhoneStatusMonitor)
+  //    for QML — used to show a call overlay with caller ID, duration, and mute button.
+  //
+  // Note: PhoneStatus is distinct from AudioFocusRequest. Audio focus tells the HU
+  // *when* to duck its media. PhoneStatus tells the HU *what is happening* on the phone
+  // (call state, caller identity). Both are needed for a complete call UX.
+
   void PhoneStatusService::start() {
-      qDebug(lcServicePhoneStatus) << "starting";
+      qDebug(lcServicePhoneStatus) << "starting (stub — see TODO above)";
   }
 
   void PhoneStatusService::stop() {
