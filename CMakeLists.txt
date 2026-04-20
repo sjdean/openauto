@@ -191,8 +191,9 @@ pkg_check_modules(TAGLIB REQUIRED IMPORTED_TARGET taglib)
 
 # ─── Linux-only dependencies ──────────────────────────────────────────────────
 if(OPENAUTO_LINUX)
-    pkg_check_modules(BLKID REQUIRED IMPORTED_TARGET blkid)
-    pkg_check_modules(GPS   REQUIRED IMPORTED_TARGET libgps)
+    pkg_check_modules(BLKID     REQUIRED IMPORTED_TARGET blkid)
+    pkg_check_modules(GPS       REQUIRED IMPORTED_TARGET libgps)
+    pkg_check_modules(PIPEWIRE  REQUIRED IMPORTED_TARGET libpipewire-0.3)
 endif()
 
 # ─── Windows-specific ─────────────────────────────────────────────────────────
@@ -376,7 +377,7 @@ target_link_libraries(autoapp PRIVATE
 # ─── Linux-only links ─────────────────────────────────────────────────────────
 if(OPENAUTO_LINUX)
     target_link_libraries(autoapp PRIVATE
-            pulse
+            PkgConfig::PIPEWIRE
             PkgConfig::BLKID
             PkgConfig::GPS
     )
