@@ -1,7 +1,6 @@
 #include <f1x/openauto/autoapp/Service/Sensor/SensorService.hpp>
 #include <fstream>
 #include <cmath>
-#include <gps.h>
 #include <qloggingcategory.h>
 
 #ifdef JOURNEYOS_CANBUS_RECEIVER
@@ -24,38 +23,40 @@ namespace f1x::openauto::autoapp::service::sensor {
   }
 
   void SensorService::start() {
-
-    #ifdef Q_OS_LINUX
-  if (gps_open("127.0.0.1", "2947", &this->gpsData_)) {
-    qWarning(lcServiceSensor) << "gpsd connect failed";
-  } else {
-    qInfo(lcServiceSensor) << "gpsd connected";
-    gps_stream(&this->gpsData_, WATCH_ENABLE | WATCH_JSON, NULL);
-    this->gpsEnabled_ = true;
-  }
-
-  if (is_file_exist("/tmp/night_mode_enabled")) {
-    this->isNight = true;
-  }
-  this->sensorPolling();
+#ifdef Q_OS_LINUX
+    if (is_file_exist("/tmp/night_mode_enabled"))
+        this->isNight = true;
+    this->sensorPolling();
 #endif
-  qInfo(lcServiceSensor) << "starting";
-  channel_->receive(this->shared_from_this());
 
+#ifdef JOURNEYOS_CANBUS_RECEIVER
+    if (gpsReceiver_) {
+        gpsConnection_ = QObject::connect(
+            gpsReceiver_, &JourneyOS::GpsReceiver::fixUpdated,
+            [this](double lat, double lon,
+                   double altM,     bool hasAlt,
+                   double speedMs,  bool hasSpeed,
+                   double trackDeg, bool hasTrack,
+                   double accuracyM) {
+                sendGPSLocationData(lat, lon, altM, hasAlt, speedMs, hasSpeed, trackDeg, hasTrack, accuracyM);
+            });
+        qInfo(lcServiceSensor) << "GPS receiver connected (event-driven)";
+    }
+#endif
+
+    qInfo(lcServiceSensor) << "starting";
+    channel_->receive(this->shared_from_this());
   }
 
   void SensorService::stop() {
     this->stopPolling = true;
     timer_.stop();
 
-    #ifdef Q_OS_LINUX
-  if (this->gpsEnabled_) {
-    gps_stream(&this->gpsData_, WATCH_DISABLE, NULL);
-    gps_close(&this->gpsData_);
-    this->gpsEnabled_ = false;
-  }
+#ifdef JOURNEYOS_CANBUS_RECEIVER
+    if (gpsConnection_)
+        QObject::disconnect(gpsConnection_);
 #endif
-  qInfo(lcServiceSensor) << "stopping";
+    qInfo(lcServiceSensor) << "stopping";
   }
 
   void SensorService::pause() {
@@ -167,40 +168,30 @@ namespace f1x::openauto::autoapp::service::sensor {
     }
   }
 
-  void SensorService::sendGPSLocationData() {
-    qDebug(lcServiceSensor) << "sending gps location";
-#ifdef Q_OS_LINUX
+  void SensorService::sendGPSLocationData(double lat, double lon,
+                                           double altM,     bool hasAlt,
+                                           double speedMs,  bool hasSpeed,
+                                           double trackDeg, bool hasTrack,
+                                           double accuracyM) {
+    qDebug(lcServiceSensor) << "sending gps location lat=" << lat << "lon=" << lon;
     aap_protobuf::service::sensorsource::message::SensorBatch indication;
 
-    auto *locInd = indication.add_location_data();
+    auto* locInd = indication.add_location_data();
+    locInd->set_latitude_e7(lat * 1e7);
+    locInd->set_longitude_e7(lon * 1e7);
+    locInd->set_accuracy_e3(accuracyM * 1e3);
 
-    // epoch seconds
-    // locInd->set_timestamp(this->gpsData_.fix.time * 1e3);
-    // degrees
-    locInd->set_latitude_e7(this->gpsData_.fix.latitude * 1e7);
-    locInd->set_longitude_e7(this->gpsData_.fix.longitude * 1e7);
-    // meters
-    auto accuracy = sqrt(pow(this->gpsData_.fix.epx, 2) + pow(this->gpsData_.fix.epy, 2));
-    locInd->set_accuracy_e3(accuracy * 1e3);
+    if (hasAlt)
+        locInd->set_altitude_e2(altM * 1e2);
+    if (hasSpeed)
+        locInd->set_speed_e3(speedMs * 1.94384 * 1e3);  // m/s → knots × 1000
+    if (hasTrack)
+        locInd->set_bearing_e6(trackDeg * 1e6);
 
-    if (this->gpsData_.set & ALTITUDE_SET) {
-      // meters above ellipsoid
-      locInd->set_altitude_e2(this->gpsData_.fix.altitude * 1e2);
-    }
-    if (this->gpsData_.set & SPEED_SET) {
-      // meters per second to knots
-      locInd->set_speed_e3(this->gpsData_.fix.speed * 1.94384 * 1e3);
-    }
-    if (this->gpsData_.set & TRACK_SET) {
-      // degrees
-      locInd->set_bearing_e6(this->gpsData_.fix.track * 1e6);
-    }
     auto promise = aasdk::channel::SendPromise::defer();
     promise->then([]() {},
                   std::bind(&SensorService::onChannelError, this->shared_from_this(), std::placeholders::_1));
     channel_->sendSensorEventIndication(indication, std::move(promise));
-#endif
-
   }
 
   void SensorService::sensorPolling() {
@@ -238,21 +229,6 @@ namespace f1x::openauto::autoapp::service::sensor {
       this->previous = this->isNight;
       this->sendNightData();
     }
-#ifdef Q_OS_LINUX
-    if ((this->gpsEnabled_) &&
-        (gps_waiting(&this->gpsData_, 0)) &&
-#if GPSD_API_MAJOR_VERSION >= 11
-        (gps_read(&this->gpsData_, NULL, 0) > 0) &&
-#else
-        (gps_read(&this->gpsData_) > 0) &&
-        (this->gpsData_.status != STATUS_NO_FIX) &&
-#endif
-        (this->gpsData_.fix.mode == MODE_2D || this->gpsData_.fix.mode == MODE_3D) &&
-        (this->gpsData_.set & TIME_SET) &&
-        (this->gpsData_.set & LATLON_SET)) {
-      this->sendGPSLocationData();
-    }
-#endif
 
     timer_.start();
   

@@ -1,6 +1,6 @@
 #pragma once
+#include <QMetaObject>
 #include <QTimer>
-#include <gps.h>
 #include <aap_protobuf/service/sensorsource/message/DrivingStatus.pb.h>
 #include <aap_protobuf/service/sensorsource/message/SensorType.pb.h>
 #include <aasdk/Channel/SensorSource/SensorSourceService.hpp>
@@ -9,6 +9,7 @@
 
 #ifdef JOURNEYOS_CANBUS_RECEIVER
 #include <f1x/openauto/autoapp/Service/Sensor/CanBusSensorBridge.hpp>
+#include <JourneyOS/CanBus/GpsReceiver.h>
 #endif
 
 
@@ -27,6 +28,8 @@ namespace f1x::openauto::autoapp::service::sensor {
 #ifdef JOURNEYOS_CANBUS_RECEIVER
         // Call once after construction (before start()) to enable CAN sensor data.
         void setCanBusBridge(CanBusSensorBridge* bridge) { canBusBridge_ = bridge; }
+        // Call once after construction (before start()) to enable event-driven GPS.
+        void setGpsReceiver(JourneyOS::GpsReceiver* gps) { gpsReceiver_ = gps; }
 #endif
 
         void start() override;
@@ -54,7 +57,11 @@ namespace f1x::openauto::autoapp::service::sensor {
 
         void sendNightData();
 
-        void sendGPSLocationData();
+        void sendGPSLocationData(double lat, double lon,
+                                  double altM,     bool hasAlt,
+                                  double speedMs,  bool hasSpeed,
+                                  double trackDeg, bool hasTrack,
+                                  double accuracyM);
 
         bool is_file_exist(const char *filename);
 
@@ -64,12 +71,12 @@ namespace f1x::openauto::autoapp::service::sensor {
 
         QTimer timer_;
         aasdk::channel::sensorsource::SensorSourceService::Pointer channel_;
-        struct gps_data_t gpsData_;
-        bool gpsEnabled_ = false;
 
 #ifdef JOURNEYOS_CANBUS_RECEIVER
-        CanBusSensorBridge* canBusBridge_ = nullptr;
-        int lastDrivingStatus_            = -1;   // -1 = not yet sent
+        CanBusSensorBridge*     canBusBridge_      = nullptr;
+        JourneyOS::GpsReceiver* gpsReceiver_       = nullptr;
+        QMetaObject::Connection gpsConnection_;
+        int                     lastDrivingStatus_ = -1;   // -1 = not yet sent
 #endif
     };
 }

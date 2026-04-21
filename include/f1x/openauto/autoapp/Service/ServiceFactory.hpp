@@ -11,6 +11,7 @@
 
 #ifdef JOURNEYOS_CANBUS_RECEIVER
 #include <f1x/openauto/autoapp/Service/Sensor/CanBusSensorBridge.hpp>
+#include <JourneyOS/CanBus/GpsReceiver.h>
 #endif
 
 namespace f1x::openauto::autoapp::service {
@@ -57,9 +58,11 @@ namespace f1x::openauto::autoapp::service {
 
         ;
 #ifdef JOURNEYOS_CANBUS_RECEIVER
-        sensor::CanBusSensorBridge* canBusBridge_ = nullptr;
+        sensor::CanBusSensorBridge* canBusBridge_  = nullptr;
+        JourneyOS::GpsReceiver*     gpsReceiver_   = nullptr;
 public:
         void setCanBusBridge(sensor::CanBusSensorBridge* bridge) { canBusBridge_ = bridge; }
+        void setGpsReceiver(JourneyOS::GpsReceiver* gps)         { gpsReceiver_  = gps; }
 private:
 #endif
         configuration::IConfiguration::Pointer configuration_;

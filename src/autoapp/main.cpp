@@ -63,6 +63,7 @@
 #include <JourneyOS/CanBus/CanBusPortConfig.h>
 #include <JourneyOS/CanBus/CanBusReceiver.h>
 #include <JourneyOS/CanBus/DeviceManager.h>
+#include <JourneyOS/CanBus/GpsReceiver.h>
 #include <f1x/openauto/autoapp/Service/Sensor/CanBusSensorBridge.hpp>
 #include <f1x/openauto/autoapp/Service/VinDecodeService.hpp>
 #include <f1x/openauto/autoapp/Service/MappingLibraryService.hpp>
@@ -312,6 +313,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef JOURNEYOS_CANBUS_RECEIVER
     f1x::openauto::autoapp::service::sensor::CanBusSensorBridge* canBusSensorBridge = nullptr;
+    auto* gpsReceiver = new JourneyOS::GpsReceiver(&app);
     {
         // Pass the full mapping file path directly; DeviceManager falls back to its
         // installed template when the path is empty or the file doesn't exist.
@@ -505,6 +507,8 @@ int main(int argc, char *argv[]) {
         serviceFactory.setCanBusBridge(canBusSensorBridge);
         qInfo(lcAutoapp) << "CAN sensor bridge registered with ServiceFactory";
     }
+    serviceFactory.setGpsReceiver(gpsReceiver);
+    qInfo(lcAutoapp) << "GPS receiver registered with ServiceFactory (event-driven)";
 #endif
     autoapp::service::SessionFactory sessionFactory(configuration, serviceFactory, androidAutoMonitor);
 

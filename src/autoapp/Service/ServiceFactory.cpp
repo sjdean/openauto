@@ -169,9 +169,10 @@ using configuration::ConfigKey;
         qInfo(lcServiceFactory) << "service registered channel=sensors";
         auto service = std::make_shared<sensor::SensorService>(messenger);
 #ifdef JOURNEYOS_CANBUS_RECEIVER
-        if (canBusBridge_) {
+        if (canBusBridge_)
             service->setCanBusBridge(canBusBridge_);
-        }
+        if (gpsReceiver_)
+            service->setGpsReceiver(gpsReceiver_);
 #endif
         return service;
     }
