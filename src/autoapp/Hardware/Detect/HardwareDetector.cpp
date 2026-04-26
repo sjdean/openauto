@@ -139,54 +139,6 @@ static void writeAudioConf(const HardwareInfo& info)
     qCInfo(hardwareDetect) << "Written:" << path;
 }
 
-static void writeKmsJson(const HardwareInfo& info)
-{
-    QJsonArray outputs;
-    if (info.primaryDisplay == "dsi") {
-        QJsonObject dsi;  dsi["name"] = "DSI-1";   dsi["primary"] = true;   outputs.append(dsi);
-        QJsonObject hdmi; hdmi["name"] = "HDMI-1";  hdmi["enabled"] = false; outputs.append(hdmi);
-    } else {
-        QJsonObject hdmi; hdmi["name"] = "HDMI-1";  hdmi["primary"] = true;  outputs.append(hdmi);
-        QJsonObject dsi;  dsi["name"] = "DSI-1";   dsi["enabled"] = false;  outputs.append(dsi);
-    }
-    QJsonObject kms;
-    kms["device"]  = "/dev/dri/card0";
-    kms["outputs"] = outputs;
-
-    const QString path = HardwareDetector::journeyOsRuntimePath("kms.json");
-    QFile file(path);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        qCWarning(hardwareDetect) << "Cannot write" << path << ":" << file.errorString();
-        return;
-    }
-    file.write(QJsonDocument(kms).toJson(QJsonDocument::Indented));
-    file.close();
-    qCInfo(hardwareDetect) << "Written:" << path;
-}
-
-static void writeQtEnv(const HardwareInfo& info)
-{
-    QString content;
-    if (info.primaryDisplay == "dsi") {
-        content = "QT_QPA_PLATFORM=eglfs\n"
-                  "QT_QPA_EGLFS_KMS_CONFIG=/run/journeyos/kms.json\n"
-                  "QT_QPA_EGLFS_KMS_ATOMIC=1\n";
-    } else {
-        // "hdmi" or "none"
-        content = "QT_QPA_PLATFORM=wayland\n";
-    }
-
-    const QString path = HardwareDetector::journeyOsRuntimePath("qt.env");
-    QFile file(path);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        qCWarning(hardwareDetect) << "Cannot write" << path << ":" << file.errorString();
-        return;
-    }
-    file.write(content.toUtf8());
-    file.close();
-    qCInfo(hardwareDetect) << "Written:" << path;
-}
-
 bool HardwareDetector::writeOutputFiles(const HardwareInfo& info)
 {
     const QString hwPath = journeyOsRuntimePath("hardware.json");
@@ -202,8 +154,6 @@ bool HardwareDetector::writeOutputFiles(const HardwareInfo& info)
 #ifdef JOURNEYOS_RPI_DETECTION
     writeDisplayConf(info);
     writeAudioConf(info);
-    writeKmsJson(info);
-    writeQtEnv(info);
 #endif
 
     return true;
@@ -215,80 +165,189 @@ bool HardwareDetector::manageBootOverlays(const HardwareInfo& info)
     Q_UNUSED(info)
     return false;
 #else
-    // Build the expected overlay list from detected hardware, in deterministic order.
-    // Each entry is a full dtoverlay= line as it would appear in /boot/hardware.txt.
+    // ── /boot availability ────────────────────────────────────────────────────
+    // boot-partition.service mounts /boot before this service runs.
+    // Bail out rather than write to rootfs if it is missing.
+    // Check that /boot is actually mounted, not just that the empty mountpoint exists.
+    // config.txt is always present on the boot vfat partition.
+    if (!QFile::exists(QStringLiteral("/boot/config.txt"))) {
+        qCWarning(hardwareDetect) << "/boot not mounted (config.txt absent) — cannot manage hardware.txt";
+        return false;
+    }
+
+    const QString bootHwTxt     = QStringLiteral("/boot/hardware.txt");
+    const QString stateFilePath = QStringLiteral("/data/journeyos/display-probe-state");
+
+    // ── Display probe state machine ───────────────────────────────────────────
+    // DSI overlays are loaded by the bootloader before the kernel starts.
+    // DRM sysfs can only confirm DSI is active on the boot *after* the overlay
+    // was written.  The state machine tries TD2, then the original Touch Screen,
+    // then falls back to HDMI.  Once a display is confirmed it re-writes the same
+    // overlay on every boot (idempotent, handles OTA-reset boot volumes).
+    //
+    // To force a re-probe after changing the display:
+    //   rm /data/journeyos/display-probe-state
+
+    QString state;
+    {
+        QFile sf(stateFilePath);
+        if (sf.open(QIODevice::ReadOnly))
+            state = QString::fromUtf8(sf.readAll()).trimmed();
+    }
+    if (state.isEmpty())
+        state = QStringLiteral("probe-td2");
+
+    qCInfo(hardwareDetect) << "Display probe state:" << state;
+
+    auto writeState = [&](const QString& newState) {
+        QDir().mkpath(QFileInfo(stateFilePath).dir().absolutePath());
+        QFile sf(stateFilePath);
+        if (sf.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            sf.write((newState + '\n').toUtf8());
+        qCInfo(hardwareDetect) << "Display probe state ->" << newState;
+    };
+
+    // displayOverlay is the dtoverlay= line for the display (empty = HDMI/none).
+    // needsReboot is set when we are advancing through probe states — the new
+    // overlay takes effect on the next boot, so we reboot immediately.
+    QString displayOverlay;
+    bool    needsReboot = false;
+
+    // Overlay probe order — both display types tried on DSI1 then DSI0:
+    //   1. Touch Display 2 on DSI1 — vc4-kms-dsi-ili9881-7inch (720×1280, rotation=270)
+    //   2. Touch Display 2 on DSI0 — same overlay + ,dsi0
+    //   3. Original Touch Display on DSI1 — vc4-kms-dsi-7inch
+    //   4. Original Touch Display on DSI0 — same overlay + ,dsi0
+    //   5. HDMI fallback (no overlay)
+    //
+    // Worst-case convergence: 5 reboots (display on DSI0, only tried after DSI1 fails).
+    // Common case: 1-2 reboots (display on DSI1).
+    //
+    // To force re-probe after changing display or connector:
+    //   rm /data/journeyos/display-probe-state
+
+    static const QString TD2_DSI1 = QStringLiteral("dtoverlay=vc4-kms-dsi-ili9881-7inch,rotation=270,swapxy,invy");
+    static const QString TD2_DSI0 = QStringLiteral("dtoverlay=vc4-kms-dsi-ili9881-7inch,dsi0,rotation=270,swapxy,invy");
+    static const QString TS1_DSI1 = QStringLiteral("dtoverlay=vc4-kms-dsi-7inch");
+    static const QString TS1_DSI0 = QStringLiteral("dtoverlay=vc4-kms-dsi-7inch,dsi0");
+
+    if (state == QStringLiteral("probe-td2")) {
+        displayOverlay = TD2_DSI1;
+        writeState(QStringLiteral("check-td2"));
+        needsReboot = true;
+        qCInfo(hardwareDetect) << "Probing: Touch Display 2 on DSI1";
+    }
+    else if (state == QStringLiteral("check-td2")) {
+        if (info.dsiPresent) {
+            displayOverlay = TD2_DSI1;
+            writeState(QStringLiteral("done-td2"));
+            qCInfo(hardwareDetect) << "Touch Display 2 on DSI1 confirmed";
+        } else {
+            displayOverlay = TD2_DSI0;
+            writeState(QStringLiteral("check-td2-dsi0"));
+            needsReboot = true;
+            qCInfo(hardwareDetect) << "TD2/DSI1 not found — probing Touch Display 2 on DSI0";
+        }
+    }
+    else if (state == QStringLiteral("check-td2-dsi0")) {
+        if (info.dsiPresent) {
+            displayOverlay = TD2_DSI0;
+            writeState(QStringLiteral("done-td2-dsi0"));
+            qCInfo(hardwareDetect) << "Touch Display 2 on DSI0 confirmed";
+        } else {
+            displayOverlay = TS1_DSI1;
+            writeState(QStringLiteral("check-ts1"));
+            needsReboot = true;
+            qCInfo(hardwareDetect) << "TD2 not found — probing original Touch Display on DSI1";
+        }
+    }
+    else if (state == QStringLiteral("check-ts1")) {
+        if (info.dsiPresent) {
+            displayOverlay = TS1_DSI1;
+            writeState(QStringLiteral("done-ts1"));
+            qCInfo(hardwareDetect) << "Original Touch Display on DSI1 confirmed";
+        } else {
+            displayOverlay = TS1_DSI0;
+            writeState(QStringLiteral("check-ts1-dsi0"));
+            needsReboot = true;
+            qCInfo(hardwareDetect) << "TS1/DSI1 not found — probing original Touch Display on DSI0";
+        }
+    }
+    else if (state == QStringLiteral("check-ts1-dsi0")) {
+        if (info.dsiPresent) {
+            displayOverlay = TS1_DSI0;
+            writeState(QStringLiteral("done-ts1-dsi0"));
+            qCInfo(hardwareDetect) << "Original Touch Display on DSI0 confirmed";
+        } else {
+            writeState(QStringLiteral("done-hdmi"));
+            needsReboot = true;
+            qCInfo(hardwareDetect) << "No DSI display found on any connector — falling back to HDMI";
+        }
+    }
+    else if (state == QStringLiteral("done-td2")) {
+        displayOverlay = TD2_DSI1;
+    }
+    else if (state == QStringLiteral("done-td2-dsi0")) {
+        displayOverlay = TD2_DSI0;
+    }
+    else if (state == QStringLiteral("done-ts1")) {
+        displayOverlay = TS1_DSI1;
+    }
+    else if (state == QStringLiteral("done-ts1-dsi0")) {
+        displayOverlay = TS1_DSI0;
+    }
+    else if (state == QStringLiteral("done-hdmi")) {
+        // HDMI — no display overlay
+    }
+    else {
+        qCWarning(hardwareDetect) << "Unknown display probe state:" << state << "— resetting";
+        displayOverlay = QStringLiteral("dtoverlay=vc4-kms-dsi-pi-touchscreen2,rotate=90");
+        writeState(QStringLiteral("check-td2"));
+        needsReboot = true;
+    }
+
+    // ── Build full overlay list (display + HATs) ──────────────────────────────
+    // HATs are detected via I2C/EEPROM every boot — no state machine needed.
     QStringList overlays;
-    if (info.dsiPresent)
-        overlays << QStringLiteral("dtoverlay=vc4-kms-dsi-7inch");
+    if (!displayOverlay.isEmpty())
+        overlays << displayOverlay;
     if (info.hatIqaudioDac || info.iqaudioDac)
         overlays << QStringLiteral("dtoverlay=iqaudio-dacplus");
     if (info.hatCanBus)
         overlays << QStringLiteral("dtoverlay=mcp2515-can0");
     if (info.hatRtc)
         overlays << QStringLiteral("dtoverlay=i2c-rtc,ds3231");
-    // hatPimoroniAudio: overlay name is product-specific — skip auto-generation
-    overlays.sort();
+    // hatPimoroniAudio: overlay name is product-specific — configure manually
 
-    // Read and parse any existing /boot/hardware.txt
-    QStringList existingOverlays;
-    QFile hwFile("/boot/hardware.txt");
-    if (hwFile.open(QIODevice::ReadOnly)) {
-        const QString existing = QString::fromUtf8(hwFile.readAll());
-        hwFile.close();
-        for (const QString& line : existing.split('\n')) {
-            const QString trimmed = line.trimmed();
-            if (!trimmed.isEmpty() && !trimmed.startsWith('#'))
-                existingOverlays << trimmed;
-        }
-        existingOverlays.sort();
-        qCInfo(hardwareDetect) << "Existing /boot/hardware.txt overlays:" << existingOverlays;
-    } else {
-        qCInfo(hardwareDetect) << "/boot/hardware.txt absent (first boot)";
-    }
-
-    if (overlays == existingOverlays) {
-        qCInfo(hardwareDetect) << "Boot overlays unchanged — no reboot needed";
-        return false;
-    }
-
-    qCInfo(hardwareDetect) << "Boot overlays changed from" << existingOverlays << "to" << overlays;
-
-    // Write new /boot/hardware.txt; fsync required for FAT32 reliability
+    // ── Write /boot/hardware.txt (always — idempotent, handles OTA resets) ───
     {
-        QFile outFile("/boot/hardware.txt");
-        if (!outFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            qCCritical(hardwareDetect) << "Cannot write /boot/hardware.txt:" << outFile.errorString();
+        QFile f(bootHwTxt);
+        if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            qCCritical(hardwareDetect) << "Cannot write" << bootHwTxt << ":" << f.errorString();
             return false;
         }
         QString content;
-        content += QStringLiteral("# JourneyOS hardware overlays — auto-generated by journeyos-hardware-detect\n");
-        content += QStringLiteral("# Do not edit manually; this file is overwritten on every boot.\n");
+        content += QStringLiteral("# JourneyOS hardware overlays\n");
+        content += QStringLiteral("# Populated by journeyos-hardware-detect on first boot and after OTA updates.\n");
+        content += QStringLiteral("# Do not edit manually — changes will be overwritten by the hardware detector.\n");
         for (const QString& line : overlays)
             content += line + '\n';
-        outFile.write(content.toUtf8());
-        outFile.flush();
-        ::fsync(outFile.handle());
-        outFile.close();
-        qCInfo(hardwareDetect) << "Written /boot/hardware.txt:" << overlays.size() << "overlay(s)";
+        f.write(content.toUtf8());
+        f.flush();
+        ::fsync(f.handle());
+        f.close();
+        qCInfo(hardwareDetect) << "Written" << bootHwTxt
+                               << (overlays.isEmpty() ? "(HDMI/no overlay)" : overlays.join(", "));
     }
 
-    // Write reboot-required flag so other units can check it
-    {
-        const QString flagPath = journeyOsRuntimePath("reboot-required");
-        QFile flagFile(flagPath);
-        if (flagFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            flagFile.write("1\n");
-            flagFile.close();
-            qCInfo(hardwareDetect) << "Written:" << flagPath;
-        }
-    }
+    if (!needsReboot)
+        return false;
 
-    // Flush all kernel buffers before the raw reboot
-    qCInfo(hardwareDetect) << "Triggering reboot for overlay changes to take effect";
+    // ── Reboot to activate new overlay ───────────────────────────────────────
+    qCInfo(hardwareDetect) << "Rebooting to activate overlay changes";
     ::sync();
-    ::reboot(RB_AUTOBOOT); // does not return on success; requires root
+    ::reboot(RB_AUTOBOOT); // does not return on success (requires root)
 
-    // Only reached if reboot(2) fails (should not happen as we run as root)
     qCCritical(hardwareDetect) << "reboot(2) failed — reboot manually";
     return true;
 #endif
