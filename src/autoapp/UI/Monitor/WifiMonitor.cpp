@@ -1,5 +1,6 @@
 #include "f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp"
 #include <QDebug>
+#include <QFile>
 #include <QRegularExpression>
 #include <QProcess>
 #ifdef Q_OS_LINUX
@@ -26,7 +27,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         if (!savedName.isEmpty()) {
             // Primary: match by interface name
             QNetworkInterface byName = QNetworkInterface::interfaceFromName(savedName);
-            if (byName.isValid() && byName.type() == QNetworkInterface::Wifi) {
+            if (byName.isValid() && isWifiInterface(byName)) {
                 m_currentInterface = byName;
             }
         }
@@ -34,7 +35,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         if (!m_currentInterface.isValid() && !savedMac.isEmpty()) {
             // Secondary: match by saved MAC (backwards-compat / renamed interface)
             for (const QNetworkInterface &i: QNetworkInterface::allInterfaces()) {
-                if (i.type() == QNetworkInterface::Wifi &&
+                if (isWifiInterface(i) &&
                     i.hardwareAddress().compare(savedMac, Qt::CaseInsensitive) == 0) {
                     m_currentInterface = i;
                     break;
@@ -45,7 +46,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         // Fallback: auto-detect first active Wi-Fi adapter
         if (!m_currentInterface.isValid()) {
             for (const QNetworkInterface &i: QNetworkInterface::allInterfaces()) {
-                if (i.type() == QNetworkInterface::Wifi &&
+                if (isWifiInterface(i) &&
                     (i.flags() & QNetworkInterface::IsUp) &&
                     !i.hardwareAddress().isEmpty()) {
                     m_currentInterface = i;
@@ -139,11 +140,20 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         emit currentIpChanged(ip);
     }
 
+    static bool isWifiInterface(const QNetworkInterface &i) {
+        // Qt's type() uses SIOCGIWNAME (wireless extensions) which returns EOPNOTSUPP
+        // on modern nl80211 drivers, causing wlan0 to appear as Ethernet. Fall back
+        // to sysfs: /sys/class/net/<iface>/wireless/ exists iff the interface is Wi-Fi.
+        if (i.type() == QNetworkInterface::Wifi)
+            return true;
+        return QFile::exists(QString("/sys/class/net/%1/wireless").arg(i.name()));
+    }
+
     void WifiMonitor::updateInterfaceList() {
         QVariantList list;
 
         for (const QNetworkInterface &i: QNetworkInterface::allInterfaces()) {
-            if (i.type() != QNetworkInterface::Wifi || i.hardwareAddress().isEmpty()) {
+            if (!isWifiInterface(i) || i.hardwareAddress().isEmpty()) {
                 continue;
             }
 

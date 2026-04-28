@@ -17,8 +17,67 @@ Q_DECLARE_METATYPE(BluezManagedObjects)
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"
 #include <QTimer>
+#include <QDir>
+#include <QFile>
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcBtHandler, "journeyos.bluetooth")
+
+// Resolve the BT SIG company identifier for the adapter that owns `address`.
+// Reads /sys/class/bluetooth/hciN/manufacturer — an authoritative integer
+// assigned by the Bluetooth SIG, not derived from the MAC OUI.
+static QString btVendorName(const QBluetoothAddress &address)
+{
+#ifdef Q_OS_LINUX
+    const QByteArray target = address.toString().toUpper().toLatin1();
+
+    for (const QString &entry : QDir("/sys/class/bluetooth").entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        if (!entry.startsWith(QLatin1String("hci")))
+            continue;
+
+        const QString base = QStringLiteral("/sys/class/bluetooth/") + entry;
+
+        QFile addrFile(base + QStringLiteral("/address"));
+        if (!addrFile.open(QIODevice::ReadOnly))
+            continue;
+        if (addrFile.readAll().trimmed().toUpper() != target)
+            continue;
+
+        QFile mfFile(base + QStringLiteral("/manufacturer"));
+        if (!mfFile.open(QIODevice::ReadOnly))
+            break;
+
+        bool ok = false;
+        const int id = QString::fromLatin1(mfFile.readAll().trimmed()).toInt(&ok);
+        if (!ok)
+            break;
+
+        // Bluetooth SIG Company Identifiers — https://www.bluetooth.com/specifications/assigned-numbers/
+        static const QHash<int, QString> kCompany = {
+            {  2,  "Intel" },
+            {  9,  "Infineon" },
+            { 10,  "CSR" },          // Cambridge Silicon Radio (now Qualcomm)
+            { 13,  "Texas Instruments" },
+            { 15,  "Broadcom" },
+            { 18,  "Zeevo" },
+            { 29,  "Qualcomm" },
+            { 48,  "Qualcomm" },
+            { 93,  "Intel" },
+            { 308, "Intel" },
+            { 320, "Murata" },
+            { 1521,"Murata" },
+            { 76,  "Apple" },
+            { 224, "Google" },
+            { 89,  "Nordic Semiconductor" },
+            { 492, "Realtek" },
+        };
+
+        return kCompany.value(id, QString());
+    }
+#else
+    Q_UNUSED(address)
+#endif
+    return QString();
+}
 
 namespace f1x::openauto::autoapp::UI::Monitor {
     /**
@@ -229,10 +288,11 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         for (const QBluetoothHostInfo &info: hostInfos) {
             QVariantMap map;
             const QString addrStr = info.address().toString();
-            // Display name includes the address so adapters are distinguishable in the combo
-            map["name"] = info.name().isEmpty()
-                          ? addrStr
-                          : info.name() + QStringLiteral(" \u2014 ") + addrStr;
+            const QString vendor = btVendorName(info.address());
+            const QString displayName = info.name().isEmpty() ? addrStr : info.name();
+            map["name"] = vendor.isEmpty()
+                          ? displayName + QStringLiteral(" \u2014 ") + addrStr
+                          : vendor + QStringLiteral(" (") + displayName + QStringLiteral(") \u2014 ") + addrStr;
             map["address"] = addrStr;
 
             // 2. Probe the status of THIS specific adapter

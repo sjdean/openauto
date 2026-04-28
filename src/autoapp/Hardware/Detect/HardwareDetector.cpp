@@ -226,8 +226,8 @@ bool HardwareDetector::manageBootOverlays(const HardwareInfo& info)
     // To force re-probe after changing display or connector:
     //   rm /data/journeyos/display-probe-state
 
-    static const QString TD2_DSI1 = QStringLiteral("dtoverlay=vc4-kms-dsi-ili9881-7inch,rotation=270,swapxy,invy");
-    static const QString TD2_DSI0 = QStringLiteral("dtoverlay=vc4-kms-dsi-ili9881-7inch,dsi0,rotation=270,swapxy,invy");
+    static const QString TD2_DSI1 = QStringLiteral("dtoverlay=vc4-kms-dsi-ili9881-7inch");
+    static const QString TD2_DSI0 = QStringLiteral("dtoverlay=vc4-kms-dsi-ili9881-7inch,dsi0");
     static const QString TS1_DSI1 = QStringLiteral("dtoverlay=vc4-kms-dsi-7inch");
     static const QString TS1_DSI0 = QStringLiteral("dtoverlay=vc4-kms-dsi-7inch,dsi0");
 
@@ -301,7 +301,7 @@ bool HardwareDetector::manageBootOverlays(const HardwareInfo& info)
     }
     else {
         qCWarning(hardwareDetect) << "Unknown display probe state:" << state << "— resetting";
-        displayOverlay = QStringLiteral("dtoverlay=vc4-kms-dsi-pi-touchscreen2,rotate=90");
+        displayOverlay = QStringLiteral("dtoverlay=vc4-kms-dsi-ili9881-7inch");
         writeState(QStringLiteral("check-td2"));
         needsReboot = true;
     }
