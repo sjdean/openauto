@@ -11,6 +11,15 @@
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcWifiMonitor, "journeyos.wifi.monitor")
 
+static bool isWifiInterface(const QNetworkInterface &i) {
+    // Qt's type() uses SIOCGIWNAME (wireless extensions) which returns EOPNOTSUPP
+    // on modern nl80211 drivers, causing wlan0 to appear as Ethernet. Fall back
+    // to sysfs: /sys/class/net/<iface>/wireless/ exists iff the interface is Wi-Fi.
+    if (i.type() == QNetworkInterface::Wifi)
+        return true;
+    return QFile::exists(QString("/sys/class/net/%1/wireless").arg(i.name()));
+}
+
 namespace f1x::openauto::autoapp::UI::Monitor {
     using namespace f1x::openauto::common::Enum;
 
@@ -138,15 +147,6 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             }
         }
         emit currentIpChanged(ip);
-    }
-
-    static bool isWifiInterface(const QNetworkInterface &i) {
-        // Qt's type() uses SIOCGIWNAME (wireless extensions) which returns EOPNOTSUPP
-        // on modern nl80211 drivers, causing wlan0 to appear as Ethernet. Fall back
-        // to sysfs: /sys/class/net/<iface>/wireless/ exists iff the interface is Wi-Fi.
-        if (i.type() == QNetworkInterface::Wifi)
-            return true;
-        return QFile::exists(QString("/sys/class/net/%1/wireless").arg(i.name()));
     }
 
     void WifiMonitor::updateInterfaceList() {
