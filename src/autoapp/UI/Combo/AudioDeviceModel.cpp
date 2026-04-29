@@ -2,6 +2,7 @@
 
 #include "f1x/openauto/autoapp/UI/Combo/AudioDeviceDirection.hpp"
 #include <qloggingcategory.h>
+#include <QMetaObject>
 Q_LOGGING_CATEGORY(lcComboAudio, "journeyos.audio.device.list")
 namespace f1x::openauto::autoapp::UI::Combo {
 
@@ -14,6 +15,22 @@ namespace f1x::openauto::autoapp::UI::Combo {
         m_direction(direction),
         m_audioHandler(std::move(audioHandler)) { // Store the interface
       populateComboBoxItems();
+
+      // Subscribe to live PA events. The lambda is called from the PA thread,
+      // so we use QueuedConnection to safely refresh on the Qt main thread.
+      if (m_direction == AudioDeviceDirection::Output) {
+          m_audioHandler->addSinksChangedCallback([this]() {
+              QMetaObject::invokeMethod(this, &AudioDeviceModel::refresh, Qt::QueuedConnection);
+          });
+      } else {
+          m_audioHandler->addSourcesChangedCallback([this]() {
+              QMetaObject::invokeMethod(this, &AudioDeviceModel::refresh, Qt::QueuedConnection);
+          });
+      }
+  }
+
+  void AudioDeviceModel::refresh() {
+    populateComboBoxItems();
   }
 
   void AudioDeviceModel::populateComboBoxItems() {

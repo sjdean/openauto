@@ -8,6 +8,7 @@
 
 #include <QString>
 #include <QVariant>
+#include <functional>
 #include <vector>
 #include <string>
 #include <memory>
@@ -48,6 +49,12 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         virtual EngineDeviceList getSinks() = 0;
         virtual EngineDeviceList getSources() = 0;
         virtual std::vector<std::pair<std::string, std::string>> getDeviceList() = 0;
+
+        // Subscribe to live device changes. Callbacks are invoked from the
+        // audio backend thread — use Qt::QueuedConnection when connecting to
+        // Qt slots to marshal back to the main thread.
+        virtual void addSinksChangedCallback(std::function<void()> /*cb*/) {}
+        virtual void addSourcesChangedCallback(std::function<void()> /*cb*/) {}
     };
 
     // A "do-nothing" stub implementation for non-Linux platforms

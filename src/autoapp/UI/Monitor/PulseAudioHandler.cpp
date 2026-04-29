@@ -36,8 +36,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             return;
         }
         
-        // Wait for connection (optional, but good for initialization)
-        // In a real app, you might want to do this asynchronously, but for init it's often okay.
+        // Wait for context to reach READY state
         while (true) {
             pa_threaded_mainloop_lock(m_mainloop);
             pa_context_state_t state = pa_context_get_state(m_context);
@@ -46,10 +45,21 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             if (state == PA_CONTEXT_READY) break;
             if (!PA_CONTEXT_IS_GOOD(state)) {
                 qCritical(lcAudioPulse) << "connection failed during init";
-                break;
+                return;
             }
-            QThread::msleep(10); // Short sleep while waiting
+            QThread::msleep(10);
         }
+
+        // Subscribe to sink and source change events so AudioDeviceModel can
+        // refresh its list automatically when hardware appears or disappears.
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_context_set_subscribe_callback(m_context, subscribe_callback, this);
+        pa_operation *op = pa_context_subscribe(
+            m_context,
+            static_cast<pa_subscription_mask_t>(PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SOURCE),
+            nullptr, nullptr);
+        if (op) pa_operation_unref(op);
+        pa_threaded_mainloop_unlock(m_mainloop);
     }
 
     PulseAudioHandler::~PulseAudioHandler() {
@@ -268,6 +278,32 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         }
         pa_threaded_mainloop_unlock(m_mainloop);
         return name;
+    }
+
+    void PulseAudioHandler::addSinksChangedCallback(std::function<void()> cb) {
+        m_sinksChangedCallbacks.push_back(std::move(cb));
+    }
+
+    void PulseAudioHandler::addSourcesChangedCallback(std::function<void()> cb) {
+        m_sourcesChangedCallbacks.push_back(std::move(cb));
+    }
+
+    // Called from the PA mainloop thread (lock is held). Callbacks must not
+    // call back into PA — they should only post to the Qt event loop.
+    void PulseAudioHandler::subscribe_callback(pa_context*, pa_subscription_event_type_t t,
+                                               uint32_t /*idx*/, void* userdata) {
+        auto* self = static_cast<PulseAudioHandler*>(userdata);
+        const auto facility = t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK;
+        const auto type     = t & PA_SUBSCRIPTION_EVENT_TYPE_MASK;
+
+        if (type != PA_SUBSCRIPTION_EVENT_NEW && type != PA_SUBSCRIPTION_EVENT_REMOVE)
+            return;
+
+        if (facility == PA_SUBSCRIPTION_EVENT_SINK) {
+            for (auto& cb : self->m_sinksChangedCallbacks) cb();
+        } else if (facility == PA_SUBSCRIPTION_EVENT_SOURCE) {
+            for (auto& cb : self->m_sourcesChangedCallbacks) cb();
+        }
     }
 
     std::vector<std::pair<std::string, std::string>> PulseAudioHandler::getDeviceList() {
