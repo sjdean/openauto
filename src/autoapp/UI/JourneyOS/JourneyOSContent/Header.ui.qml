@@ -31,29 +31,31 @@ Item {
     property int wifiSignalStrength: wifiViewModel.signalStrength
     property bool wifiConnected: wifiViewModel.connected
     property string wifiSsid: wifiViewModel.currentSsid
+    // Compact: show SSID when connected, abbreviations otherwise
     property string wifiStatusText:
         (wifiConnected ? wifiSsid :
-        (wifiEnabled ? (hotspotEnabled ? "Listening for Connections" : (hasWifi ? "Not Connected" : "No Interfaces")
-        ) : "Disabled"))
+        (wifiEnabled ? (hotspotEnabled ? "AP" : (hasWifi ? "N/C" : "")) : "Off"))
 
-        //"Wi-Fi"     // Determine what to show - probably Mac/IP of Adapter on Boot, Update Icon to a Configured colour,
-                                                // Then monitor for connection, show "Connected to (SSID)"
-                                                // Then perhaps roll back to SSID and/or Client ID connected to
-
-    // Bluetooth - This is to display minimal Bluetooth Status information for a context button
+    // Bluetooth
     property bool hasBluetooth: true
-    property string bluetoothStatusText: bluetoothHandler.statusText
     property bool bluetoothPaired: bluetoothHandler.bluetoothConnectionStatus !== BluetoothConnectionStatus.BC_NOT_CONFIGURED
     property bool bluetoothConnected: bluetoothHandler.bluetoothConnectionStatus === BluetoothConnectionStatus.BC_CONNECTED
     property bool bluetoothConnecting: bluetoothHandler.bluetoothConnectionStatus === BluetoothConnectionStatus.BC_CONNECTING
+    property string btConnectedName: bluetoothHandler.connectedDeviceName
+    // Show connected device name when paired, "···" while connecting, empty otherwise
+    property string bluetoothStatusText:
+        (bluetoothConnected ? (btConnectedName.length > 0 ? btConnectedName : "On") :
+        (bluetoothConnecting ? "···" : ""))
 
-
-    // Android Auto - This is to display minimal AndroidAuto status information, connectivity method, status, and eventually Device Name connected. Though we could roll that back after five seconds, or have a scrolling text
+    // Android Auto
     property bool androidAutoConnected: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTED
     property bool androidAutoConnecting: androidAutoMonitor.state === AndroidAutoConnectivityState.AA_CONNECTING
-    property string androidAutoMethodText: androidAutoMonitor.method === AndroidAutoConnectivityMethod.AA_USB ? "USB"
-                                                                  : androidAutoMonitor.method === AndroidAutoConnectivityMethod.AA_WIFI ? "Wi-Fi"
-                                                                  : "Unknown"
+    // Show method only when active; empty when idle
+    property string androidAutoStatusText:
+        (androidAutoConnecting ? "···" :
+        (androidAutoConnected ? (androidAutoMonitor.method === AndroidAutoConnectivityMethod.AA_USB ? "USB"
+                               : androidAutoMonitor.method === AndroidAutoConnectivityMethod.AA_WIFI ? "WiFi"
+                               : "") : ""))
 
     Rectangle {
         color: Constants.primaryBackgroundColor
@@ -113,7 +115,7 @@ Item {
                         id: androidAutoButton
                         height: 25
                         textIsStatus: true
-                        text: headerItem.androidAutoMethodText
+                        text: headerItem.androidAutoStatusText
                         icon.source: "images/android-auto.svg"
                         iconColor: headerItem.androidAutoConnecting ? Constants.actionColor : (headerItem.androidAutoConnected ? Constants.okColor : Constants.baseColor)
                         iconSize: 12

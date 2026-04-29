@@ -147,14 +147,16 @@ Button {
                 id: horizontalTextItem
                 anchors.verticalCenter: parent.verticalCenter
                 visible: control.text.length > 0
-                height: childrenRect.height
-                width: childrenRect.width
+                height: horizontalText.height
+                width: Math.min(horizontalText.implicitWidth + 10, 90)
 
                 Text {
                     id: horizontalText
                     text: control.text
+                    width: parent.width
                     rightPadding: 5
                     leftPadding: 5
+                    elide: Text.ElideRight
                     opacity: enabled ? 1.0 : 0.3
                     color: control.textColor
                     font.pointSize: control.font.pointSize

@@ -531,6 +531,14 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         }
     }
 
+    QString BluetoothHandler::getConnectedDeviceName() const {
+        for (const auto &device : m_devices) {
+            if (device.connected)
+                return device.name;
+        }
+        return QString();
+    }
+
     QVariantList BluetoothHandler::getPairedDeviceList() {
         QVariantList model;
         for (const auto &device: m_devices) {

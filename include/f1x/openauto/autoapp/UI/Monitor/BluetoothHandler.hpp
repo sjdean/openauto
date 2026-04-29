@@ -33,6 +33,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             f1x::openauto::common::Enum::BluetoothConnectionStatus::Value bluetoothConnectionStatus
             READ getBluetoothConnectionStatus NOTIFY bluetoothConnectionStatusChanged)
         Q_PROPERTY(QString statusText READ getStatusText NOTIFY bluetoothConnectionStatusChanged)
+        Q_PROPERTY(QString connectedDeviceName READ getConnectedDeviceName NOTIFY bluetoothConnectionStatusChanged)
         Q_PROPERTY(bool isScanning READ isScanning NOTIFY isScanningChanged)
         // Agent property only valid on Linux, or return nullptr on Mac
         Q_PROPERTY(QObject* agent READ getAgent CONSTANT)
@@ -75,6 +76,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         void setBluetoothConnectionStatus(common::Enum::BluetoothConnectionStatus::Value value);
 
         QString getStatusText() const override;
+
+        QString getConnectedDeviceName() const;
 
         bool isScanning() const override;
 
