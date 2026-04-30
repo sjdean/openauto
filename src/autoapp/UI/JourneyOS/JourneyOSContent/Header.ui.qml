@@ -103,12 +103,15 @@ Item {
                         textIsStatus: true
                         text: headerItem.wifiStatusText
                         icon.source: "images/fi-br-wifi.svg"
-                        iconColor: !headerItem.wifiEnabled ? Constants.badColor : (!headerItem.wifiConnected ? Constants.waitColor : Constants.okColor)
+                        iconColor: !headerItem.hasWifi ? Constants.waitColor : (!headerItem.wifiEnabled ? Constants.badColor : (!headerItem.wifiConnected ? Constants.waitColor : Constants.okColor))
                         iconSize: 12
-                        visible: headerItem.hasWifi
                         Connections {
                             target: wirelessButton
-                            onClicked: headerItem.viewWifiStatus()
+                            onClicked: {
+                                if (headerItem.hasWifi) {
+                                    headerItem.viewWifiStatus()
+                                }
+                            }
                         }
                     }
                     JourneyButton {

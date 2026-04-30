@@ -2,8 +2,67 @@
 #include <QBluetoothLocalDevice>
 #include <QProcess>
 #include <qloggingcategory.h>
+#include <QDir>
+#include <QFile>
+
 Q_LOGGING_CATEGORY(lcComboBtAdapter, "journeyos.bluetooth.adapter.list")
 
+// Resolve the BT SIG company identifier for the adapter that owns `address`.
+// Reads /sys/class/bluetooth/hciN/manufacturer — an authoritative integer
+// assigned by the Bluetooth SIG, not derived from the MAC OUI.
+static QString btVendorName(const QBluetoothAddress &address)
+{
+#ifdef Q_OS_LINUX
+    const QByteArray target = address.toString().toUpper().toLatin1();
+
+    for (const QString &entry : QDir("/sys/class/bluetooth").entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        if (!entry.startsWith(QLatin1String("hci")))
+            continue;
+
+        const QString base = QStringLiteral("/sys/class/bluetooth/") + entry;
+
+        QFile addrFile(base + QStringLiteral("/address"));
+        if (!addrFile.open(QIODevice::ReadOnly))
+            continue;
+        if (addrFile.readAll().trimmed().toUpper() != target)
+            continue;
+
+        QFile mfFile(base + QStringLiteral("/manufacturer"));
+        if (!mfFile.open(QIODevice::ReadOnly))
+            break;
+
+        bool ok = false;
+        const int id = QString::fromLatin1(mfFile.readAll().trimmed()).toInt(&ok);
+        if (!ok)
+            break;
+
+        // Bluetooth SIG Company Identifiers — https://www.bluetooth.com/specifications/assigned-numbers/
+        static const QHash<int, QString> kCompany = {
+            {  2,  "Intel" },
+            {  9,  "Infineon" },
+            { 10,  "CSR" },          // Cambridge Silicon Radio (now Qualcomm)
+            { 13,  "Texas Instruments" },
+            { 15,  "Broadcom" },
+            { 18,  "Zeevo" },
+            { 29,  "Qualcomm" },
+            { 48,  "Qualcomm" },
+            { 93,  "Intel" },
+            { 308, "Intel" },
+            { 320, "Murata" },
+            { 1521,"Murata" },
+            { 76,  "Apple" },
+            { 224, "Google" },
+            { 89,  "Nordic Semiconductor" },
+            { 492, "Realtek" },
+        };
+
+        return kCompany.value(id, QString());
+    }
+#else
+    Q_UNUSED(address)
+#endif
+    return QString();
+}
 
 namespace f1x::openauto::autoapp::UI::Combo {
     // TODO: Bring in Bluetooth Monitor
@@ -19,9 +78,17 @@ namespace f1x::openauto::autoapp::UI::Combo {
             qDebug(lcComboBtAdapter) << "adapters found count=" << adapters.count();
             for (const QBluetoothHostInfo &adapter: adapters) {
                 QString adapterAddress = adapter.address().toString();
-                addComboBoxItem(QString("%1 (%2)").arg(adapter.name()).arg(
-                                    adapterAddress).toUtf8().constData(),
-                                adapterAddress);
+                QString vendor = btVendorName(adapter.address());
+                QString displayName = adapter.name().isEmpty() ? adapterAddress : adapter.name();
+
+                QString displayString;
+                if (vendor.isEmpty()) {
+                    displayString = displayName + QStringLiteral(" — ") + adapterAddress;
+                } else {
+                    displayString = vendor + QStringLiteral(" (") + displayName + QStringLiteral(") — ") + adapterAddress;
+                }
+
+                addComboBoxItem(displayString.toUtf8().constData(), adapterAddress);
             }
         } else {
             qDebug(lcComboBtAdapter) << "no adapters found";
