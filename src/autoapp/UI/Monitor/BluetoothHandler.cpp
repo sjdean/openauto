@@ -166,6 +166,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         loadPairedDevicesFromBlueZ();
 #endif
 
+        // Notify QML that the adapter list is available
+        Q_EMIT bluetoothAdapterListChanged();
+        Q_EMIT adapterCountChanged();
+
         // 6. Auto-connect to last known device after the BT stack settles.
         //    If the saved device is unreachable, fall back to other paired devices.
         QTimer::singleShot(3000, this, [this]() {
@@ -186,7 +190,9 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
     void BluetoothHandler::startScan() {
         qInfo(lcBtHandler) << "scan starting";
-        m_devices.clear();
+        // Only clear unpaired/discovered devices — keep paired entries intact
+        m_devices.erase(std::remove_if(m_devices.begin(), m_devices.end(),
+            [](const Model::BluetoothDevice &d) { return !d.paired; }), m_devices.end());
         Q_EMIT unpairedDeviceListChanged();
         m_isScanning = true;
         Q_EMIT isScanningChanged();
@@ -654,6 +660,13 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         if (m_pairingModeEnabled == enabled) return;
         m_pairingModeEnabled = enabled;
 
+        // Update host visibility so remote devices can find us
+        if (localDevice_ && localDevice_->isValid()) {
+            localDevice_->setHostMode(enabled
+                ? QBluetoothLocalDevice::HostDiscoverable
+                : QBluetoothLocalDevice::HostConnectable);
+        }
+
 #ifdef Q_OS_LINUX
         QDBusInterface agentManager("org.bluez", "/org/bluez", "org.bluez.AgentManager1",
                                     QDBusConnection::systemBus());
@@ -664,11 +677,11 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                                   "DisplayYesNo");
                 agentManager.call("RequestDefaultAgent",
                                   QVariant::fromValue(QDBusObjectPath(m_agent->objectPath())));
-                qInfo(lcBtHandler) << "Pairing mode enabled";
+                qInfo(lcBtHandler) << "pairing mode enabled — device is discoverable";
             } else {
                 agentManager.call("UnregisterAgent",
                                   QVariant::fromValue(QDBusObjectPath(m_agent->objectPath())));
-                qInfo(lcBtHandler) << "Pairing mode disabled";
+                qInfo(lcBtHandler) << "pairing mode disabled — device is connectable only";
             }
         } else {
             qWarning(lcBtHandler) << "agent manager not available";

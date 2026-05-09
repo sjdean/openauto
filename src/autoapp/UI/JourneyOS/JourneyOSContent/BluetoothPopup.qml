@@ -51,7 +51,7 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 20
 
-                        JourneyButton {
+                        Button {
                             text: "Accept"
                             onClicked: {
                                 if (bluetoothHandler.agent)
@@ -60,7 +60,7 @@ Item {
                             }
                         }
 
-                        JourneyButton {
+                        Button {
                             text: "Decline"
                             onClicked: {
                                 if (bluetoothHandler.agent)
@@ -136,7 +136,7 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: 20
 
-                        JourneyButton {
+                        Button {
                             text: "Forget"
                             onClicked: {
                                 bluetoothHandler.removePair(removeConfirmOverlay.deviceAddress)
@@ -144,7 +144,7 @@ Item {
                             }
                         }
 
-                        JourneyButton {
+                        Button {
                             text: "Cancel"
                             onClicked: removeConfirmOverlay.visible = false
                         }
@@ -232,10 +232,10 @@ Item {
             anchors.fill: parent
             anchors.margins: 16
             anchors.topMargin: 44   // leave room for close button
-            spacing: 12
+            spacing: 10
             visible: ConfigGate.showConfig
 
-            // ── Status row ────────────────────────────────────────────────────
+            // ── Title + status ────────────────────────────────────────────────
             Row {
                 width: parent.width
                 spacing: 10
@@ -248,7 +248,6 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                // Coloured status dot
                 Rectangle {
                     width: 10
                     height: 10
@@ -275,37 +274,115 @@ Item {
             Row {
                 width: parent.width
                 spacing: 10
-                visible: bluetoothHandler.adapterCount > 0
 
                 Text {
                     text: "Adapter:"
                     color: Constants.textSecondary
                     font.pixelSize: Constants.fontLabel
                     anchors.verticalCenter: parent.verticalCenter
+                    visible: bluetoothHandler.adapterCount > 1
                 }
 
                 ComboBox {
                     id: adapterCombo
                     width: parent.width - 80
-                    property var adapterList: bluetoothHandler.bluetoothAdapterList
-                    model: adapterList
+                    visible: bluetoothHandler.adapterCount > 1
+
+                    // adapterList is a QVariantList of QVariantMap {name, address, powered, discoverable}
+                    model: bluetoothHandler.bluetoothAdapterList
                     textRole: "name"
 
-                    Component.onCompleted: {
-                        if (!adapterList || adapterList.length === 0) return
+                    Component.onCompleted: refreshAdapterIndex()
+
+                    function refreshAdapterIndex() {
+                        var list = bluetoothHandler.bluetoothAdapterList
+                        if (!list || list.length === 0) return
                         var savedAddr = bluetoothHandler.getAdapterAddress()
-                        for (var i = 0; i < adapterList.length; i++) {
-                            if (adapterList[i].address === savedAddr) {
+                        for (var i = 0; i < list.length; i++) {
+                            if (list[i].address === savedAddr) {
                                 currentIndex = i
-                                break
+                                return
                             }
                         }
+                        currentIndex = 0
                     }
 
                     onActivated: {
-                        if (currentIndex >= 0 && currentIndex < adapterList.length)
-                            bluetoothHandler.setActiveAdapter(adapterList[currentIndex].address)
+                        var list = bluetoothHandler.bluetoothAdapterList
+                        if (currentIndex >= 0 && currentIndex < list.length)
+                            bluetoothHandler.setActiveAdapter(list[currentIndex].address)
                     }
+
+                    Connections {
+                        target: bluetoothHandler
+                        function onBluetoothAdapterListChanged() { adapterCombo.refreshAdapterIndex() }
+                    }
+                }
+
+                // When only one adapter — just show its name + address inline
+                Text {
+                    visible: bluetoothHandler.adapterCount <= 1
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: Constants.textPrimary
+                    font.pixelSize: Constants.fontLabel
+                    text: {
+                        var list = bluetoothHandler.bluetoothAdapterList
+                        if (list && list.length > 0) return list[0].name
+                        return "No adapter"
+                    }
+                }
+            }
+
+            // ── Local device info (address + discoverability) ─────────────────
+            Rectangle {
+                width: parent.width
+                height: addrRow.implicitHeight + 10
+                color: Constants.overlaySubtle
+                radius: Constants.radiusInput
+
+                Row {
+                    id: addrRow
+                    anchors.centerIn: parent
+                    spacing: 20
+
+                    Text {
+                        text: "Address: " + bluetoothHandler.getAdapterAddress()
+                        color: Constants.textSecondary
+                        font.pixelSize: Constants.fontCaption
+                        font.family: "monospace"
+                    }
+
+                    Text {
+                        text: bluetoothHandler.isPairingModeEnabled ? "Discoverable" : "Connectable"
+                        color: bluetoothHandler.isPairingModeEnabled ? Constants.statusOk : Constants.textDisabled
+                        font.pixelSize: Constants.fontCaption
+                    }
+                }
+            }
+
+            // ── Pairing mode toggle ────────────────────────────────────────────
+            Row {
+                width: parent.width
+                spacing: 10
+
+                Text {
+                    text: "Discoverable:"
+                    color: Constants.textSecondary
+                    font.pixelSize: Constants.fontLabel
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                Switch {
+                    id: pairingModeSwitch
+                    checked: bluetoothHandler.isPairingModeEnabled
+                    onCheckedChanged: bluetoothHandler.enablePairingMode(checked)
+                }
+
+                Text {
+                    text: pairingModeSwitch.checked ? "On — device is visible to others" : "Off"
+                    color: pairingModeSwitch.checked ? Constants.statusOk : Constants.textDisabled
+                    font.pixelSize: Constants.fontCaption
+                    anchors.verticalCenter: parent.verticalCenter
                 }
             }
 
@@ -320,43 +397,59 @@ Item {
             ListView {
                 id: pairedList
                 width: parent.width
-                height: 150
+                height: 120
                 clip: true
                 model: bluetoothHandler.pairedDeviceList
 
                 delegate: Rectangle {
                     width: pairedList.width
-                    height: 48
+                    height: 44
                     color: "transparent"
+                    // thin separator line below
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
+                        color: Constants.overlaySubtle
+                    }
 
                     Row {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 8
 
-                        Text {
-                            text: model.name || model.address
-                            color: Constants.textPrimary
-                            font.pixelSize: Constants.fontBody
+                        Rectangle {
+                            width: 8; height: 8; radius: 4
                             anchors.verticalCenter: parent.verticalCenter
+                            color: model.connected ? Constants.statusOk : Constants.textDisabled
                         }
 
-                        Text {
-                            visible: model.connected
-                            text: "(Connected)"
-                            color: Constants.statusOk
-                            font.pixelSize: Constants.fontCaption
+                        Column {
                             anchors.verticalCenter: parent.verticalCenter
+                            spacing: 2
+                            Text {
+                                text: model.name || model.address
+                                color: Constants.textPrimary
+                                font.pixelSize: Constants.fontBody
+                            }
+                            Text {
+                                visible: model.name && model.name.length > 0
+                                text: model.address
+                                color: Constants.textDisabled
+                                font.pixelSize: Constants.fontCaption
+                                font.family: "monospace"
+                            }
                         }
                     }
 
                     Row {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 8
+                        spacing: 6
 
-                        JourneyButton {
+                        Button {
                             text: model.connected ? "Disconnect" : "Connect"
+                            height: 32
                             onClicked: {
                                 if (model.connected)
                                     bluetoothHandler.disconnectDevice(model.address)
@@ -365,8 +458,9 @@ Item {
                             }
                         }
 
-                        JourneyButton {
+                        Button {
                             text: "Forget"
+                            height: 32
                             onClicked: {
                                 removeConfirmOverlay.deviceAddress = model.address
                                 removeConfirmOverlay.deviceName = model.name || model.address
@@ -391,7 +485,7 @@ Item {
                 width: parent.width
                 spacing: 12
 
-                JourneyButton {
+                Button {
                     text: bluetoothHandler.isScanning ? "Scanning…" : "Scan for Devices"
                     enabled: !bluetoothHandler.isScanning
                     onClicked: bluetoothHandler.startScan()
@@ -399,42 +493,16 @@ Item {
 
                 Text {
                     visible: bluetoothHandler.isScanning
-                    text: "Searching for devices…"
+                    text: "Searching for nearby devices…"
                     color: Constants.statusWait
                     font.pixelSize: Constants.fontLabel
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
 
-            // ── Pairing mode toggle ────────────────────────────────────────────
-            Row {
-                width: parent.width
-                spacing: 10
-
-                Text {
-                    text: "Pairing Mode"
-                    color: Constants.textSecondary
-                    font.pixelSize: Constants.fontLabel
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                Switch {
-                    id: pairingModeSwitch
-                    checked: bluetoothHandler.isPairingModeEnabled
-                    onCheckedChanged: bluetoothHandler.enablePairingMode(checked)
-                }
-
-                Text {
-                    text: pairingModeSwitch.checked ? "On — device is discoverable" : "Off"
-                    color: pairingModeSwitch.checked ? Constants.statusOk : Constants.textDisabled
-                    font.pixelSize: Constants.fontCaption
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-            }
-
             // ── Available / scanned devices ───────────────────────────────────
             Text {
-                visible: availableList.count > 0 || bluetoothHandler.isScanning
+                visible: availableList.count > 0
                 text: "Available Devices"
                 color: Constants.textSecondary
                 font.pixelSize: Constants.fontLabel
@@ -444,36 +512,58 @@ Item {
             ListView {
                 id: availableList
                 width: parent.width
-                height: 120
+                height: 100
                 clip: true
                 visible: count > 0
                 model: bluetoothHandler.unpairedDeviceList
 
                 delegate: Rectangle {
                     width: availableList.width
-                    height: 44
+                    height: 40
                     color: "transparent"
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        width: parent.width
+                        height: 1
+                        color: Constants.overlaySubtle
+                    }
 
-                    Text {
+                    Row {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        text: model.name || model.address
-                        color: Constants.textPrimary
-                        font.pixelSize: Constants.fontBody
+                        spacing: 8
+
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 2
+                            Text {
+                                text: model.name || "Unknown Device"
+                                color: Constants.textPrimary
+                                font.pixelSize: Constants.fontBody
+                            }
+                            Text {
+                                text: model.address
+                                color: Constants.textDisabled
+                                font.pixelSize: Constants.fontCaption
+                                font.family: "monospace"
+                            }
+                        }
                     }
 
                     Row {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 8
+                        spacing: 6
 
-                        JourneyButton {
+                        Button {
                             text: "Pair"
+                            height: 32
                             onClicked: bluetoothHandler.pair(model.address)
                         }
 
-                        JourneyButton {
+                        Button {
                             text: "Ignore"
+                            height: 32
                             onClicked: bluetoothHandler.ignoreDevice(model.address)
                         }
                     }

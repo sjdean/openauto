@@ -64,31 +64,54 @@ Item {
         // ── Status strip ──────────────────────────────────────────────────────
         Rectangle {
             width: parent.width
-            height: statusRow.implicitHeight + 12
+            height: statusCol.implicitHeight + 12
             color: wifiViewModel.connected ? Constants.statusBgOk : Constants.statusBgBad
             radius: Constants.radiusInput
 
-            Row {
-                id: statusRow
+            Column {
+                id: statusCol
                 anchors.centerIn: parent
-                spacing: 12
+                spacing: 4
 
-                Text {
-                    text: wifiViewModel.connected ? "● Connected" : "○ Not Connected"
-                    color: wifiViewModel.connected ? Constants.statusOk : Constants.statusBad
-                    font.pixelSize: Constants.fontCaption
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 12
+
+                    Text {
+                        text: wifiViewModel.connected ? "● Connected" : "○ Not Connected"
+                        color: wifiViewModel.connected ? Constants.statusOk : Constants.statusBad
+                        font.pixelSize: Constants.fontCaption
+                    }
+                    Text {
+                        visible: wifiViewModel.connected
+                        text: wifiViewModel.currentSsid.length > 0 ? wifiViewModel.currentSsid : ""
+                        color: Constants.textPrimary
+                        font.pixelSize: Constants.fontCaption
+                    }
+                    Text {
+                        visible: wifiViewModel.connected && wifiViewModel.signalStrength > 0
+                        text: wifiViewModel.signalStrength + "%"
+                        color: Constants.textPrimary
+                        font.pixelSize: Constants.fontCaption
+                    }
                 }
-                Text {
-                    visible: wifiViewModel.connected
-                    text: wifiViewModel.currentSsid.length > 0 ? ("  " + wifiViewModel.currentSsid) : ""
-                    color: Constants.textPrimary
-                    font.pixelSize: Constants.fontCaption
-                }
-                Text {
-                    visible: wifiViewModel.connected && wifiViewModel.signalStrength > 0
-                    text: wifiViewModel.signalStrength + "%"
-                    color: Constants.textPrimary
-                    font.pixelSize: Constants.fontCaption
+
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 16
+
+                    Text {
+                        visible: wifiViewModel.interfaceMac.length > 0
+                        text: "MAC: " + wifiViewModel.interfaceMac
+                        color: Constants.textSecondary
+                        font.pixelSize: Constants.fontCaption
+                    }
+                    Text {
+                        visible: wifiViewModel.connected && wifiViewModel.currentIp.length > 0
+                        text: "IP: " + wifiViewModel.currentIp
+                        color: Constants.textSecondary
+                        font.pixelSize: Constants.fontCaption
+                    }
                 }
             }
         }

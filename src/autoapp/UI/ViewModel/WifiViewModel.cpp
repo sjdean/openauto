@@ -99,6 +99,9 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         return m_availableInterfaces;
     }
 
+    QString WifiViewModel::getCurrentIp() const { return m_currentIp; }
+    QString WifiViewModel::getInterfaceMac() const { return m_interfaceMac; }
+
 
     void WifiViewModel::setSelectedInterface(const QString& iface) {
         if (iface != m_selectedInterface) {

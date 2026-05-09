@@ -26,7 +26,7 @@ Item {
 
     // --- Wifi Status Bindings ---
     property bool hotspotEnabled: wifiViewModel.isHotspot
-    property bool hasWifi: wifiViewModel.availableInterfaces.count > 0
+    property bool hasWifi: wifiViewModel.availableInterfaces.length > 0
     property bool wifiEnabled: wifiViewModel.isEnabled
     property int wifiSignalStrength: wifiViewModel.signalStrength
     property bool wifiConnected: wifiViewModel.connected
@@ -107,11 +107,7 @@ Item {
                         iconSize: 12
                         Connections {
                             target: wirelessButton
-                            onClicked: {
-                                if (headerItem.hasWifi) {
-                                    headerItem.viewWifiStatus()
-                                }
-                            }
+                            onClicked: headerItem.viewWifiStatus()
                         }
                     }
                     JourneyButton {
