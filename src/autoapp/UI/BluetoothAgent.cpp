@@ -16,7 +16,10 @@ BluetoothAgent::BluetoothAgent(const QString &dbusPath, QObject *parent) :
     QObject(parent), m_dbusPath(dbusPath)
 {
     QDBusConnection systemBus = QDBusConnection::systemBus();
-    if (!systemBus.registerObject(m_dbusPath, this)) {
+    // ExportAllSlots is required — the default ExportAdaptors exports nothing
+    // without a generated adaptor class, so BlueZ would get "Method not found"
+    // for every pairing callback.
+    if (!systemBus.registerObject(m_dbusPath, this, QDBusConnection::ExportAllSlots)) {
         qWarning(lcBtAgent) << "dbus registration failed path=" << m_dbusPath;
     } else {
         qInfo(lcBtAgent) << "registered path=" << m_dbusPath;
@@ -54,10 +57,14 @@ void BluetoothAgent::DisplayPasskey(const QDBusObjectPath &device, quint32 passk
     emit showConfirmation(QString::number(passkey));
 }
 
-void BluetoothAgent::RequestConfirmation(const QDBusMessage &message, const QDBusObjectPath &device, quint32 passkey) {
+void BluetoothAgent::RequestConfirmation(const QDBusObjectPath &device, quint32 passkey) {
     qInfo(lcBtAgent) << "confirmation requested passkey=" << passkey << " device=" << device.path();
 
-    m_pendingMessage = message;
+    // Defer the D-Bus reply so we can wait for the user to accept or reject.
+    // Without this, Qt sends an empty void reply immediately (auto-accept) and
+    // the user's decision in QML has no effect.
+    setDelayedReply(true);
+    m_pendingMessage = message();
     emit showConfirmation(QString::number(passkey));
 }
 

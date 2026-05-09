@@ -183,7 +183,26 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     void WifiMonitor::requestScan()
     {
 #ifdef Q_OS_LINUX
-        if (m_wifiDevicePath.isEmpty()) return;
+        if (m_wifiDevicePath.isEmpty()) {
+            // Device path not yet resolved (findWifiDevice is async at startup).
+            // Re-resolve synchronously now and chain into the scan.
+            if (!m_currentInterface.isValid()) {
+                qWarning(lcWifiMonitor) << "scan requested but no interface available";
+                return;
+            }
+            qInfo(lcWifiMonitor) << "device path empty — resolving before scan";
+            QDBusInterface nm("org.freedesktop.NetworkManager",
+                              "/org/freedesktop/NetworkManager",
+                              "org.freedesktop.NetworkManager", m_bus);
+            QDBusReply<QDBusObjectPath> devReply = nm.call("GetDeviceByIpIface",
+                                                           m_currentInterface.name());
+            if (!devReply.isValid()) {
+                qWarning(lcWifiMonitor) << "device lookup failed error=" << devReply.error().message();
+                return;
+            }
+            m_wifiDevicePath = devReply.value().path();
+            qInfo(lcWifiMonitor) << "device path resolved path=" << m_wifiDevicePath;
+        }
 
         QDBusInterface wireless("org.freedesktop.NetworkManager",
                                 m_wifiDevicePath,

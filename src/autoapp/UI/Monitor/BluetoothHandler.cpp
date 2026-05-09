@@ -136,6 +136,21 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         discoveryAgent_->setLowEnergyDiscoveryTimeout(5000);
         connect(discoveryAgent_, &QBluetoothDeviceDiscoveryAgent::deviceDiscovered,
                 this, &BluetoothHandler::onDeviceDiscovered);
+        connect(discoveryAgent_, &QBluetoothDeviceDiscoveryAgent::deviceUpdated,
+                this, [this](const QBluetoothDeviceInfo &info, QBluetoothDeviceInfo::Fields) {
+                    // Device names often arrive after initial discovery — update existing entry
+                    const QString address = info.address().toString();
+                    const QString name = info.name();
+                    if (name.isEmpty()) return;
+                    for (auto &device : m_devices) {
+                        if (device.address == address && device.name != name) {
+                            device.name = name;
+                            Q_EMIT unpairedDeviceListChanged();
+                            Q_EMIT pairedDeviceListChanged();
+                            break;
+                        }
+                    }
+                });
         connect(discoveryAgent_, &QBluetoothDeviceDiscoveryAgent::finished,
                 this, &BluetoothHandler::onScanFinished);
 
@@ -220,9 +235,11 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     }
 
     void BluetoothHandler::onDeviceDiscovered(const QBluetoothDeviceInfo &info) {
-        // Filter out Low Energy (if you only want Classic Audio)
-        if (!(info.coreConfigurations() & QBluetoothDeviceInfo::BaseRateCoreConfiguration)) {
-            return;
+        // Accept both Classic and dual-mode devices. Modern phones advertise BLE first
+        // and the Classic flag arrives later via deviceUpdated — filtering here causes
+        // phones to show as "Unknown Device" or not at all.
+        if (info.coreConfigurations() == QBluetoothDeviceInfo::LowEnergyCoreConfiguration) {
+            return; // Skip BLE-only devices (earbuds, beacons, etc.)
         }
 
         QString address = info.address().toString();

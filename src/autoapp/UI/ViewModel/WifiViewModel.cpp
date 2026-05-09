@@ -17,15 +17,17 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     QObject *parent)
         : QObject(parent), m_config(std::move(config)), m_wifiController(controller), m_monitor(monitor)
     {
-        // Load from config
+        // Load from config — assign m_mode directly to bypass the updateMode equality
+        // guard: m_mode is default-initialized to WIRELESS_HOTSPOT (=0), so if config
+        // also returns 0, updateMode() would see no change and leave m_mode = HOTSPOT
+        // permanently, causing the header to always show "AP".
         m_selectedInterface = m_config->getSettingByName<QString>("Wireless", "Interface");
         m_hotspotSsid       = m_config->getSettingByName<QString>("Wireless", "HotspotSSID");
         m_hotspotPassword   = m_config->getSettingByName<QString>("Wireless", "HotspotPassword");
         m_clientSsid        = m_config->getSettingByName<QString>("Wireless", "ClientSSID");
         m_clientPassword    = m_config->getSettingByName<QString>("Wireless", "ClientPassword");
         m_isEnabled         = m_config->getSettingByName<bool>("Wireless", "Enabled");
-        auto modeVal        = m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type");
-        updateMode(modeVal);
+        m_mode              = m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type");
 
         connect(m_monitor, &Monitor::IWiFiMonitor::signalStrengthChanged,this, &WifiViewModel::updateSignalStrength);
         connect(m_monitor, &Monitor::IWiFiMonitor::accessPointsChanged,this, &WifiViewModel::updateAccessPoints);
