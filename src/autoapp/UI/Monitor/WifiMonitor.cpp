@@ -212,10 +212,13 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         QVariantMap options; // NM accepts empty options map
         auto *w = new QDBusPendingCallWatcher(wireless.asyncCall("RequestScan", options), this);
         connect(w, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
-            if (call->isError())
+            if (call->isError()) {
                 qWarning(lcWifiMonitor) << "scan request failed error=" << call->error().message();
-            else
+                // Even if it failed, it might be because a scan is already cached or recently done.
+                QTimer::singleShot(500, this, &WifiMonitor::refreshAccessPoints);
+            } else {
                 QTimer::singleShot(2000, this, &WifiMonitor::refreshAccessPoints);
+            }
             call->deleteLater();
         });
 #endif
@@ -324,7 +327,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         } else {
             emit currentSsidChanged("");
             emit signalStrengthChanged(0);
-            emit modeChanged(WirelessType::WIRELESS_CLIENT);
+            // DO NOT change mode to CLIENT here just because it disconnected.
+            // emit modeChanged(WirelessType::WIRELESS_CLIENT);
         }
     }
 
@@ -349,7 +353,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         QDBusObjectPath activeConnPath = device.property("ActiveConnection").value<QDBusObjectPath>();
         if (activeConnPath.path() == "/" || activeConnPath.path().isEmpty()) {
             emit currentSsidChanged("");
-            emit modeChanged(WirelessType::WIRELESS_CLIENT);
+            // DO NOT reset mode to client here just because there's no active connection.
+            // emit modeChanged(WirelessType::WIRELESS_CLIENT);
             return;
         }
 

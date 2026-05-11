@@ -17,6 +17,10 @@ namespace f1x::openauto::autoapp::UI::Combo {
             // Basic filtering to remove loopback or obviously inactive ones
             if (interface.flags().testFlag(QNetworkInterface::IsLoopBack)) continue;
 
+            // Filter only wireless interfaces
+            // In Linux they typically start with wlan or wl
+            if (!interface.name().startsWith("wl")) continue;
+
             QString display = QString("%1 (%2)").arg(interface.humanReadableName(), interface.hardwareAddress());
             if (interface.hardwareAddress().isEmpty()) {
                 display = interface.humanReadableName();

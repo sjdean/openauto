@@ -5,7 +5,7 @@ import JourneyOS
 Item {
     id: wirelessPopup
     implicitWidth: 460
-    implicitHeight: contentColumn.implicitHeight + 40
+    implicitHeight: 440  // fixed — content scrolls inside Flickable
 
     signal close
 
@@ -44,14 +44,25 @@ Item {
         }
     }
 
-    Column {
-        id: contentColumn
-        spacing: 8
+    Flickable {
+        id: scroller
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: 20
-        anchors.topMargin: 10
+        anchors.bottom: parent.bottom
+        anchors.margins: 0
+        contentWidth: width
+        contentHeight: contentColumn.implicitHeight + 40
+        clip: true
+        flickableDirection: Flickable.VerticalFlick
+        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+    Column {
+        id: contentColumn
+        spacing: 8
+        width: scroller.width - 20
+        x: 20
+        y: 10
 
         // ── Title ─────────────────────────────────────────────────────────────
         Text {
@@ -355,4 +366,5 @@ Item {
 
         Item { width: 1; height: 4 } // bottom padding
     }
+    } // Flickable
 }

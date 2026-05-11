@@ -91,7 +91,7 @@ Window {
         id: wifiPopup
         anchors.centerIn: parent
         width: Math.min(500, parent.width - 40)
-        height: Math.min(wifiPopupContent.implicitHeight + 20, parent.height - 40)
+        height: parent.height - 40
         modal: true
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside

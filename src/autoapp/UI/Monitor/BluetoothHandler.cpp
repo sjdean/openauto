@@ -235,13 +235,6 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     }
 
     void BluetoothHandler::onDeviceDiscovered(const QBluetoothDeviceInfo &info) {
-        // Accept both Classic and dual-mode devices. Modern phones advertise BLE first
-        // and the Classic flag arrives later via deviceUpdated — filtering here causes
-        // phones to show as "Unknown Device" or not at all.
-        if (info.coreConfigurations() == QBluetoothDeviceInfo::LowEnergyCoreConfiguration) {
-            return; // Skip BLE-only devices (earbuds, beacons, etc.)
-        }
-
         QString address = info.address().toString();
         QString name = info.name();
 
