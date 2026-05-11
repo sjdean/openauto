@@ -61,7 +61,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     QString WifiViewModel::getSelectedInterface() const { return m_selectedInterface; }
 
-    common::Enum::WirelessType::Value WifiViewModel::getMode() const { return m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type"); }
+    common::Enum::WirelessType::Value WifiViewModel::getMode() const { return m_mode; }
 
     bool WifiViewModel::getIsHotspot() const { return m_mode == common::Enum::WirelessType::WIRELESS_HOTSPOT; }
 
@@ -116,11 +116,13 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     }
 
     void WifiViewModel::setMode(common::Enum::WirelessType::Value mode) {
-        if (mode != this->m_mode) {
+        if (mode != m_mode) {
+            m_mode = mode;
             m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", mode);
             m_config->save();
             m_wifiController->setMode(mode);
             emit modeChanged();
+            emit statusChanged();
         }
     }
 

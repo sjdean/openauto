@@ -388,7 +388,11 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             QString mode = wireless.value("mode").toString(); // "infrastructure" or "ap"
 
             emit currentSsidChanged(ssid);
-            emit modeChanged(mode == "ap" ? WirelessType::WIRELESS_HOTSPOT : WirelessType::WIRELESS_CLIENT);
+            // DO NOT emit modeChanged here — the active connection's "mode" field
+            // lags behind the user's intent (hotspot doesn't tear down immediately when
+            // switching to client mode), causing a race that reverts m_mode to HOTSPOT.
+            // Mode is authoritative from user config/setMode() only.
+            Q_UNUSED(mode);
 
             // Signal strength from current AccessPoint
             if (!specificObject.path().isEmpty() && specificObject.path() != "/") {
