@@ -259,6 +259,13 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         qInfo(lcBtHandler) << "scan finished count=" << m_devices.size();
         m_isScanning = false;
         Q_EMIT isScanningChanged();
+#ifdef Q_OS_LINUX
+        // Qt's discovery agent often delivers devices with empty names — the name
+        // arrives later (or not at all) via deviceUpdated.  BlueZ always has the
+        // Name/Alias it obtained during inquiry in its managed objects cache.
+        // Fill in any still-empty names now that the scan has settled.
+        refreshDeviceNamesFromBlueZ();
+#endif
     }
 
     void BluetoothHandler::onPairingFinished(const QBluetoothAddress &address, QBluetoothLocalDevice::Pairing pairing) {
@@ -639,6 +646,44 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         if (changed)
             Q_EMIT pairedDeviceListChanged();
+    }
+
+    void BluetoothHandler::refreshDeviceNamesFromBlueZ() {
+        QDBusReply<BluezManagedObjects> reply = m_manager.call("GetManagedObjects");
+        if (!reply.isValid()) {
+            qWarning(lcBtHandler) << "refreshDeviceNamesFromBlueZ failed error=" << reply.error().message();
+            return;
+        }
+
+        const BluezManagedObjects &objects = reply.value();
+        bool changed = false;
+
+        for (auto &device : m_devices) {
+            if (!device.name.isEmpty()) continue; // already has a name
+
+            // Look for this address in BlueZ's object tree
+            for (auto it = objects.constBegin(); it != objects.constEnd(); ++it) {
+                const BluezInterfaceList &interfaces = it.value();
+                if (!interfaces.contains("org.bluez.Device1")) continue;
+
+                const QVariantMap &props = interfaces["org.bluez.Device1"];
+                if (props.value("Address").toString() != device.address) continue;
+
+                // Prefer Name (from inquiry/GATT), fall back to Alias (user-editable label)
+                const QString name = props.value("Name", props.value("Alias")).toString();
+                if (!name.isEmpty()) {
+                    qInfo(lcBtHandler) << "name resolved from BlueZ address=" << device.address << " name=" << name;
+                    device.name = name;
+                    changed = true;
+                }
+                break;
+            }
+        }
+
+        if (changed) {
+            Q_EMIT unpairedDeviceListChanged();
+            Q_EMIT pairedDeviceListChanged();
+        }
     }
 #endif
 

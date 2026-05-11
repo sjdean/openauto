@@ -118,6 +118,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 #ifdef Q_OS_LINUX
         QString getBluezAdapterPath();
         void loadPairedDevicesFromBlueZ();
+        void refreshDeviceNamesFromBlueZ();
 #endif
 
         configuration::IConfiguration::Pointer configuration_;
