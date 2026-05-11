@@ -55,6 +55,9 @@ Item {
         contentHeight: contentColumn.implicitHeight + 40
         clip: true
         flickableDirection: Flickable.VerticalFlick
+        // Only intercept touch events when content actually overflows — otherwise
+        // the Flickable absorbs taps before child Buttons and TextFields see them.
+        interactive: contentHeight > height
         ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
     Column {
