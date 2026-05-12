@@ -5,7 +5,6 @@ import JourneyOS
 Item {
     id: wirelessPopup
     implicitWidth: 460
-    implicitHeight: 440  // fixed — content scrolls inside Flickable
 
     signal close
 
@@ -44,28 +43,22 @@ Item {
         }
     }
 
-    Flickable {
+    ScrollView {
         id: scroller
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 0
-        contentWidth: width
-        contentHeight: contentColumn.implicitHeight + 40
-        clip: true
-        flickableDirection: Flickable.VerticalFlick
-        // Only intercept touch events when content actually overflows — otherwise
-        // the Flickable absorbs taps before child Buttons and TextFields see them.
-        interactive: contentHeight > height
-        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+        contentWidth: availableWidth
+        ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
     Column {
         id: contentColumn
         spacing: 8
-        width: scroller.width - 20
-        x: 20
-        y: 10
+        width: scroller.availableWidth - 40
+        leftPadding: 20
+        topPadding: 10
+        bottomPadding: 10
 
         // ── Title ─────────────────────────────────────────────────────────────
         Text {
@@ -367,7 +360,6 @@ Item {
             font.pixelSize: Constants.fontCaption
         }
 
-        Item { width: 1; height: 4 } // bottom padding
     }
-    } // Flickable
+    } // ScrollView
 }
