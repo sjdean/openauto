@@ -125,7 +125,10 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         void loadPairedDevicesFromBlueZ();
         void refreshDeviceNamesFromBlueZ();
         void subscribeToInterfacesAdded();
+#endif
+
     private slots:
+#ifdef Q_OS_LINUX
         void onBluezInterfacesAdded(const QDBusObjectPath &path, const BluezInterfaceList &interfaces);
 #endif
 
