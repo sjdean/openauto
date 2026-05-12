@@ -132,6 +132,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         void onBluezInterfacesAdded(const QDBusObjectPath &path, const BluezInterfaceList &interfaces);
 #endif
 
+    private:
         configuration::IConfiguration::Pointer configuration_;
         QList<Model::BluetoothAdapter> m_adapters;
         int m_activeAdapterIndex = -1;
