@@ -12,6 +12,11 @@
 #include "f1x/openauto/autoapp/UI/BluetoothAgent.hpp"
 #include <QtDBus/QDBusReply>
 #include <QtDBus/QDBusInterface>
+// BlueZ GetManagedObjects / InterfacesAdded types
+using BluezInterfaceList  = QMap<QString, QVariantMap>;              // a{sa{sv}}
+using BluezManagedObjects = QMap<QDBusObjectPath, BluezInterfaceList>; // a{oa{sa{sv}}}
+Q_DECLARE_METATYPE(BluezInterfaceList)
+Q_DECLARE_METATYPE(BluezManagedObjects)
 #endif
 
 #include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"
@@ -119,6 +124,9 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         QString getBluezAdapterPath();
         void loadPairedDevicesFromBlueZ();
         void refreshDeviceNamesFromBlueZ();
+        void subscribeToInterfacesAdded();
+    private slots:
+        void onBluezInterfacesAdded(const QDBusObjectPath &path, const BluezInterfaceList &interfaces);
 #endif
 
         configuration::IConfiguration::Pointer configuration_;
@@ -142,6 +150,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 #ifdef Q_OS_LINUX
         QDBusInterface m_manager;
         BluetoothAgent *m_agent;
+        QString m_cachedAdapterPath;
 #endif
     };
 }

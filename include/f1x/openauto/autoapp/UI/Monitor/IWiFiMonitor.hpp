@@ -27,6 +27,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         void currentIpChanged(const QString &ip);
         void availableInterfacesChanged(const QVariantList &interfaces);
         void accessPointsChanged(const QVariantList &aps);
+        // "" = idle/success, "Scanning…" = in progress, "Scan failed: <reason>" = error
+        void scanStatusChanged(const QString &status);
     };
 
 } // namespace

@@ -188,6 +188,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             // Re-resolve synchronously now and chain into the scan.
             if (!m_currentInterface.isValid()) {
                 qWarning(lcWifiMonitor) << "scan requested but no interface available";
+                emit scanStatusChanged(tr("Scan failed: no Wi-Fi interface"));
                 return;
             }
             qInfo(lcWifiMonitor) << "device path empty — resolving before scan";
@@ -198,6 +199,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                                                            m_currentInterface.name());
             if (!devReply.isValid()) {
                 qWarning(lcWifiMonitor) << "device lookup failed error=" << devReply.error().message();
+                emit scanStatusChanged(tr("Scan failed: device not found"));
                 return;
             }
             m_wifiDevicePath = devReply.value().path();
@@ -209,11 +211,15 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                                 "org.freedesktop.NetworkManager.Device.Wireless",
                                 m_bus);
 
+        emit scanStatusChanged(tr("Scanning\u2026")); // "Scanning…"
+
         QVariantMap options; // NM accepts empty options map
         auto *w = new QDBusPendingCallWatcher(wireless.asyncCall("RequestScan", options), this);
         connect(w, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
             if (call->isError()) {
+                const QString msg = tr("Scan failed: %1").arg(call->error().message());
                 qWarning(lcWifiMonitor) << "scan request failed error=" << call->error().message();
+                emit scanStatusChanged(msg);
                 // Even if it failed, it might be because a scan is already cached or recently done.
                 QTimer::singleShot(500, this, &WifiMonitor::refreshAccessPoints);
             } else {
@@ -266,6 +272,12 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         });
 
         emit accessPointsChanged(apList);
+
+        // Clear "Scanning…" / error status now that results are in
+        const QString statusMsg = apList.isEmpty()
+            ? tr("No networks found")
+            : tr("%1 network(s) found").arg(apList.size());
+        emit scanStatusChanged(statusMsg);
     }
 #endif
 
@@ -345,69 +357,34 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     void WifiMonitor::refreshLinuxStatus() {
         if (m_wifiDevicePath.isEmpty()) return;
 
-        QDBusInterface device("org.freedesktop.NetworkManager",
-                              m_wifiDevicePath,
-                              "org.freedesktop.NetworkManager.Device",
-                              m_bus);
+        // Use Device.Wireless.ActiveAccessPoint to get SSID + signal strength.
+        // Avoids GetSettings which returns a{sa{sv}} — using QDBusPendingReply<QVariantMap>
+        // for that caused "Unexpected reply signature: got a{sa{sv}}, expected a{sv}" errors.
+        QDBusInterface wireless("org.freedesktop.NetworkManager",
+                                m_wifiDevicePath,
+                                "org.freedesktop.NetworkManager.Device.Wireless",
+                                m_bus);
 
-        QDBusObjectPath activeConnPath = device.property("ActiveConnection").value<QDBusObjectPath>();
-        if (activeConnPath.path() == "/" || activeConnPath.path().isEmpty()) {
+        QDBusObjectPath activeApPath = wireless.property("ActiveAccessPoint").value<QDBusObjectPath>();
+        if (activeApPath.path().isEmpty() || activeApPath.path() == "/") {
+            // No active AP — device is idle or acting as hotspot AP (no client-side AP entry)
             emit currentSsidChanged("");
-            // DO NOT reset mode to client here just because there's no active connection.
-            // emit modeChanged(WirelessType::WIRELESS_CLIENT);
+            emit signalStrengthChanged(0);
             return;
         }
 
-        QDBusInterface activeConn("org.freedesktop.NetworkManager",
-                                  activeConnPath.path(),
-                                  "org.freedesktop.NetworkManager.Connection.Active",
-                                  m_bus);
+        QDBusInterface ap("org.freedesktop.NetworkManager",
+                          activeApPath.path(),
+                          "org.freedesktop.NetworkManager.AccessPoint",
+                          m_bus);
 
-        QDBusObjectPath connSettingsPath = activeConn.property("Connection").value<QDBusObjectPath>();
-        QDBusObjectPath specificObject = activeConn.property("SpecificObject").value<QDBusObjectPath>();
+        QByteArray ssidBytes = ap.property("Ssid").toByteArray();
+        QString ssid = QString::fromUtf8(ssidBytes);
+        quint8 strength = ap.property("Strength").value<quint8>();
 
-        // Get connection settings (SSID, mode)
-        QDBusInterface settings("org.freedesktop.NetworkManager",
-                                connSettingsPath.path(),
-                                "org.freedesktop.NetworkManager.Settings.Connection",
-                                m_bus);
-
-        QDBusPendingReply<QVariantMap> reply = settings.asyncCall("GetSettings");
-        auto *watcher = new QDBusPendingCallWatcher(reply, this);
-        connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, specificObject](QDBusPendingCallWatcher *w) {
-            if (w->isError()) {
-                qWarning(lcWifiMonitor) << "failed to get connection settings error=" << w->error().message();
-                w->deleteLater();
-                return;
-            }
-
-            QVariantMap settings = w->reply().arguments().first().toMap();
-            QVariantMap wireless = settings.value("802-11-wireless").toMap();
-            QByteArray ssidBytes = wireless.value("ssid").toByteArray();
-            QString ssid = QString::fromUtf8(ssidBytes);
-            QString mode = wireless.value("mode").toString(); // "infrastructure" or "ap"
-
-            emit currentSsidChanged(ssid);
-            // DO NOT emit modeChanged here — the active connection's "mode" field
-            // lags behind the user's intent (hotspot doesn't tear down immediately when
-            // switching to client mode), causing a race that reverts m_mode to HOTSPOT.
-            // Mode is authoritative from user config/setMode() only.
-            Q_UNUSED(mode);
-
-            // Signal strength from current AccessPoint
-            if (!specificObject.path().isEmpty() && specificObject.path() != "/") {
-                QDBusInterface ap("org.freedesktop.NetworkManager",
-                                  specificObject.path(),
-                                  "org.freedesktop.NetworkManager.AccessPoint",
-                                  m_bus);
-                quint8 strength = ap.property("Strength").value<quint8>();
-                emit signalStrengthChanged(static_cast<int>(strength));
-            } else {
-                emit signalStrengthChanged(0);
-            }
-
-            w->deleteLater();
-        });
+        qCInfo(lcWifiMonitor) << "active AP ssid=" << ssid << "strength=" << strength;
+        emit currentSsidChanged(ssid);
+        emit signalStrengthChanged(static_cast<int>(strength));
     }
 
 #endif // Q_OS_LINUX

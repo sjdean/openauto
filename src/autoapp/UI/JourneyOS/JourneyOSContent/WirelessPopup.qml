@@ -272,15 +272,21 @@ Item {
                         text: "Scan"
                         onClicked: wifiViewModel.doWirelessNetworkScan()
                     }
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: wifiViewModel.accessPoints.length > 0
-                              ? (wifiViewModel.accessPoints.length + " network(s) found")
-                              : "No scan results"
-                        color: Constants.textSecondary
-                        font.pixelSize: Constants.fontSmall
-                        font.italic: true
-                    }
+                }
+
+                // Scan status feedback
+                Text {
+                    visible: wifiViewModel.scanStatus.length > 0
+                    width: parent.width
+                    text: wifiViewModel.scanStatus
+                    color: wifiViewModel.scanStatus.startsWith("Scan failed")
+                           ? Constants.statusBad
+                           : (wifiViewModel.scanStatus === "Scanning\u2026"
+                              ? Constants.statusWait
+                              : Constants.textSecondary)
+                    font.pixelSize: Constants.fontSmall
+                    font.italic: true
+                    wrapMode: Text.WordWrap
                 }
 
                 // Scan results list

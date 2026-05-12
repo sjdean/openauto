@@ -3,12 +3,6 @@
 
 #ifdef Q_OS_LINUX
 #include <QDBusMetaType>
-// BlueZ GetManagedObjects returns a{oa{sa{sv}}}:
-//   object path → interface name → property name → variant
-using BluezInterfaceList  = QMap<QString, QVariantMap>;   // a{sa{sv}}
-using BluezManagedObjects = QMap<QDBusObjectPath, BluezInterfaceList>; // a{oa{sa{sv}}}
-Q_DECLARE_METATYPE(BluezInterfaceList)
-Q_DECLARE_METATYPE(BluezManagedObjects)
 #endif
 
 #include <aap_protobuf/service/bluetooth/message/BluetoothPairingRequest.pb.h>
@@ -179,6 +173,11 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         // 5. Load already-paired devices from BlueZ so the list is populated on startup
 #ifdef Q_OS_LINUX
         loadPairedDevicesFromBlueZ();
+        // Cache adapter path now so onDeviceDiscovered can use it without a D-Bus round-trip
+        m_cachedAdapterPath = getBluezAdapterPath();
+        // Subscribe to InterfacesAdded — fires when BlueZ creates a new device object,
+        // which includes the Name property if BlueZ has already resolved it.
+        subscribeToInterfacesAdded();
 #endif
 
         // Notify QML that the adapter list is available
@@ -267,11 +266,12 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         m_isScanning = false;
         Q_EMIT isScanningChanged();
 #ifdef Q_OS_LINUX
-        // Qt's discovery agent often delivers devices with empty names — the name
-        // arrives later (or not at all) via deviceUpdated.  BlueZ always has the
-        // Name/Alias it obtained during inquiry in its managed objects cache.
-        // Fill in any still-empty names now that the scan has settled.
+        // Immediate pass: fill names already in BlueZ cache
         refreshDeviceNamesFromBlueZ();
+        // BlueZ Remote Name Request (RNR) can take 2–10 s after the scan.
+        // Schedule follow-up passes so names that resolve later are captured.
+        QTimer::singleShot(3000, this, &BluetoothHandler::refreshDeviceNamesFromBlueZ);
+        QTimer::singleShot(8000, this, &BluetoothHandler::refreshDeviceNamesFromBlueZ);
 #endif
     }
 
@@ -653,6 +653,45 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         if (changed)
             Q_EMIT pairedDeviceListChanged();
+    }
+
+    void BluetoothHandler::subscribeToInterfacesAdded() {
+        // BlueZ fires InterfacesAdded on / whenever a new object (including Device1) is
+        // added to the object tree. This gives us the Name property as soon as BlueZ
+        // creates the object — often before Qt's deviceUpdated signal fires.
+        bool ok = QDBusConnection::systemBus().connect(
+            "org.bluez", "/",
+            "org.freedesktop.DBus.ObjectManager", "InterfacesAdded",
+            this, SLOT(onBluezInterfacesAdded(QDBusObjectPath, BluezInterfaceList)));
+        if (!ok)
+            qWarning(lcBtHandler) << "failed to subscribe to BlueZ InterfacesAdded";
+    }
+
+    void BluetoothHandler::onBluezInterfacesAdded(const QDBusObjectPath &path,
+                                                   const BluezInterfaceList &interfaces) {
+        if (!interfaces.contains("org.bluez.Device1")) return;
+
+        const QVariantMap &props = interfaces["org.bluez.Device1"];
+        const QString address = props.value("Address").toString();
+        if (address.isEmpty()) return;
+
+        const QString name = props.value("Name", props.value("Alias")).toString();
+        if (name.isEmpty()) return;
+
+        bool changed = false;
+        for (auto &device : m_devices) {
+            if (device.address == address && device.name != name) {
+                qInfo(lcBtHandler) << "InterfacesAdded resolved name address=" << address << " name=" << name;
+                device.name = name;
+                changed = true;
+                break;
+            }
+        }
+        if (changed) {
+            Q_EMIT unpairedDeviceListChanged();
+            Q_EMIT pairedDeviceListChanged();
+        }
+        Q_UNUSED(path)
     }
 
     void BluetoothHandler::refreshDeviceNamesFromBlueZ() {

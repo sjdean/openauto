@@ -38,6 +38,12 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         connect(m_monitor, &Monitor::IWiFiMonitor::currentIpChanged, this, &WifiViewModel::updateCurrentIP);
         connect(m_monitor, &Monitor::IWiFiMonitor::interfaceChanged, this, &WifiViewModel::updateInterface);
         connect(m_monitor, &Monitor::IWiFiMonitor::interfaceUpChanged, this, &WifiViewModel::updateInterfaceUp);
+        connect(m_monitor, &Monitor::IWiFiMonitor::scanStatusChanged, this, [this](const QString &status) {
+            if (status != m_scanStatus) {
+                m_scanStatus = status;
+                emit scanStatusChanged();
+            }
+        });
     }
 
     bool WifiViewModel::getIsEnabled() const { return m_isEnabled; }
@@ -103,6 +109,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     QString WifiViewModel::getCurrentIp() const { return m_currentIp; }
     QString WifiViewModel::getInterfaceMac() const { return m_interfaceMac; }
+    QString WifiViewModel::getScanStatus() const { return m_scanStatus; }
 
 
     void WifiViewModel::setSelectedInterface(const QString& iface) {

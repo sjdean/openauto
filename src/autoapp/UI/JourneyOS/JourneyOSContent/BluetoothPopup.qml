@@ -537,7 +537,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 2
                             Text {
-                                text: model.name || "Unknown Device"
+                                text: (model.name && model.name.length > 0) ? model.name : model.address
                                 color: Constants.textPrimary
                                 font.pixelSize: Constants.fontBody
                             }
