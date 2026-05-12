@@ -13,9 +13,10 @@
 #include <QtDBus/QDBusReply>
 #include <QtDBus/QDBusInterface>
 // BlueZ GetManagedObjects / InterfacesAdded types
+// BluezInterfaceList = QMap<QString,QVariantMap> — same underlying type as NMConnectionSettings
+// in WifiController.hpp, so Q_DECLARE_METATYPE must not be repeated here (ODR violation).
 using BluezInterfaceList  = QMap<QString, QVariantMap>;              // a{sa{sv}}
 using BluezManagedObjects = QMap<QDBusObjectPath, BluezInterfaceList>; // a{oa{sa{sv}}}
-Q_DECLARE_METATYPE(BluezInterfaceList)
 Q_DECLARE_METATYPE(BluezManagedObjects)
 #endif
 
