@@ -238,20 +238,27 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         QString address = info.address().toString();
         QString name = info.name();
 
-        // Avoid duplicates
         auto it = std::find_if(m_devices.begin(), m_devices.end(),
                                [&address](const Model::BluetoothDevice &d) { return d.address == address; });
 
         if (it == m_devices.end()) {
+            // New device
 #ifdef Q_OS_LINUX
             Model::BluetoothDevice device(address, name, QDBusObjectPath("/"), false, false);
 #else
             Model::BluetoothDevice device(address, name, QString{}, false, false);
 #endif
             m_devices.append(device);
-
             Q_EMIT unpairedDeviceListChanged();
-            qDebug(lcBtHandler) << "device found name=" << name;
+            qDebug(lcBtHandler) << "device found address=" << address << " name=" << (name.isEmpty() ? "(no name yet)" : name);
+        } else if (!name.isEmpty() && it->name.isEmpty()) {
+            // Same address seen again — Classic BT inquiry response arrived after the
+            // initial BLE advertisement. Qt calls deviceDiscovered a second time with
+            // the full info (including name). Update the existing entry.
+            it->name = name;
+            Q_EMIT unpairedDeviceListChanged();
+            Q_EMIT pairedDeviceListChanged();
+            qDebug(lcBtHandler) << "device name resolved address=" << address << " name=" << name;
         }
     }
 
