@@ -293,7 +293,7 @@ Item {
                 Rectangle {
                     visible: wifiViewModel.accessPoints.length > 0
                     width: parent.width
-                    height: Math.min(apList.contentHeight + 2, 160)
+                    height: Math.min(wifiViewModel.accessPoints.length * 38 + 4, 160)
                     color: Constants.overlaySubtle
                     radius: Constants.radiusInput
                     clip: true

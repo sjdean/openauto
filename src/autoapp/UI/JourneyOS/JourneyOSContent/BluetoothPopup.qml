@@ -421,20 +421,20 @@ Item {
                         Rectangle {
                             width: 8; height: 8; radius: 4
                             anchors.verticalCenter: parent.verticalCenter
-                            color: model.connected ? Constants.statusOk : Constants.textDisabled
+                            color: modelData.connected ? Constants.statusOk : Constants.textDisabled
                         }
 
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 2
                             Text {
-                                text: model.name || model.address
+                                text: (modelData.name && modelData.name.length > 0) ? modelData.name : modelData.address
                                 color: Constants.textPrimary
                                 font.pixelSize: Constants.fontBody
                             }
                             Text {
-                                visible: model.name && model.name.length > 0
-                                text: model.address
+                                visible: modelData.name && modelData.name.length > 0
+                                text: modelData.address
                                 color: Constants.textDisabled
                                 font.pixelSize: Constants.fontCaption
                                 font.family: "monospace"
@@ -448,13 +448,13 @@ Item {
                         spacing: 6
 
                         Button {
-                            text: model.connected ? "Disconnect" : "Connect"
+                            text: modelData.connected ? "Disconnect" : "Connect"
                             height: 32
                             onClicked: {
-                                if (model.connected)
-                                    bluetoothHandler.disconnectDevice(model.address)
+                                if (modelData.connected)
+                                    bluetoothHandler.disconnectDevice(modelData.address)
                                 else
-                                    bluetoothHandler.connectToDevice(model.address)
+                                    bluetoothHandler.connectToDevice(modelData.address)
                             }
                         }
 
@@ -462,8 +462,8 @@ Item {
                             text: "Forget"
                             height: 32
                             onClicked: {
-                                removeConfirmOverlay.deviceAddress = model.address
-                                removeConfirmOverlay.deviceName = model.name || model.address
+                                removeConfirmOverlay.deviceAddress = modelData.address
+                                removeConfirmOverlay.deviceName = (modelData.name && modelData.name.length > 0) ? modelData.name : modelData.address
                                 removeConfirmOverlay.visible = true
                             }
                         }
@@ -537,12 +537,12 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 2
                             Text {
-                                text: (model.name && model.name.length > 0) ? model.name : model.address
+                                text: (modelData.name && modelData.name.length > 0) ? modelData.name : modelData.address
                                 color: Constants.textPrimary
                                 font.pixelSize: Constants.fontBody
                             }
                             Text {
-                                text: model.address
+                                text: modelData.address
                                 color: Constants.textDisabled
                                 font.pixelSize: Constants.fontCaption
                                 font.family: "monospace"
@@ -558,13 +558,13 @@ Item {
                         Button {
                             text: "Pair"
                             height: 32
-                            onClicked: bluetoothHandler.pair(model.address)
+                            onClicked: bluetoothHandler.pair(modelData.address)
                         }
 
                         Button {
                             text: "Ignore"
                             height: 32
-                            onClicked: bluetoothHandler.ignoreDevice(model.address)
+                            onClicked: bluetoothHandler.ignoreDevice(modelData.address)
                         }
                     }
                 }
