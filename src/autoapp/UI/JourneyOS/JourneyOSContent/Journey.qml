@@ -89,9 +89,14 @@ Window {
 
     Popup {
         id: wifiPopup
-        anchors.centerIn: parent
-        width: Math.min(500, parent.width - 40)
-        height: parent.height - 40
+        // When the virtual keyboard is active, shift the popup to the top of
+        // the screen and shrink it so it fits entirely above the keyboard.
+        x: Math.round((root.width - width) / 2)
+        y: inputPanel.active ? 5 : Math.round((root.height - height) / 2)
+        width: Math.min(500, root.width - 40)
+        height: inputPanel.active
+                ? Math.max(root.height - inputPanel.height - 10, 160)
+                : root.height - 40
         modal: true
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -354,11 +359,13 @@ Window {
     // ---------------------------------------------------------
     // VIRTUAL KEYBOARD
     // ---------------------------------------------------------
-    // InputPanel must live in the root Window so it can overlay all content.
-    // It starts off-screen (y: root.height) and slides up when a text field
-    // is focused, then slides back down on dismiss.
+    // Parent to Overlay.overlay so the keyboard renders above all Popup content
+    // regardless of the Overlay singleton's z-order within the Window tree.
+    // Overlay.overlay fills the Window, so root-relative coordinates are equivalent.
+    // Falls back to root if the overlay hasn't been created yet.
     InputPanel {
         id: inputPanel
+        parent: Overlay.overlay || root
         z: 10000   // above softwareDimmer (9999) so it remains readable at low brightness
         x: 0
         width: root.width
