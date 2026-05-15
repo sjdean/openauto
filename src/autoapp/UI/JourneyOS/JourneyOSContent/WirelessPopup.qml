@@ -290,63 +290,75 @@ Item {
                 }
 
                 // Scan results list
+                // Uses Repeater (not ListView) so it integrates cleanly with the
+                // outer ScrollView Column — ListView inside a ScrollView Column
+                // fights over viewport ownership and silently clips to zero in Qt6.
+                // required property var modelData is mandatory in Qt6 for QVariantList
+                // delegates; without it modelData is an unreliable context variable.
                 Rectangle {
                     visible: wifiViewModel.accessPoints.length > 0
                     width: parent.width
-                    height: Math.min(wifiViewModel.accessPoints.length * 38 + 4, 160)
+                    height: apItemColumn.implicitHeight + 4
                     color: Constants.overlaySubtle
                     radius: Constants.radiusInput
-                    clip: true
 
-                    ListView {
-                        id: apList
-                        anchors.fill: parent
-                        model: wifiViewModel.accessPoints
+                    Column {
+                        id: apItemColumn
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: 2
                         spacing: 2
 
-                        delegate: Rectangle {
-                            width: apList.width
-                            height: 36
-                            color: apMouseArea.containsPress ? Constants.overlayPress : "transparent"
-                            radius: Constants.radiusInput - 1
+                        Repeater {
+                            model: wifiViewModel.accessPoints
 
-                            Row {
-                                anchors.fill: parent
-                                anchors.leftMargin: 8
-                                anchors.rightMargin: 8
-                                spacing: 8
+                            delegate: Rectangle {
+                                required property var modelData
 
-                                Text {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: modelData.secured ? "\uD83D\uDD12" : "\uD83D\uDCF6"
-                                    font.pixelSize: Constants.fontBody
-                                }
-                                Text {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: modelData.ssid
-                                    color: Constants.textPrimary
-                                    font.pixelSize: Constants.fontLabel
-                                    elide: Text.ElideRight
-                                    width: parent.width - 80
-                                }
-                                Text {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: modelData.strength + "%"
-                                    color: modelData.strength > 60 ? Constants.statusOk
-                                         : modelData.strength > 30 ? Constants.statusWait
-                                         : Constants.statusBad
-                                    font.pixelSize: Constants.fontCaption
-                                }
-                            }
+                                width: apItemColumn.width
+                                height: 36
+                                color: apMouseArea.containsPress ? Constants.overlayPress : "transparent"
+                                radius: Constants.radiusInput - 1
 
-                            MouseArea {
-                                id: apMouseArea
-                                anchors.fill: parent
-                                onClicked: {
-                                    clientSsidField.text = modelData.ssid
-                                    wifiViewModel.clientSsid = modelData.ssid
-                                    clientPasswordField.text = ""
-                                    clientPasswordField.forceActiveFocus()
+                                Row {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 8
+                                    anchors.rightMargin: 8
+                                    spacing: 8
+
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: modelData.secured ? "\uD83D\uDD12" : "\uD83D\uDCF6"
+                                        font.pixelSize: Constants.fontBody
+                                    }
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: modelData.ssid
+                                        color: Constants.textPrimary
+                                        font.pixelSize: Constants.fontLabel
+                                        elide: Text.ElideRight
+                                        width: parent.width - 80
+                                    }
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: modelData.strength + "%"
+                                        color: modelData.strength > 60 ? Constants.statusOk
+                                             : modelData.strength > 30 ? Constants.statusWait
+                                             : Constants.statusBad
+                                        font.pixelSize: Constants.fontCaption
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: apMouseArea
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        clientSsidField.text = modelData.ssid
+                                        wifiViewModel.clientSsid = modelData.ssid
+                                        clientPasswordField.text = ""
+                                        clientPasswordField.forceActiveFocus()
+                                    }
                                 }
                             }
                         }

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import JourneyOS
+import JourneyOS.Hardware 1.0
 
 Item {
     id: settingsView
@@ -293,12 +294,95 @@ Item {
             }
 
             // --- TAB 5: SYSTEM ---
-            // TODO (4.2): Add "System Information" section below Device Mode:
-            //   - Device name / hostname
-            //   - JourneyOS version + build date  (from updateManager.currentVersion + build timestamp)
-            //   - Kernel / OS version
-            //   - Hardware profile summary (display type, audio HAT, CAN bus, GPS)
             SettingsPage {
+                SectionHeader {
+                    text: "Hardware"
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: 2
+                    columnSpacing: 16
+                    rowSpacing: 8
+
+                    Label {
+                        text: "Display"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        text: {
+                            if (HardwareProfile.primaryDisplay === "dsi") return "DSI (touchscreen)"
+                            if (HardwareProfile.primaryDisplay === "hdmi") return "HDMI"
+                            return "Unknown"
+                        }
+                        font.pixelSize: 13
+                        color: cTextMain
+                    }
+
+                    Label {
+                        text: "Audio HAT"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        text: HardwareProfile.hasIQAudioDAC ? "IQAudio DAC+"
+                            : (HardwareProfile.hasOnboardAudio ? "Onboard" : "None detected")
+                        font.pixelSize: 13
+                        color: cTextMain
+                    }
+
+                    Label {
+                        visible: HardwareProfile.usbAudioDevices.length > 0
+                        text: "USB Audio"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        visible: HardwareProfile.usbAudioDevices.length > 0
+                        text: HardwareProfile.usbAudioDevices.join(", ")
+                        font.pixelSize: 13
+                        color: cTextMain
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+
+                    Label {
+                        text: "CAN Bus"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        text: HardwareProfile.hasCANBus ? "Present" : "Not detected"
+                        font.pixelSize: 13
+                        color: HardwareProfile.hasCANBus ? cTextMain : cTextDim
+                    }
+
+                    Label {
+                        text: "RTC"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        text: HardwareProfile.hasRTC ? "Present" : "Not detected"
+                        font.pixelSize: 13
+                        color: HardwareProfile.hasRTC ? cTextMain : cTextDim
+                    }
+
+                    Label {
+                        text: "GPS"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        text: HardwareProfile.hasGPS
+                              ? ("Present" + (HardwareProfile.gpsDevice !== "" ? " (" + HardwareProfile.gpsDevice + ")" : ""))
+                              : "Not detected"
+                        font.pixelSize: 13
+                        color: HardwareProfile.hasGPS ? cTextMain : cTextDim
+                    }
+                }
+
                 SectionHeader {
                     text: "Device Mode"
                 }

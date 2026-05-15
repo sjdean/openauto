@@ -265,8 +265,23 @@ void RpiHardwareDetector::detectHats(HardwareInfo& info)
     }
 
     if (!info.hatIqaudioDac) {
-        // PCM5122 is addressable at 0x4C or 0x4D depending on ADDR pin strapping
-        info.hatIqaudioDac = probeI2cAddress(1, 0x4C) || probeI2cAddress(1, 0x4D);
+        // PCM5122 is addressable at 0x4C or 0x4D depending on ADDR pin strapping.
+        // When the kernel pcm512x driver is already bound (shown as "UU" in i2cdetect),
+        // ioctl(I2C_SLAVE) returns EBUSY — fall back to the sysfs name file.
+        auto checkI2cName = [](int bus, quint8 addr, const QStringList& names) -> bool {
+            const QString path = QString("/sys/bus/i2c/devices/%1-%2/name")
+                                 .arg(bus).arg(addr, 4, 16, QLatin1Char('0'));
+            QFile f(path);
+            if (!f.open(QIODevice::ReadOnly)) return false;
+            const QString name = QString::fromUtf8(f.readAll()).trimmed().toLower();
+            for (const QString& n : names)
+                if (name.contains(n)) return true;
+            return false;
+        };
+
+        const QStringList pcmNames{"pcm5122", "pcm5121", "pcm512x"};
+        info.hatIqaudioDac = probeI2cAddress(1, 0x4C) || probeI2cAddress(1, 0x4D)
+                           || checkI2cName(1, 0x4C, pcmNames) || checkI2cName(1, 0x4D, pcmNames);
         if (info.hatIqaudioDac) {
             info.iqaudioDac = true;
             qCInfo(hardwareDetect) << "IQAudio DAC+: detected via I2C (0x4C/0x4D)";
