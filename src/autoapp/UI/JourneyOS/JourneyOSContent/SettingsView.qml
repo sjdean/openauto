@@ -9,6 +9,11 @@ Item {
     width: 800
     height: 480
 
+    Component.onCompleted: {
+        pulseAudioDeviceModelOutput.refresh()
+        pulseAudioDeviceModelInput.refresh()
+    }
+
     // -- SETTINGS PAGE THEME -- mapped from Constants for easy future theming
     readonly property color cTextMain: Constants.textOnSettings
     readonly property color cTextDim:  Constants.textDimOnSettings
