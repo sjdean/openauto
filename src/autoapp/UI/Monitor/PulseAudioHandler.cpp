@@ -1,5 +1,6 @@
 #include "f1x/openauto/autoapp/UI/Monitor/PulseAudioHandler.hpp"
 #ifdef Q_OS_LINUX
+#include <cstdlib>
 #include <qloggingcategory.h>
 #include <pulse/introspect.h>
 #include <pulse/operation.h>
@@ -174,8 +175,19 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         }
         if (i) {
             EngineDevice device;
-            device.description = QString::fromUtf8(i->description);
+            // Prefer the ALSA card name over the generic PulseAudio description.
+            // On JourneyOS, udev-detect reports both the IQAudio DAC and the
+            // onboard headphone output as "Built-in Audio Stereo" — the ALSA card
+            // name ("IQaudIODAC", "bcm2835_alsa", etc.) is unambiguous.
+            const char *cardName = pa_proplist_gets(i->proplist, "alsa.card_name");
+            device.description = (cardName && *cardName)
+                                     ? QString::fromUtf8(cardName)
+                                     : QString::fromUtf8(i->description);
             device.value = QString::fromUtf8(i->name);
+            // Store ALSA card number so getSinks() can remove duplicate PA sinks
+            // that udev-detect creates for the same physical card.
+            const char *cardNumStr = pa_proplist_gets(i->proplist, "alsa.card");
+            device.card = cardNumStr ? std::atoi(cardNumStr) : -1;
             device.iconname = device.GuessIconName();
             state->devices.append(device);
         }
@@ -183,13 +195,13 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
     EngineDeviceList PulseAudioHandler::getSinks() {
         if (!m_mainloop) return {};
-        
+
         ListDevicesState state;
         state.loop = m_mainloop;
 
         pa_threaded_mainloop_lock(m_mainloop);
         pa_operation *op = pa_context_get_sink_info_list(m_context, &PulseAudioHandler::GetSinkInfoCallback, &state);
-        
+
         if (op) {
             while (!state.finished) {
                 pa_threaded_mainloop_wait(m_mainloop); // Wait for signal from callback
@@ -198,7 +210,35 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         }
         pa_threaded_mainloop_unlock(m_mainloop);
 
-        return state.devices;
+        // Deduplicate: PulseAudio udev-detect creates two PA sinks for the same
+        // physical ALSA card when the device tree gives it both a platform alias
+        // ("platform-soc_sound") and an ALSA card name ("IQaudIODAC").  Both map
+        // to the same hw:N device and would otherwise appear twice in the UI.
+        // Strategy: group by ALSA card number; within each group keep the sink
+        // whose PA name is NOT the platform-* path (the named path is more stable
+        // and matches what "hw:IQaudIODAC" would select explicitly).
+        QMap<int, int> preferredIdx; // ALSA card# → index in state.devices
+        for (int i = 0; i < state.devices.size(); ++i) {
+            const int cardNum = state.devices[i].card;
+            if (cardNum < 0) continue; // not an ALSA sink — keep unconditionally
+            const bool isPlatform = state.devices[i].value.contains(QLatin1String("platform-"));
+            if (!preferredIdx.contains(cardNum)) {
+                preferredIdx[cardNum] = i;
+            } else {
+                // Prefer the non-platform entry
+                const bool existingIsPlatform = state.devices[preferredIdx[cardNum]].value.contains(QLatin1String("platform-"));
+                if (existingIsPlatform && !isPlatform)
+                    preferredIdx[cardNum] = i;
+            }
+        }
+
+        EngineDeviceList result;
+        for (int i = 0; i < state.devices.size(); ++i) {
+            const int cardNum = state.devices[i].card;
+            if (cardNum < 0 || preferredIdx.value(cardNum, i) == i)
+                result.append(state.devices[i]);
+        }
+        return result;
     }
 
     // Similar implementation for Sources
@@ -229,6 +269,12 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             pa_operation_unref(op);
         }
         pa_threaded_mainloop_unlock(m_mainloop);
+
+        // NOTE: on JourneyOS the only available sources are monitor pseudo-sources
+        // (alsa_output.*.monitor) — there is no physical microphone.  The HDMI
+        // monitor source is used as a loopback input workaround for Android Auto.
+        // Do NOT filter out .monitor sources here.
+
         return state.devices;
     }
     
