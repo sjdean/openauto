@@ -15,7 +15,7 @@ Q_LOGGING_CATEGORY(lcConfig, "journeyos.configuration")
 namespace f1x::openauto::autoapp::configuration {
 
   Configuration::Configuration()
-  : m_settings("journey.conf", QSettings::IniFormat)
+  : m_settings(QSettings::IniFormat, QSettings::UserScope, "JourneyOS", "autoapp")
   {
     m_configurationGroups.clear();
 
@@ -107,9 +107,7 @@ namespace f1x::openauto::autoapp::configuration {
   }
 
   void Configuration::save() const {
-    // Initialise Settings
-    QSettings settings("journey.conf", QSettings::IniFormat);
-
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JourneyOS", "autoapp");
     for (const auto& group : m_configurationGroups) {
       group.save(settings);
     }
