@@ -24,7 +24,7 @@ void WifiController::applyAllSettings()
 {
 #ifdef Q_OS_LINUX
     const QString iface = m_config->getSettingByName<QString>("Wireless", "Interface", "wlan0");
-    const auto mode = m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", common::Enum::WirelessType::WIRELESS_CLIENT);
+    const auto mode = static_cast<common::Enum::WirelessType::Value>(m_config->getSettingByName<int>("Wireless", "Type", static_cast<int>(common::Enum::WirelessType::WIRELESS_CLIENT)));
 
     setInterface(iface);
     setMode(mode);
@@ -93,7 +93,7 @@ void WifiController::setHotspotCredentials(const QString& ssid, const QString& p
     if (m_currentIface.isEmpty()) return;
     m_config->updateSettingByName<QString>("Wireless", "HotspotSSID", ssid);
     m_config->updateSettingByName<QString>("Wireless", "HotspotPassword", password);
-    m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", common::Enum::WirelessType::WIRELESS_HOTSPOT);
+    m_config->updateSettingByName<int>("Wireless", "Type", static_cast<int>(common::Enum::WirelessType::WIRELESS_HOTSPOT));
     m_config->save();
 
     enableHotspotImpl(ssid, password);

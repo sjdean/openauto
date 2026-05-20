@@ -177,16 +177,29 @@ bool HardwareDetector::manageBootOverlays(const HardwareInfo& info)
 
     const QString bootHwTxt     = QStringLiteral("/boot/hardware.txt");
     const QString stateFilePath = QStringLiteral("/data/journeyos/display-probe-state");
+    const QString failCountPath = QStringLiteral("/data/journeyos/display-probe-fail-count");
 
     // ── Display probe state machine ───────────────────────────────────────────
     // DSI overlays are loaded by the bootloader before the kernel starts.
     // DRM sysfs can only confirm DSI is active on the boot *after* the overlay
-    // was written.  The state machine tries TD2, then the original Touch Screen,
-    // then falls back to HDMI.  Once a display is confirmed it re-writes the same
-    // overlay on every boot (idempotent, handles OTA-reset boot volumes).
+    // was written.  The state machine tries TD2 on DSI1, then DSI0, then the
+    // original Touch Screen on DSI1/DSI0, then falls back to HDMI.
+    // Once a display is confirmed it re-writes the same overlay on every boot
+    // (idempotent, handles OTA-reset boot volumes).
     //
-    // To force a re-probe after changing the display:
-    //   rm /data/journeyos/display-probe-state
+    // Retry logic: the ILI9881C panel in Touch Display 2 can fail MIPI init on
+    // soft reboots, reporting the connector as disconnected even when physically
+    // present.  We require kProbeRetries consecutive failures before advancing
+    // to the next overlay — this prevents a single bad boot from permanently
+    // locking the wrong overlay.
+    //
+    // To force a full re-probe after changing the display or connector:
+    //   rm /data/journeyos/display-probe-state /data/journeyos/display-probe-fail-count
+
+    // 2 total attempts per DSI candidate before advancing.
+    // Cold boots (fresh flash) almost always succeed on attempt 1.
+    // The second attempt guards against a single soft-reboot transient.
+    static constexpr int kProbeRetries = 2;
 
     QString state;
     {
@@ -199,6 +212,13 @@ bool HardwareDetector::manageBootOverlays(const HardwareInfo& info)
 
     qCInfo(hardwareDetect) << "Display probe state:" << state;
 
+    int failCount = 0;
+    {
+        QFile cf(failCountPath);
+        if (cf.open(QIODevice::ReadOnly))
+            failCount = QString::fromUtf8(cf.readAll()).trimmed().toInt();
+    }
+
     auto writeState = [&](const QString& newState) {
         QDir().mkpath(QFileInfo(stateFilePath).dir().absolutePath());
         QFile sf(stateFilePath);
@@ -207,24 +227,71 @@ bool HardwareDetector::manageBootOverlays(const HardwareInfo& info)
         qCInfo(hardwareDetect) << "Display probe state ->" << newState;
     };
 
+    auto writeFailCount = [&](int n) {
+        QDir().mkpath(QFileInfo(failCountPath).dir().absolutePath());
+        QFile cf(failCountPath);
+        if (cf.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            cf.write((QString::number(n) + '\n').toUtf8());
+        qCInfo(hardwareDetect) << "Display probe fail count ->" << n;
+    };
+
+    auto resetFailCount = [&]() {
+        QFile::remove(failCountPath);
+        failCount = 0;
+    };
+
+    // Helper: handle the check logic shared by every check-* state.
+    // On detection: lock to doneState.
+    // On failure with retries remaining: stay on current overlay, reboot.
+    // On failure exhausted: advance to nextOverlay / nextState.
+    // Returns the overlay string to use for hardware.txt.
+    // Sets needsReboot as a side-effect.
+    auto handleCheckState = [&](const QString& currentOverlay,
+                                const QString& doneState,
+                                const QString& nextOverlay,
+                                const QString& nextState,
+                                const QString& doneMsg,
+                                const QString& retryMsg,
+                                const QString& advanceMsg) -> QString {
+        if (info.dsiPresent) {
+            writeState(doneState);
+            resetFailCount();
+            qCInfo(hardwareDetect) << doneMsg;
+            return currentOverlay;
+        }
+        if (failCount + 1 < kProbeRetries) {
+            writeFailCount(failCount + 1);
+            needsReboot = true;
+            qCInfo(hardwareDetect) << retryMsg
+                                   << "(" << (failCount + 1) << "of" << kProbeRetries << ")";
+            return currentOverlay; // keep same overlay loaded
+        }
+        // All retries exhausted — advance
+        writeState(nextState);
+        resetFailCount();
+        needsReboot = true;
+        qCInfo(hardwareDetect) << advanceMsg;
+        return nextOverlay;
+    };
+
     // displayOverlay is the dtoverlay= line for the display (empty = HDMI/none).
-    // needsReboot is set when we are advancing through probe states — the new
-    // overlay takes effect on the next boot, so we reboot immediately.
+    // needsReboot is set when a reboot is required (overlay change or retry).
     QString displayOverlay;
     bool    needsReboot = false;
 
-    // Overlay probe order — both display types tried on DSI1 then DSI0:
-    //   1. Touch Display 2 on DSI1 — vc4-kms-dsi-ili9881-7inch (720×1280, rotation=270)
+    // Probe order:
+    //   0. HDMI (no overlay) — detected instantly on first probe boot, 0 reboots
+    //   1. Touch Display 2 on DSI1 — vc4-kms-dsi-ili9881-7inch
     //   2. Touch Display 2 on DSI0 — same overlay + ,dsi0
-    //   3. Original Touch Display on DSI1 — vc4-kms-dsi-7inch
-    //   4. Original Touch Display on DSI0 — same overlay + ,dsi0
-    //   5. HDMI fallback (no overlay)
+    //   3. Original Touch Screen on DSI1 — vc4-kms-dsi-7inch
+    //   4. Original Touch Screen on DSI0 — same overlay + ,dsi0
+    //   5. HDMI fallback (no overlay, if DSI probing exhausted)
     //
-    // Worst-case convergence: 5 reboots (display on DSI0, only tried after DSI1 fails).
-    // Common case: 1-2 reboots (display on DSI1).
+    // Worst-case (DSI display but no HDMI connected): 4 candidates × kProbeRetries = 8 reboots.
+    // Common cases: HDMI → 0 reboots; TD2 on DSI1 (cold boot) → 1–2 reboots.
     //
-    // To force re-probe after changing display or connector:
-    //   rm /data/journeyos/display-probe-state
+    // Note: when re-probing manually, use `poweroff` + cold power-on rather than
+    // `reboot` — the ILI9881C panel requires a full power cycle to reset reliably.
 
     static const QString TD2_DSI1 = QStringLiteral("dtoverlay=vc4-kms-dsi-ili9881-7inch");
     static const QString TD2_DSI0 = QStringLiteral("dtoverlay=vc4-kms-dsi-ili9881-7inch,dsi0");
@@ -232,54 +299,60 @@ bool HardwareDetector::manageBootOverlays(const HardwareInfo& info)
     static const QString TS1_DSI0 = QStringLiteral("dtoverlay=vc4-kms-dsi-7inch,dsi0");
 
     if (state == QStringLiteral("probe-td2")) {
-        displayOverlay = TD2_DSI1;
-        writeState(QStringLiteral("check-td2"));
-        needsReboot = true;
-        qCInfo(hardwareDetect) << "Probing: Touch Display 2 on DSI1";
+        if (info.hdmiPresent) {
+            // HDMI is already active — no overlay needed, no reboot.
+            // Skip DSI probing entirely for HDMI-only setups.
+            writeState(QStringLiteral("done-hdmi"));
+            resetFailCount();
+            qCInfo(hardwareDetect) << "HDMI detected on first probe — skipping DSI, no reboot needed";
+            // displayOverlay stays empty; needsReboot stays false
+        } else {
+            displayOverlay = TD2_DSI1;
+            writeState(QStringLiteral("check-td2"));
+            resetFailCount();
+            needsReboot = true;
+            qCInfo(hardwareDetect) << "No HDMI detected — probing Touch Display 2 on DSI1";
+        }
     }
     else if (state == QStringLiteral("check-td2")) {
-        if (info.dsiPresent) {
-            displayOverlay = TD2_DSI1;
-            writeState(QStringLiteral("done-td2"));
-            qCInfo(hardwareDetect) << "Touch Display 2 on DSI1 confirmed";
-        } else {
-            displayOverlay = TD2_DSI0;
-            writeState(QStringLiteral("check-td2-dsi0"));
-            needsReboot = true;
-            qCInfo(hardwareDetect) << "TD2/DSI1 not found — probing Touch Display 2 on DSI0";
-        }
+        displayOverlay = handleCheckState(
+            TD2_DSI1, QStringLiteral("done-td2"),
+            TD2_DSI0, QStringLiteral("check-td2-dsi0"),
+            QStringLiteral("Touch Display 2 on DSI1 confirmed"),
+            QStringLiteral("TD2/DSI1 not detected — retrying"),
+            QStringLiteral("TD2/DSI1 failed — probing Touch Display 2 on DSI0"));
     }
     else if (state == QStringLiteral("check-td2-dsi0")) {
-        if (info.dsiPresent) {
-            displayOverlay = TD2_DSI0;
-            writeState(QStringLiteral("done-td2-dsi0"));
-            qCInfo(hardwareDetect) << "Touch Display 2 on DSI0 confirmed";
-        } else {
-            displayOverlay = TS1_DSI1;
-            writeState(QStringLiteral("check-ts1"));
-            needsReboot = true;
-            qCInfo(hardwareDetect) << "TD2 not found — probing original Touch Display on DSI1";
-        }
+        displayOverlay = handleCheckState(
+            TD2_DSI0, QStringLiteral("done-td2-dsi0"),
+            TS1_DSI1, QStringLiteral("check-ts1"),
+            QStringLiteral("Touch Display 2 on DSI0 confirmed"),
+            QStringLiteral("TD2/DSI0 not detected — retrying"),
+            QStringLiteral("TD2/DSI0 failed — probing original Touch Screen on DSI1"));
     }
     else if (state == QStringLiteral("check-ts1")) {
-        if (info.dsiPresent) {
-            displayOverlay = TS1_DSI1;
-            writeState(QStringLiteral("done-ts1"));
-            qCInfo(hardwareDetect) << "Original Touch Display on DSI1 confirmed";
-        } else {
-            displayOverlay = TS1_DSI0;
-            writeState(QStringLiteral("check-ts1-dsi0"));
-            needsReboot = true;
-            qCInfo(hardwareDetect) << "TS1/DSI1 not found — probing original Touch Display on DSI0";
-        }
+        displayOverlay = handleCheckState(
+            TS1_DSI1, QStringLiteral("done-ts1"),
+            TS1_DSI0, QStringLiteral("check-ts1-dsi0"),
+            QStringLiteral("Original Touch Screen on DSI1 confirmed"),
+            QStringLiteral("TS1/DSI1 not detected — retrying"),
+            QStringLiteral("TS1/DSI1 failed — probing original Touch Screen on DSI0"));
     }
     else if (state == QStringLiteral("check-ts1-dsi0")) {
         if (info.dsiPresent) {
             displayOverlay = TS1_DSI0;
             writeState(QStringLiteral("done-ts1-dsi0"));
-            qCInfo(hardwareDetect) << "Original Touch Display on DSI0 confirmed";
+            resetFailCount();
+            qCInfo(hardwareDetect) << "Original Touch Screen on DSI0 confirmed";
+        } else if (failCount + 1 < kProbeRetries) {
+            displayOverlay = TS1_DSI0;
+            writeFailCount(failCount + 1);
+            needsReboot = true;
+            qCInfo(hardwareDetect) << "TS1/DSI0 not detected — retrying"
+                                   << "(" << (failCount + 1) << "of" << kProbeRetries << ")";
         } else {
             writeState(QStringLiteral("done-hdmi"));
+            resetFailCount();
             needsReboot = true;
             qCInfo(hardwareDetect) << "No DSI display found on any connector — falling back to HDMI";
         }
@@ -301,8 +374,9 @@ bool HardwareDetector::manageBootOverlays(const HardwareInfo& info)
     }
     else {
         qCWarning(hardwareDetect) << "Unknown display probe state:" << state << "— resetting";
-        displayOverlay = QStringLiteral("dtoverlay=vc4-kms-dsi-ili9881-7inch");
+        displayOverlay = TD2_DSI1;
         writeState(QStringLiteral("check-td2"));
+        resetFailCount();
         needsReboot = true;
     }
 

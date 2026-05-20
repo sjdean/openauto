@@ -27,7 +27,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         m_clientSsid        = m_config->getSettingByName<QString>("Wireless", "ClientSSID");
         m_clientPassword    = m_config->getSettingByName<QString>("Wireless", "ClientPassword");
         m_isEnabled         = m_config->getSettingByName<bool>("Wireless", "Enabled");
-        m_mode              = m_config->getSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type");
+        m_mode              = static_cast<common::Enum::WirelessType::Value>(m_config->getSettingByName<int>("Wireless", "Type"));
 
         connect(m_monitor, &Monitor::IWiFiMonitor::signalStrengthChanged,this, &WifiViewModel::updateSignalStrength);
         connect(m_monitor, &Monitor::IWiFiMonitor::accessPointsChanged,this, &WifiViewModel::updateAccessPoints);
@@ -125,7 +125,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void WifiViewModel::setMode(common::Enum::WirelessType::Value mode) {
         if (mode != m_mode) {
             m_mode = mode;
-            m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", mode);
+            m_config->updateSettingByName<int>("Wireless", "Type", static_cast<int>(mode));
             m_config->save();
             m_wifiController->setMode(mode);
             emit modeChanged();
@@ -202,7 +202,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void WifiViewModel::updateMode(common::Enum::WirelessType::Value m) {
         if (m != m_mode) {
             m_mode = m;
-            m_config->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", m);
+            m_config->updateSettingByName<int>("Wireless", "Type", static_cast<int>(m));
             m_config->save();
             emit modeChanged();
             emit statusChanged();

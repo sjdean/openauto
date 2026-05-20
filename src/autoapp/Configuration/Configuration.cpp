@@ -100,7 +100,7 @@ namespace f1x::openauto::autoapp::configuration {
     wirelessGroup.addSetting<QString>("Interface", "");
     wirelessGroup.addSetting<QString>("InterfaceMAC", "");
 
-    wirelessGroup.addSetting<common::Enum::WirelessType::Value>("Type", f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT);
+    wirelessGroup.addSetting<int>("Type", static_cast<int>(f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT));
     wirelessGroup.load(m_settings);
     m_configurationGroups.append(wirelessGroup);
 

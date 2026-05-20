@@ -132,9 +132,9 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
                                                                 configuration_->getSettingByName<QString>(
                                                                     "Wireless", "Interface")),
                                                             m_wirelessType(
-                                                                configuration_->getSettingByName<
-                                                                    common::Enum::WirelessType::Value>(
-                                                                    "Wireless", "Type")),
+                                                                static_cast<common::Enum::WirelessType::Value>(
+                                                                    configuration_->getSettingByName<int>(
+                                                                        "Wireless", "Type"))),
                                                             m_wirelessEnabled(
                                                                 configuration_->getSettingByName<bool>(
                                                                     "Wireless", "Enabled")),
@@ -731,7 +731,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
 
     void SettingsViewModel::setWirelessType(common::Enum::WirelessType::Value value) {
         if (value != m_wirelessType) {
-            configuration_->updateSettingByName<common::Enum::WirelessType::Value>("Wireless", "Type", value);
+            configuration_->updateSettingByName<int>("Wireless", "Type", static_cast<int>(value));
             configuration_->save();
             m_wirelessType = value;
 
