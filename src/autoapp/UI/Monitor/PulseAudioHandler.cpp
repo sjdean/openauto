@@ -90,12 +90,9 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     void PulseAudioHandler::setSinkVolume(const QString& deviceName, int volume) {
         if (!m_mainloop || !m_context) return;
         int safeVolume = std::clamp(volume, 0, 255);
-        pa_volume_t paVol = (pa_volume_t)((safeVolume * PA_VOLUME_NORM) / 255.0);
+        pa_volume_t paVol = static_cast<pa_volume_t>((safeVolume * PA_VOLUME_NORM) / 255.0);
 
-        pa_cvolume cv;
-        cv.channels = 2; // Default to stereo
-        for(int i=0; i<cv.channels; i++) cv.values[i] = paVol;
-
+        // Resolve name BEFORE taking the lock — getDefaultSink() also acquires it.
         const QString resolvedName = deviceName.isEmpty() ? getDefaultSink() : deviceName;
         if (resolvedName.isEmpty()) {
             qWarning(lcAudioPulse) << "setSinkVolume: no sink name available, skipping";
@@ -103,20 +100,39 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         }
         const QByteArray nameBytes = resolvedName.toUtf8();
 
+        // Query the sink's actual channel count. PA silently rejects a pa_cvolume
+        // whose channel count doesn't match the sink — this is the most common cause
+        // of "slider moves but volume doesn't change" at runtime.
+        struct ChInfo { pa_threaded_mainloop* loop; uint8_t ch{2}; bool done{false}; };
+        ChInfo info{m_mainloop};
+
         pa_threaded_mainloop_lock(m_mainloop);
-        pa_operation* o = pa_context_set_sink_volume_by_name(m_context, nameBytes.constData(), &cv, nullptr, nullptr);
-        if (o) pa_operation_unref(o);
+        pa_operation* qop = pa_context_get_sink_info_by_name(m_context, nameBytes.constData(),
+            [](pa_context*, const pa_sink_info* i, int eol, void* ud) {
+                auto* s = static_cast<ChInfo*>(ud);
+                if (eol > 0 || !i) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
+                s->ch = i->channel_map.channels;
+            }, &info);
+        if (qop) {
+            while (!info.done) pa_threaded_mainloop_wait(m_mainloop);
+            pa_operation_unref(qop);
+        }
+
+        pa_cvolume cv;
+        pa_cvolume_set(&cv, info.ch, paVol);
+
+        qInfo(lcAudioPulse) << "setSinkVolume" << resolvedName << "vol=" << volume
+                            << "pa_vol=" << paVol << "channels=" << info.ch;
+
+        pa_operation* vop = pa_context_set_sink_volume_by_name(m_context, nameBytes.constData(), &cv, nullptr, nullptr);
+        if (vop) pa_operation_unref(vop);
         pa_threaded_mainloop_unlock(m_mainloop);
     }
 
     void PulseAudioHandler::setSourceVolume(const QString& deviceName, int volume) {
         if (!m_mainloop || !m_context) return;
         int safeVolume = std::clamp(volume, 0, 255);
-        pa_volume_t paVol = (pa_volume_t)((safeVolume * PA_VOLUME_NORM) / 255.0);
-
-        pa_cvolume cv;
-        cv.channels = 1; // Mics usually mono
-        for(int i=0; i<cv.channels; i++) cv.values[i] = paVol;
+        pa_volume_t paVol = static_cast<pa_volume_t>((safeVolume * PA_VOLUME_NORM) / 255.0);
 
         const QString resolvedName = deviceName.isEmpty() ? getDefaultSource() : deviceName;
         if (resolvedName.isEmpty()) {
@@ -125,9 +141,29 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         }
         const QByteArray nameBytes = resolvedName.toUtf8();
 
+        struct ChInfo { pa_threaded_mainloop* loop; uint8_t ch{1}; bool done{false}; };
+        ChInfo info{m_mainloop};
+
         pa_threaded_mainloop_lock(m_mainloop);
-        pa_operation* o = pa_context_set_source_volume_by_name(m_context, nameBytes.constData(), &cv, nullptr, nullptr);
-        if (o) pa_operation_unref(o);
+        pa_operation* qop = pa_context_get_source_info_by_name(m_context, nameBytes.constData(),
+            [](pa_context*, const pa_source_info* i, int eol, void* ud) {
+                auto* s = static_cast<ChInfo*>(ud);
+                if (eol > 0 || !i) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
+                s->ch = i->channel_map.channels;
+            }, &info);
+        if (qop) {
+            while (!info.done) pa_threaded_mainloop_wait(m_mainloop);
+            pa_operation_unref(qop);
+        }
+
+        pa_cvolume cv;
+        pa_cvolume_set(&cv, info.ch, paVol);
+
+        qInfo(lcAudioPulse) << "setSourceVolume" << resolvedName << "vol=" << volume
+                            << "pa_vol=" << paVol << "channels=" << info.ch;
+
+        pa_operation* vop = pa_context_set_source_volume_by_name(m_context, nameBytes.constData(), &cv, nullptr, nullptr);
+        if (vop) pa_operation_unref(vop);
         pa_threaded_mainloop_unlock(m_mainloop);
     }
 

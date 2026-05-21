@@ -55,6 +55,7 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
   void VolumeHandler::setVolumeSink(const int volume) {
     const int clamped = std::clamp(volume, m_sinkMin, m_sinkMax);
     const QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
+    qInfo(lcVolume) << "setVolumeSink" << volume << "-> clamped=" << clamped << "device=" << device;
     m_audioHandler->setSinkVolume(device, clamped);
     configuration_->updateSettingByName("Audio", "PlaybackVolume", clamped);
     m_volumeSink = clamped;

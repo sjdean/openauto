@@ -611,6 +611,15 @@ Item {
             color: Constants.settingsFooter
             z: 10
 
+            property bool saved: false
+
+            Timer {
+                id: saveResetTimer
+                interval: 1800
+                repeat: false
+                onTriggered: footerBar.saved = false
+            }
+
             Rectangle {
                 width: parent.width; height: 1; color: Constants.settingsFooterBorder; anchors.top: parent.top
             }
@@ -620,9 +629,9 @@ Item {
                 anchors.margins: 15
                 spacing: 20
 
-                // Cancel — red outline, discards changes
+                // Back — exits settings; all changes already persisted per-keystroke
                 Button {
-                    text: "Cancel"
+                    text: "Back"
                     Layout.preferredWidth: 120
                     Layout.fillHeight: true
                     background: Rectangle {
@@ -647,17 +656,22 @@ Item {
                     Layout.fillWidth: true
                 }
 
-                // Save Changes — green confirm, writes settings
+                // Save — forces a disk sync and shows brief confirmation
                 Button {
-                    text: "Save Changes"
+                    id: saveBtn
+                    text: footerBar.saved ? "Saved ✓" : "Save"
+                    enabled: !footerBar.saved
                     Layout.preferredWidth: 180
                     Layout.fillHeight: true
                     background: Rectangle {
-                        color: parent.down ? Constants.btnConfirmBgPressed : Constants.btnConfirmBg
+                        color: footerBar.saved
+                               ? Constants.btnConfirmBgPressed
+                               : (parent.down ? Constants.btnConfirmBgPressed : Constants.btnConfirmBg)
                         radius: 8
+                        Behavior on color { ColorAnimation { duration: 150 } }
                     }
                     contentItem: Text {
-                        text: parent.text
+                        text: saveBtn.text
                         font.pixelSize: 16
                         font.bold: true
                         color: Constants.btnConfirmFg
@@ -666,7 +680,8 @@ Item {
                     }
                     onClicked: {
                         settingsViewHandler.save()
-                        stackView.pop()
+                        footerBar.saved = true
+                        saveResetTimer.restart()
                     }
                 }
             }

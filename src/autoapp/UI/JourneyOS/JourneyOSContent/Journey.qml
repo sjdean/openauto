@@ -296,6 +296,79 @@ Window {
     }
 
     // ---------------------------------------------------------
+    // FIRST-BOOT SAFETY DISCLAIMER
+    // Modal, cannot be dismissed without accepting. Shown once.
+    // ---------------------------------------------------------
+    Popup {
+        id: firstBootPopup
+        anchors.centerIn: parent
+        width: Math.min(480, root.width - 40)
+        modal: true
+        focus: true
+        closePolicy: Popup.NoAutoClose
+
+        background: Rectangle {
+            color: Constants.popupBackgroundTranslucent
+            radius: Constants.radiusPopup
+            border.color: Constants.popupBorder
+            border.width: 1
+        }
+
+        Column {
+            width: parent.width
+            spacing: 18
+            padding: 24
+
+            Text {
+                text: "Safety Notice"
+                font.pixelSize: Constants.fontHeading
+                font.bold: true
+                color: Constants.textPrimary
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            Text {
+                text: "JourneyOS is provided as-is, without warranty of any kind.\n\n" +
+                      "Always keep your eyes on the road and obey all applicable traffic laws. " +
+                      "Never interact with this device while the vehicle is in motion.\n\n" +
+                      "Use of this software is entirely at your own risk."
+                wrapMode: Text.WordWrap
+                width: parent.width - parent.padding * 2
+                font.pixelSize: Constants.fontBody
+                color: Constants.textSecondary
+                lineHeight: 1.4
+            }
+
+            Button {
+                text: "I Understand"
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 200
+                height: 44
+                background: Rectangle {
+                    color: parent.down ? Constants.btnConfirmBgPressed : Constants.btnConfirmBg
+                    radius: Constants.radiusButton
+                }
+                contentItem: Text {
+                    text: parent.text
+                    font.pixelSize: Constants.fontBody
+                    font.bold: true
+                    color: Constants.btnConfirmFg
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                onClicked: {
+                    settingsViewHandler.acknowledgeFirstBoot()
+                    firstBootPopup.close()
+                }
+            }
+        }
+
+        Component.onCompleted: {
+            if (settingsViewHandler.firstBoot) firstBootPopup.open()
+        }
+    }
+
+    // ---------------------------------------------------------
     // 3. LOGIC & CONNECTIONS
     // ---------------------------------------------------------
 
