@@ -240,6 +240,12 @@ bool HardwareDetector::manageBootOverlays(const HardwareInfo& info)
         failCount = 0;
     };
 
+    // displayOverlay is the dtoverlay= line for the display (empty = HDMI/none).
+    // needsReboot is set when a reboot is required (overlay change or retry).
+    // Declared here so the handleCheckState lambda below can capture them via [&].
+    QString displayOverlay;
+    bool    needsReboot = false;
+
     // Helper: handle the check logic shared by every check-* state.
     // On detection: lock to doneState.
     // On failure with retries remaining: stay on current overlay, reboot.
@@ -273,11 +279,6 @@ bool HardwareDetector::manageBootOverlays(const HardwareInfo& info)
         qCInfo(hardwareDetect) << advanceMsg;
         return nextOverlay;
     };
-
-    // displayOverlay is the dtoverlay= line for the display (empty = HDMI/none).
-    // needsReboot is set when a reboot is required (overlay change or retry).
-    QString displayOverlay;
-    bool    needsReboot = false;
 
     // Probe order:
     //   0. HDMI (no overlay) — detected instantly on first probe boot, 0 reboots
