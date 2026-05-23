@@ -71,12 +71,24 @@ Build is handled by the Yocto layer. All dependencies are provided by the sysroo
 ```bash
 cmake -B build \
   -DCMAKE_BUILD_TYPE=Release \
-  -DQT6_INSTALL_DIR="~/Qt/6.x.x/macos"   # macOS — omit on Linux if Qt is in PATH
+  -DQT6_INSTALL_DIR="$HOME/Qt/6.8.3/macos"   # macOS — omit on Linux if Qt is in PATH
 
 cmake --build build -j$(nproc)
 ```
 
 `aasdk` and `aap_protobuf` must be installed to a location CMake can find, or their install prefixes added to `CMAKE_PREFIX_PATH`.
+
+### Build variables
+
+These are the `-D` flags you may need to pass to `cmake`. Only `QT6_INSTALL_DIR` is typically required on macOS; everything else is optional.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `QT6_INSTALL_DIR` | *(unset)* | Path to the Qt6 installation root (the directory containing `lib/cmake/Qt6`). Required when Qt was installed via the Qt Online Installer rather than a system package manager. Example: `$HOME/Qt/6.8.3/macos` |
+| `CMAKE_BUILD_TYPE` | `Release` | Build configuration: `Release`, `Debug`, `RelWithDebInfo`, or `MinSizeRel`. |
+| `CMAKE_PREFIX_PATH` | *(unset)* | Semicolon-separated list of additional install prefixes for CMake to search. Use this if `aasdk`, `aap_protobuf`, or other dependencies are installed to non-standard locations. |
+
+> **Note:** CMake does not expand `~` in `-D` values. Use `$HOME` (shell-expanded before CMake sees it) or an absolute path.
 
 ---
 

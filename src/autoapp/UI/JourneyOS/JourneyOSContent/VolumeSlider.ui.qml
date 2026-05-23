@@ -11,8 +11,8 @@ import JourneyOS 1.0
 
 Slider {
     id: volumeSlider
-    from: volumePopupHandler.volumeSinkMin
-    to: volumePopupHandler.volumeSinkMax
+    from: 0
+    to: 255
     stepSize: 1
     snapMode: Slider.SnapAlways
     value: volumePopupHandler.volumeSink

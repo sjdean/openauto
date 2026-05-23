@@ -8,9 +8,7 @@ Item {
     width: 75
     height: 380
 
-    property bool isMuted: false
-
-    signal mutePressed(bool isMuted)
+    property bool isMuted: volumePopupHandler.volumeSinkMute
 
 
     Column {
@@ -42,11 +40,7 @@ Item {
             width: parent.width
             Connections {
                 target: muteButton
-                onClicked: {
-                    volumePopup.isMuted = !volumePopup.isMuted
-                    volumePopupHandler.volumeSinkMute = volumePopup.isMuted
-                }
-
+                function onClicked() { volumePopupHandler.toggleSinkMute() }
             }
         }
     }

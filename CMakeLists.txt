@@ -348,6 +348,7 @@ if(OPENAUTO_LINUX)
     )
 endif()
 
+
 # ─── Output properties ────────────────────────────────────────────────────────
 # VERSION/SOVERSION are for shared libraries, not executables.
 # Use OUTPUT_NAME and RUNTIME_OUTPUT_DIRECTORY only.

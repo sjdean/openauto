@@ -7,106 +7,139 @@
 Q_LOGGING_CATEGORY(lcVolume, "journeyos.volume")
 
 namespace f1x::openauto::autoapp::UI::Monitor  {
-  VolumeHandler::VolumeHandler(configuration::IConfiguration::Pointer configuration, std::shared_ptr<IAudioHandler> audioHandler) :
-  configuration_(std::move(configuration)),
-  m_audioHandler(std::move(audioHandler)) {
+
+  VolumeHandler::VolumeHandler(configuration::IConfiguration::Pointer configuration,
+                               std::shared_ptr<IAudioHandler> audioHandler) :
+    configuration_(std::move(configuration)),
+    m_audioHandler(std::move(audioHandler))
+  {
     m_sinkMin   = configuration_->getSettingByName<int>("Audio", "PlaybackMin");
     m_sinkMax   = configuration_->getSettingByName<int>("Audio", "PlaybackMax");
     m_sourceMin = configuration_->getSettingByName<int>("Audio", "CaptureMin");
     m_sourceMax = configuration_->getSettingByName<int>("Audio", "CaptureMax");
 
-    // Clamp stored value to current [min,max] range and apply to hardware.
-    // If no device is configured, resolve from the audio system and persist so the
-    // UI shows a meaningful value on subsequent boots.
     bool settingsChanged = false;
 
-    QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
-    if (device.isEmpty()) {
-        device = m_audioHandler->getDefaultSink();
-        if (!device.isEmpty()) {
-            configuration_->updateSettingByName<QString>("Audio", "PlaybackDevice", device);
-            settingsChanged = true;
-            qInfo(lcVolume) << "PlaybackDevice auto-detected sink=" << device;
-        }
+    // Resolve playback device — validates against live audio system, falls back to
+    // PA default if the stored name is missing or stale.
+    const QString storedSink = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
+    m_resolvedSinkName = m_audioHandler->resolveSinkName(storedSink);
+    if (!m_resolvedSinkName.isEmpty() && m_resolvedSinkName != storedSink) {
+        configuration_->updateSettingByName<QString>("Audio", "PlaybackDevice", m_resolvedSinkName);
+        settingsChanged = true;
     }
-    const int volume = std::clamp(
-        configuration_->getSettingByName<int>("Audio", "PlaybackVolume"), m_sinkMin, m_sinkMax);
-    m_audioHandler->setSinkVolume(device, volume);
-    m_volumeSink = volume;
+    qInfo(lcVolume) << "PlaybackDevice: stored=" << storedSink << "resolved=" << m_resolvedSinkName;
 
-    QString captureDevice = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
-    if (captureDevice.isEmpty()) {
-        captureDevice = m_audioHandler->getDefaultSource();
-        if (!captureDevice.isEmpty()) {
-            configuration_->updateSettingByName<QString>("Audio", "CaptureDevice", captureDevice);
-            settingsChanged = true;
-            qInfo(lcVolume) << "CaptureDevice auto-detected source=" << captureDevice;
-        }
+    const int storedSlider = std::clamp(
+        configuration_->getSettingByName<int>("Audio", "PlaybackVolume"), 0, 255);
+    const int initPaValue = std::clamp((m_sinkMax - m_sinkMin) * storedSlider / 255, 0, 255);
+    m_audioHandler->setSinkVolume(m_resolvedSinkName, initPaValue);
+    m_volumeSink = storedSlider;
+
+    // Resolve capture device.
+    const QString storedSource = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
+    m_resolvedSourceName = m_audioHandler->resolveSourceName(storedSource);
+    if (!m_resolvedSourceName.isEmpty() && m_resolvedSourceName != storedSource) {
+        configuration_->updateSettingByName<QString>("Audio", "CaptureDevice", m_resolvedSourceName);
+        settingsChanged = true;
     }
-    const int captureVolume = std::clamp(
-        configuration_->getSettingByName<int>("Audio", "CaptureVolume"), m_sourceMin, m_sourceMax);
-    m_audioHandler->setSourceVolume(captureDevice, captureVolume);
-    m_volumeSource = captureVolume;
+    qInfo(lcVolume) << "CaptureDevice: stored=" << storedSource << "resolved=" << m_resolvedSourceName;
+
+    const int storedCaptureSlider = std::clamp(
+        configuration_->getSettingByName<int>("Audio", "CaptureVolume"), 0, 255);
+    const int initCaptureValue = std::clamp((m_sourceMax - m_sourceMin) * storedCaptureSlider / 255, 0, 255);
+    m_audioHandler->setSourceVolume(m_resolvedSourceName, initCaptureValue);
+    m_volumeSource = storedCaptureSlider;
 
     if (settingsChanged)
         configuration_->save();
   }
 
-  void VolumeHandler::setVolumeSink(const int volume) {
-    const int clamped = std::clamp(volume, m_sinkMin, m_sinkMax);
-    const QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
-    qInfo(lcVolume) << "setVolumeSink" << volume << "-> clamped=" << clamped << "device=" << device;
-    m_audioHandler->setSinkVolume(device, clamped);
-    configuration_->updateSettingByName("Audio", "PlaybackVolume", clamped);
-    m_volumeSink = clamped;
+  // --- Device resolution (called when user selects a new device in Settings) ---
+
+  void VolumeHandler::updatePlaybackDevice(const QString& name) {
+    m_resolvedSinkName = m_audioHandler->resolveSinkName(name);
+    qInfo(lcVolume) << "updatePlaybackDevice: requested=" << name
+                    << "resolved=" << m_resolvedSinkName;
+  }
+
+  void VolumeHandler::updateCaptureDevice(const QString& name) {
+    m_resolvedSourceName = m_audioHandler->resolveSourceName(name);
+    qInfo(lcVolume) << "updateCaptureDevice: requested=" << name
+                    << "resolved=" << m_resolvedSourceName;
+  }
+
+  // --- Bounds (updated from Settings) ---
+
+  void VolumeHandler::updatePlaybackBounds(int min, int max) {
+    m_sinkMin = min;
+    m_sinkMax = max;
+    qInfo(lcVolume) << "playback bounds updated min=" << min << "max=" << max;
+  }
+
+  void VolumeHandler::updateCaptureBounds(int min, int max) {
+    m_sourceMin = min;
+    m_sourceMax = max;
+    qInfo(lcVolume) << "capture bounds updated min=" << min << "max=" << max;
+  }
+
+  // --- Volume / mute setters (use cached resolved names — no runtime lookup) ---
+
+  void VolumeHandler::setVolumeSink(const int sliderValue) {
+    if (m_resolvedSinkName.isEmpty()) {
+        qWarning(lcVolume) << "setVolumeSink: no resolved sink, skipping";
+        return;
+    }
+    const int slider  = std::clamp(sliderValue, 0, 255);
+    const int paValue = std::clamp((m_sinkMax - m_sinkMin) * slider / 255, 0, 255);
+    qInfo(lcVolume) << "setVolumeSink slider=" << slider
+                    << "range=[" << m_sinkMin << "," << m_sinkMax << "] pa=" << paValue
+                    << "sink=" << m_resolvedSinkName;
+    m_audioHandler->setSinkVolume(m_resolvedSinkName, paValue);
+    configuration_->updateSettingByName("Audio", "PlaybackVolume", slider);
+    m_volumeSink = slider;
     emit volumeSinkChanged();
   }
 
-  void VolumeHandler::setVolumeSource(const int volume) {
-    const int clamped = std::clamp(volume, m_sourceMin, m_sourceMax);
-    const QString device = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
-    m_audioHandler->setSourceVolume(device, clamped);
-    configuration_->updateSettingByName("Audio", "CaptureVolume", clamped);
-    m_volumeSource = clamped;
+  void VolumeHandler::setVolumeSource(const int sliderValue) {
+    if (m_resolvedSourceName.isEmpty()) return;
+    const int slider  = std::clamp(sliderValue, 0, 255);
+    const int paValue = std::clamp((m_sourceMax - m_sourceMin) * slider / 255, 0, 255);
+    m_audioHandler->setSourceVolume(m_resolvedSourceName, paValue);
+    configuration_->updateSettingByName("Audio", "CaptureVolume", slider);
+    m_volumeSource = slider;
     emit volumeSourceChanged();
   }
 
   void VolumeHandler::setVolumeSinkMute(const bool mute) {
-    QString device = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
-    m_audioHandler->setSinkMute(device, mute);
+    if (m_resolvedSinkName.isEmpty()) return;
+    m_audioHandler->setSinkMute(m_resolvedSinkName, mute);
     m_volumeSinkMute = mute;
     emit volumeSinkMuteChanged();
   }
 
   void VolumeHandler::setVolumeSourceMute(const bool mute) {
-    QString device = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
-    m_audioHandler->setSourceMute(device, mute);
+    if (m_resolvedSourceName.isEmpty()) return;
+    m_audioHandler->setSourceMute(m_resolvedSourceName, mute);
     m_volumeSourceMute = mute;
     emit volumeSourceMuteChanged();
   }
 
-  int VolumeHandler::getVolumeSinkMin() const { return m_sinkMin; }
-  int VolumeHandler::getVolumeSinkMax() const { return m_sinkMax; }
-  int VolumeHandler::getVolumeSourceMin() const { return m_sourceMin; }
-  int VolumeHandler::getVolumeSourceMax() const { return m_sourceMax; }
-
-  bool VolumeHandler::getVolumeSourceMute() const {
-    return m_volumeSourceMute;
+  void VolumeHandler::toggleSinkMute() {
+    setVolumeSinkMute(!m_volumeSinkMute);
   }
 
-  bool VolumeHandler::getVolumeSinkMute() const {
-    return m_volumeSinkMute;
-  }
+  // --- Getters ---
 
-  int VolumeHandler::getVolumeSource() const {
-    return m_volumeSource;
-  }
+  int  VolumeHandler::getVolumeSink()       const { return m_volumeSink; }
+  int  VolumeHandler::getVolumeSource()     const { return m_volumeSource; }
+  bool VolumeHandler::getVolumeSinkMute()   const { return m_volumeSinkMute; }
+  bool VolumeHandler::getVolumeSourceMute() const { return m_volumeSourceMute; }
+  int  VolumeHandler::getVolumeSinkMin()    const { return m_sinkMin; }
+  int  VolumeHandler::getVolumeSinkMax()    const { return m_sinkMax; }
+  int  VolumeHandler::getVolumeSourceMin()  const { return m_sourceMin; }
+  int  VolumeHandler::getVolumeSourceMax()  const { return m_sourceMax; }
 
-  int VolumeHandler::getVolumeSink() const {
-    return m_volumeSink;
-  }
+  void VolumeHandler::saveSettings() const { configuration_->save(); }
 
-  void VolumeHandler::saveSettings() const {
-    configuration_->save();
-  }
-}
+} // namespace

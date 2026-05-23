@@ -41,6 +41,12 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         virtual QString getDefaultSink() = 0;
         virtual QString getDefaultSource() = 0;
 
+        // Validate a configured name against the live audio system and return the
+        // name to actually use.  Falls back to the system default when the requested
+        // name is empty or not present.  Default impl is a pass-through (stubs/null).
+        virtual QString resolveSinkName(const QString& requested)   { return requested; }
+        virtual QString resolveSourceName(const QString& requested) { return requested; }
+
         virtual void setSinkMute(const QString& deviceName, bool mute) = 0;
         virtual void setSinkVolume(const QString& deviceName, int volume) = 0;
         virtual void setSourceMute(const QString& deviceName, bool mute) = 0;

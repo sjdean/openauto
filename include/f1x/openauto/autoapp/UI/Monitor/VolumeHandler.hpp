@@ -20,6 +20,15 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     VolumeHandler(configuration::IConfiguration::Pointer configuration, std::shared_ptr<IAudioHandler> audioHandler);
 
     Q_INVOKABLE void saveSettings() const;
+    Q_INVOKABLE void toggleSinkMute();
+
+    void updatePlaybackBounds(int min, int max);
+    void updateCaptureBounds(int min, int max);
+
+    // Called when the user selects a different device in Settings.
+    // Re-resolves the name against the live audio system and caches the result.
+    void updatePlaybackDevice(const QString& name);
+    void updateCaptureDevice(const QString& name);
 
     void setVolumeSinkMute(bool mute);
     void setVolumeSink(int volume);
@@ -52,6 +61,9 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     int m_sinkMax{255};
     int m_sourceMin{0};
     int m_sourceMax{255};
+
+    QString m_resolvedSinkName;
+    QString m_resolvedSourceName;
 
     std::shared_ptr<IAudioHandler> m_audioHandler;
 

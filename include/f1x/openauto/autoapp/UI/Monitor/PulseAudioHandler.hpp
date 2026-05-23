@@ -20,6 +20,9 @@ public:
     QString getDefaultSink() override;
     QString getDefaultSource() override;
 
+    QString resolveSinkName(const QString& requested) override;
+    QString resolveSourceName(const QString& requested) override;
+
     void setSinkMute(const QString& deviceName, bool mute) override;
     void setSinkVolume(const QString& deviceName, int volume) override;
     void setSourceMute(const QString& deviceName, bool mute) override;
