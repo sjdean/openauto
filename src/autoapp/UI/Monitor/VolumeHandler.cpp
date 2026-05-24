@@ -22,9 +22,13 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
 
     // Resolve playback device — validates against live audio system, falls back to
     // PA default if the stored name is missing or stale.
+    // NOTE: only persist back to config when the stored value was empty (no user
+    // preference).  If the user has chosen a specific sink (e.g. IQaudIODAC) and
+    // that sink isn't available yet at startup (PA timing race), we must NOT
+    // overwrite their preference with the fallback default.
     const QString storedSink = configuration_->getSettingByName<QString>("Audio", "PlaybackDevice");
     m_resolvedSinkName = m_audioHandler->resolveSinkName(storedSink);
-    if (!m_resolvedSinkName.isEmpty() && m_resolvedSinkName != storedSink) {
+    if (storedSink.isEmpty() && !m_resolvedSinkName.isEmpty()) {
         configuration_->updateSettingByName<QString>("Audio", "PlaybackDevice", m_resolvedSinkName);
         settingsChanged = true;
     }
@@ -36,10 +40,10 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
     m_audioHandler->setSinkVolume(m_resolvedSinkName, initPaValue);
     m_volumeSink = storedSlider;
 
-    // Resolve capture device.
+    // Resolve capture device — same policy: only persist if no preference was stored.
     const QString storedSource = configuration_->getSettingByName<QString>("Audio", "CaptureDevice");
     m_resolvedSourceName = m_audioHandler->resolveSourceName(storedSource);
-    if (!m_resolvedSourceName.isEmpty() && m_resolvedSourceName != storedSource) {
+    if (storedSource.isEmpty() && !m_resolvedSourceName.isEmpty()) {
         configuration_->updateSettingByName<QString>("Audio", "CaptureDevice", m_resolvedSourceName);
         settingsChanged = true;
     }
