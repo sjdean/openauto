@@ -30,7 +30,7 @@ Item {
             alternateColor: Constants.sliderAlternateColor
             value: volumePopupHandler.volumeSink
             onMoved: volumePopupHandler.volumeSink = value
-
+            onPressedChanged: if (!pressed) volumePopupHandler.saveSettings()
         }
 
         JourneyButton {

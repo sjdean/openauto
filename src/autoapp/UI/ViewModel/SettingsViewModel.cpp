@@ -764,6 +764,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     void SettingsViewModel::acknowledgeFirstBoot() {
         if (m_firstBoot) {
             configuration_->updateSettingByName<bool>("System", "FirstBoot", false);
+            configuration_->save();
             m_firstBoot = false;
             emit firstBootChanged();
         }
