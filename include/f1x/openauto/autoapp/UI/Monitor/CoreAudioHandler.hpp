@@ -14,7 +14,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
   public:
     explicit CoreAudioHandler();
-    ~CoreAudioHandler() override; // Implement the virtual destructor
+    ~CoreAudioHandler() override;
 
     QString getDefaultSink() override;
     QString getDefaultSource() override;
@@ -26,17 +26,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
     EngineDeviceList getSinks() override;
     EngineDeviceList getSources() override;
-    std::vector<std::pair<std::string, std::string>> getDeviceList()  override;
-
-  private:
-    struct ListDevicesState {
-      ListDevicesState() : finished(false) {}
-
-      bool finished;
-      EngineDeviceList devices;
-    };
-
-
+    std::vector<std::pair<std::string, std::string>> getDeviceList() override;
   };
 }
 #endif

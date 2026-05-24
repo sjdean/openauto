@@ -85,116 +85,146 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         }
     }
 
-    // --- VOLUME CONTROL ---
+    // --- NAME RESOLUTION ---
 
-    void PulseAudioHandler::setSinkVolume(const QString& deviceName, int volume) {
-        if (!m_mainloop || !m_context) return;
-        int safeVolume = std::clamp(volume, 0, 255);
-        pa_volume_t paVol = static_cast<pa_volume_t>((safeVolume * PA_VOLUME_NORM) / 255.0);
-
-        // Resolve name BEFORE taking the lock — getDefaultSink() also acquires it.
-        const QString resolvedName = deviceName.isEmpty() ? getDefaultSink() : deviceName;
-        if (resolvedName.isEmpty()) {
-            qWarning(lcAudioPulse) << "setSinkVolume: no sink name available, skipping";
-            return;
+    // Checks whether a named sink exists in PA and returns it, or falls back to
+    // the PA default sink.  Must be called WITHOUT holding the mainloop lock since
+    // getDefaultSink() also acquires it.
+    QString PulseAudioHandler::resolveSinkName(const QString& requested) {
+        if (!m_mainloop || !m_context) return {};
+        const QString candidate = requested.isEmpty() ? getDefaultSink() : requested;
+        if (candidate.isEmpty()) {
+            qWarning(lcAudioPulse) << "resolveSinkName: no sinks available in PA";
+            return {};
         }
-        const QByteArray nameBytes = resolvedName.toUtf8();
+        struct State { pa_threaded_mainloop* loop; bool found{false}; bool done{false}; };
+        State s{m_mainloop};
+        const QByteArray nb = candidate.toUtf8();
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation* op = pa_context_get_sink_info_by_name(m_context, nb.constData(),
+            [](pa_context*, const pa_sink_info* i, int eol, void* ud) {
+                auto* s = static_cast<State*>(ud);
+                if (eol > 0 || !i) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
+                s->found = true;
+            }, &s);
+        if (op) { while (!s.done) pa_threaded_mainloop_wait(m_mainloop); pa_operation_unref(op); }
+        pa_threaded_mainloop_unlock(m_mainloop);
 
-        // Query the sink's actual channel count. PA silently rejects a pa_cvolume
-        // whose channel count doesn't match the sink — this is the most common cause
-        // of "slider moves but volume doesn't change" at runtime.
+        if (s.found) {
+            qInfo(lcAudioPulse) << "resolveSinkName:" << candidate << "verified";
+            return candidate;
+        }
+        // Requested sink not present — try the PA default.
+        if (requested.isEmpty()) return {};  // already tried default above
+        qWarning(lcAudioPulse) << "resolveSinkName: sink" << candidate
+                               << "not found in PA, falling back to default";
+        return getDefaultSink();
+    }
+
+    QString PulseAudioHandler::resolveSourceName(const QString& requested) {
+        if (!m_mainloop || !m_context) return {};
+        const QString candidate = requested.isEmpty() ? getDefaultSource() : requested;
+        if (candidate.isEmpty()) {
+            qWarning(lcAudioPulse) << "resolveSourceName: no sources available in PA";
+            return {};
+        }
+        struct State { pa_threaded_mainloop* loop; bool found{false}; bool done{false}; };
+        State s{m_mainloop};
+        const QByteArray nb = candidate.toUtf8();
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation* op = pa_context_get_source_info_by_name(m_context, nb.constData(),
+            [](pa_context*, const pa_source_info* i, int eol, void* ud) {
+                auto* s = static_cast<State*>(ud);
+                if (eol > 0 || !i) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
+                s->found = true;
+            }, &s);
+        if (op) { while (!s.done) pa_threaded_mainloop_wait(m_mainloop); pa_operation_unref(op); }
+        pa_threaded_mainloop_unlock(m_mainloop);
+
+        if (s.found) {
+            qInfo(lcAudioPulse) << "resolveSourceName:" << candidate << "verified";
+            return candidate;
+        }
+        if (requested.isEmpty()) return {};
+        qWarning(lcAudioPulse) << "resolveSourceName: source" << candidate
+                               << "not found in PA, falling back to default";
+        return getDefaultSource();
+    }
+
+    // --- VOLUME CONTROL ---
+    // Names passed here are pre-resolved by VolumeHandler — always valid.
+
+    void PulseAudioHandler::setSinkVolume(const QString& sinkName, int volume) {
+        if (!m_mainloop || !m_context || sinkName.isEmpty()) return;
+        const int safe = std::clamp(volume, 0, 255);
+        const pa_volume_t paVol = static_cast<pa_volume_t>((safe * PA_VOLUME_NORM) / 255.0);
+        const QByteArray nb = sinkName.toUtf8();
+
+        // Query actual channel count — PA silently rejects a pa_cvolume whose
+        // channel count doesn't match the sink.
         struct ChInfo { pa_threaded_mainloop* loop; uint8_t ch{2}; bool done{false}; };
         ChInfo info{m_mainloop};
-
         pa_threaded_mainloop_lock(m_mainloop);
-        pa_operation* qop = pa_context_get_sink_info_by_name(m_context, nameBytes.constData(),
+        pa_operation* qop = pa_context_get_sink_info_by_name(m_context, nb.constData(),
             [](pa_context*, const pa_sink_info* i, int eol, void* ud) {
                 auto* s = static_cast<ChInfo*>(ud);
                 if (eol > 0 || !i) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
                 s->ch = i->channel_map.channels;
+                s->done = true; pa_threaded_mainloop_signal(s->loop, 0);
             }, &info);
-        if (qop) {
-            while (!info.done) pa_threaded_mainloop_wait(m_mainloop);
-            pa_operation_unref(qop);
-        }
+        if (qop) { while (!info.done) pa_threaded_mainloop_wait(m_mainloop); pa_operation_unref(qop); }
 
         pa_cvolume cv;
         pa_cvolume_set(&cv, info.ch, paVol);
-
-        qInfo(lcAudioPulse) << "setSinkVolume" << resolvedName << "vol=" << volume
-                            << "pa_vol=" << paVol << "channels=" << info.ch;
-
-        pa_operation* vop = pa_context_set_sink_volume_by_name(m_context, nameBytes.constData(), &cv, nullptr, nullptr);
+        qInfo(lcAudioPulse) << "setSinkVolume" << sinkName << "vol=" << safe
+                            << "pa=" << paVol << "ch=" << info.ch;
+        pa_operation* vop = pa_context_set_sink_volume_by_name(m_context, nb.constData(), &cv, nullptr, nullptr);
         if (vop) pa_operation_unref(vop);
         pa_threaded_mainloop_unlock(m_mainloop);
     }
 
-    void PulseAudioHandler::setSourceVolume(const QString& deviceName, int volume) {
-        if (!m_mainloop || !m_context) return;
-        int safeVolume = std::clamp(volume, 0, 255);
-        pa_volume_t paVol = static_cast<pa_volume_t>((safeVolume * PA_VOLUME_NORM) / 255.0);
-
-        const QString resolvedName = deviceName.isEmpty() ? getDefaultSource() : deviceName;
-        if (resolvedName.isEmpty()) {
-            qWarning(lcAudioPulse) << "setSourceVolume: no source name available, skipping";
-            return;
-        }
-        const QByteArray nameBytes = resolvedName.toUtf8();
+    void PulseAudioHandler::setSourceVolume(const QString& sourceName, int volume) {
+        if (!m_mainloop || !m_context || sourceName.isEmpty()) return;
+        const int safe = std::clamp(volume, 0, 255);
+        const pa_volume_t paVol = static_cast<pa_volume_t>((safe * PA_VOLUME_NORM) / 255.0);
+        const QByteArray nb = sourceName.toUtf8();
 
         struct ChInfo { pa_threaded_mainloop* loop; uint8_t ch{1}; bool done{false}; };
         ChInfo info{m_mainloop};
-
         pa_threaded_mainloop_lock(m_mainloop);
-        pa_operation* qop = pa_context_get_source_info_by_name(m_context, nameBytes.constData(),
+        pa_operation* qop = pa_context_get_source_info_by_name(m_context, nb.constData(),
             [](pa_context*, const pa_source_info* i, int eol, void* ud) {
                 auto* s = static_cast<ChInfo*>(ud);
                 if (eol > 0 || !i) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
                 s->ch = i->channel_map.channels;
+                s->done = true; pa_threaded_mainloop_signal(s->loop, 0);
             }, &info);
-        if (qop) {
-            while (!info.done) pa_threaded_mainloop_wait(m_mainloop);
-            pa_operation_unref(qop);
-        }
+        if (qop) { while (!info.done) pa_threaded_mainloop_wait(m_mainloop); pa_operation_unref(qop); }
 
         pa_cvolume cv;
         pa_cvolume_set(&cv, info.ch, paVol);
-
-        qInfo(lcAudioPulse) << "setSourceVolume" << resolvedName << "vol=" << volume
-                            << "pa_vol=" << paVol << "channels=" << info.ch;
-
-        pa_operation* vop = pa_context_set_source_volume_by_name(m_context, nameBytes.constData(), &cv, nullptr, nullptr);
+        qInfo(lcAudioPulse) << "setSourceVolume" << sourceName << "vol=" << safe
+                            << "pa=" << paVol << "ch=" << info.ch;
+        pa_operation* vop = pa_context_set_source_volume_by_name(m_context, nb.constData(), &cv, nullptr, nullptr);
         if (vop) pa_operation_unref(vop);
         pa_threaded_mainloop_unlock(m_mainloop);
     }
 
-    void PulseAudioHandler::setSinkMute(const QString& deviceName, bool mute) {
-        if (!m_mainloop || !m_context) return;
-
-        const QString resolvedName = deviceName.isEmpty() ? getDefaultSink() : deviceName;
-        if (resolvedName.isEmpty()) {
-            qWarning(lcAudioPulse) << "setSinkMute: no sink name available, skipping";
-            return;
-        }
-        const QByteArray nameBytes = resolvedName.toUtf8();
-
+    void PulseAudioHandler::setSinkMute(const QString& sinkName, bool mute) {
+        if (!m_mainloop || !m_context || sinkName.isEmpty()) return;
+        const QByteArray nb = sinkName.toUtf8();
         pa_threaded_mainloop_lock(m_mainloop);
-        pa_operation* o = pa_context_set_sink_mute_by_name(m_context, nameBytes.constData(), mute, nullptr, nullptr);
+        qInfo(lcAudioPulse) << "setSinkMute" << sinkName << mute;
+        pa_operation* o = pa_context_set_sink_mute_by_name(m_context, nb.constData(), mute ? 1 : 0, nullptr, nullptr);
         if (o) pa_operation_unref(o);
         pa_threaded_mainloop_unlock(m_mainloop);
     }
 
-    void PulseAudioHandler::setSourceMute(const QString& deviceName, bool mute) {
-        if (!m_mainloop || !m_context) return;
-
-        const QString resolvedName = deviceName.isEmpty() ? getDefaultSource() : deviceName;
-        if (resolvedName.isEmpty()) {
-            qWarning(lcAudioPulse) << "setSourceMute: no source name available, skipping";
-            return;
-        }
-        const QByteArray nameBytes = resolvedName.toUtf8();
-
+    void PulseAudioHandler::setSourceMute(const QString& sourceName, bool mute) {
+        if (!m_mainloop || !m_context || sourceName.isEmpty()) return;
+        const QByteArray nb = sourceName.toUtf8();
         pa_threaded_mainloop_lock(m_mainloop);
-        pa_operation* o = pa_context_set_source_mute_by_name(m_context, nameBytes.constData(), mute, nullptr, nullptr);
+        pa_operation* o = pa_context_set_source_mute_by_name(m_context, nb.constData(), mute ? 1 : 0, nullptr, nullptr);
         if (o) pa_operation_unref(o);
         pa_threaded_mainloop_unlock(m_mainloop);
     }

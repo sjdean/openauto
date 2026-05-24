@@ -283,6 +283,30 @@ int main(int argc, char *argv[]) {
 
     context->setContextProperty("settingsViewHandler", &settingsViewModel);
     context->setContextProperty("volumePopupHandler", &volumeHandler);
+
+    // Keep VolumeHandler's cached bounds in sync when the user changes limits in Settings.
+    auto syncPlaybackBounds = [&]() {
+        volumeHandler.updatePlaybackBounds(
+            settingsViewModel.property("audioVolumePlaybackMin").toInt(),
+            settingsViewModel.property("audioVolumePlaybackMax").toInt());
+    };
+    auto syncCaptureBounds = [&]() {
+        volumeHandler.updateCaptureBounds(
+            settingsViewModel.property("audioVolumeCaptureMin").toInt(),
+            settingsViewModel.property("audioVolumeCaptureMax").toInt());
+    };
+    QObject::connect(&settingsViewModel, &autoapp::UI::ViewModel::SettingsViewModel::audioVolumePlaybackMinChanged, syncPlaybackBounds);
+    QObject::connect(&settingsViewModel, &autoapp::UI::ViewModel::SettingsViewModel::audioVolumePlaybackMaxChanged, syncPlaybackBounds);
+    QObject::connect(&settingsViewModel, &autoapp::UI::ViewModel::SettingsViewModel::audioVolumeCaptureMinChanged,  syncCaptureBounds);
+    QObject::connect(&settingsViewModel, &autoapp::UI::ViewModel::SettingsViewModel::audioVolumeCaptureMaxChanged,  syncCaptureBounds);
+
+    // Re-resolve the sink/source name whenever the user picks a different device.
+    QObject::connect(&settingsViewModel, &autoapp::UI::ViewModel::SettingsViewModel::audioPlaybackDeviceChanged, [&]() {
+        volumeHandler.updatePlaybackDevice(settingsViewModel.property("audioPlaybackDevice").toString());
+    });
+    QObject::connect(&settingsViewModel, &autoapp::UI::ViewModel::SettingsViewModel::audioCaptureDeviceChanged, [&]() {
+        volumeHandler.updateCaptureDevice(settingsViewModel.property("audioCaptureDevice").toString());
+    });
     context->setContextProperty("brightnessPopupHandler", &brightnessHandler);
     engine.rootContext()->setContextProperty("wifiViewModel", wifiViewModel);
     // Power Controller
