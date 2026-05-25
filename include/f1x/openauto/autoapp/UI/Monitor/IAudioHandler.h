@@ -51,6 +51,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         virtual void setSinkVolume(const QString& deviceName, int volume) = 0;
         virtual void setSourceMute(const QString& deviceName, bool mute) = 0;
         virtual void setSourceVolume(const QString& deviceName, int volume) = 0;
+        virtual void setDefaultSink(const QString& /*sinkName*/) {}
 
         virtual EngineDeviceList getSinks() = 0;
         virtual EngineDeviceList getSources() = 0;

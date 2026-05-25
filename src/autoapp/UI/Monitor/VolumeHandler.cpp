@@ -33,6 +33,9 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
         settingsChanged = true;
     }
     qInfo(lcVolume) << "PlaybackDevice: stored=" << storedSink << "resolved=" << m_resolvedSinkName;
+    // Make the resolved sink the PA default so QMediaDevices::defaultAudioOutput()
+    // returns it — QtAudioOutput falls back to the PA default when no id match found.
+    m_audioHandler->setDefaultSink(m_resolvedSinkName);
 
     const int storedSlider = std::clamp(
         configuration_->getSettingByName<int>("Audio", "PlaybackVolume"), 0, 255);
@@ -65,6 +68,7 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
     m_resolvedSinkName = m_audioHandler->resolveSinkName(name);
     qInfo(lcVolume) << "updatePlaybackDevice: requested=" << name
                     << "resolved=" << m_resolvedSinkName;
+    m_audioHandler->setDefaultSink(m_resolvedSinkName);
   }
 
   void VolumeHandler::updateCaptureDevice(const QString& name) {

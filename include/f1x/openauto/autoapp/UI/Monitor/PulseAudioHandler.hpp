@@ -22,6 +22,7 @@ public:
 
     QString resolveSinkName(const QString& requested) override;
     QString resolveSourceName(const QString& requested) override;
+    void setDefaultSink(const QString& sinkName) override;
 
     void setSinkMute(const QString& deviceName, bool mute) override;
     void setSinkVolume(const QString& deviceName, int volume) override;
@@ -42,6 +43,8 @@ public:
       pa_threaded_mainloop* loop = nullptr;
       EngineDeviceList devices;
     };
+
+    QString bestAvailableSink();
 
     static void context_state_callback(pa_context *c, void *userdata);
     static void GetSinkInfoCallback(pa_context *c, const pa_sink_info *i, int eol, void *userdata);

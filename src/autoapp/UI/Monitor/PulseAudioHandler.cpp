@@ -90,9 +90,36 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     // Checks whether a named sink exists in PA and returns it, or falls back to
     // the PA default sink.  Must be called WITHOUT holding the mainloop lock since
     // getDefaultSink() also acquires it.
+    // Returns the best non-platform, non-null sink available, or the PA default
+    // if no preference can be inferred. Used on first boot when no device is stored.
+    QString PulseAudioHandler::bestAvailableSink() {
+        const EngineDeviceList sinks = getSinks();
+        // Prefer any sink whose PA name is not a platform-* or null path.
+        // These are explicitly-named ALSA card sinks (e.g. IQaudIODAC) which are
+        // more stable and are what the user almost certainly wants.
+        for (const auto& s : sinks) {
+            if (!s.value.contains(QLatin1String("platform-")) &&
+                !s.value.contains(QLatin1String("null"))) {
+                qInfo(lcAudioPulse) << "bestAvailableSink: preferred" << s.value;
+                return s.value;
+            }
+        }
+        return getDefaultSink();
+    }
+
+    void PulseAudioHandler::setDefaultSink(const QString& sinkName) {
+        if (!m_mainloop || !m_context || sinkName.isEmpty()) return;
+        const QByteArray nb = sinkName.toUtf8();
+        pa_threaded_mainloop_lock(m_mainloop);
+        qInfo(lcAudioPulse) << "setDefaultSink" << sinkName;
+        pa_operation* op = pa_context_set_default_sink(m_context, nb.constData(), nullptr, nullptr);
+        if (op) pa_operation_unref(op);
+        pa_threaded_mainloop_unlock(m_mainloop);
+    }
+
     QString PulseAudioHandler::resolveSinkName(const QString& requested) {
         if (!m_mainloop || !m_context) return {};
-        const QString candidate = requested.isEmpty() ? getDefaultSink() : requested;
+        const QString candidate = requested.isEmpty() ? bestAvailableSink() : requested;
         if (candidate.isEmpty()) {
             qWarning(lcAudioPulse) << "resolveSinkName: no sinks available in PA";
             return {};
