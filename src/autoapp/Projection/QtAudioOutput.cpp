@@ -61,7 +61,7 @@ namespace f1x::openauto::autoapp::projection {
     if(!configDeviceName.isEmpty()) {
         const auto devices = QMediaDevices::audioOutputs();
         for(const auto& d : devices) {
-            if(d.description() == configDeviceName) {
+            if(d.id() == configDeviceName.toUtf8()) {
                 device = d;
                 break;
             }
@@ -101,7 +101,7 @@ namespace f1x::openauto::autoapp::projection {
     if (!playbackStarted_) {
       qInfo(lcQtAudioOut) << "playback started";
       audioOutput_->start(&audioInternalBuffer_);
-      float vol = configuration_->getSettingByName<int>("Audio", "PlaybackVolume") / 100.0f;
+      float vol = configuration_->getSettingByName<int>("Audio", "PlaybackVolume") / 255.0f;
       audioOutput_->setVolume(std::clamp(vol, 0.0f, 1.0f));
       playbackStarted_ = true;
     } else {
