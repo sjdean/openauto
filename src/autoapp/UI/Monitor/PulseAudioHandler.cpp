@@ -87,24 +87,14 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
     // --- NAME RESOLUTION ---
 
-    // Checks whether a named sink exists in PA and returns it, or falls back to
-    // the PA default sink.  Must be called WITHOUT holding the mainloop lock since
-    // getDefaultSink() also acquires it.
-    // Returns the best non-platform, non-null sink available, or the PA default
-    // if no preference can be inferred. Used on first boot when no device is stored.
+    // Returns the PA default sink name.  Used on first boot when no device is
+    // stored in config.  PA sets the default via set-default-sink in
+    // journeyos-iqaudio.pa, so this reliably returns the IQaudIO DAC sink.
+    // Must be called WITHOUT holding the mainloop lock (getDefaultSink acquires it).
     QString PulseAudioHandler::bestAvailableSink() {
-        const EngineDeviceList sinks = getSinks();
-        // Prefer any sink whose PA name is not a platform-* or null path.
-        // These are explicitly-named ALSA card sinks (e.g. IQaudIODAC) which are
-        // more stable and are what the user almost certainly wants.
-        for (const auto& s : sinks) {
-            if (!s.value.contains(QLatin1String("platform-")) &&
-                !s.value.contains(QLatin1String("null"))) {
-                qInfo(lcAudioPulse) << "bestAvailableSink: preferred" << s.value;
-                return s.value;
-            }
-        }
-        return getDefaultSink();
+        const QString def = getDefaultSink();
+        qInfo(lcAudioPulse) << "bestAvailableSink:" << def;
+        return def;
     }
 
     void PulseAudioHandler::setDefaultSink(const QString& sinkName) {
