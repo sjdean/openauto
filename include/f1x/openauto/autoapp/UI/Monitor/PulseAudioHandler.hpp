@@ -55,6 +55,11 @@ public:
     pa_mainloop_api *m_api = nullptr;
     pa_context *m_context = nullptr;
 
+    // ALSA card device string (e.g. "hw:2") populated by setDefaultSink.
+    // Used to drive hardware volume/mute via snd_mixer_* instead of PA soft-volume,
+    // which is lossy (digital multiply).  Empty on non-ALSA sinks (auto_null etc).
+    QString m_alsaCardDevice;
+
     std::vector<std::function<void()>> m_sinksChangedCallbacks;
     std::vector<std::function<void()>> m_sourcesChangedCallbacks;
   };

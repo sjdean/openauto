@@ -39,7 +39,7 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
 
     const int storedSlider = std::clamp(
         configuration_->getSettingByName<int>("Audio", "PlaybackVolume"), 0, 255);
-    const int initPaValue = std::clamp((m_sinkMax - m_sinkMin) * storedSlider / 255, 0, 255);
+    const int initPaValue = std::clamp(m_sinkMin + (m_sinkMax - m_sinkMin) * storedSlider / 255, 0, 255);
     m_audioHandler->setSinkVolume(m_resolvedSinkName, initPaValue);
     m_volumeSink = storedSlider;
 
@@ -54,7 +54,7 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
 
     const int storedCaptureSlider = std::clamp(
         configuration_->getSettingByName<int>("Audio", "CaptureVolume"), 0, 255);
-    const int initCaptureValue = std::clamp((m_sourceMax - m_sourceMin) * storedCaptureSlider / 255, 0, 255);
+    const int initCaptureValue = std::clamp(m_sourceMin + (m_sourceMax - m_sourceMin) * storedCaptureSlider / 255, 0, 255);
     m_audioHandler->setSourceVolume(m_resolvedSourceName, initCaptureValue);
     m_volumeSource = storedCaptureSlider;
 
@@ -99,7 +99,7 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
         return;
     }
     const int slider  = std::clamp(sliderValue, 0, 255);
-    const int paValue = std::clamp((m_sinkMax - m_sinkMin) * slider / 255, 0, 255);
+    const int paValue = std::clamp(m_sinkMin + (m_sinkMax - m_sinkMin) * slider / 255, 0, 255);
     qInfo(lcVolume) << "setVolumeSink slider=" << slider
                     << "range=[" << m_sinkMin << "," << m_sinkMax << "] pa=" << paValue
                     << "sink=" << m_resolvedSinkName;
@@ -112,7 +112,7 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
   void VolumeHandler::setVolumeSource(const int sliderValue) {
     if (m_resolvedSourceName.isEmpty()) return;
     const int slider  = std::clamp(sliderValue, 0, 255);
-    const int paValue = std::clamp((m_sourceMax - m_sourceMin) * slider / 255, 0, 255);
+    const int paValue = std::clamp(m_sourceMin + (m_sourceMax - m_sourceMin) * slider / 255, 0, 255);
     m_audioHandler->setSourceVolume(m_resolvedSourceName, paValue);
     configuration_->updateSettingByName("Audio", "CaptureVolume", slider);
     m_volumeSource = slider;

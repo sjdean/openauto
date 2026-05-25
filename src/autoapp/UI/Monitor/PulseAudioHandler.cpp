@@ -2,9 +2,11 @@
 #ifdef Q_OS_LINUX
 #include <cstdlib>
 #include <qloggingcategory.h>
+#include <QScopeGuard>
 #include <pulse/introspect.h>
 #include <pulse/operation.h>
 #include <pulse/thread-mainloop.h>
+#include <alsa/asoundlib.h>
 
 #include "f1x/openauto/autoapp/UI/Monitor/IAudioHandler.h"
 
@@ -100,10 +102,47 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     void PulseAudioHandler::setDefaultSink(const QString& sinkName) {
         if (!m_mainloop || !m_context || sinkName.isEmpty()) return;
         const QByteArray nb = sinkName.toUtf8();
+
+        // 1. Tell PA which sink is the default
         pa_threaded_mainloop_lock(m_mainloop);
         qInfo(lcAudioPulse) << "setDefaultSink" << sinkName;
         pa_operation* op = pa_context_set_default_sink(m_context, nb.constData(), nullptr, nullptr);
         if (op) pa_operation_unref(op);
+        pa_threaded_mainloop_unlock(m_mainloop);
+
+        // 2. Query sink info: grab ALSA device.string and channel count
+        struct SinkInfo { pa_threaded_mainloop* loop; QString device; uint8_t ch{2}; bool done{false}; };
+        SinkInfo si{m_mainloop};
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation* qop = pa_context_get_sink_info_by_name(m_context, nb.constData(),
+            [](pa_context*, const pa_sink_info* i, int eol, void* ud) {
+                auto* s = static_cast<SinkInfo*>(ud);
+                if (eol > 0) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
+                if (!i) return;
+                const char* dev = pa_proplist_gets(i->proplist, "device.string");
+                if (dev && *dev) s->device = QString::fromUtf8(dev);
+                s->ch = i->channel_map.channels;
+            }, &si);
+        if (qop) { while (!si.done) pa_threaded_mainloop_wait(m_mainloop); pa_operation_unref(qop); }
+        pa_threaded_mainloop_unlock(m_mainloop);
+
+        if (!si.device.isEmpty()) {
+            m_alsaCardDevice = si.device;
+            qInfo(lcAudioPulse) << "setDefaultSink: ALSA card device=" << m_alsaCardDevice;
+        } else {
+            qWarning(lcAudioPulse) << "setDefaultSink: no ALSA device.string for" << sinkName
+                                   << "— volume will use PA soft-volume fallback";
+        }
+
+        // 3. Lock PA sink at 100% — volume is now driven by ALSA hardware mixer.
+        //    Soft-volume multiply at anything < 100% silently discards low-order bits
+        //    (reduces effective bit depth), so we keep the PA path bit-perfect.
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_cvolume cv;
+        pa_cvolume_set(&cv, si.ch, PA_VOLUME_NORM);
+        pa_operation* vop = pa_context_set_sink_volume_by_name(
+            m_context, nb.constData(), &cv, nullptr, nullptr);
+        if (vop) pa_operation_unref(vop);
         pa_threaded_mainloop_unlock(m_mainloop);
     }
 
@@ -172,29 +211,52 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     // Names passed here are pre-resolved by VolumeHandler — always valid.
 
     void PulseAudioHandler::setSinkVolume(const QString& sinkName, int volume) {
-        if (!m_mainloop || !m_context || sinkName.isEmpty()) return;
         const int safe = std::clamp(volume, 0, 255);
+
+        // Prefer ALSA hardware volume — no soft-volume bit-depth penalty, and
+        // survives a future PipeWire migration unchanged (snd_mixer_* talks to
+        // the kernel ALSA control interface, bypassing any audio server).
+        if (!m_alsaCardDevice.isEmpty()) {
+            const QByteArray card = m_alsaCardDevice.toUtf8();
+            snd_mixer_t* handle = nullptr;
+            if (snd_mixer_open(&handle, 0) == 0) {
+                auto cleanup = qScopeGuard([handle]{ snd_mixer_close(handle); });
+                if (snd_mixer_attach(handle, card.constData()) == 0 &&
+                    snd_mixer_selem_register(handle, nullptr, nullptr) == 0 &&
+                    snd_mixer_load(handle) == 0) {
+                    for (auto* e = snd_mixer_first_elem(handle); e; e = snd_mixer_elem_next(e)) {
+                        if (!snd_mixer_selem_has_playback_volume(e)) continue;
+                        long lo = 0, hi = 0;
+                        snd_mixer_selem_get_playback_volume_range(e, &lo, &hi);
+                        const long alsaVol = lo + static_cast<long>((hi - lo) * safe / 255.0);
+                        snd_mixer_selem_set_playback_volume_all(e, alsaVol);
+                        qInfo(lcAudioPulse) << "setSinkVolume ALSA" << m_alsaCardDevice
+                                           << "vol=" << safe << "alsa=" << alsaVol << "/" << hi;
+                        return;
+                    }
+                }
+            }
+            qWarning(lcAudioPulse) << "setSinkVolume: ALSA mixer failed for" << m_alsaCardDevice
+                                   << "— falling back to PA soft-volume";
+        }
+
+        // PA soft-volume fallback (non-ALSA sinks, or ALSA card not yet cached)
+        if (!m_mainloop || !m_context || sinkName.isEmpty()) return;
         const pa_volume_t paVol = static_cast<pa_volume_t>((safe * PA_VOLUME_NORM) / 255.0);
         const QByteArray nb = sinkName.toUtf8();
-
-        // Query actual channel count — PA silently rejects a pa_cvolume whose
-        // channel count doesn't match the sink.
         struct ChInfo { pa_threaded_mainloop* loop; uint8_t ch{2}; bool done{false}; };
         ChInfo info{m_mainloop};
         pa_threaded_mainloop_lock(m_mainloop);
         pa_operation* qop = pa_context_get_sink_info_by_name(m_context, nb.constData(),
             [](pa_context*, const pa_sink_info* i, int eol, void* ud) {
                 auto* s = static_cast<ChInfo*>(ud);
-                if (eol > 0 || !i) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
-                s->ch = i->channel_map.channels;
-                s->done = true; pa_threaded_mainloop_signal(s->loop, 0);
+                if (eol > 0) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
+                if (i) { s->ch = i->channel_map.channels; }
             }, &info);
         if (qop) { while (!info.done) pa_threaded_mainloop_wait(m_mainloop); pa_operation_unref(qop); }
-
         pa_cvolume cv;
         pa_cvolume_set(&cv, info.ch, paVol);
-        qInfo(lcAudioPulse) << "setSinkVolume" << sinkName << "vol=" << safe
-                            << "pa=" << paVol << "ch=" << info.ch;
+        qInfo(lcAudioPulse) << "setSinkVolume PA" << sinkName << "vol=" << safe << "pa=" << paVol;
         pa_operation* vop = pa_context_set_sink_volume_by_name(m_context, nb.constData(), &cv, nullptr, nullptr);
         if (vop) pa_operation_unref(vop);
         pa_threaded_mainloop_unlock(m_mainloop);
@@ -228,10 +290,33 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     }
 
     void PulseAudioHandler::setSinkMute(const QString& sinkName, bool mute) {
+        // Prefer ALSA hardware mute switch — instant, no soft-volume interaction,
+        // works identically under PulseAudio and PipeWire.
+        if (!m_alsaCardDevice.isEmpty()) {
+            const QByteArray card = m_alsaCardDevice.toUtf8();
+            snd_mixer_t* handle = nullptr;
+            if (snd_mixer_open(&handle, 0) == 0) {
+                auto cleanup = qScopeGuard([handle]{ snd_mixer_close(handle); });
+                if (snd_mixer_attach(handle, card.constData()) == 0 &&
+                    snd_mixer_selem_register(handle, nullptr, nullptr) == 0 &&
+                    snd_mixer_load(handle) == 0) {
+                    for (auto* e = snd_mixer_first_elem(handle); e; e = snd_mixer_elem_next(e)) {
+                        if (!snd_mixer_selem_has_playback_switch(e)) continue;
+                        snd_mixer_selem_set_playback_switch_all(e, mute ? 0 : 1);
+                        qInfo(lcAudioPulse) << "setSinkMute ALSA" << m_alsaCardDevice << mute;
+                        return;
+                    }
+                }
+            }
+            qWarning(lcAudioPulse) << "setSinkMute: ALSA mixer failed for" << m_alsaCardDevice
+                                   << "— falling back to PA mute";
+        }
+
+        // PA mute fallback
         if (!m_mainloop || !m_context || sinkName.isEmpty()) return;
         const QByteArray nb = sinkName.toUtf8();
         pa_threaded_mainloop_lock(m_mainloop);
-        qInfo(lcAudioPulse) << "setSinkMute" << sinkName << mute;
+        qInfo(lcAudioPulse) << "setSinkMute PA" << sinkName << mute;
         pa_operation* o = pa_context_set_sink_mute_by_name(m_context, nb.constData(), mute ? 1 : 0, nullptr, nullptr);
         if (o) pa_operation_unref(o);
         pa_threaded_mainloop_unlock(m_mainloop);

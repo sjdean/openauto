@@ -343,6 +343,7 @@ if(OPENAUTO_LINUX)
     )
     target_link_libraries(autoapp PRIVATE
             pulse
+            asound
             ${BLKID_LIBRARIES}
             ${GPS_LIBRARIES}
     )
