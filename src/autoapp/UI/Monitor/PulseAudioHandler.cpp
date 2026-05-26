@@ -224,14 +224,27 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                 if (snd_mixer_attach(handle, card.constData()) == 0 &&
                     snd_mixer_selem_register(handle, nullptr, nullptr) == 0 &&
                     snd_mixer_load(handle) == 0) {
+                    // Pick the element with the largest playback-volume range.
+                    // On IQaudIO PCM5122 the mixer exposes 'Analogue' (0-1) before
+                    // 'Digital' (0-207); using the first element would effectively
+                    // give only two volume levels.  The widest range is the real DAC
+                    // volume control.
+                    snd_mixer_elem_t* best = nullptr;
+                    long bestLo = 0, bestHi = 0, bestRange = 0;
                     for (auto* e = snd_mixer_first_elem(handle); e; e = snd_mixer_elem_next(e)) {
                         if (!snd_mixer_selem_has_playback_volume(e)) continue;
                         long lo = 0, hi = 0;
                         snd_mixer_selem_get_playback_volume_range(e, &lo, &hi);
-                        const long alsaVol = lo + static_cast<long>((hi - lo) * safe / 255.0);
-                        snd_mixer_selem_set_playback_volume_all(e, alsaVol);
+                        if (hi - lo > bestRange) {
+                            bestRange = hi - lo;
+                            best = e; bestLo = lo; bestHi = hi;
+                        }
+                    }
+                    if (best) {
+                        const long alsaVol = bestLo + static_cast<long>((bestHi - bestLo) * safe / 255.0 + 0.5);
+                        snd_mixer_selem_set_playback_volume_all(best, alsaVol);
                         qInfo(lcAudioPulse) << "setSinkVolume ALSA" << m_alsaCardDevice
-                                           << "vol=" << safe << "alsa=" << alsaVol << "/" << hi;
+                                           << "vol=" << safe << "alsa=" << alsaVol << "/" << bestHi;
                         return;
                     }
                 }
@@ -300,9 +313,27 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                 if (snd_mixer_attach(handle, card.constData()) == 0 &&
                     snd_mixer_selem_register(handle, nullptr, nullptr) == 0 &&
                     snd_mixer_load(handle) == 0) {
+                    // Prefer an element that has BOTH volume AND switch — on PCM5122 that
+                    // is 'Digital'.  Pure-switch elements like 'Auto Mute' are chip feature
+                    // flags, not actual audio muting.  Among volume+switch elements pick the
+                    // one with the largest range; fall back to switch-only if none found.
+                    snd_mixer_elem_t* muteElem = nullptr;
+                    long bestRange = -1;
                     for (auto* e = snd_mixer_first_elem(handle); e; e = snd_mixer_elem_next(e)) {
                         if (!snd_mixer_selem_has_playback_switch(e)) continue;
-                        snd_mixer_selem_set_playback_switch_all(e, mute ? 0 : 1);
+                        if (snd_mixer_selem_has_playback_volume(e)) {
+                            long lo = 0, hi = 0;
+                            snd_mixer_selem_get_playback_volume_range(e, &lo, &hi);
+                            if (hi - lo > bestRange) {
+                                bestRange = hi - lo;
+                                muteElem = e;
+                            }
+                        } else if (bestRange < 0) {
+                            muteElem = e; // switch-only fallback
+                        }
+                    }
+                    if (muteElem) {
+                        snd_mixer_selem_set_playback_switch_all(muteElem, mute ? 0 : 1);
                         qInfo(lcAudioPulse) << "setSinkMute ALSA" << m_alsaCardDevice << mute;
                         return;
                     }
