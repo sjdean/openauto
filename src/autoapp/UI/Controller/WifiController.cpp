@@ -5,6 +5,7 @@
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusObjectPath>
 #include <QtDBus/QDBusMetaType>
+#include <QtDBus/QDBusReply>
 #endif
 Q_LOGGING_CATEGORY(lcWifi, "journeyos.wifi.controller")
 
