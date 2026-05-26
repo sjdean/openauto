@@ -47,6 +47,7 @@ namespace f1x::openauto::autoapp::projection {
         void decodeLoop();
 
         QVideoSink* videoSink_ = nullptr;
+        bool pendingDecodeFlush_ = false; // flush decoder on next loop iteration after sink reconnect
 
         // [CHANGED] Use std::thread instead of QThread
         std::thread decodeThread_;

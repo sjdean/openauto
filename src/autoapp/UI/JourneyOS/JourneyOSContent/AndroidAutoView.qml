@@ -25,7 +25,12 @@ Item {
         id: aaVideoOutput
         anchors.fill: parent
         fillMode: VideoOutput.PreserveAspectFit
-        Component.onCompleted: videoBackend.setVideoSink(aaVideoOutput.videoSink)
+        // onVideoSinkChanged fires whenever Qt6 recreates the internal QVideoSink
+        // (e.g. after scene-graph reattachment triggered by the virtual keyboard or
+        // a window-geometry change).  Component.onCompleted alone is not enough
+        // because the sink object can change after initial construction.
+        onVideoSinkChanged: if (videoSink) videoBackend.setVideoSink(videoSink)
+        Component.onCompleted: if (videoSink) videoBackend.setVideoSink(videoSink)
     }
 
     // 2. MOUSE HANDLER (Works on Mac/PC/Simulated Mouse)
