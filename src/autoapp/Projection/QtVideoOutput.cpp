@@ -39,26 +39,8 @@ namespace f1x::openauto::autoapp::projection {
 
         if (auto sink = qobject_cast<QVideoSink *>(videoOutputItem)) {
             if (sink == videoSink_) return; // same sink re-registered, no-op
-
-            const bool wasNull = (videoSink_ == nullptr);
-            qInfo() << "[Video] QML VideoSink connected —" << sink
-                    << (wasNull ? "(reconnect)" : "(new)");
+            qInfo() << "[Video] QML VideoSink connected —" << sink;
             videoSink_ = sink;
-
-            if (wasNull) {
-                // Discard any packets that queued up while no sink was attached.
-                // They'll mostly be P-frames that can't be displayed without the
-                // preceding I-frame, causing a blank screen until the next keyframe.
-                if (!packetQueue_.empty()) {
-                    qInfo() << "[Video] discarding" << packetQueue_.size()
-                            << "stale packets on sink reconnect";
-                    packetQueue_.clear();
-                }
-                // Signal the decode loop to flush the FFmpeg decoder state so it
-                // waits cleanly for the phone's next I-frame.
-                pendingDecodeFlush_ = true;
-                cv_.notify_one(); // wake the loop in case it's idle
-            }
         } else {
             qWarning() << "[Video] setVideoSink: object is NOT a QVideoSink:" << videoOutputItem;
         }
@@ -117,30 +99,15 @@ namespace f1x::openauto::autoapp::projection {
         while (!stopRequested_) {
             VideoPacket currentPacket;
             QVideoSink* localSink = nullptr;
-            bool doFlush = false;
             {
                 std::unique_lock<std::mutex> lock(mutex_);
-                cv_.wait(lock, [this] {
-                    return !packetQueue_.empty() || stopRequested_.load() || pendingDecodeFlush_;
-                });
+                cv_.wait(lock, [this] { return !packetQueue_.empty() || stopRequested_.load(); });
 
                 if (stopRequested_) break;
-
-                if (pendingDecodeFlush_) {
-                    pendingDecodeFlush_ = false;
-                    doFlush = true;
-                }
-
-                if (packetQueue_.empty()) continue; // woken for flush only — no packet yet
 
                 currentPacket = packetQueue_.front();
                 packetQueue_.pop_front();
                 localSink = videoSink_;
-            }
-
-            if (doFlush) {
-                avcodec_flush_buffers(codecContext_);
-                qInfo() << "[Video] decoder flushed — waiting for next I-frame";
             }
             // mutex released — write() may queue freely while we decode
 
