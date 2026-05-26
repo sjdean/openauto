@@ -398,6 +398,20 @@ Window {
         function onViewBrightness() { brightnessPopup.open() }
     }
 
+    // Forward keyboard events to Android Auto only when the AA view is on top
+    // and no modal popup is obscuring it.  Without this, typing into Settings
+    // TextFields or WiFi/BT popup fields also sends the keystrokes to AA.
+    Binding {
+        target: inputMapper
+        property: "inputEnabled"
+        value: stackView.currentItem !== null
+               && stackView.currentItem.objectName === "AndroidAutoView"
+               && !bluetoothPopup.opened
+               && !wifiPopup.opened
+               && !powerPopup.opened
+               && !firstBootPopup.opened
+    }
+
     // Restart slider auto-close timers on each interaction so they only
     // close 5 s after the user stops touching the slider.
     Connections {
