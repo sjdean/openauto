@@ -21,6 +21,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
     Q_INVOKABLE void saveSettings() const;
     Q_INVOKABLE void toggleSinkMute();
+    Q_INVOKABLE void reapplyVolume();
 
     void updatePlaybackBounds(int min, int max);
     void updateCaptureBounds(int min, int max);

@@ -241,10 +241,33 @@ namespace f1x::openauto::autoapp::UI::Monitor {
                         }
                     }
                     if (best) {
-                        const long alsaVol = bestLo + static_cast<long>((bestHi - bestLo) * safe / 255.0 + 0.5);
-                        snd_mixer_selem_set_playback_volume_all(best, alsaVol);
+                        long targetAlsaVol;
+                        if (safe == 0) {
+                            targetAlsaVol = bestLo; // minimum / let hardware auto-mute take over
+                        } else {
+                            // Map slider 1-255 linearly in dB over a -60 dB to 0 dB working range.
+                            // The PCM5122 Digital element spans 103.5 dB total (0-207 units,
+                            // 0.5 dB/step); the bottom half is effectively inaudible and compresses
+                            // all the useful travel into the top 20% of the slider.
+                            // Linear-in-dB gives perceptually uniform loudness steps.
+                            long dBmin_mB = 0, dBmax_mB = 0;
+                            if (snd_mixer_selem_get_playback_dB_range(best, &dBmin_mB, &dBmax_mB) == 0
+                                && dBmax_mB > dBmin_mB) {
+                                // -60 dB floor in millibels, or the element's actual min if shallower
+                                const long floorDB_mB = std::max(dBmin_mB, -6000L);
+                                const long targetDB_mB = floorDB_mB +
+                                    static_cast<long>((dBmax_mB - floorDB_mB) * (safe - 1) / 254.0 + 0.5);
+                                // dir=1: round up (slightly louder) when between steps
+                                snd_mixer_selem_ask_playback_dB_vol(best, targetDB_mB, 1, &targetAlsaVol);
+                            } else {
+                                // No dB metadata — fall back to linear ALSA unit mapping
+                                targetAlsaVol = bestLo +
+                                    static_cast<long>((bestHi - bestLo) * safe / 255.0 + 0.5);
+                            }
+                        }
+                        snd_mixer_selem_set_playback_volume_all(best, targetAlsaVol);
                         qInfo(lcAudioPulse) << "setSinkVolume ALSA" << m_alsaCardDevice
-                                           << "vol=" << safe << "alsa=" << alsaVol << "/" << bestHi;
+                                           << "slider=" << safe << "alsa=" << targetAlsaVol << "/" << bestHi;
                         return;
                     }
                 }

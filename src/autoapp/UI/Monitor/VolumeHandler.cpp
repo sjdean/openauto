@@ -137,6 +137,10 @@ namespace f1x::openauto::autoapp::UI::Monitor  {
     setVolumeSinkMute(!m_volumeSinkMute);
   }
 
+  void VolumeHandler::reapplyVolume() {
+    setVolumeSink(m_volumeSink);
+  }
+
   // --- Getters ---
 
   int  VolumeHandler::getVolumeSink()       const { return m_volumeSink; }

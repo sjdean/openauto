@@ -9,9 +9,16 @@ Item {
     width: 800
     height: 480
 
+    // Saved range values for revert-on-Back (range slider has live preview)
+    property int _savedPlaybackMin: 0
+    property int _savedPlaybackMax: 255
+    property bool _rangeModified: false
+
     Component.onCompleted: {
         pulseAudioDeviceModelOutput.refresh()
         pulseAudioDeviceModelInput.refresh()
+        _savedPlaybackMin = settingsViewHandler.audioVolumePlaybackMin
+        _savedPlaybackMax = settingsViewHandler.audioVolumePlaybackMax
     }
 
     // -- SETTINGS PAGE THEME -- mapped from Constants for easy future theming
@@ -251,8 +258,16 @@ Item {
                         to: 255
                         first.value: settingsViewHandler.audioVolumePlaybackMin
                         second.value: settingsViewHandler.audioVolumePlaybackMax
-                        first.onMoved: settingsViewHandler.audioVolumePlaybackMin = first.value
-                        second.onMoved: settingsViewHandler.audioVolumePlaybackMax = second.value
+                        first.onMoved: {
+                            settingsViewHandler.audioVolumePlaybackMin = first.value
+                            volumePopupHandler.reapplyVolume()
+                            settingsView._rangeModified = true
+                        }
+                        second.onMoved: {
+                            settingsViewHandler.audioVolumePlaybackMax = second.value
+                            volumePopupHandler.reapplyVolume()
+                            settingsView._rangeModified = true
+                        }
                     }
                 }
                 Label {
@@ -649,7 +664,14 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                         opacity: parent.parent.down ? 0.6 : 1.0
                     }
-                    onClicked: stackView.pop()
+                    onClicked: {
+                        if (settingsView._rangeModified) {
+                            settingsViewHandler.audioVolumePlaybackMin = settingsView._savedPlaybackMin
+                            settingsViewHandler.audioVolumePlaybackMax = settingsView._savedPlaybackMax
+                            volumePopupHandler.reapplyVolume()
+                        }
+                        StackView.view.pop()
+                    }
                 }
 
                 Item {
@@ -680,6 +702,9 @@ Item {
                     }
                     onClicked: {
                         settingsViewHandler.save()
+                        settingsView._savedPlaybackMin = settingsViewHandler.audioVolumePlaybackMin
+                        settingsView._savedPlaybackMax = settingsViewHandler.audioVolumePlaybackMax
+                        settingsView._rangeModified = false
                         footerBar.saved = true
                         saveResetTimer.restart()
                     }
