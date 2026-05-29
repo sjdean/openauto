@@ -14,6 +14,9 @@ Item {
     property int _savedPlaybackMax: 255
     property bool _rangeModified: false
 
+    // Journey.qml's Connections block (target: stackView.currentItem) handles this
+    signal requestHome()
+
     Component.onCompleted: {
         pulseAudioDeviceModelOutput.refresh()
         pulseAudioDeviceModelInput.refresh()
@@ -670,7 +673,7 @@ Item {
                             settingsViewHandler.audioVolumePlaybackMax = settingsView._savedPlaybackMax
                             volumePopupHandler.reapplyVolume()
                         }
-                        StackView.view.pop()
+                        settingsView.requestHome()
                     }
                 }
 
