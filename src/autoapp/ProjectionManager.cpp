@@ -232,7 +232,15 @@ namespace f1x::openauto::autoapp {
 
     void ProjectionManager::handleNewClient(std::shared_ptr<boost::asio::ip::tcp::socket> socket, const boost::system::error_code &err) {
         if (!err) {
-            qInfo(lcProjectionManager) << "New WiFi Client Connected.";
+            boost::system::error_code epErr;
+            const auto remote = socket->remote_endpoint(epErr);
+            if (!epErr) {
+                qInfo(lcProjectionManager) << "New WiFi Client Connected from"
+                                           << remote.address().to_string().c_str()
+                                           << "port" << remote.port();
+            } else {
+                qInfo(lcProjectionManager) << "New WiFi Client Connected (remote endpoint unavailable)";
+            }
             start(std::move(socket));
         } else {
             qWarning(lcProjectionManager) << "WiFi Accept Error: " << err.message().c_str();
