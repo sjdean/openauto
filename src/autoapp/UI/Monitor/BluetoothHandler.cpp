@@ -3,6 +3,9 @@
 
 #ifdef Q_OS_LINUX
 #include <QDBusMetaType>
+#include <QDBusInterface>
+#include <QDBusReply>
+#include <QFileInfo>
 #endif
 
 #include <aap_protobuf/service/bluetooth/message/BluetoothPairingRequest.pb.h>
@@ -16,61 +19,73 @@
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcBtHandler, "journeyos.bluetooth")
 
-// Resolve the BT SIG company identifier for the adapter that owns `address`.
-// Reads /sys/class/bluetooth/hciN/manufacturer — an authoritative integer
-// assigned by the Bluetooth SIG, not derived from the MAC OUI.
+// Returns a human-readable hardware label for the BT adapter that owns `address`.
+// Strategy:
+//   1. Use BlueZ GetManagedObjects to map MAC → hci name (e.g. "hci1")
+//   2. Resolve /sys/class/bluetooth/hci1/device symlink → USB interface path
+//   3. Read the parent USB device's "product" string (e.g. "CSR8510 A10")
+//   4. For built-in UART adapters (no USB product) return "Built-in"
 static QString btVendorName(const QBluetoothAddress &address)
 {
 #ifdef Q_OS_LINUX
-    const QByteArray target = address.toString().toUpper().toLatin1();
+    const QString targetAddr = address.toString().toUpper();
 
-    for (const QString &entry : QDir("/sys/class/bluetooth").entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
-        if (!entry.startsWith(QLatin1String("hci")))
+    // Step 1: ask BlueZ which hci object path belongs to this MAC
+    QDBusInterface om("org.bluez", "/",
+                      "org.freedesktop.DBus.ObjectManager",
+                      QDBusConnection::systemBus());
+    const QDBusMessage reply = om.call("GetManagedObjects");
+    if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().isEmpty())
+        return {};
+
+    using ObjectMap = QMap<QDBusObjectPath, QMap<QString, QVariantMap>>;
+    const auto objects = qdbus_cast<ObjectMap>(reply.arguments().at(0));
+
+    QString hciName;
+    for (auto it = objects.cbegin(); it != objects.cend(); ++it) {
+        if (!it.value().contains(QLatin1String("org.bluez.Adapter1")))
             continue;
-
-        const QString base = QStringLiteral("/sys/class/bluetooth/") + entry;
-
-        QFile addrFile(base + QStringLiteral("/address"));
-        if (!addrFile.open(QIODevice::ReadOnly))
-            continue;
-        if (addrFile.readAll().trimmed().toUpper() != target)
-            continue;
-
-        QFile mfFile(base + QStringLiteral("/manufacturer"));
-        if (!mfFile.open(QIODevice::ReadOnly))
+        const QString addr = it.value()[QLatin1String("org.bluez.Adapter1")]
+                             [QLatin1String("Address")].toString().toUpper();
+        if (addr == targetAddr) {
+            // Object path is "/org/bluez/hci0" — take the last segment
+            hciName = it.key().path().section(QLatin1Char('/'), -1);
             break;
-
-        bool ok = false;
-        const int id = QString::fromLatin1(mfFile.readAll().trimmed()).toInt(&ok);
-        if (!ok)
-            break;
-
-        // Bluetooth SIG Company Identifiers — https://www.bluetooth.com/specifications/assigned-numbers/
-        static const QHash<int, QString> kCompany = {
-            {  2,  "Intel" },
-            {  9,  "Infineon" },
-            { 10,  "CSR" },          // Cambridge Silicon Radio (now Qualcomm)
-            { 13,  "Texas Instruments" },
-            { 15,  "Broadcom" },
-            { 18,  "Zeevo" },
-            { 29,  "Qualcomm" },
-            { 48,  "Qualcomm" },
-            { 93,  "Intel" },
-            { 308, "Intel" },
-            { 320, "Murata" },
-            { 1521,"Murata" },
-            { 76,  "Apple" },
-            { 224, "Google" },
-            { 89,  "Nordic Semiconductor" },
-            { 492, "Realtek" },
-        };
-
-        return kCompany.value(id, QString());
+        }
     }
+    if (hciName.isEmpty())
+        return {};
+
+    // Step 2: resolve /sys/class/bluetooth/hciN/device symlink
+    const QString deviceLink = QStringLiteral("/sys/class/bluetooth/") + hciName
+                               + QStringLiteral("/device");
+    const QString resolvedIface = QFileInfo(deviceLink).canonicalFilePath();
+
+    if (!resolvedIface.isEmpty()) {
+        // Step 3: parent dir = the USB device node (one level above the interface)
+        const QString usbDevPath = QFileInfo(resolvedIface).canonicalPath();
+
+        QFile productFile(usbDevPath + QStringLiteral("/product"));
+        if (productFile.open(QIODevice::ReadOnly)) {
+            const QString product = QString::fromLatin1(productFile.readAll().trimmed());
+            if (!product.isEmpty())
+                return product;           // e.g. "CSR8510 A10"
+        }
+
+        QFile mfFile(usbDevPath + QStringLiteral("/manufacturer"));
+        if (mfFile.open(QIODevice::ReadOnly)) {
+            const QString mf = QString::fromLatin1(mfFile.readAll().trimmed());
+            if (!mf.isEmpty())
+                return mf;
+        }
+    }
+
+    // Step 4: no USB product string → built-in UART adapter
+    return QStringLiteral("Built-in");
 #else
     Q_UNUSED(address)
+    return {};
 #endif
-    return QString();
 }
 
 namespace f1x::openauto::autoapp::UI::Monitor {
