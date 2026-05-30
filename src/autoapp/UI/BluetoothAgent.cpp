@@ -73,7 +73,7 @@ void BluetoothAgent::Release() {
     emit pairingComplete();
 }
 
-void BluetoothAgent::AuthorizeService(const QDBusObjectPath &device, const QString &uuid) {
+void BluetoothAgent::AuthorizeService(const QDBusObjectPath &device, const QString &uuid) { // NOLINT(readability-make-member-function-const)
     qInfo(lcBtAgent) << "service authorized uuid=" << uuid << " device=" << device.path();
 }
 

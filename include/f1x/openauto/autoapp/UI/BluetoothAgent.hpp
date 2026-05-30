@@ -80,7 +80,7 @@ public slots:
      * @brief D-Bus: BlueZ asks to authorize a service (e.g., phone book).
      * We'll just auto-accept this for now.
      */
-    static void AuthorizeService(const QDBusObjectPath &device, const QString &uuid);
+    void AuthorizeService(const QDBusObjectPath &device, const QString &uuid);
 
     /**
      * @brief D-Bus: BlueZ tells us the pairing was canceled.
