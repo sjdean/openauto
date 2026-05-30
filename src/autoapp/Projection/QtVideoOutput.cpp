@@ -11,7 +11,11 @@ namespace f1x::openauto::autoapp::projection {
     }
 
     QtVideoOutput::~QtVideoOutput() {
-        stop();
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            stopRequested_ = true;
+        }
+        cv_.notify_all();
         if (decodeThread_.joinable()) {
             decodeThread_.join();
         }
@@ -21,10 +25,12 @@ namespace f1x::openauto::autoapp::projection {
     bool QtVideoOutput::init() { return true; }
 
     void QtVideoOutput::stop() {
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            stopRequested_ = true;
-        }
+        // Called at end of each AA session. Flush queued packets and request a
+        // codec reset so the decode thread is ready for the next connection.
+        // Do NOT set stopRequested_ — the thread must survive across sessions.
+        std::lock_guard<std::mutex> lock(mutex_);
+        packetQueue_.clear();
+        flushRequested_ = true;
         cv_.notify_all();
     }
 
@@ -101,9 +107,21 @@ namespace f1x::openauto::autoapp::projection {
             QVideoSink* localSink = nullptr;
             {
                 std::unique_lock<std::mutex> lock(mutex_);
-                cv_.wait(lock, [this] { return !packetQueue_.empty() || stopRequested_.load(); });
+                cv_.wait(lock, [this] { return !packetQueue_.empty() || stopRequested_.load() || flushRequested_.load(); });
 
                 if (stopRequested_) break;
+
+                if (flushRequested_) {
+                    flushRequested_ = false;
+                    packetQueue_.clear();
+                    // Reset FFmpeg decoder state so the next session gets a clean IDR frame
+                    avcodec_flush_buffers(codecContext_);
+                    sendCount  = 0;
+                    recvCount  = 0;
+                    pixFmtLogged = false;
+                    qInfo() << "[Video] decodeLoop flushed for new session";
+                    continue;
+                }
 
                 currentPacket = packetQueue_.front();
                 packetQueue_.pop_front();

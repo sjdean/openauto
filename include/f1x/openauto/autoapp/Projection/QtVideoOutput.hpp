@@ -54,7 +54,8 @@ namespace f1x::openauto::autoapp::projection {
         std::mutex mutex_;
         std::condition_variable cv_;
         std::deque<VideoPacket> packetQueue_;
-        std::atomic<bool> stopRequested_{false};
+        std::atomic<bool> stopRequested_{false};  // set only by destructor
+        std::atomic<bool> flushRequested_{false};  // set by stop() between sessions
 
         AVCodecContext* codecContext_ = nullptr;
         AVPacket* packet_ = nullptr;
