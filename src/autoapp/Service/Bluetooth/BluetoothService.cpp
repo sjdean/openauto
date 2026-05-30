@@ -50,7 +50,7 @@ namespace f1x::openauto::autoapp::service::bluetooth {
     if (bluetoothDevice_->isAvailable()) {
       const auto addr = bluetoothDevice_->getAdapterAddress();
       qInfo(lcServiceBt) << "fillFeatures: advertising BT adapter address=" << addr.c_str()
-                         << "pairing=PIN+NUMERIC_COMPARISON";
+                         << "pairing=NUMERIC_COMPARISON";
 
       // If the HU wants the MD to skip the Bluetooth Pairing and Connection process, the HU can declare its address as SKIP_THIS_BLUETOOTH
       bluetooth->set_car_address(addr);
@@ -114,7 +114,10 @@ namespace f1x::openauto::autoapp::service::bluetooth {
     // Use Numeric Comparison to match what BlueZ does (RequestConfirmation).
     // PIN mode requires entering a static PIN at the OS level, but BlueZ never
     // calls RequestPinCode for our adapter — it uses Numeric Comparison instead.
-    // Mismatch was causing the phone to return auth status=-15.
+    // auth_data is a required proto field and must be set even for NC (where its
+    // value is not used for the actual pairing decision — the passkey is exchanged
+    // at the OS/BT level and auto-accepted via BluetoothAgent::RequestConfirmation).
+    data.set_auth_data("");
     data.set_pairing_method(
         aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_NUMERIC_COMPARISON);
     auto promise = aasdk::channel::SendPromise::defer(strand_);
