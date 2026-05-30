@@ -157,6 +157,14 @@ namespace f1x::openauto::autoapp {
                 } catch (...) {
                     qCritical(lcProjectionManager) << "Error restarting waitForDevice loop.";
                 }
+                // Also re-run the enumerator so a phone that reconnects in MTP mode
+                // (idProduct=4ee1) gets the AOAP switch command.  waitForUSBDevice()
+                // calls both at startup; onAndroidAutoQuit must mirror that.
+                try {
+                    this->enumerateDevices();
+                } catch (...) {
+                    qCritical(lcProjectionManager) << "Error restarting enumerateDevices loop.";
+                }
             }
         });
     }

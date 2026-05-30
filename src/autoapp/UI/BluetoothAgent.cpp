@@ -60,11 +60,11 @@ void BluetoothAgent::DisplayPasskey(const QDBusObjectPath &device, quint32 passk
 void BluetoothAgent::RequestConfirmation(const QDBusObjectPath &device, quint32 passkey) {
     qInfo(lcBtAgent) << "confirmation requested passkey=" << passkey << " device=" << device.path();
 
-    // Defer the D-Bus reply so we can wait for the user to accept or reject.
-    // Without this, Qt sends an empty void reply immediately (auto-accept) and
-    // the user's decision in QML has no effect.
-    setDelayedReply(true);
-    m_pendingMessage = message();
+    // Auto-accept numeric comparison for head unit use case.
+    // During wireless AA projection the phone initiates BT pairing while the user is
+    // in full-screen AA view — they cannot reach the Bluetooth popup to tap Accept.
+    // The AA channel is already authenticated so accepting the BT layer pairing is safe.
+    // Qt sends an implicit success (empty void reply) when setDelayedReply is NOT called.
     emit showConfirmation(QString::number(passkey));
 }
 

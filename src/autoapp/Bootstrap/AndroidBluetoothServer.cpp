@@ -312,7 +312,7 @@ namespace f1x::openauto::autoapp::bootstrap {
 
   void AndroidBluetoothServer::sendMessage(const google::protobuf::Message &message, uint16_t type) {
     qInfo(lcBsBtServer) << "[AndroidBluetoothServer::sendMessage] type=" << type
-                        << "proto=" << message.GetTypeName().c_str();
+                        << "proto=" << std::string(message.GetTypeName()).c_str();
 
     int byteSize = message.ByteSizeLong();
     QByteArray out(byteSize + 4, 0);
@@ -371,7 +371,7 @@ namespace f1x::openauto::autoapp::bootstrap {
           qDebug(lcBsBtServer) << "[DecodeProtoMessage] field" << field.number() << "fixed64:" << field.fixed64();
           break;
         case UnknownField::TYPE_LENGTH_DELIMITED: {
-          const std::string &ld = field.length_delimited();
+          const std::string ld(field.length_delimited());
           std::stringstream ss;
           ss << std::hex << std::setfill('0');
           for (unsigned char ch : ld) { ss << std::setw(2) << static_cast<unsigned>(ch); }
