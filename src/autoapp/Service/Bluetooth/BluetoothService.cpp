@@ -56,8 +56,9 @@ namespace f1x::openauto::autoapp::service::bluetooth {
       bluetooth->set_car_address(addr);
 
       // AAP supports both PIN and Numeric Comparison as pairing methods.
-      bluetooth->add_supported_pairing_methods(
-          aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_PIN);
+      // Advertise only Numeric Comparison — BlueZ raises RequestConfirmation
+      // for this method, which we auto-accept. PIN mode would require entering
+      // "123456" at the OS level which BlueZ never prompts for, causing a mismatch.
       bluetooth->add_supported_pairing_methods(
           aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_NUMERIC_COMPARISON);
     } else {
@@ -110,10 +111,12 @@ namespace f1x::openauto::autoapp::service::bluetooth {
     qInfo(lcServiceBt) << "sending authentication data";
 
     aap_protobuf::service::bluetooth::message::BluetoothAuthenticationData data;
-    // TODO: Do we need to generate a random pin, or is 123456 sufficient?
-    data.set_auth_data("123456");
+    // Use Numeric Comparison to match what BlueZ does (RequestConfirmation).
+    // PIN mode requires entering a static PIN at the OS level, but BlueZ never
+    // calls RequestPinCode for our adapter — it uses Numeric Comparison instead.
+    // Mismatch was causing the phone to return auth status=-15.
     data.set_pairing_method(
-        aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_PIN);
+        aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_NUMERIC_COMPARISON);
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {}, std::bind(&BluetoothService::onChannelError, this->shared_from_this(),
                                      std::placeholders::_1));

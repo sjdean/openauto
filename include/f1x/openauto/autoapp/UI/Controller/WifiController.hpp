@@ -47,6 +47,7 @@ namespace f1x::openauto::autoapp::UI::Controller {
         QString m_currentIface;
         QString m_wifiDevicePath;
         QDBusConnection m_bus = QDBusConnection::systemBus();
+        common::Enum::WirelessType::Value m_currentMode = common::Enum::WirelessType::WIRELESS_CLIENT;
 #endif
     };
 } // namespace

@@ -70,8 +70,13 @@ void WifiController::setInterface(const QString& ifaceOrMac)
 void WifiController::setMode(common::Enum::WirelessType::Value mode)
 {
 #ifdef Q_OS_LINUX
-    // Always tear down the current connection before switching modes.
-    disconnect();
+    // Only tear down the current connection when actually switching modes.
+    // Calling disconnect() when staying in client mode causes a visible
+    // brief drop that confuses the UI.
+    if (mode != m_currentMode) {
+        disconnect();
+        m_currentMode = mode;
+    }
 
     if (mode == common::Enum::WirelessType::WIRELESS_HOTSPOT) {
         const QString ssid = m_config->getSettingByName<QString>("Wireless", "HotspotSSID", "MyCarHotspot");
