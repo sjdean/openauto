@@ -6,8 +6,6 @@
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcVolume, "journeyos.volume")
 
-// TODO: Do we still need this? It was removed in v4.2
-
 namespace f1x::openauto::autoapp::UI::Monitor  {
 
   VolumeHandler::VolumeHandler(configuration::IConfiguration::Pointer configuration,
