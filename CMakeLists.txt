@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.16)
 # ─── Version (single source of truth) ────────────────────────────────────────
 # Numeric triplet only — used for VERSION/SOVERSION.
 # Display string (with date/git) is separate and never used for file naming.
-set(LIBRARY_BUILD_DATE          "20260328")
+set(LIBRARY_BUILD_DATE          "20260602")
 set(LIBRARY_BUILD_MAJOR_RELEASE 4)
-set(LIBRARY_BUILD_MINOR_RELEASE 1)
-set(LIBRARY_BUILD_INCREMENTAL   4)
+set(LIBRARY_BUILD_MINOR_RELEASE 2)
+set(LIBRARY_BUILD_INCREMENTAL   0)
 
 set(LIBRARY_BUILD_VERSION_STRING
         "${LIBRARY_BUILD_MAJOR_RELEASE}.${LIBRARY_BUILD_MINOR_RELEASE}.${LIBRARY_BUILD_INCREMENTAL}+${LIBRARY_BUILD_DATE}")
@@ -165,7 +165,10 @@ if(libusb-1.0_FOUND OR TARGET libusb-1.0::libusb-1.0)
     set(LIBUSB_TARGET libusb-1.0::libusb-1.0)
     message(STATUS "libusb-1.0      : found via config mode")
 else()
-    pkg_check_modules(libusb QUIET IMPORTED_TARGET libusb-1.0)
+    find_package(PkgConfig QUIET)
+    if(PKG_CONFIG_FOUND)
+        pkg_check_modules(libusb QUIET IMPORTED_TARGET libusb-1.0)
+    endif()
     if(TARGET PkgConfig::libusb)
         set(LIBUSB_TARGET PkgConfig::libusb)
         message(STATUS "libusb-1.0      : found via pkg-config")
@@ -191,6 +194,7 @@ find_package(FFMPEG REQUIRED)
 
 # ─── taglib ───────────────────────────────────────────────────────────────────
 pkg_check_modules(TAGLIB REQUIRED IMPORTED_TARGET taglib)
+
 
 # ─── Linux-only dependencies ──────────────────────────────────────────────────
 if(OPENAUTO_LINUX)
@@ -339,6 +343,7 @@ target_link_libraries(autoapp PRIVATE
 if(OPENAUTO_LINUX)
     target_link_libraries(autoapp PRIVATE
             pulse
+            asound
             PkgConfig::BLKID
             PkgConfig::GPS
     )

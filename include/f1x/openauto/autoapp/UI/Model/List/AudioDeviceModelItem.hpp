@@ -8,8 +8,8 @@ namespace f1x::openauto::autoapp::UI::Model::List {
     // Renamed class
     class AudioDeviceModelItem : public QObject {
         Q_OBJECT
-          Q_PROPERTY(QString display READ getDisplay WRITE setDisplay)
-          Q_PROPERTY(QString value READ getValue WRITE setValue)
+          Q_PROPERTY(QString display READ getDisplay WRITE setDisplay NOTIFY displayChanged)
+        Q_PROPERTY(QString value READ getValue WRITE setValue NOTIFY valueChanged)
         public:
         explicit AudioDeviceModelItem(QString display, QString value, QObject *parent = nullptr); // Renamed
 
@@ -17,6 +17,10 @@ namespace f1x::openauto::autoapp::UI::Model::List {
         void setDisplay(const QString &display);
         QString getValue() const;
         void setValue(const QString &value);
+
+    signals:
+        void displayChanged();
+        void valueChanged();
 
     private:
         QString m_display;

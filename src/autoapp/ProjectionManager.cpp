@@ -159,6 +159,14 @@ using configuration::ConfigKey;
                 } catch (...) {
                     qCritical(lcProjectionManager) << "Error restarting waitForDevice loop.";
                 }
+                // Also re-run the enumerator so a phone that reconnects in MTP mode
+                // (idProduct=4ee1) gets the AOAP switch command.  waitForUSBDevice()
+                // calls both at startup; onAndroidAutoQuit must mirror that.
+                try {
+                    this->enumerateDevices();
+                } catch (...) {
+                    qCritical(lcProjectionManager) << "Error restarting enumerateDevices loop.";
+                }
             }
         });
     }
@@ -234,7 +242,15 @@ using configuration::ConfigKey;
 
     void ProjectionManager::handleNewClient(std::shared_ptr<boost::asio::ip::tcp::socket> socket, const boost::system::error_code &err) {
         if (!err) {
-            qInfo(lcProjectionManager) << "New WiFi Client Connected.";
+            boost::system::error_code epErr;
+            const auto remote = socket->remote_endpoint(epErr);
+            if (!epErr) {
+                qInfo(lcProjectionManager) << "New WiFi Client Connected from"
+                                           << remote.address().to_string().c_str()
+                                           << "port" << remote.port();
+            } else {
+                qInfo(lcProjectionManager) << "New WiFi Client Connected (remote endpoint unavailable)";
+            }
             start(std::move(socket));
         } else {
             qWarning(lcProjectionManager) << "WiFi Accept Error: " << err.message().c_str();

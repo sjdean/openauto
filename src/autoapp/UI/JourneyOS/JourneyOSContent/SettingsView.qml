@@ -2,11 +2,27 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import JourneyOS
+import JourneyOS.Hardware 1.0
 
 Item {
     id: settingsView
     width: parent ? parent.width : 800
     height: parent ? parent.height : 480
+
+    // Saved range values for revert-on-Back (range slider has live preview)
+    property int _savedPlaybackMin: 0
+    property int _savedPlaybackMax: 255
+    property bool _rangeModified: false
+
+    // Journey.qml's Connections block (target: stackView.currentItem) handles this
+    signal requestHome()
+
+    Component.onCompleted: {
+        pulseAudioDeviceModelOutput.refresh()
+        pulseAudioDeviceModelInput.refresh()
+        _savedPlaybackMin = settingsViewHandler.audioVolumePlaybackMin
+        _savedPlaybackMax = settingsViewHandler.audioVolumePlaybackMax
+    }
 
     // -- SETTINGS PAGE THEME -- mapped from Constants for easy future theming
     readonly property color cTextMain: Constants.textOnSettings
@@ -299,8 +315,16 @@ Item {
                         to: 255
                         first.value: settingsViewHandler.audioVolumePlaybackMin
                         second.value: settingsViewHandler.audioVolumePlaybackMax
-                        first.onMoved: settingsViewHandler.audioVolumePlaybackMin = first.value
-                        second.onMoved: settingsViewHandler.audioVolumePlaybackMax = second.value
+                        first.onMoved: {
+                            settingsViewHandler.audioVolumePlaybackMin = first.value
+                            volumePopupHandler.reapplyVolume()
+                            settingsView._rangeModified = true
+                        }
+                        second.onMoved: {
+                            settingsViewHandler.audioVolumePlaybackMax = second.value
+                            volumePopupHandler.reapplyVolume()
+                            settingsView._rangeModified = true
+                        }
                     }
                 }
                 Label {
@@ -347,12 +371,95 @@ Item {
             }
 
             // --- TAB 5: SYSTEM ---
-            // TODO (4.2): Add "System Information" section below Device Mode:
-            //   - Device name / hostname
-            //   - JourneyOS version + build date  (from updateManager.currentVersion + build timestamp)
-            //   - Kernel / OS version
-            //   - Hardware profile summary (display type, audio HAT, CAN bus, GPS)
             SettingsPage {
+                SectionHeader {
+                    text: "Hardware"
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: 2
+                    columnSpacing: 16
+                    rowSpacing: 8
+
+                    Label {
+                        text: "Display"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        text: {
+                            if (HardwareProfile.primaryDisplay === "dsi") return "DSI (touchscreen)"
+                            if (HardwareProfile.primaryDisplay === "hdmi") return "HDMI"
+                            return "Unknown"
+                        }
+                        font.pixelSize: 13
+                        color: cTextMain
+                    }
+
+                    Label {
+                        text: "Audio HAT"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        text: HardwareProfile.hasIQAudioDAC ? "IQAudio DAC+"
+                            : (HardwareProfile.hasOnboardAudio ? "Onboard" : "None detected")
+                        font.pixelSize: 13
+                        color: cTextMain
+                    }
+
+                    Label {
+                        visible: HardwareProfile.usbAudioDevices.length > 0
+                        text: "USB Audio"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        visible: HardwareProfile.usbAudioDevices.length > 0
+                        text: HardwareProfile.usbAudioDevices.join(", ")
+                        font.pixelSize: 13
+                        color: cTextMain
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+
+                    Label {
+                        text: "CAN Bus"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        text: HardwareProfile.hasCANBus ? "Present" : "Not detected"
+                        font.pixelSize: 13
+                        color: HardwareProfile.hasCANBus ? cTextMain : cTextDim
+                    }
+
+                    Label {
+                        text: "RTC"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        text: HardwareProfile.hasRTC ? "Present" : "Not detected"
+                        font.pixelSize: 13
+                        color: HardwareProfile.hasRTC ? cTextMain : cTextDim
+                    }
+
+                    Label {
+                        text: "GPS"
+                        font.pixelSize: 13
+                        color: cTextDim
+                    }
+                    Label {
+                        text: HardwareProfile.hasGPS
+                              ? ("Present" + (HardwareProfile.gpsDevice !== "" ? " (" + HardwareProfile.gpsDevice + ")" : ""))
+                              : "Not detected"
+                        font.pixelSize: 13
+                        color: HardwareProfile.hasGPS ? cTextMain : cTextDim
+                    }
+                }
+
                 SectionHeader {
                     text: "Device Mode"
                 }
@@ -435,6 +542,14 @@ Item {
                         text: "Check for Updates"
                         Layout.alignment: Qt.AlignVCenter
                         onClicked: updateManager.checkForUpdate()
+                        // originally (but doesn't match between main and v4.2 branch - where did it come from?)
+                        //                         onClicked: {
+                        //                             if (!wifiViewModel.connected) {
+                        //                                 wifiWarningDialog.open()
+                        //                             } else {
+                        //                                 updateManager.checkForUpdate()
+                        //                             }
+                        //                         }
                     }
                 }
 
@@ -513,11 +628,11 @@ Item {
                 }
             }
         }
-
+// TODO: Do some major work to ensure this works and check between main/v4.2 branches
         // ── OTA dialogs — declared outside StackLayout so they overlay everything ──
         Dialog {
-            id: updateFoundDialog
-            title: "Update Available"
+            id: otaErrorDialog
+            title: "Update Failed"
             modal: true
             anchors.centerIn: parent
             standardButtons: Dialog.Ok | Dialog.Cancel
@@ -649,6 +764,15 @@ Item {
             color: Constants.settingsFooter
             z: 10
 
+            property bool saved: false
+
+            Timer {
+                id: saveResetTimer
+                interval: 1800
+                repeat: false
+                onTriggered: footerBar.saved = false
+            }
+
             Rectangle {
                 width: parent.width; height: 1; color: Constants.settingsFooterBorder; anchors.top: parent.top
             }
@@ -658,9 +782,9 @@ Item {
                 anchors.margins: 15
                 spacing: 20
 
-                // Cancel — red outline, discards changes
+                // Back — exits settings; all changes already persisted per-keystroke
                 Button {
-                    text: "Cancel"
+                    text: "Back"
                     Layout.preferredWidth: 120
                     Layout.fillHeight: true
                     background: Rectangle {
@@ -678,24 +802,36 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                         opacity: parent.parent.down ? 0.6 : 1.0
                     }
-                    onClicked: stackView.pop()
+                    onClicked: {
+                        if (settingsView._rangeModified) {
+                            settingsViewHandler.audioVolumePlaybackMin = settingsView._savedPlaybackMin
+                            settingsViewHandler.audioVolumePlaybackMax = settingsView._savedPlaybackMax
+                            volumePopupHandler.reapplyVolume()
+                        }
+                        settingsView.requestHome()
+                    }
                 }
 
                 Item {
                     Layout.fillWidth: true
                 }
 
-                // Save Changes — green confirm, writes settings
+                // Save — forces a disk sync and shows brief confirmation
                 Button {
-                    text: "Save Changes"
+                    id: saveBtn
+                    text: footerBar.saved ? "Saved ✓" : "Save"
+                    enabled: !footerBar.saved
                     Layout.preferredWidth: 180
                     Layout.fillHeight: true
                     background: Rectangle {
-                        color: parent.down ? Constants.btnConfirmBgPressed : Constants.btnConfirmBg
+                        color: footerBar.saved
+                               ? Constants.btnConfirmBgPressed
+                               : (parent.down ? Constants.btnConfirmBgPressed : Constants.btnConfirmBg)
                         radius: 8
+                        Behavior on color { ColorAnimation { duration: 150 } }
                     }
                     contentItem: Text {
-                        text: parent.text
+                        text: saveBtn.text
                         font.pointSize: 16
                         font.bold: true
                         color: Constants.btnConfirmFg
@@ -706,9 +842,16 @@ Item {
                         // Commit any text field edits that didn't trigger onEditingFinished
                         // (e.g. when the user types then immediately clicks Save)
                         // Each setter calls configuration->save() internally — no explicit save needed.
+
+                        settingsViewHandler.save()
+                        settingsView._savedPlaybackMin = settingsViewHandler.audioVolumePlaybackMin
+                        settingsView._savedPlaybackMax = settingsViewHandler.audioVolumePlaybackMax
+                        settingsView._rangeModified = false
                         settingsViewHandler.uiAccentPrimary = primaryAccentField.text.trim()
                         settingsViewHandler.uiAccentBrand2  = brand2AccentField.text.trim()
-                        stackView.pop()
+
+                        footerBar.saved = true
+                        saveResetTimer.restart()
                     }
                 }
             }
@@ -986,3 +1129,4 @@ Item {
         return 0;
     }
 }
+

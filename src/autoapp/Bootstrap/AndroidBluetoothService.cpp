@@ -1,6 +1,6 @@
 #include <f1x/openauto/autoapp/Bootstrap/AndroidBluetoothService.hpp>
 #include <qloggingcategory.h>
-Q_LOGGING_CATEGORY(lcBsBtService, "journeyos.bluetooth.boottrap.service")
+Q_LOGGING_CATEGORY(lcBsBtService, "journeyos.bluetooth.bootstrap.service")
 
 namespace f1x::openauto::autoapp::bootstrap {
   /**

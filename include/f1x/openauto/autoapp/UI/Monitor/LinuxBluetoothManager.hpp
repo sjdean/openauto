@@ -12,6 +12,12 @@
 #include "f1x/openauto/autoapp/UI/Agent/BluetoothAgent.hpp"
 #include <QtDBus/QDBusReply>
 #include <QtDBus/QDBusInterface>
+// BlueZ GetManagedObjects / InterfacesAdded types
+// BluezInterfaceList = QMap<QString,QVariantMap> — same underlying type as NMConnectionSettings
+// in WifiController.hpp, so Q_DECLARE_METATYPE must not be repeated here (ODR violation).
+using BluezInterfaceList  = QMap<QString, QVariantMap>;              // a{sa{sv}}
+using BluezManagedObjects = QMap<QDBusObjectPath, BluezInterfaceList>; // a{oa{sa{sv}}}
+Q_DECLARE_METATYPE(BluezManagedObjects)
 #endif
 
 #include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"
@@ -33,6 +39,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
             f1x::openauto::common::Enum::BluetoothConnectionStatus::Value bluetoothConnectionStatus
             READ getBluetoothConnectionStatus NOTIFY bluetoothConnectionStatusChanged)
         Q_PROPERTY(QString statusText READ getStatusText NOTIFY bluetoothConnectionStatusChanged)
+        Q_PROPERTY(QString connectedDeviceName READ getConnectedDeviceName NOTIFY bluetoothConnectionStatusChanged)
         Q_PROPERTY(bool isScanning READ isScanning NOTIFY isScanningChanged)
         // Agent property only valid on Linux, or return nullptr on Mac
         Q_PROPERTY(QObject* agent READ getAgent CONSTANT)
@@ -76,6 +83,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         QString getStatusText() const override;
 
+        QString getConnectedDeviceName() const;
+
         bool isScanning() const override;
 
         Q_INVOKABLE void ignoreDevice(const QString &address) override;
@@ -115,8 +124,16 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 #ifdef Q_OS_LINUX
         QString getBluezAdapterPath();
         void loadPairedDevicesFromBlueZ();
+        void refreshDeviceNamesFromBlueZ();
+        void subscribeToInterfacesAdded();
 #endif
 
+    private slots:
+#ifdef Q_OS_LINUX
+        void onBluezInterfacesAdded(const QDBusObjectPath &path, const BluezInterfaceList &interfaces);
+#endif
+
+    private:
         configuration::IConfiguration::Pointer configuration_;
         QList<Model::BluetoothAdapter> m_adapters;
         int m_activeAdapterIndex = -1;
@@ -138,6 +155,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 #ifdef Q_OS_LINUX
         QDBusInterface m_manager;
         BluetoothAgent *m_agent;
+        QString m_cachedAdapterPath;
 #endif
     };
 }

@@ -1,7 +1,6 @@
 
 #include <boost/algorithm/hex.hpp>
 #include <QNetworkInterface>
-#include <iostream>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/unknown_field_set.h>
@@ -47,16 +46,19 @@ using configuration::ConfigKey;
 
   /// Start Server listening on Address
   uint16_t AndroidBluetoothServer::start(const QBluetoothAddress &address) {
-    qDebug(lcBsBtServer) << "[AndroidBluetoothServer::start]";
+    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::start] Attempting to listen on address:"
+                        << (address.isNull() ? "(any)" : address.toString());
     if (rfcommServer_->listen(address)) {
-
+      qInfo(lcBsBtServer) << "[AndroidBluetoothServer::start] Listening on RFCOMM port:"
+                          << rfcommServer_->serverPort();
       return rfcommServer_->serverPort();
     }
+    qCritical(lcBsBtServer) << "[AndroidBluetoothServer::start] listen() failed — RFCOMM server not started";
     return 0;
   }
 
   void AndroidBluetoothServer::onError(QBluetoothServer::Error error) {
-    qDebug(lcBsBtServer) << "[AndroidBluetoothServer::onError]";
+    qCritical(lcBsBtServer) << "[AndroidBluetoothServer::onError] RFCOMM server error:" << static_cast<int>(error);
   }
 
 // ---------------------------------------------------------
@@ -96,10 +98,27 @@ using configuration::ConfigKey;
     socket = rfcommServer_->nextPendingConnection();
 
     if (socket != nullptr) {
-      qDebug(lcBsBtServer) << "[AndroidBluetoothServer] rfcomm client connected, peer name: "
-                         << socket->peerName().toStdString();
+      qInfo(lcBsBtServer) << "[AndroidBluetoothServer] RFCOMM client connected"
+                          << "peer:" << socket->peerName()
+                          << "addr:" << socket->peerAddress().toString();
 
       connect(socket, &QBluetoothSocket::readyRead, this, &AndroidBluetoothServer::readSocket);
+      connect(socket, &QBluetoothSocket::disconnected, this, [this]() {
+        qInfo(lcBsBtServer) << "[AndroidBluetoothServer] RFCOMM socket disconnected";
+      });
+      connect(socket, &QBluetoothSocket::stateChanged, this, [this](QBluetoothSocket::SocketState state) {
+        qInfo(lcBsBtServer) << "[AndroidBluetoothServer] socket state ->" << state;
+      });
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+      connect(socket, &QBluetoothSocket::errorOccurred, this, [this](QBluetoothSocket::SocketError err) {
+        qCritical(lcBsBtServer) << "[AndroidBluetoothServer] RFCOMM socket error:" << err;
+      });
+#else
+      connect(socket, QOverload<QBluetoothSocket::SocketError>::of(&QBluetoothSocket::error),
+              this, [this](QBluetoothSocket::SocketError err) {
+        qCritical(lcBsBtServer) << "[AndroidBluetoothServer] RFCOMM socket error:" << err;
+      });
+#endif
 
       aap_protobuf::service::control::message::AudioFocusRequestType afrt;
       aap_protobuf::aaw::WifiVersionRequest versionRequest;
@@ -205,20 +224,36 @@ using configuration::ConfigKey;
   /// \param buffer
   /// \param length
   void AndroidBluetoothServer::handleWifiInfoRequest(QByteArray &buffer, uint16_t length) {
-    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiInfoRequest] Handling wifi info request";
+    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiInfoRequest] Received WifiInfoRequest from phone";
 
     aap_protobuf::aaw::WifiInfoResponse response;
 
-    response.set_ssid(configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID).toStdString());
-    response.set_password(configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword).toStdString());
+    const QString ssid = configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID).toStdString();
+    const QString password = configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword).toStdString();
+
+    if (ssid.isEmpty()) {
+      qCWarning(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiInfoRequest] HotspotSSID is empty — phone will fail to connect";
+    }
+    if (password.isEmpty()) {
+      qCWarning(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiInfoRequest] HotspotPassword is empty";
+    }
+
+    response.set_ssid(ssid.toStdString());
+    response.set_password(password.toStdString());
 
     QNetworkInterface wifiInterface = findConfiguredInterface();
 
     // BSSID is essentially the MAC address of the AP
     std::string bssid = wifiInterface.hardwareAddress().toStdString();
 
-    if(bssid.empty()) {
-      qCWarning(lcBsBtServer) << "Failed to resolve BSSID (MAC) for interface:" << wifiInterface.name();
+    if (bssid.empty()) {
+      qCWarning(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiInfoRequest] Failed to resolve BSSID (MAC) for interface:" << wifiInterface.name();
+    } else {
+      qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiInfoRequest] Advertising:"
+                          << "interface=" << wifiInterface.name()
+                          << "SSID=" << ssid
+                          << "BSSID=" << bssid.c_str()
+                          << "security=WPA2_PERSONAL";
     }
 
     response.set_bssid(bssid);
@@ -242,23 +277,44 @@ using configuration::ConfigKey;
   /// \param buffer
   /// \param length
   void AndroidBluetoothServer::handleWifiStartResponse(QByteArray &buffer, uint16_t length) {
-    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiStartResponse] Handling wifi start response";
+    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiStartResponse] Received WifiStartResponse from phone";
     aap_protobuf::aaw::WifiStartResponse response;
-    response.ParseFromArray(buffer.data() + 4, length);
-    qDebug(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiStartResponse] " << response.ip_address() << " port " << response.port() << " status " << Status_Name(response.status());
+    if (!response.ParseFromArray(buffer.data() + 4, length)) {
+      qCWarning(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiStartResponse] Failed to parse WifiStartResponse protobuf";
+      return;
+    }
+    const auto statusName = Status_Name(response.status());
+    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiStartResponse]"
+                        << "phone connecting to ip=" << response.ip_address().c_str()
+                        << "port=" << response.port()
+                        << "status=" << statusName.c_str();
+    if (response.status() != aap_protobuf::aaw::STATUS_SUCCESS) {
+      qCWarning(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiStartResponse] Phone reported non-success status — wireless session may not start";
+    }
   }
 
   /// Handles request for WifiStartRequest by sending a WifiStartResponse
   /// \param buffer
   /// \param length
   void AndroidBluetoothServer::handleWifiConnectionStatus(QByteArray &buffer, uint16_t length) {
-    aap_protobuf::aaw::WifiConnectionStatus status;
-    status.ParseFromArray(buffer.data() + 4, length);
-    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiConnectionStatus] Handle wifi connection status, received: " << Status_Name(status.status());
+    aap_protobuf::aaw::WifiConnectionStatus connStatus;
+    if (!connStatus.ParseFromArray(buffer.data() + 4, length)) {
+      qCWarning(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiConnectionStatus] Failed to parse WifiConnectionStatus protobuf";
+      return;
+    }
+    const auto statusName = Status_Name(connStatus.status());
+    if (connStatus.status() == aap_protobuf::aaw::STATUS_SUCCESS) {
+      qInfo(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiConnectionStatus] Phone WiFi connection status: SUCCESS";
+    } else {
+      qCWarning(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiConnectionStatus] Phone WiFi connection status:"
+                              << statusName.c_str()
+                              << (connStatus.has_error_message() ? ("— " + connStatus.error_message()).c_str() : "");
+    }
   }
 
   void AndroidBluetoothServer::sendMessage(const google::protobuf::Message &message, uint16_t type) {
-    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::sendMessage] Sending message to connected device";
+    qInfo(lcBsBtServer) << "[AndroidBluetoothServer::sendMessage] type=" << type
+                        << "proto=" << std::string(message.GetTypeName()).c_str();
 
     int byteSize = message.ByteSizeLong();
     QByteArray out(byteSize + 4, 0);
@@ -296,38 +352,36 @@ using configuration::ConfigKey;
   void AndroidBluetoothServer::DecodeProtoMessage(const std::string& proto_data) {
     UnknownFieldSet set;
 
-    // Create streams
     ArrayInputStream raw_input(proto_data.data(), proto_data.size());
     CodedInputStream input(&raw_input);
 
-    // Decode the message
     if (!set.MergeFromCodedStream(&input)) {
-      std::cerr << "Failed to decode the message." << std::endl;
+      qCWarning(lcBsBtServer) << "[AndroidBluetoothServer::DecodeProtoMessage] Failed to decode unknown message";
       return;
     }
 
-    // Iterate over the fields
     for (int i = 0; i < set.field_count(); ++i) {
       const UnknownField& field = set.field(i);
       switch (field.type()) {
         case UnknownField::TYPE_VARINT:
-          std::cout << "Field number " << field.number() << " is a varint: " << field.varint() << std::endl;
+          qDebug(lcBsBtServer) << "[DecodeProtoMessage] field" << field.number() << "varint:" << field.varint();
           break;
         case UnknownField::TYPE_FIXED32:
-          std::cout << "Field number " << field.number() << " is a fixed32: " << field.fixed32() << std::endl;
+          qDebug(lcBsBtServer) << "[DecodeProtoMessage] field" << field.number() << "fixed32:" << field.fixed32();
           break;
         case UnknownField::TYPE_FIXED64:
-          std::cout << "Field number " << field.number() << " is a fixed64: " << field.fixed64() << std::endl;
+          qDebug(lcBsBtServer) << "[DecodeProtoMessage] field" << field.number() << "fixed64:" << field.fixed64();
           break;
-        case UnknownField::TYPE_LENGTH_DELIMITED:
-          std::cout << "Field number " << field.number() << " is length-delimited: ";
-          for (char ch : field.length_delimited()) {
-            std::cout << std::hex << (int)(unsigned char)ch;
-          }
-          std::cout << std::dec << std::endl;
+        case UnknownField::TYPE_LENGTH_DELIMITED: {
+          const std::string ld(field.length_delimited());
+          std::stringstream ss;
+          ss << std::hex << std::setfill('0');
+          for (unsigned char ch : ld) { ss << std::setw(2) << static_cast<unsigned>(ch); }
+          qDebug(lcBsBtServer) << "[DecodeProtoMessage] field" << field.number() << "length_delimited:" << ss.str().c_str();
           break;
-        case UnknownField::TYPE_GROUP:  // Deprecated in modern Protobuf
-          std::cout << "Field number " << field.number() << " is a group." << std::endl;
+        }
+        case UnknownField::TYPE_GROUP:
+          qDebug(lcBsBtServer) << "[DecodeProtoMessage] field" << field.number() << "group (deprecated)";
           break;
       }
     }

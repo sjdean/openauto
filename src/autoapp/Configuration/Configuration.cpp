@@ -15,7 +15,7 @@ Q_LOGGING_CATEGORY(lcConfig, "journeyos.configuration")
 namespace f1x::openauto::autoapp::configuration {
 
   Configuration::Configuration()
-  : m_settings("journey.conf", QSettings::IniFormat)
+  : m_settings(QSettings::IniFormat, QSettings::UserScope, "JourneyOS", "autoapp")
   {
     m_configurationGroups.clear();
 
@@ -94,6 +94,8 @@ namespace f1x::openauto::autoapp::configuration {
     ConfigurationGroup systemGroup(toQString(ConfigGroup::System));
     systemGroup.addSetting<bool>(toQString(ConfigKey::SystemHeadUnitMode), true);
     systemGroup.addSetting<bool>(toQString(ConfigKey::SystemDesktopMode), false);
+    // TODO: Convert this to our enum
+    systemGroup.addSetting<bool>("FirstBoot", true);
     systemGroup.load(m_settings);
     m_configurationGroups.append(systemGroup);
 
@@ -106,11 +108,14 @@ namespace f1x::openauto::autoapp::configuration {
     wirelessGroup.addSetting<QString>(toQString(ConfigKey::WirelessInterface), "");
     wirelessGroup.addSetting<QString>(toQString(ConfigKey::WirelessInterfaceMAC), "");
     wirelessGroup.addSetting<common::Enum::WirelessType::Value>(toQString(ConfigKey::WirelessType), f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT);
+    // TODO: Convert this to using our enum
+    wirelessGroup.addSetting<int>("Type", static_cast<int>(f1x::openauto::common::Enum::WirelessType::WIRELESS_HOTSPOT));
     wirelessGroup.load(m_settings);
     m_configurationGroups.append(wirelessGroup);
   }
 
   void Configuration::save() const {
+    // TODO: Check change on main branch
     m_settings.sync();
   }
 

@@ -8,6 +8,7 @@
 
 #include <QString>
 #include <QVariant>
+#include <functional>
 #include <vector>
 #include <string>
 #include <memory>
@@ -40,14 +41,27 @@ namespace f1x::openauto::autoapp::UI::Backend::Audio {
         virtual QString getDefaultSink() = 0;
         virtual QString getDefaultSource() = 0;
 
+        // Validate a configured name against the live audio system and return the
+        // name to actually use.  Falls back to the system default when the requested
+        // name is empty or not present.  Default impl is a pass-through (stubs/null).
+        virtual QString resolveSinkName(const QString& requested)   { return requested; }
+        virtual QString resolveSourceName(const QString& requested) { return requested; }
+
         virtual void setSinkMute(const QString& deviceName, bool mute) = 0;
         virtual void setSinkVolume(const QString& deviceName, int volume) = 0;
         virtual void setSourceMute(const QString& deviceName, bool mute) = 0;
         virtual void setSourceVolume(const QString& deviceName, int volume) = 0;
+        virtual void setDefaultSink(const QString& /*sinkName*/) {}
 
         virtual EngineDeviceList getSinks() = 0;
         virtual EngineDeviceList getSources() = 0;
         virtual std::vector<std::pair<std::string, std::string>> getDeviceList() = 0;
+
+        // Subscribe to live device changes. Callbacks are invoked from the
+        // audio backend thread — use Qt::QueuedConnection when connecting to
+        // Qt slots to marshal back to the main thread.
+        virtual void addSinksChangedCallback(std::function<void()> /*cb*/) {}
+        virtual void addSourcesChangedCallback(std::function<void()> /*cb*/) {}
     };
 
     // A "do-nothing" stub implementation for non-Linux platforms

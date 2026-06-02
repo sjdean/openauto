@@ -16,7 +16,7 @@ namespace f1x::openauto::autoapp::UI::Model::List {
     void AudioDeviceModelItem::setDisplay(const QString &display) {
         if (m_display != display) {
             m_display = display;
-
+            emit displayChanged();
         }
     }
 
@@ -25,8 +25,9 @@ namespace f1x::openauto::autoapp::UI::Model::List {
     }
 
     void AudioDeviceModelItem::setValue(const QString &value) {
-        if (m_value != value) { // Extract T from QVariant
+        if (m_value != value) {
             m_value = value;
+            emit valueChanged();
         }
     }
 }

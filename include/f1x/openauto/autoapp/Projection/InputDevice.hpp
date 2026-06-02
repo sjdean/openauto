@@ -28,6 +28,7 @@ namespace f1x::openauto::autoapp::projection {
 
         Q_INVOKABLE bool handleTouchEvent(int type, float x, float y);
         Q_INVOKABLE bool handleMouseEvent(int type, float x, float y);
+        Q_INVOKABLE void setInputEnabled(bool enabled);
 
     private:
         void setVideoGeometry();
@@ -43,5 +44,6 @@ namespace f1x::openauto::autoapp::projection {
         IInputDeviceEventHandler *eventHandler_;
         std::mutex mutex_;
         bool hasTouchScreen_;
+        bool inputEnabled_ = true;
     };
 }

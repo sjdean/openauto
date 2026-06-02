@@ -48,18 +48,19 @@ namespace f1x::openauto::autoapp::service::bluetooth {
     auto bluetooth = service->mutable_bluetooth_service();
 
     if (bluetoothDevice_->isAvailable()) {
-      qInfo(lcServiceBt) << "adapter address=" << bluetoothDevice_->getAdapterAddress();
+      const auto addr = bluetoothDevice_->getAdapterAddress();
+      qInfo(lcServiceBt) << "fillFeatures: advertising BT adapter address=" << addr.c_str()
+                         << "pairing=PIN+NUMERIC_COMPARISON";
 
       // If the HU wants the MD to skip the Bluetooth Pairing and Connection process, the HU can declare its address as SKIP_THIS_BLUETOOTH
-      bluetooth->set_car_address(bluetoothDevice_->getAdapterAddress());
+      bluetooth->set_car_address(addr);
 
-      // AAP supports both PIN and Numeric Comparison as pairing methods.
       bluetooth->add_supported_pairing_methods(
           aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_PIN);
       bluetooth->add_supported_pairing_methods(
           aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_NUMERIC_COMPARISON);
     } else {
-      qWarning(lcServiceBt) << "bluetooth not available";
+      qCWarning(lcServiceBt) << "fillFeatures: bluetooth adapter not available — advertising BLUETOOTH_PAIRING_UNAVAILABLE";
       bluetooth->set_car_address("");
       bluetooth->add_supported_pairing_methods(
           aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_UNAVAILABLE);
@@ -108,7 +109,11 @@ namespace f1x::openauto::autoapp::service::bluetooth {
     qInfo(lcServiceBt) << "sending authentication data";
 
     aap_protobuf::service::bluetooth::message::BluetoothAuthenticationData data;
-    // TODO: Do we need to generate a random pin, or is 123456 sufficient?
+    // auth_data and pairing_method are AA-protocol advisory fields only — they do not
+    // control the OS-level BT pairing method, which is negotiated by BlueZ independently.
+    // Use the original proven values. The actual confirmation is handled by
+    // BluetoothAgent::RequestConfirmation which auto-accepts so pairing completes
+    // even when the user is in full-screen AA view.
     data.set_auth_data("123456");
     data.set_pairing_method(
         aap_protobuf::service::bluetooth::message::BluetoothPairingMethod::BLUETOOTH_PAIRING_PIN);

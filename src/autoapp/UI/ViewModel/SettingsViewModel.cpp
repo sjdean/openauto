@@ -156,6 +156,8 @@ using configuration::ConfigKey;
         m_uiAccentPrimary = configuration_->getSettingByName<QString>(ConfigGroup::Screen, ConfigKey::ScreenAccentPrimary);
         m_uiAccentBrand2  = configuration_->getSettingByName<QString>(ConfigGroup::Screen, ConfigKey::ScreenAccentBrand2);
         m_uiButtonOpacity = configuration_->getSettingByName<double>(ConfigGroup::Screen, ConfigKey::ScreenButtonOpacity);
+        //TODO: Make this backed by enum
+        m_firstBoot = configuration_->getSettingByName<bool>("System", "FirstBoot");
     }
 
     QString SettingsViewModel::getCarMake() const {
@@ -829,6 +831,19 @@ using configuration::ConfigKey;
             configuration_->save();
             m_uiButtonOpacity = value;
             emit uiButtonOpacityChanged();
+        }
+    }
+
+    bool SettingsViewModel::getFirstBoot() const {
+        return m_firstBoot;
+    }
+
+    void SettingsViewModel::acknowledgeFirstBoot() {
+        if (m_firstBoot) {
+            configuration_->updateSettingByName<bool>("System", "FirstBoot", false);
+            configuration_->save();
+            m_firstBoot = false;
+            emit firstBootChanged();
         }
     }
 }

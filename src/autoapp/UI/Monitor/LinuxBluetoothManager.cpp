@@ -3,12 +3,9 @@
 
 #ifdef Q_OS_LINUX
 #include <QDBusMetaType>
-// BlueZ GetManagedObjects returns a{oa{sa{sv}}}:
-//   object path → interface name → property name → variant
-using BluezInterfaceList  = QMap<QString, QVariantMap>;   // a{sa{sv}}
-using BluezManagedObjects = QMap<QDBusObjectPath, BluezInterfaceList>; // a{oa{sa{sv}}}
-Q_DECLARE_METATYPE(BluezInterfaceList)
-Q_DECLARE_METATYPE(BluezManagedObjects)
+#include <QDBusInterface>
+#include <QDBusReply>
+#include <QFileInfo>
 #endif
 
 #include <aap_protobuf/service/bluetooth/message/BluetoothPairingRequest.pb.h>
@@ -17,8 +14,79 @@ Q_DECLARE_METATYPE(BluezManagedObjects)
 #include "f1x/openauto/autoapp/Configuration/IConfiguration.hpp"
 #include "f1x/openauto/Common/Enum/BluetoothConnectionStatus.hpp"
 #include <QTimer>
+#include <QDir>
+#include <QFile>
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcBtHandler, "journeyos.bluetooth")
+
+// Returns a human-readable hardware label for the BT adapter that owns `address`.
+// Strategy:
+//   1. Use BlueZ GetManagedObjects to map MAC → hci name (e.g. "hci1")
+//   2. Resolve /sys/class/bluetooth/hci1/device symlink → USB interface path
+//   3. Read the parent USB device's "product" string (e.g. "CSR8510 A10")
+//   4. For built-in UART adapters (no USB product) return "Built-in"
+static QString btVendorName(const QBluetoothAddress &address)
+{
+#ifdef Q_OS_LINUX
+    const QString targetAddr = address.toString().toUpper();
+
+    // Step 1: ask BlueZ which hci object path belongs to this MAC
+    QDBusInterface om("org.bluez", "/",
+                      "org.freedesktop.DBus.ObjectManager",
+                      QDBusConnection::systemBus());
+    const QDBusMessage reply = om.call("GetManagedObjects");
+    if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().isEmpty())
+        return {};
+
+    using ObjectMap = QMap<QDBusObjectPath, QMap<QString, QVariantMap>>;
+    const auto objects = qdbus_cast<ObjectMap>(reply.arguments().at(0));
+
+    QString hciName;
+    for (auto it = objects.cbegin(); it != objects.cend(); ++it) {
+        if (!it.value().contains(QLatin1String("org.bluez.Adapter1")))
+            continue;
+        const QString addr = it.value()[QLatin1String("org.bluez.Adapter1")]
+                             [QLatin1String("Address")].toString().toUpper();
+        if (addr == targetAddr) {
+            // Object path is "/org/bluez/hci0" — take the last segment
+            hciName = it.key().path().section(QLatin1Char('/'), -1);
+            break;
+        }
+    }
+    if (hciName.isEmpty())
+        return {};
+
+    // Step 2: resolve /sys/class/bluetooth/hciN/device symlink
+    const QString deviceLink = QStringLiteral("/sys/class/bluetooth/") + hciName
+                               + QStringLiteral("/device");
+    const QString resolvedIface = QFileInfo(deviceLink).canonicalFilePath();
+
+    if (!resolvedIface.isEmpty()) {
+        // Step 3: parent dir = the USB device node (one level above the interface)
+        const QString usbDevPath = QFileInfo(resolvedIface).canonicalPath();
+
+        QFile productFile(usbDevPath + QStringLiteral("/product"));
+        if (productFile.open(QIODevice::ReadOnly)) {
+            const QString product = QString::fromLatin1(productFile.readAll().trimmed());
+            if (!product.isEmpty())
+                return product;           // e.g. "CSR8510 A10"
+        }
+
+        QFile mfFile(usbDevPath + QStringLiteral("/manufacturer"));
+        if (mfFile.open(QIODevice::ReadOnly)) {
+            const QString mf = QString::fromLatin1(mfFile.readAll().trimmed());
+            if (!mf.isEmpty())
+                return mf;
+        }
+    }
+
+    // Step 4: no USB product string → built-in UART adapter
+    return QStringLiteral("Built-in");
+#else
+    Q_UNUSED(address)
+    return {};
+#endif
+}
 
 namespace f1x::openauto::autoapp::UI::Monitor {
 using configuration::ConfigGroup;
@@ -79,6 +147,21 @@ using configuration::ConfigKey;
         discoveryAgent_->setLowEnergyDiscoveryTimeout(5000);
         connect(discoveryAgent_, &QBluetoothDeviceDiscoveryAgent::deviceDiscovered,
                 this, &LinuxBluetoothManager::onDeviceDiscovered);
+        connect(discoveryAgent_, &QBluetoothDeviceDiscoveryAgent::deviceUpdated,
+                this, [this](const QBluetoothDeviceInfo &info, QBluetoothDeviceInfo::Fields) {
+                    // Device names often arrive after initial discovery — update existing entry
+                    const QString address = info.address().toString();
+                    const QString name = info.name();
+                    if (name.isEmpty()) return;
+                    for (auto &device : m_devices) {
+                        if (device.address == address && device.name != name) {
+                            device.name = name;
+                            Q_EMIT unpairedDeviceListChanged();
+                            Q_EMIT pairedDeviceListChanged();
+                            break;
+                        }
+                    }
+                });
         connect(discoveryAgent_, &QBluetoothDeviceDiscoveryAgent::finished,
                 this, &LinuxBluetoothManager::onScanFinished);
 
@@ -107,7 +190,16 @@ using configuration::ConfigKey;
         // 5. Load already-paired devices from BlueZ so the list is populated on startup
 #ifdef Q_OS_LINUX
         loadPairedDevicesFromBlueZ();
+        // Cache adapter path now so onDeviceDiscovered can use it without a D-Bus round-trip
+        m_cachedAdapterPath = getBluezAdapterPath();
+        // Subscribe to InterfacesAdded — fires when BlueZ creates a new device object,
+        // which includes the Name property if BlueZ has already resolved it.
+        subscribeToInterfacesAdded();
 #endif
+
+        // Notify QML that the adapter list is available
+        Q_EMIT bluetoothAdapterListChanged();
+        Q_EMIT adapterCountChanged();
 
         // 6. Auto-connect to last known device after the BT stack settles.
         //    If the saved device is unreachable, fall back to other paired devices.
@@ -129,7 +221,9 @@ using configuration::ConfigKey;
 
     void LinuxBluetoothManager::startScan() {
         qInfo(lcBtHandler) << "scan starting";
-        m_devices.clear();
+        // Only clear unpaired/discovered devices — keep paired entries intact
+        m_devices.erase(std::remove_if(m_devices.begin(), m_devices.end(),
+            [](const Model::BluetoothDevice &d) { return !d.paired; }), m_devices.end());
         Q_EMIT unpairedDeviceListChanged();
         m_isScanning = true;
         Q_EMIT isScanningChanged();
@@ -157,28 +251,30 @@ using configuration::ConfigKey;
     }
 
     void LinuxBluetoothManager::onDeviceDiscovered(const QBluetoothDeviceInfo &info) {
-        // Filter out Low Energy (if you only want Classic Audio)
-        if (!(info.coreConfigurations() & QBluetoothDeviceInfo::BaseRateCoreConfiguration)) {
-            return;
-        }
-
         QString address = info.address().toString();
         QString name = info.name();
 
-        // Avoid duplicates
         auto it = std::find_if(m_devices.begin(), m_devices.end(),
                                [&address](const Model::BluetoothDevice &d) { return d.address == address; });
 
         if (it == m_devices.end()) {
+            // New device
 #ifdef Q_OS_LINUX
             Model::BluetoothDevice device(address, name, QDBusObjectPath("/"), false, false);
 #else
             Model::BluetoothDevice device(address, name, QString{}, false, false);
 #endif
             m_devices.append(device);
-
             Q_EMIT unpairedDeviceListChanged();
-            qDebug(lcBtHandler) << "device found name=" << name;
+            qDebug(lcBtHandler) << "device found address=" << address << " name=" << (name.isEmpty() ? "(no name yet)" : name);
+        } else if (!name.isEmpty() && it->name.isEmpty()) {
+            // Same address seen again — Classic BT inquiry response arrived after the
+            // initial BLE advertisement. Qt calls deviceDiscovered a second time with
+            // the full info (including name). Update the existing entry.
+            it->name = name;
+            Q_EMIT unpairedDeviceListChanged();
+            Q_EMIT pairedDeviceListChanged();
+            qDebug(lcBtHandler) << "device name resolved address=" << address << " name=" << name;
         }
     }
 
@@ -186,6 +282,14 @@ using configuration::ConfigKey;
         qInfo(lcBtHandler) << "scan finished count=" << m_devices.size();
         m_isScanning = false;
         Q_EMIT isScanningChanged();
+#ifdef Q_OS_LINUX
+        // Immediate pass: fill names already in BlueZ cache
+        refreshDeviceNamesFromBlueZ();
+        // BlueZ Remote Name Request (RNR) can take 2–10 s after the scan.
+        // Schedule follow-up passes so names that resolve later are captured.
+        QTimer::singleShot(3000, this, &LinuxBluetoothManager::refreshDeviceNamesFromBlueZ);
+        QTimer::singleShot(8000, this, &LinuxBluetoothManager::refreshDeviceNamesFromBlueZ);
+#endif
     }
 
     void LinuxBluetoothManager::onPairingFinished(const QBluetoothAddress &address, QBluetoothLocalDevice::Pairing pairing) {
@@ -231,10 +335,11 @@ using configuration::ConfigKey;
         for (const QBluetoothHostInfo &info: hostInfos) {
             QVariantMap map;
             const QString addrStr = info.address().toString();
-            // Display name includes the address so adapters are distinguishable in the combo
-            map["name"] = info.name().isEmpty()
-                          ? addrStr
-                          : info.name() + QStringLiteral(" \u2014 ") + addrStr;
+            const QString vendor = btVendorName(info.address());
+            const QString displayName = info.name().isEmpty() ? addrStr : info.name();
+            map["name"] = vendor.isEmpty()
+                          ? displayName + QStringLiteral(" \u2014 ") + addrStr
+                          : vendor + QStringLiteral(" (") + displayName + QStringLiteral(") \u2014 ") + addrStr;
             map["address"] = addrStr;
 
             // 2. Probe the status of THIS specific adapter
@@ -473,6 +578,14 @@ using configuration::ConfigKey;
         }
     }
 
+    QString LinuxBluetoothManager::getConnectedDeviceName() const {
+        for (const auto &device : m_devices) {
+            if (device.connected)
+                return device.name;
+        }
+        return QString();
+    }
+
     QVariantList LinuxBluetoothManager::getPairedDeviceList() {
         QVariantList model;
         for (const auto &device: m_devices) {
@@ -558,6 +671,83 @@ using configuration::ConfigKey;
         if (changed)
             Q_EMIT pairedDeviceListChanged();
     }
+
+    void LinuxBluetoothManager::subscribeToInterfacesAdded() {
+        // BlueZ fires InterfacesAdded on / whenever a new object (including Device1) is
+        // added to the object tree. This gives us the Name property as soon as BlueZ
+        // creates the object — often before Qt's deviceUpdated signal fires.
+        bool ok = QDBusConnection::systemBus().connect(
+            "org.bluez", "/",
+            "org.freedesktop.DBus.ObjectManager", "InterfacesAdded",
+            this, SLOT(onBluezInterfacesAdded(QDBusObjectPath, BluezInterfaceList)));
+        if (!ok)
+            qWarning(lcBtHandler) << "failed to subscribe to BlueZ InterfacesAdded";
+    }
+
+    void LinuxBluetoothManager::onBluezInterfacesAdded(const QDBusObjectPath &path,
+                                                   const BluezInterfaceList &interfaces) {
+        if (!interfaces.contains("org.bluez.Device1")) return;
+
+        const QVariantMap &props = interfaces["org.bluez.Device1"];
+        const QString address = props.value("Address").toString();
+        if (address.isEmpty()) return;
+
+        const QString name = props.value("Name", props.value("Alias")).toString();
+        if (name.isEmpty()) return;
+
+        bool changed = false;
+        for (auto &device : m_devices) {
+            if (device.address == address && device.name != name) {
+                qInfo(lcBtHandler) << "InterfacesAdded resolved name address=" << address << " name=" << name;
+                device.name = name;
+                changed = true;
+                break;
+            }
+        }
+        if (changed) {
+            Q_EMIT unpairedDeviceListChanged();
+            Q_EMIT pairedDeviceListChanged();
+        }
+        Q_UNUSED(path)
+    }
+
+    void LinuxBluetoothManager::refreshDeviceNamesFromBlueZ() {
+        QDBusReply<BluezManagedObjects> reply = m_manager.call("GetManagedObjects");
+        if (!reply.isValid()) {
+            qWarning(lcBtHandler) << "refreshDeviceNamesFromBlueZ failed error=" << reply.error().message();
+            return;
+        }
+
+        const BluezManagedObjects &objects = reply.value();
+        bool changed = false;
+
+        for (auto &device : m_devices) {
+            if (!device.name.isEmpty()) continue; // already has a name
+
+            // Look for this address in BlueZ's object tree
+            for (auto it = objects.constBegin(); it != objects.constEnd(); ++it) {
+                const BluezInterfaceList &interfaces = it.value();
+                if (!interfaces.contains("org.bluez.Device1")) continue;
+
+                const QVariantMap &props = interfaces["org.bluez.Device1"];
+                if (props.value("Address").toString() != device.address) continue;
+
+                // Prefer Name (from inquiry/GATT), fall back to Alias (user-editable label)
+                const QString name = props.value("Name", props.value("Alias")).toString();
+                if (!name.isEmpty()) {
+                    qInfo(lcBtHandler) << "name resolved from BlueZ address=" << device.address << " name=" << name;
+                    device.name = name;
+                    changed = true;
+                }
+                break;
+            }
+        }
+
+        if (changed) {
+            Q_EMIT unpairedDeviceListChanged();
+            Q_EMIT pairedDeviceListChanged();
+        }
+    }
 #endif
 
     void LinuxBluetoothManager::setActiveAdapter(const QString &address) {
@@ -588,6 +778,13 @@ using configuration::ConfigKey;
         if (m_pairingModeEnabled == enabled) return;
         m_pairingModeEnabled = enabled;
 
+        // Update host visibility so remote devices can find us
+        if (localDevice_ && localDevice_->isValid()) {
+            localDevice_->setHostMode(enabled
+                ? QBluetoothLocalDevice::HostDiscoverable
+                : QBluetoothLocalDevice::HostConnectable);
+        }
+
 #ifdef Q_OS_LINUX
         QDBusInterface agentManager("org.bluez", "/org/bluez", "org.bluez.AgentManager1",
                                     QDBusConnection::systemBus());
@@ -598,11 +795,11 @@ using configuration::ConfigKey;
                                   "DisplayYesNo");
                 agentManager.call("RequestDefaultAgent",
                                   QVariant::fromValue(QDBusObjectPath(m_agent->objectPath())));
-                qInfo(lcBtHandler) << "Pairing mode enabled";
+                qInfo(lcBtHandler) << "pairing mode enabled — device is discoverable";
             } else {
                 agentManager.call("UnregisterAgent",
                                   QVariant::fromValue(QDBusObjectPath(m_agent->objectPath())));
-                qInfo(lcBtHandler) << "Pairing mode disabled";
+                qInfo(lcBtHandler) << "pairing mode disabled — device is connectable only";
             }
         } else {
             qWarning(lcBtHandler) << "agent manager not available";

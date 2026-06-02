@@ -7,9 +7,7 @@ Item {
     id: volumePopup
     anchors.fill: parent
 
-    property bool isMuted: false
-
-    signal mutePressed(bool isMuted)
+    property bool isMuted: volumePopupHandler.volumeSinkMute
 
 
     Column {
@@ -29,7 +27,7 @@ Item {
             alternateColor: Constants.sliderAlternateColor
             value: volumePopupHandler.volumeSink
             onMoved: volumePopupHandler.volumeSink = value
-
+            onPressedChanged: if (!pressed) volumePopupHandler.saveSettings()
         }
 
         JourneyButton {
@@ -41,10 +39,7 @@ Item {
             width: parent.width
             Connections {
                 target: muteButton
-                onClicked: {
-                    volumePopup.isMuted = !volumePopup.isMuted
-                    volumePopupHandler.volumeSinkMute = volumePopup.isMuted
-                }
+                function onClicked() { volumePopupHandler.toggleSinkMute() }
             }
         }
     }

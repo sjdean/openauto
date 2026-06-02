@@ -1,5 +1,6 @@
 #include "f1x/openauto/autoapp/UI/Monitor/WifiMonitor.hpp"
 #include <QDebug>
+#include <QFile>
 #include <QRegularExpression>
 #include <QProcess>
 #ifdef Q_OS_LINUX
@@ -9,6 +10,15 @@
 
 #include <qloggingcategory.h>
 Q_LOGGING_CATEGORY(lcWifiMonitor, "journeyos.wifi.monitor")
+
+static bool isWifiInterface(const QNetworkInterface &i) {
+    // Qt's type() uses SIOCGIWNAME (wireless extensions) which returns EOPNOTSUPP
+    // on modern nl80211 drivers, causing wlan0 to appear as Ethernet. Fall back
+    // to sysfs: /sys/class/net/<iface>/wireless/ exists iff the interface is Wi-Fi.
+    if (i.type() == QNetworkInterface::Wifi)
+        return true;
+    return QFile::exists(QString("/sys/class/net/%1/wireless").arg(i.name()));
+}
 
 namespace f1x::openauto::autoapp::UI::Monitor {
     using namespace f1x::openauto::common::Enum;
@@ -28,7 +38,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         if (!savedName.isEmpty()) {
             // Primary: match by interface name
             QNetworkInterface byName = QNetworkInterface::interfaceFromName(savedName);
-            if (byName.isValid() && byName.type() == QNetworkInterface::Wifi) {
+            if (byName.isValid() && isWifiInterface(byName)) {
                 m_currentInterface = byName;
             }
         }
@@ -36,7 +46,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         if (!m_currentInterface.isValid() && !savedMac.isEmpty()) {
             // Secondary: match by saved MAC (backwards-compat / renamed interface)
             for (const QNetworkInterface &i: QNetworkInterface::allInterfaces()) {
-                if (i.type() == QNetworkInterface::Wifi &&
+                if (isWifiInterface(i) &&
                     i.hardwareAddress().compare(savedMac, Qt::CaseInsensitive) == 0) {
                     m_currentInterface = i;
                     break;
@@ -47,7 +57,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         // Fallback: auto-detect first active Wi-Fi adapter
         if (!m_currentInterface.isValid()) {
             for (const QNetworkInterface &i: QNetworkInterface::allInterfaces()) {
-                if (i.type() == QNetworkInterface::Wifi &&
+                if (isWifiInterface(i) &&
                     (i.flags() & QNetworkInterface::IsUp) &&
                     !i.hardwareAddress().isEmpty()) {
                     m_currentInterface = i;
@@ -145,7 +155,7 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         QVariantList list;
 
         for (const QNetworkInterface &i: QNetworkInterface::allInterfaces()) {
-            if (i.type() != QNetworkInterface::Wifi || i.hardwareAddress().isEmpty()) {
+            if (!isWifiInterface(i) || i.hardwareAddress().isEmpty()) {
                 continue;
             }
 
@@ -175,20 +185,48 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     void WifiMonitor::requestScan()
     {
 #ifdef Q_OS_LINUX
-        if (m_wifiDevicePath.isEmpty()) return;
+        if (m_wifiDevicePath.isEmpty()) {
+            // Device path not yet resolved (findWifiDevice is async at startup).
+            // Re-resolve synchronously now and chain into the scan.
+            if (!m_currentInterface.isValid()) {
+                qWarning(lcWifiMonitor) << "scan requested but no interface available";
+                emit scanStatusChanged(tr("Scan failed: no Wi-Fi interface"));
+                return;
+            }
+            qInfo(lcWifiMonitor) << "device path empty — resolving before scan";
+            QDBusInterface nm("org.freedesktop.NetworkManager",
+                              "/org/freedesktop/NetworkManager",
+                              "org.freedesktop.NetworkManager", m_bus);
+            QDBusReply<QDBusObjectPath> devReply = nm.call("GetDeviceByIpIface",
+                                                           m_currentInterface.name());
+            if (!devReply.isValid()) {
+                qWarning(lcWifiMonitor) << "device lookup failed error=" << devReply.error().message();
+                emit scanStatusChanged(tr("Scan failed: device not found"));
+                return;
+            }
+            m_wifiDevicePath = devReply.value().path();
+            qInfo(lcWifiMonitor) << "device path resolved path=" << m_wifiDevicePath;
+        }
 
         QDBusInterface wireless("org.freedesktop.NetworkManager",
                                 m_wifiDevicePath,
                                 "org.freedesktop.NetworkManager.Device.Wireless",
                                 m_bus);
 
+        emit scanStatusChanged(tr("Scanning\u2026")); // "Scanning…"
+
         QVariantMap options; // NM accepts empty options map
         auto *w = new QDBusPendingCallWatcher(wireless.asyncCall("RequestScan", options), this);
         connect(w, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
-            if (call->isError())
+            if (call->isError()) {
+                const QString msg = tr("Scan failed: %1").arg(call->error().message());
                 qWarning(lcWifiMonitor) << "scan request failed error=" << call->error().message();
-            else
+                emit scanStatusChanged(msg);
+                // Even if it failed, it might be because a scan is already cached or recently done.
+                QTimer::singleShot(500, this, &WifiMonitor::refreshAccessPoints);
+            } else {
                 QTimer::singleShot(2000, this, &WifiMonitor::refreshAccessPoints);
+            }
             call->deleteLater();
         });
 #endif
@@ -236,6 +274,12 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         });
 
         emit accessPointsChanged(apList);
+
+        // Clear "Scanning…" / error status now that results are in
+        const QString statusMsg = apList.isEmpty()
+            ? tr("No networks found")
+            : tr("%1 network(s) found").arg(apList.size());
+        emit scanStatusChanged(statusMsg);
     }
 #endif
 
@@ -297,7 +341,8 @@ namespace f1x::openauto::autoapp::UI::Monitor {
         } else {
             emit currentSsidChanged("");
             emit signalStrengthChanged(0);
-            emit modeChanged(WirelessType::WIRELESS_CLIENT);
+            // DO NOT change mode to CLIENT here just because it disconnected.
+            // emit modeChanged(WirelessType::WIRELESS_CLIENT);
         }
     }
 
@@ -314,64 +359,34 @@ namespace f1x::openauto::autoapp::UI::Monitor {
     void WifiMonitor::refreshLinuxStatus() {
         if (m_wifiDevicePath.isEmpty()) return;
 
-        QDBusInterface device("org.freedesktop.NetworkManager",
-                              m_wifiDevicePath,
-                              "org.freedesktop.NetworkManager.Device",
-                              m_bus);
+        // Use Device.Wireless.ActiveAccessPoint to get SSID + signal strength.
+        // Avoids GetSettings which returns a{sa{sv}} — using QDBusPendingReply<QVariantMap>
+        // for that caused "Unexpected reply signature: got a{sa{sv}}, expected a{sv}" errors.
+        QDBusInterface wireless("org.freedesktop.NetworkManager",
+                                m_wifiDevicePath,
+                                "org.freedesktop.NetworkManager.Device.Wireless",
+                                m_bus);
 
-        QDBusObjectPath activeConnPath = device.property("ActiveConnection").value<QDBusObjectPath>();
-        if (activeConnPath.path() == "/" || activeConnPath.path().isEmpty()) {
+        QDBusObjectPath activeApPath = wireless.property("ActiveAccessPoint").value<QDBusObjectPath>();
+        if (activeApPath.path().isEmpty() || activeApPath.path() == "/") {
+            // No active AP — device is idle or acting as hotspot AP (no client-side AP entry)
             emit currentSsidChanged("");
-            emit modeChanged(WirelessType::WIRELESS_CLIENT);
+            emit signalStrengthChanged(0);
             return;
         }
 
-        QDBusInterface activeConn("org.freedesktop.NetworkManager",
-                                  activeConnPath.path(),
-                                  "org.freedesktop.NetworkManager.Connection.Active",
-                                  m_bus);
+        QDBusInterface ap("org.freedesktop.NetworkManager",
+                          activeApPath.path(),
+                          "org.freedesktop.NetworkManager.AccessPoint",
+                          m_bus);
 
-        QDBusObjectPath connSettingsPath = activeConn.property("Connection").value<QDBusObjectPath>();
-        QDBusObjectPath specificObject = activeConn.property("SpecificObject").value<QDBusObjectPath>();
+        QByteArray ssidBytes = ap.property("Ssid").toByteArray();
+        QString ssid = QString::fromUtf8(ssidBytes);
+        quint8 strength = ap.property("Strength").value<quint8>();
 
-        // Get connection settings (SSID, mode)
-        QDBusInterface settings("org.freedesktop.NetworkManager",
-                                connSettingsPath.path(),
-                                "org.freedesktop.NetworkManager.Settings.Connection",
-                                m_bus);
-
-        QDBusPendingReply<QVariantMap> reply = settings.asyncCall("GetSettings");
-        auto *watcher = new QDBusPendingCallWatcher(reply, this);
-        connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, specificObject](QDBusPendingCallWatcher *w) {
-            if (w->isError()) {
-                qWarning(lcWifiMonitor) << "failed to get connection settings error=" << w->error().message();
-                w->deleteLater();
-                return;
-            }
-
-            QVariantMap settings = w->reply().arguments().first().toMap();
-            QVariantMap wireless = settings.value("802-11-wireless").toMap();
-            QByteArray ssidBytes = wireless.value("ssid").toByteArray();
-            QString ssid = QString::fromUtf8(ssidBytes);
-            QString mode = wireless.value("mode").toString(); // "infrastructure" or "ap"
-
-            emit currentSsidChanged(ssid);
-            emit modeChanged(mode == "ap" ? WirelessType::WIRELESS_HOTSPOT : WirelessType::WIRELESS_CLIENT);
-
-            // Signal strength from current AccessPoint
-            if (!specificObject.path().isEmpty() && specificObject.path() != "/") {
-                QDBusInterface ap("org.freedesktop.NetworkManager",
-                                  specificObject.path(),
-                                  "org.freedesktop.NetworkManager.AccessPoint",
-                                  m_bus);
-                quint8 strength = ap.property("Strength").value<quint8>();
-                emit signalStrengthChanged(static_cast<int>(strength));
-            } else {
-                emit signalStrengthChanged(0);
-            }
-
-            w->deleteLater();
-        });
+        qCInfo(lcWifiMonitor) << "active AP ssid=" << ssid << "strength=" << strength;
+        emit currentSsidChanged(ssid);
+        emit signalStrengthChanged(static_cast<int>(strength));
     }
 
 #endif // Q_OS_LINUX

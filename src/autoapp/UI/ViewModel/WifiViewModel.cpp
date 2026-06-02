@@ -26,6 +26,7 @@ using configuration::ConfigKey;
         m_clientSsid        = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientSSID);
         m_clientPassword    = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessClientPassword);
         m_isEnabled         = m_config->getSettingByName<bool>(ConfigGroup::Wireless, ConfigKey::WirelessEnabled);
+        m_mode              = static_cast<common::Enum::WirelessType::Value>(m_config->getSettingByName<common::Enum::WirelessType::Value>(ConfigGroup::Wireless, ConfigKey::WirelessType));
         auto modeVal        = m_config->getSettingByName<common::Enum::WirelessType::Value>(ConfigGroup::Wireless, ConfigKey::WirelessType);
         updateMode(modeVal);
 
@@ -38,6 +39,12 @@ using configuration::ConfigKey;
         connect(m_monitor, &Monitor::IWiFiMonitor::currentIpChanged, this, &WifiViewModel::updateCurrentIP);
         connect(m_monitor, &Monitor::IWiFiMonitor::interfaceChanged, this, &WifiViewModel::updateInterface);
         connect(m_monitor, &Monitor::IWiFiMonitor::interfaceUpChanged, this, &WifiViewModel::updateInterfaceUp);
+        connect(m_monitor, &Monitor::IWiFiMonitor::scanStatusChanged, this, [this](const QString &status) {
+            if (status != m_scanStatus) {
+                m_scanStatus = status;
+                emit scanStatusChanged();
+            }
+        });
     }
 
     bool WifiViewModel::getIsEnabled() const { return m_isEnabled; }
@@ -61,7 +68,7 @@ using configuration::ConfigKey;
 
     QString WifiViewModel::getSelectedInterface() const { return m_selectedInterface; }
 
-    common::Enum::WirelessType::Value WifiViewModel::getMode() const { return m_config->getSettingByName<common::Enum::WirelessType::Value>(ConfigGroup::Wireless, ConfigKey::WirelessType); }
+    common::Enum::WirelessType::Value WifiViewModel::getMode() const { return m_mode; }
 
     bool WifiViewModel::getIsHotspot() const { return m_mode == common::Enum::WirelessType::WIRELESS_HOTSPOT; }
 
@@ -101,6 +108,10 @@ using configuration::ConfigKey;
         return m_availableInterfaces;
     }
 
+    QString WifiViewModel::getCurrentIp() const { return m_currentIp; }
+    QString WifiViewModel::getInterfaceMac() const { return m_interfaceMac; }
+    QString WifiViewModel::getScanStatus() const { return m_scanStatus; }
+
 
     void WifiViewModel::setSelectedInterface(const QString& iface) {
         if (iface != m_selectedInterface) {
@@ -113,11 +124,13 @@ using configuration::ConfigKey;
     }
 
     void WifiViewModel::setMode(common::Enum::WirelessType::Value mode) {
-        if (mode != this->m_mode) {
+        if (mode != m_mode) {
+            m_mode = mode;
             m_config->updateSettingByName<common::Enum::WirelessType::Value>(ConfigGroup::Wireless, ConfigKey::WirelessType, mode);
             m_config->save();
             m_wifiController->setMode(mode);
             emit modeChanged();
+            emit statusChanged();
         }
     }
 

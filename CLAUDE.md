@@ -115,4 +115,15 @@ CLion's indexer lacks the Qt include paths. Diagnostics shown in `.hpp`/`.cpp` f
 
 ## Commit Convention
 
-`type: subject` (lowercase). Types: `feat`, `fix`, `chore`, `docs`, `refactor`. PRs target `crankshaft-ng`.
+`type: subject` (lowercase). Types: `feat`, `fix`, `chore`, `docs`, `refactor`. PRs target `develop`.
+
+## Branching Strategy
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Stable releases — merge here and tag for a release |
+| `develop` | Active development — default branch; PRs merge here |
+| `feature/<name>` | Feature branches off `develop` |
+| `release/<major.minor>` | Optional stabilisation branch before merging to `main` |
+
+Tags use `v<LIBRARY_BUILD_VERSION>` format (e.g. `v4.1.5`). Historical upstream tags on `origin/crankshaft-ng` reflect the pre-fork lineage and should not be moved.

@@ -26,6 +26,9 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         Q_PROPERTY(QVariantList accessPoints READ getAccessPoints NOTIFY accessPointsChanged)
         Q_PROPERTY(QVariantList availableInterfaces READ getAvailableInterfaces NOTIFY availableInterfacesChanged)
         Q_PROPERTY(WifiStatus status READ getStatus NOTIFY statusChanged)
+        Q_PROPERTY(QString currentIp READ getCurrentIp NOTIFY currentIpChanged)
+        Q_PROPERTY(QString interfaceMac READ getInterfaceMac NOTIFY interfaceMacChanged)
+        Q_PROPERTY(QString scanStatus READ getScanStatus NOTIFY scanStatusChanged)
 
     public:
         enum class WifiStatus { Disconnected, Connected, HotspotActive };
@@ -52,6 +55,9 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         QVariantList getAccessPoints() const;
         QVariantList getAvailableInterfaces() const;
         WifiStatus getStatus() const;
+        QString getCurrentIp() const;
+        QString getInterfaceMac() const;
+        QString getScanStatus() const;
 
         // Write (saves to config + emits)
         Q_INVOKABLE void setSelectedInterface(const QString &iface);
@@ -97,6 +103,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         void interfaceUpChanged();
         void currentIpChanged();
         void availableInterfacesChanged();
+        void scanStatusChanged();
 
         void connectRequested(const QString &ssid);
         void statusChanged();
@@ -120,5 +127,6 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
         QString m_currentIp;
         bool m_interfaceUp;
         QString m_interfaceMac;
+        QString m_scanStatus;
     };
 } // namespace

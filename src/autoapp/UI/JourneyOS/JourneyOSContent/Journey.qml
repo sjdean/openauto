@@ -95,9 +95,14 @@ Window {
 
     Popup {
         id: wifiPopup
-        anchors.centerIn: parent
-        width: Math.min(500, parent.width - 40)
-        height: Math.min(wifiPopupContent.implicitHeight + 20, parent.height - 40)
+        // When the virtual keyboard is active, shift the popup to the top of
+        // the screen and shrink it so it fits entirely above the keyboard.
+        x: Math.round((root.width - width) / 2)
+        y: inputPanel.active ? 5 : Math.round((root.height - height) / 2)
+        width: Math.min(500, root.width - 40)
+        height: inputPanel.active
+                ? Math.max(root.height - inputPanel.height - 10, 160)
+                : root.height - 40
         modal: true
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -128,6 +133,79 @@ Window {
     }
 
     // ---------------------------------------------------------
+    // FIRST-BOOT SAFETY DISCLAIMER
+    // Modal, cannot be dismissed without accepting. Shown once.
+    // ---------------------------------------------------------
+    Popup {
+        id: firstBootPopup
+        anchors.centerIn: parent
+        width: Math.min(480, root.width - 40)
+        modal: true
+        focus: true
+        closePolicy: Popup.NoAutoClose
+
+        background: Rectangle {
+            color: Constants.popupBackgroundTranslucent
+            radius: Constants.radiusPopup
+            border.color: Constants.popupBorder
+            border.width: 1
+        }
+
+        Column {
+            width: parent.width
+            spacing: 18
+            padding: 24
+
+            Text {
+                text: "Safety Notice"
+                font.pixelSize: Constants.fontHeading
+                font.bold: true
+                color: Constants.textPrimary
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            Text {
+                text: "JourneyOS is provided as-is, without warranty of any kind.\n\n" +
+                      "Always keep your eyes on the road and obey all applicable traffic laws. " +
+                      "Never interact with this device while the vehicle is in motion.\n\n" +
+                      "Use of this software is entirely at your own risk."
+                wrapMode: Text.WordWrap
+                width: parent.width - parent.padding * 2
+                font.pixelSize: Constants.fontBody
+                color: Constants.textSecondary
+                lineHeight: 1.4
+            }
+
+            Button {
+                text: "I Understand"
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 200
+                height: 44
+                background: Rectangle {
+                    color: parent.down ? Constants.btnConfirmBgPressed : Constants.btnConfirmBg
+                    radius: Constants.radiusButton
+                }
+                contentItem: Text {
+                    text: parent.text
+                    font.pixelSize: Constants.fontBody
+                    font.bold: true
+                    color: Constants.btnConfirmFg
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                onClicked: {
+                    settingsViewHandler.acknowledgeFirstBoot()
+                    firstBootPopup.close()
+                }
+            }
+        }
+
+        Component.onCompleted: {
+            if (settingsViewHandler.firstBoot) firstBootPopup.open()
+        }
+    }
+
+    // ---------------------------------------------------------
     // 3. LOGIC & CONNECTIONS
     // ---------------------------------------------------------
 
@@ -155,6 +233,20 @@ Window {
         // Slider popups
         function onViewVolume()     { volumePopup.open() }
         function onViewBrightness() { brightnessPopup.open() }
+    }
+
+    // Forward keyboard events to Android Auto only when the AA view is on top
+    // and no modal popup is obscuring it.  Without this, typing into Settings
+    // TextFields or WiFi/BT popup fields also sends the keystrokes to AA.
+    Binding {
+        target: inputMapper
+        property: "inputEnabled"
+        value: stackView.currentItem !== null
+               && stackView.currentItem.objectName === "AndroidAutoView"
+               && !bluetoothPopup.opened
+               && !wifiPopup.opened
+               && !powerPopup.opened
+               && !firstBootPopup.opened
     }
 
     // Restart slider auto-close timers on each interaction so they only
@@ -191,11 +283,13 @@ Window {
     // ---------------------------------------------------------
     // VIRTUAL KEYBOARD
     // ---------------------------------------------------------
-    // InputPanel must live in the root Window so it can overlay all content.
-    // It starts off-screen (y: root.height) and slides up when a text field
-    // is focused, then slides back down on dismiss.
+    // Parent to Overlay.overlay so the keyboard renders above all Popup content
+    // regardless of the Overlay singleton's z-order within the Window tree.
+    // Overlay.overlay fills the Window, so root-relative coordinates are equivalent.
+    // Falls back to root if the overlay hasn't been created yet.
     InputPanel {
         id: inputPanel
+        parent: Overlay.overlay || root
         z: 10000   // above softwareDimmer (9999) so it remains readable at low brightness
         x: 0
         width: root.width

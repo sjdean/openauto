@@ -29,6 +29,7 @@ using configuration::ConfigKey;
     connect(this, &QtAudioOutput::stopPlayback, this, &QtAudioOutput::onStopPlayback);
     connect(this, &QtAudioOutput::requestSetVolume, this, &QtAudioOutput::onSetVolume);
 
+    // TODO:heck this against the main branch
     // Thread is NOT started here. Call setFormat() then open() after AA negotiation.
   }
 
@@ -62,7 +63,7 @@ using configuration::ConfigKey;
     if(!configDeviceName.isEmpty()) {
         const auto devices = QMediaDevices::audioOutputs();
         for(const auto& d : devices) {
-            if(d.description() == configDeviceName) {
+            if(d.id() == configDeviceName.toUtf8()) {
                 device = d;
                 break;
             }
@@ -107,7 +108,7 @@ using configuration::ConfigKey;
     if (!playbackStarted_) {
       qInfo(lcQtAudioOut) << "playback started";
       audioOutput_->start(&audioInternalBuffer_);
-      float vol = configuration_->getSettingByName<int>(ConfigGroup::Audio, ConfigKey::AudioPlaybackVolume) / 100.0f;
+      float vol = configuration_->getSettingByName<int>(ConfigGroup::Audio, ConfigKey::AudioPlaybackVolume) / 255.0f;
       audioOutput_->setVolume(std::clamp(vol, 0.0f, 1.0f));
       playbackStarted_ = true;
     } else {

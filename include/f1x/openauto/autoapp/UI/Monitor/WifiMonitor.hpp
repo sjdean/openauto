@@ -30,22 +30,6 @@ namespace f1x::openauto::autoapp::UI::Monitor {
 
         ~WifiMonitor() override;
 
-    signals:
-        // Real-time status
-        void currentSsidChanged(const QString &ssid);
-        void signalStrengthChanged(int strength); // 0–100
-        void connectedChanged(bool connected);
-        void modeChanged(common::Enum::WirelessType::Value mode);
-
-        // Interface info
-        void interfaceChanged(const QString &macAddress);
-        void interfaceUpChanged(bool up);
-        void currentIpChanged(const QString &ip);
-        void availableInterfacesChanged(const QVariantList &interfaces);
-
-        // Scan results (Linux only for now)
-        void accessPointsChanged(const QVariantList &aps);
-
     public slots:
         void requestScan();
 

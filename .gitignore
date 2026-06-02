@@ -3,6 +3,7 @@ lib/
 bin/
 build/
 .vscode/
+.idea/cmake.xml
 openauto.ini
 CMakeLists.txt.user
 /.claude/

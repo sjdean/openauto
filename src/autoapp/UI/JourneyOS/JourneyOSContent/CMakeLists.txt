@@ -3,6 +3,8 @@
 
 
 
+set_source_files_properties(ConfigGate.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+
 qt_add_library(JourneyOSContent STATIC)
 qt6_add_qml_module(JourneyOSContent
     URI "JourneyOSContent"

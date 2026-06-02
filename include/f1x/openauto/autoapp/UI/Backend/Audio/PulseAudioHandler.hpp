@@ -7,6 +7,8 @@
 #include <QString>
 #include <QVariant>
 #include <QThread>
+#include <functional>
+#include <vector>
 
 namespace f1x::openauto::autoapp::UI::Backend::Audio {
 
@@ -18,6 +20,10 @@ public:
     QString getDefaultSink() override;
     QString getDefaultSource() override;
 
+    QString resolveSinkName(const QString& requested) override;
+    QString resolveSourceName(const QString& requested) override;
+    void setDefaultSink(const QString& sinkName) override;
+
     void setSinkMute(const QString& deviceName, bool mute) override;
     void setSinkVolume(const QString& deviceName, int volume) override;
     void setSourceMute(const QString& deviceName, bool mute) override;
@@ -27,6 +33,9 @@ public:
     EngineDeviceList getSources() override;
     std::vector<std::pair<std::string, std::string>> getDeviceList() override;
 
+    void addSinksChangedCallback(std::function<void()> cb) override;
+    void addSourcesChangedCallback(std::function<void()> cb) override;
+
   private:
     // Helper struct for synchronous callbacks
     struct ListDevicesState {
@@ -35,13 +44,24 @@ public:
       EngineDeviceList devices;
     };
 
+    QString bestAvailableSink();
+
     static void context_state_callback(pa_context *c, void *userdata);
     static void GetSinkInfoCallback(pa_context *c, const pa_sink_info *i, int eol, void *userdata);
     static void GetSourceInfoCallback(pa_context *c, const pa_source_info *i, int eol, void *userdata);
+    static void subscribe_callback(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata);
 
     pa_threaded_mainloop *m_mainloop = nullptr;
     pa_mainloop_api *m_api = nullptr;
     pa_context *m_context = nullptr;
+
+    // ALSA card device string (e.g. "hw:2") populated by setDefaultSink.
+    // Used to drive hardware volume/mute via snd_mixer_* instead of PA soft-volume,
+    // which is lossy (digital multiply).  Empty on non-ALSA sinks (auto_null etc).
+    QString m_alsaCardDevice;
+
+    std::vector<std::function<void()>> m_sinksChangedCallbacks;
+    std::vector<std::function<void()>> m_sourcesChangedCallbacks;
   };
 }
 #endif

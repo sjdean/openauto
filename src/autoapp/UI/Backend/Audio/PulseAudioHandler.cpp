@@ -1,9 +1,12 @@
 #include "f1x/openauto/autoapp/UI/Backend/Audio/PulseAudioHandler.hpp"
 #ifdef Q_OS_LINUX
+#include <cstdlib>
 #include <qloggingcategory.h>
+#include <QScopeGuard>
 #include <pulse/introspect.h>
 #include <pulse/operation.h>
 #include <pulse/thread-mainloop.h>
+#include <alsa/asoundlib.h>
 
 #include "f1x/openauto/autoapp/UI/Backend/Audio/IAudioHandler.h"
 
@@ -36,8 +39,7 @@ namespace f1x::openauto::autoapp::UI::Backend::Audio {
             return;
         }
         
-        // Wait for connection (optional, but good for initialization)
-        // In a real app, you might want to do this asynchronously, but for init it's often okay.
+        // Wait for context to reach READY state
         while (true) {
             pa_threaded_mainloop_lock(m_mainloop);
             pa_context_state_t state = pa_context_get_state(m_context);
@@ -46,10 +48,21 @@ namespace f1x::openauto::autoapp::UI::Backend::Audio {
             if (state == PA_CONTEXT_READY) break;
             if (!PA_CONTEXT_IS_GOOD(state)) {
                 qCritical(lcAudioPulse) << "connection failed during init";
-                break;
+                return;
             }
-            QThread::msleep(10); // Short sleep while waiting
+            QThread::msleep(10);
         }
+
+        // Subscribe to sink and source change events so AudioDeviceModel can
+        // refresh its list automatically when hardware appears or disappears.
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_context_set_subscribe_callback(m_context, subscribe_callback, this);
+        pa_operation *op = pa_context_subscribe(
+            m_context,
+            static_cast<pa_subscription_mask_t>(PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SOURCE),
+            nullptr, nullptr);
+        if (op) pa_operation_unref(op);
+        pa_threaded_mainloop_unlock(m_mainloop);
     }
 
     PulseAudioHandler::~PulseAudioHandler() {
@@ -74,80 +87,300 @@ namespace f1x::openauto::autoapp::UI::Backend::Audio {
         }
     }
 
+    // --- NAME RESOLUTION ---
+
+    // Returns the PA default sink name.  Used on first boot when no device is
+    // stored in config.  PA sets the default via set-default-sink in
+    // journeyos-iqaudio.pa, so this reliably returns the IQaudIO DAC sink.
+    // Must be called WITHOUT holding the mainloop lock (getDefaultSink acquires it).
+    QString PulseAudioHandler::bestAvailableSink() {
+        const QString def = getDefaultSink();
+        qInfo(lcAudioPulse) << "bestAvailableSink:" << def;
+        return def;
+    }
+
+    void PulseAudioHandler::setDefaultSink(const QString& sinkName) {
+        if (!m_mainloop || !m_context || sinkName.isEmpty()) return;
+        const QByteArray nb = sinkName.toUtf8();
+
+        // 1. Tell PA which sink is the default
+        pa_threaded_mainloop_lock(m_mainloop);
+        qInfo(lcAudioPulse) << "setDefaultSink" << sinkName;
+        pa_operation* op = pa_context_set_default_sink(m_context, nb.constData(), nullptr, nullptr);
+        if (op) pa_operation_unref(op);
+        pa_threaded_mainloop_unlock(m_mainloop);
+
+        // 2. Query sink info: grab ALSA device.string and channel count
+        struct SinkInfo { pa_threaded_mainloop* loop; QString device; uint8_t ch{2}; bool done{false}; };
+        SinkInfo si{m_mainloop};
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation* qop = pa_context_get_sink_info_by_name(m_context, nb.constData(),
+            [](pa_context*, const pa_sink_info* i, int eol, void* ud) {
+                auto* s = static_cast<SinkInfo*>(ud);
+                if (eol > 0) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
+                if (!i) return;
+                const char* dev = pa_proplist_gets(i->proplist, "device.string");
+                if (dev && *dev) s->device = QString::fromUtf8(dev);
+                s->ch = i->channel_map.channels;
+            }, &si);
+        if (qop) { while (!si.done) pa_threaded_mainloop_wait(m_mainloop); pa_operation_unref(qop); }
+        pa_threaded_mainloop_unlock(m_mainloop);
+
+        if (!si.device.isEmpty()) {
+            m_alsaCardDevice = si.device;
+            qInfo(lcAudioPulse) << "setDefaultSink: ALSA card device=" << m_alsaCardDevice;
+        } else {
+            qWarning(lcAudioPulse) << "setDefaultSink: no ALSA device.string for" << sinkName
+                                   << "— volume will use PA soft-volume fallback";
+        }
+
+        // 3. Lock PA sink at 100% — volume is now driven by ALSA hardware mixer.
+        //    Soft-volume multiply at anything < 100% silently discards low-order bits
+        //    (reduces effective bit depth), so we keep the PA path bit-perfect.
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_cvolume cv;
+        pa_cvolume_set(&cv, si.ch, PA_VOLUME_NORM);
+        pa_operation* vop = pa_context_set_sink_volume_by_name(
+            m_context, nb.constData(), &cv, nullptr, nullptr);
+        if (vop) pa_operation_unref(vop);
+        pa_threaded_mainloop_unlock(m_mainloop);
+    }
+
+    QString PulseAudioHandler::resolveSinkName(const QString& requested) {
+        if (!m_mainloop || !m_context) return {};
+        const QString candidate = requested.isEmpty() ? bestAvailableSink() : requested;
+        if (candidate.isEmpty()) {
+            qWarning(lcAudioPulse) << "resolveSinkName: no sinks available in PA";
+            return {};
+        }
+        struct State { pa_threaded_mainloop* loop; bool found{false}; bool done{false}; };
+        State s{m_mainloop};
+        const QByteArray nb = candidate.toUtf8();
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation* op = pa_context_get_sink_info_by_name(m_context, nb.constData(),
+            [](pa_context*, const pa_sink_info* i, int eol, void* ud) {
+                auto* s = static_cast<State*>(ud);
+                if (eol > 0 || !i) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
+                s->found = true;
+            }, &s);
+        if (op) { while (!s.done) pa_threaded_mainloop_wait(m_mainloop); pa_operation_unref(op); }
+        pa_threaded_mainloop_unlock(m_mainloop);
+
+        if (s.found) {
+            qInfo(lcAudioPulse) << "resolveSinkName:" << candidate << "verified";
+            return candidate;
+        }
+        // Requested sink not present — try the PA default.
+        if (requested.isEmpty()) return {};  // already tried default above
+        qWarning(lcAudioPulse) << "resolveSinkName: sink" << candidate
+                               << "not found in PA, falling back to default";
+        return getDefaultSink();
+    }
+
+    QString PulseAudioHandler::resolveSourceName(const QString& requested) {
+        if (!m_mainloop || !m_context) return {};
+        const QString candidate = requested.isEmpty() ? getDefaultSource() : requested;
+        if (candidate.isEmpty()) {
+            qWarning(lcAudioPulse) << "resolveSourceName: no sources available in PA";
+            return {};
+        }
+        struct State { pa_threaded_mainloop* loop; bool found{false}; bool done{false}; };
+        State s{m_mainloop};
+        const QByteArray nb = candidate.toUtf8();
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation* op = pa_context_get_source_info_by_name(m_context, nb.constData(),
+            [](pa_context*, const pa_source_info* i, int eol, void* ud) {
+                auto* s = static_cast<State*>(ud);
+                if (eol > 0 || !i) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
+                s->found = true;
+            }, &s);
+        if (op) { while (!s.done) pa_threaded_mainloop_wait(m_mainloop); pa_operation_unref(op); }
+        pa_threaded_mainloop_unlock(m_mainloop);
+
+        if (s.found) {
+            qInfo(lcAudioPulse) << "resolveSourceName:" << candidate << "verified";
+            return candidate;
+        }
+        if (requested.isEmpty()) return {};
+        qWarning(lcAudioPulse) << "resolveSourceName: source" << candidate
+                               << "not found in PA, falling back to default";
+        return getDefaultSource();
+    }
+
     // --- VOLUME CONTROL ---
+    // Names passed here are pre-resolved by VolumeHandler — always valid.
 
-    void PulseAudioHandler::setSinkVolume(const QString& deviceName, int volume) {
-        if (!m_mainloop || !m_context) return;
-        int safeVolume = std::clamp(volume, 0, 255);
-        pa_volume_t paVol = (pa_volume_t)((safeVolume * PA_VOLUME_NORM) / 255.0);
+    void PulseAudioHandler::setSinkVolume(const QString& sinkName, int volume) {
+        const int safe = std::clamp(volume, 0, 255);
+
+        // Prefer ALSA hardware volume — no soft-volume bit-depth penalty, and
+        // survives a future PipeWire migration unchanged (snd_mixer_* talks to
+        // the kernel ALSA control interface, bypassing any audio server).
+        if (!m_alsaCardDevice.isEmpty()) {
+            const QByteArray card = m_alsaCardDevice.toUtf8();
+            snd_mixer_t* handle = nullptr;
+            if (snd_mixer_open(&handle, 0) == 0) {
+                auto cleanup = qScopeGuard([handle]{ snd_mixer_close(handle); });
+                if (snd_mixer_attach(handle, card.constData()) == 0 &&
+                    snd_mixer_selem_register(handle, nullptr, nullptr) == 0 &&
+                    snd_mixer_load(handle) == 0) {
+                    // Pick the element with the largest playback-volume range.
+                    // On IQaudIO PCM5122 the mixer exposes 'Analogue' (0-1) before
+                    // 'Digital' (0-207); using the first element would effectively
+                    // give only two volume levels.  The widest range is the real DAC
+                    // volume control.
+                    snd_mixer_elem_t* best = nullptr;
+                    long bestLo = 0, bestHi = 0, bestRange = 0;
+                    for (auto* e = snd_mixer_first_elem(handle); e; e = snd_mixer_elem_next(e)) {
+                        if (!snd_mixer_selem_has_playback_volume(e)) continue;
+                        long lo = 0, hi = 0;
+                        snd_mixer_selem_get_playback_volume_range(e, &lo, &hi);
+                        if (hi - lo > bestRange) {
+                            bestRange = hi - lo;
+                            best = e; bestLo = lo; bestHi = hi;
+                        }
+                    }
+                    if (best) {
+                        long targetAlsaVol;
+                        if (safe == 0) {
+                            targetAlsaVol = bestLo; // minimum / let hardware auto-mute take over
+                        } else {
+                            // Map slider 1-255 linearly in dB over a -60 dB to 0 dB working range.
+                            // The PCM5122 Digital element spans 103.5 dB total (0-207 units,
+                            // 0.5 dB/step); the bottom half is effectively inaudible and compresses
+                            // all the useful travel into the top 20% of the slider.
+                            // Linear-in-dB gives perceptually uniform loudness steps.
+                            long dBmin_mB = 0, dBmax_mB = 0;
+                            if (snd_mixer_selem_get_playback_dB_range(best, &dBmin_mB, &dBmax_mB) == 0
+                                && dBmax_mB > dBmin_mB) {
+                                // -60 dB floor in millibels, or the element's actual min if shallower
+                                const long floorDB_mB = std::max(dBmin_mB, -6000L);
+                                const long targetDB_mB = floorDB_mB +
+                                    static_cast<long>((dBmax_mB - floorDB_mB) * (safe - 1) / 254.0 + 0.5);
+                                // dir=1: round up (slightly louder) when between steps
+                                snd_mixer_selem_ask_playback_dB_vol(best, targetDB_mB, 1, &targetAlsaVol);
+                            } else {
+                                // No dB metadata — fall back to linear ALSA unit mapping
+                                targetAlsaVol = bestLo +
+                                    static_cast<long>((bestHi - bestLo) * safe / 255.0 + 0.5);
+                            }
+                        }
+                        snd_mixer_selem_set_playback_volume_all(best, targetAlsaVol);
+                        qInfo(lcAudioPulse) << "setSinkVolume ALSA" << m_alsaCardDevice
+                                           << "slider=" << safe << "alsa=" << targetAlsaVol << "/" << bestHi;
+                        return;
+                    }
+                }
+            }
+            qWarning(lcAudioPulse) << "setSinkVolume: ALSA mixer failed for" << m_alsaCardDevice
+                                   << "— falling back to PA soft-volume";
+        }
+
+        // PA soft-volume fallback (non-ALSA sinks, or ALSA card not yet cached)
+        if (!m_mainloop || !m_context || sinkName.isEmpty()) return;
+        const pa_volume_t paVol = static_cast<pa_volume_t>((safe * PA_VOLUME_NORM) / 255.0);
+        const QByteArray nb = sinkName.toUtf8();
+        struct ChInfo { pa_threaded_mainloop* loop; uint8_t ch{2}; bool done{false}; };
+        ChInfo info{m_mainloop};
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation* qop = pa_context_get_sink_info_by_name(m_context, nb.constData(),
+            [](pa_context*, const pa_sink_info* i, int eol, void* ud) {
+                auto* s = static_cast<ChInfo*>(ud);
+                if (eol > 0) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
+                if (i) { s->ch = i->channel_map.channels; }
+            }, &info);
+        if (qop) { while (!info.done) pa_threaded_mainloop_wait(m_mainloop); pa_operation_unref(qop); }
+        pa_cvolume cv;
+        pa_cvolume_set(&cv, info.ch, paVol);
+        qInfo(lcAudioPulse) << "setSinkVolume PA" << sinkName << "vol=" << safe << "pa=" << paVol;
+        pa_operation* vop = pa_context_set_sink_volume_by_name(m_context, nb.constData(), &cv, nullptr, nullptr);
+        if (vop) pa_operation_unref(vop);
+        pa_threaded_mainloop_unlock(m_mainloop);
+    }
+
+    void PulseAudioHandler::setSourceVolume(const QString& sourceName, int volume) {
+        if (!m_mainloop || !m_context || sourceName.isEmpty()) return;
+        const int safe = std::clamp(volume, 0, 255);
+        const pa_volume_t paVol = static_cast<pa_volume_t>((safe * PA_VOLUME_NORM) / 255.0);
+        const QByteArray nb = sourceName.toUtf8();
+
+        struct ChInfo { pa_threaded_mainloop* loop; uint8_t ch{1}; bool done{false}; };
+        ChInfo info{m_mainloop};
+        pa_threaded_mainloop_lock(m_mainloop);
+        pa_operation* qop = pa_context_get_source_info_by_name(m_context, nb.constData(),
+            [](pa_context*, const pa_source_info* i, int eol, void* ud) {
+                auto* s = static_cast<ChInfo*>(ud);
+                if (eol > 0 || !i) { s->done = true; pa_threaded_mainloop_signal(s->loop, 0); return; }
+                s->ch = i->channel_map.channels;
+                s->done = true; pa_threaded_mainloop_signal(s->loop, 0);
+            }, &info);
+        if (qop) { while (!info.done) pa_threaded_mainloop_wait(m_mainloop); pa_operation_unref(qop); }
 
         pa_cvolume cv;
-        cv.channels = 2; // Default to stereo
-        for(int i=0; i<cv.channels; i++) cv.values[i] = paVol;
+        pa_cvolume_set(&cv, info.ch, paVol);
+        qInfo(lcAudioPulse) << "setSourceVolume" << sourceName << "vol=" << safe
+                            << "pa=" << paVol << "ch=" << info.ch;
+        pa_operation* vop = pa_context_set_source_volume_by_name(m_context, nb.constData(), &cv, nullptr, nullptr);
+        if (vop) pa_operation_unref(vop);
+        pa_threaded_mainloop_unlock(m_mainloop);
+    }
 
-        const QString resolvedName = deviceName.isEmpty() ? getDefaultSink() : deviceName;
-        if (resolvedName.isEmpty()) {
-            qWarning(lcAudioPulse) << "setSinkVolume: no sink name available, skipping";
-            return;
+    void PulseAudioHandler::setSinkMute(const QString& sinkName, bool mute) {
+        // Prefer ALSA hardware mute switch — instant, no soft-volume interaction,
+        // works identically under PulseAudio and PipeWire.
+        if (!m_alsaCardDevice.isEmpty()) {
+            const QByteArray card = m_alsaCardDevice.toUtf8();
+            snd_mixer_t* handle = nullptr;
+            if (snd_mixer_open(&handle, 0) == 0) {
+                auto cleanup = qScopeGuard([handle]{ snd_mixer_close(handle); });
+                if (snd_mixer_attach(handle, card.constData()) == 0 &&
+                    snd_mixer_selem_register(handle, nullptr, nullptr) == 0 &&
+                    snd_mixer_load(handle) == 0) {
+                    // Prefer an element that has BOTH volume AND switch — on PCM5122 that
+                    // is 'Digital'.  Pure-switch elements like 'Auto Mute' are chip feature
+                    // flags, not actual audio muting.  Among volume+switch elements pick the
+                    // one with the largest range; fall back to switch-only if none found.
+                    snd_mixer_elem_t* muteElem = nullptr;
+                    long bestRange = -1;
+                    for (auto* e = snd_mixer_first_elem(handle); e; e = snd_mixer_elem_next(e)) {
+                        if (!snd_mixer_selem_has_playback_switch(e)) continue;
+                        if (snd_mixer_selem_has_playback_volume(e)) {
+                            long lo = 0, hi = 0;
+                            snd_mixer_selem_get_playback_volume_range(e, &lo, &hi);
+                            if (hi - lo > bestRange) {
+                                bestRange = hi - lo;
+                                muteElem = e;
+                            }
+                        } else if (bestRange < 0) {
+                            muteElem = e; // switch-only fallback
+                        }
+                    }
+                    if (muteElem) {
+                        snd_mixer_selem_set_playback_switch_all(muteElem, mute ? 0 : 1);
+                        qInfo(lcAudioPulse) << "setSinkMute ALSA" << m_alsaCardDevice << mute;
+                        return;
+                    }
+                }
+            }
+            qWarning(lcAudioPulse) << "setSinkMute: ALSA mixer failed for" << m_alsaCardDevice
+                                   << "— falling back to PA mute";
         }
-        const QByteArray nameBytes = resolvedName.toUtf8();
 
+        // PA mute fallback
+        if (!m_mainloop || !m_context || sinkName.isEmpty()) return;
+        const QByteArray nb = sinkName.toUtf8();
         pa_threaded_mainloop_lock(m_mainloop);
-        pa_operation* o = pa_context_set_sink_volume_by_name(m_context, nameBytes.constData(), &cv, nullptr, nullptr);
+        qInfo(lcAudioPulse) << "setSinkMute PA" << sinkName << mute;
+        pa_operation* o = pa_context_set_sink_mute_by_name(m_context, nb.constData(), mute ? 1 : 0, nullptr, nullptr);
         if (o) pa_operation_unref(o);
         pa_threaded_mainloop_unlock(m_mainloop);
     }
 
-    void PulseAudioHandler::setSourceVolume(const QString& deviceName, int volume) {
-        if (!m_mainloop || !m_context) return;
-        int safeVolume = std::clamp(volume, 0, 255);
-        pa_volume_t paVol = (pa_volume_t)((safeVolume * PA_VOLUME_NORM) / 255.0);
-
-        pa_cvolume cv;
-        cv.channels = 1; // Mics usually mono
-        for(int i=0; i<cv.channels; i++) cv.values[i] = paVol;
-
-        const QString resolvedName = deviceName.isEmpty() ? getDefaultSource() : deviceName;
-        if (resolvedName.isEmpty()) {
-            qWarning(lcAudioPulse) << "setSourceVolume: no source name available, skipping";
-            return;
-        }
-        const QByteArray nameBytes = resolvedName.toUtf8();
-
+    void PulseAudioHandler::setSourceMute(const QString& sourceName, bool mute) {
+        if (!m_mainloop || !m_context || sourceName.isEmpty()) return;
+        const QByteArray nb = sourceName.toUtf8();
         pa_threaded_mainloop_lock(m_mainloop);
-        pa_operation* o = pa_context_set_source_volume_by_name(m_context, nameBytes.constData(), &cv, nullptr, nullptr);
-        if (o) pa_operation_unref(o);
-        pa_threaded_mainloop_unlock(m_mainloop);
-    }
-
-    void PulseAudioHandler::setSinkMute(const QString& deviceName, bool mute) {
-        if (!m_mainloop || !m_context) return;
-
-        const QString resolvedName = deviceName.isEmpty() ? getDefaultSink() : deviceName;
-        if (resolvedName.isEmpty()) {
-            qWarning(lcAudioPulse) << "setSinkMute: no sink name available, skipping";
-            return;
-        }
-        const QByteArray nameBytes = resolvedName.toUtf8();
-
-        pa_threaded_mainloop_lock(m_mainloop);
-        pa_operation* o = pa_context_set_sink_mute_by_name(m_context, nameBytes.constData(), mute, nullptr, nullptr);
-        if (o) pa_operation_unref(o);
-        pa_threaded_mainloop_unlock(m_mainloop);
-    }
-
-    void PulseAudioHandler::setSourceMute(const QString& deviceName, bool mute) {
-        if (!m_mainloop || !m_context) return;
-
-        const QString resolvedName = deviceName.isEmpty() ? getDefaultSource() : deviceName;
-        if (resolvedName.isEmpty()) {
-            qWarning(lcAudioPulse) << "setSourceMute: no source name available, skipping";
-            return;
-        }
-        const QByteArray nameBytes = resolvedName.toUtf8();
-
-        pa_threaded_mainloop_lock(m_mainloop);
-        pa_operation* o = pa_context_set_source_mute_by_name(m_context, nameBytes.constData(), mute, nullptr, nullptr);
+        pa_operation* o = pa_context_set_source_mute_by_name(m_context, nb.constData(), mute ? 1 : 0, nullptr, nullptr);
         if (o) pa_operation_unref(o);
         pa_threaded_mainloop_unlock(m_mainloop);
     }
@@ -164,8 +397,19 @@ namespace f1x::openauto::autoapp::UI::Backend::Audio {
         }
         if (i) {
             EngineDevice device;
-            device.description = QString::fromUtf8(i->description);
+            // Prefer the ALSA card name over the generic PulseAudio description.
+            // On JourneyOS, udev-detect reports both the IQAudio DAC and the
+            // onboard headphone output as "Built-in Audio Stereo" — the ALSA card
+            // name ("IQaudIODAC", "bcm2835_alsa", etc.) is unambiguous.
+            const char *cardName = pa_proplist_gets(i->proplist, "alsa.card_name");
+            device.description = (cardName && *cardName)
+                                     ? QString::fromUtf8(cardName)
+                                     : QString::fromUtf8(i->description);
             device.value = QString::fromUtf8(i->name);
+            // Store ALSA card number so getSinks() can remove duplicate PA sinks
+            // that udev-detect creates for the same physical card.
+            const char *cardNumStr = pa_proplist_gets(i->proplist, "alsa.card");
+            device.card = cardNumStr ? std::atoi(cardNumStr) : -1;
             device.iconname = device.GuessIconName();
             state->devices.append(device);
         }
@@ -173,13 +417,13 @@ namespace f1x::openauto::autoapp::UI::Backend::Audio {
 
     EngineDeviceList PulseAudioHandler::getSinks() {
         if (!m_mainloop) return {};
-        
+
         ListDevicesState state;
         state.loop = m_mainloop;
 
         pa_threaded_mainloop_lock(m_mainloop);
         pa_operation *op = pa_context_get_sink_info_list(m_context, &PulseAudioHandler::GetSinkInfoCallback, &state);
-        
+
         if (op) {
             while (!state.finished) {
                 pa_threaded_mainloop_wait(m_mainloop); // Wait for signal from callback
@@ -188,7 +432,35 @@ namespace f1x::openauto::autoapp::UI::Backend::Audio {
         }
         pa_threaded_mainloop_unlock(m_mainloop);
 
-        return state.devices;
+        // Deduplicate: PulseAudio udev-detect creates two PA sinks for the same
+        // physical ALSA card when the device tree gives it both a platform alias
+        // ("platform-soc_sound") and an ALSA card name ("IQaudIODAC").  Both map
+        // to the same hw:N device and would otherwise appear twice in the UI.
+        // Strategy: group by ALSA card number; within each group keep the sink
+        // whose PA name is NOT the platform-* path (the named path is more stable
+        // and matches what "hw:IQaudIODAC" would select explicitly).
+        QMap<int, int> preferredIdx; // ALSA card# → index in state.devices
+        for (int i = 0; i < state.devices.size(); ++i) {
+            const int cardNum = state.devices[i].card;
+            if (cardNum < 0) continue; // not an ALSA sink — keep unconditionally
+            const bool isPlatform = state.devices[i].value.contains(QLatin1String("platform-"));
+            if (!preferredIdx.contains(cardNum)) {
+                preferredIdx[cardNum] = i;
+            } else {
+                // Prefer the non-platform entry
+                const bool existingIsPlatform = state.devices[preferredIdx[cardNum]].value.contains(QLatin1String("platform-"));
+                if (existingIsPlatform && !isPlatform)
+                    preferredIdx[cardNum] = i;
+            }
+        }
+
+        EngineDeviceList result;
+        for (int i = 0; i < state.devices.size(); ++i) {
+            const int cardNum = state.devices[i].card;
+            if (cardNum < 0 || preferredIdx.value(cardNum, i) == i)
+                result.append(state.devices[i]);
+        }
+        return result;
     }
 
     // Similar implementation for Sources
@@ -219,6 +491,12 @@ namespace f1x::openauto::autoapp::UI::Backend::Audio {
             pa_operation_unref(op);
         }
         pa_threaded_mainloop_unlock(m_mainloop);
+
+        // NOTE: on JourneyOS the only available sources are monitor pseudo-sources
+        // (alsa_output.*.monitor) — there is no physical microphone.  The HDMI
+        // monitor source is used as a loopback input workaround for Android Auto.
+        // Do NOT filter out .monitor sources here.
+
         return state.devices;
     }
     
@@ -268,6 +546,32 @@ namespace f1x::openauto::autoapp::UI::Backend::Audio {
         }
         pa_threaded_mainloop_unlock(m_mainloop);
         return name;
+    }
+
+    void PulseAudioHandler::addSinksChangedCallback(std::function<void()> cb) {
+        m_sinksChangedCallbacks.push_back(std::move(cb));
+    }
+
+    void PulseAudioHandler::addSourcesChangedCallback(std::function<void()> cb) {
+        m_sourcesChangedCallbacks.push_back(std::move(cb));
+    }
+
+    // Called from the PA mainloop thread (lock is held). Callbacks must not
+    // call back into PA — they should only post to the Qt event loop.
+    void PulseAudioHandler::subscribe_callback(pa_context*, pa_subscription_event_type_t t,
+                                               uint32_t /*idx*/, void* userdata) {
+        auto* self = static_cast<PulseAudioHandler*>(userdata);
+        const auto facility = t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK;
+        const auto type     = t & PA_SUBSCRIPTION_EVENT_TYPE_MASK;
+
+        if (type != PA_SUBSCRIPTION_EVENT_NEW && type != PA_SUBSCRIPTION_EVENT_REMOVE)
+            return;
+
+        if (facility == PA_SUBSCRIPTION_EVENT_SINK) {
+            for (auto& cb : self->m_sinksChangedCallbacks) cb();
+        } else if (facility == PA_SUBSCRIPTION_EVENT_SOURCE) {
+            for (auto& cb : self->m_sourcesChangedCallbacks) cb();
+        }
     }
 
     std::vector<std::pair<std::string, std::string>> PulseAudioHandler::getDeviceList() {

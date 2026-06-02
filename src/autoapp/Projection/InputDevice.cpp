@@ -30,11 +30,18 @@ namespace f1x::openauto::autoapp::projection {
         eventHandler_ = nullptr;
     }
 
+    void InputDevice::setInputEnabled(bool enabled) {
+        std::lock_guard<decltype(mutex_)> lock(mutex_);
+        if (inputEnabled_ == enabled) return;
+        inputEnabled_ = enabled;
+        qInfo(lcInput) << "input forwarding" << (enabled ? "enabled" : "disabled (UI overlay active)");
+    }
+
     bool InputDevice::eventFilter(QObject *obj, QEvent *event) {
         std::lock_guard<decltype(mutex_)> lock(mutex_);
 
         // We no longer filter for mouse events, so we can control from QML.
-        if (eventHandler_ != nullptr) {
+        if (inputEnabled_ && eventHandler_ != nullptr) {
             if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease) {
                 QKeyEvent *key = static_cast<QKeyEvent *>(event);
                 if (!key->isAutoRepeat()) {

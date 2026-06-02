@@ -28,6 +28,8 @@ namespace f1x::openauto::autoapp::UI::Model::List {
                                   AudioDeviceDirection direction,
                                   QObject *parent = nullptr);
 
+        Q_INVOKABLE void refresh();
+
         signals:
           void comboBoxItemsChanged();
         void currentComboBoxItemChanged();

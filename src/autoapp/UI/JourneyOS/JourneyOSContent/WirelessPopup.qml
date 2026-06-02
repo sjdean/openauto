@@ -44,14 +44,22 @@ Item {
         }
     }
 
-    Column {
-        id: contentColumn
-        spacing: 8
+    ScrollView {
+        id: scroller
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: 20
-        anchors.topMargin: 10
+        height: Math.min(contentColumn.implicitHeight, 420)
+        contentWidth: availableWidth
+        ScrollBar.vertical.policy: ScrollBar.AsNeeded
+
+        Column {
+            id: contentColumn
+            spacing: 8
+            width: scroller.availableWidth - 40
+            leftPadding: 20
+            topPadding: 10
+            bottomPadding: 10
 
         // ── Title ─────────────────────────────────────────────────────────────
         Text {
@@ -61,17 +69,21 @@ Item {
             color: Constants.textPrimary
         }
 
-        // ── Status strip ──────────────────────────────────────────────────────
-        Rectangle {
-            width: parent.width
-            height: statusRow.implicitHeight + 12
-            color: wifiViewModel.connected ? Constants.statusBgOk : Constants.statusBgBad
-            radius: Constants.radiusInput
+            // ── Status strip ──────────────────────────────────────────────────
+            Rectangle {
+                width: parent.width
+                height: statusCol.implicitHeight + 12
+                color: wifiViewModel.connected ? Constants.statusBgOk : Constants.statusBgBad
+                radius: Constants.radiusInput
 
-            Row {
-                id: statusRow
-                anchors.centerIn: parent
-                spacing: 12
+                Column {
+                    id: statusCol
+                    anchors.centerIn: parent
+                    spacing: 4
+
+                    Row {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: 12
 
                 Text {
                     text: wifiViewModel.connected ? "● Connected" : "○ Not Connected"
@@ -79,8 +91,8 @@ Item {
                     font.pointSize: Constants.fontCaption
                 }
                 Text {
-                    visible: wifiViewModel.connected
-                    text: wifiViewModel.currentSsid.length > 0 ? ("  " + wifiViewModel.currentSsid) : ""
+                    visible: wifiViewModel.connected && wifiViewModel.currentSsid.length > 0
+                    text: wifiViewModel.currentSsid
                     color: Constants.textPrimary
                     font.pointSize: Constants.fontCaption
                 }
@@ -91,15 +103,32 @@ Item {
                     font.pointSize: Constants.fontCaption
                 }
             }
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 16
+
+                Text {
+                    visible: wifiViewModel.interfaceMac.length > 0
+                    text: "MAC: " + wifiViewModel.interfaceMac
+                    color: Constants.textSecondary
+                    font.pixelSize: Constants.fontCaption
+                }
+                Text {
+                    visible: wifiViewModel.connected && wifiViewModel.currentIp.length > 0
+                    text: "IP: " + wifiViewModel.currentIp
+                    color: Constants.textSecondary
+                    font.pixelSize: Constants.fontCaption
+                }
+            }
         }
 
-        // ── Enable toggle ─────────────────────────────────────────────────────
-        CheckBox {
-            id: checkBoxEnableWireless
-            text: qsTr("Enable Wireless")
-            checked: wifiViewModel.isEnabled
-            onCheckedChanged: wifiViewModel.isEnabled = checked
-        }
+            // ── Enable toggle ─────────────────────────────────────────────────
+            CheckBox {
+                text: qsTr("Enable Wireless")
+                checked: wifiViewModel.isEnabled
+                onCheckedChanged: wifiViewModel.isEnabled = checked
+            }
 
         // ── Interface selection ───────────────────────────────────────────────
         Text { text: "Interface"; color: Constants.textSecondary; font.pointSize: Constants.fontCaption }
@@ -109,56 +138,54 @@ Item {
             model: networkAdapterModel.comboBoxItems
             textRole: "displayName"
 
-            Component.onCompleted: {
-                var items = networkAdapterModel.comboBoxItems
-                for (var i = 0; i < items.length; i++) {
-                    if (items[i].interfaceName === wifiViewModel.selectedInterface) {
-                        currentIndex = i
-                        break
+                Component.onCompleted: {
+                    var items = networkAdapterModel.comboBoxItems
+                    for (var i = 0; i < items.length; i++) {
+                        if (items[i].interfaceName === wifiViewModel.selectedInterface) {
+                            currentIndex = i
+                            break
+                        }
+                    }
+                }
+
+                onActivated: {
+                    var items = networkAdapterModel.comboBoxItems
+                    if (currentIndex >= 0 && currentIndex < items.length) {
+                        wifiViewModel.selectedInterface = items[currentIndex].interfaceName
+                        networkAdapterModel.currentComboBoxItem = items[currentIndex]
                     }
                 }
             }
 
-            onActivated: {
-                var items = networkAdapterModel.comboBoxItems
-                if (currentIndex >= 0 && currentIndex < items.length) {
-                    wifiViewModel.selectedInterface = items[currentIndex].interfaceName
-                    networkAdapterModel.currentComboBoxItem = items[currentIndex]
-                }
-            }
-        }
-
-        // ── Head Unit controls ────────────────────────────────────────────────
-        Column {
-            visible: ConfigGate.showConfig
-            width: parent.width
-            spacing: 8
-
-            ButtonGroup { id: wirelessModeGroup }
-
-            Row {
-                spacing: 10
-                RadioButton {
-                    id: hotspotButton
-                    text: qsTr("Hotspot")
-                    checked: wifiViewModel.mode === 0
-                    onCheckedChanged: if (checked) wifiViewModel.mode = 0
-                    ButtonGroup.group: wirelessModeGroup
-                }
-                RadioButton {
-                    id: clientButton
-                    text: qsTr("Client")
-                    checked: wifiViewModel.mode === 1
-                    onCheckedChanged: if (checked) wifiViewModel.mode = 1
-                    ButtonGroup.group: wirelessModeGroup
-                }
-            }
-
-            // ── Hotspot credentials ───────────────────────────────────────────
+            // ── Head Unit controls (JourneyOS / head-unit-mode only) ──────────
             Column {
-                visible: wifiViewModel.mode === 0
+                visible: ConfigGate.showConfig
                 width: parent.width
-                spacing: 6
+                spacing: 8
+
+                ButtonGroup { id: wirelessModeGroup }
+
+                Row {
+                    spacing: 10
+                    RadioButton {
+                        text: qsTr("Hotspot")
+                        checked: wifiViewModel.mode === 0
+                        onCheckedChanged: if (checked) wifiViewModel.mode = 0
+                        ButtonGroup.group: wirelessModeGroup
+                    }
+                    RadioButton {
+                        text: qsTr("Client")
+                        checked: wifiViewModel.mode === 1
+                        onCheckedChanged: if (checked) wifiViewModel.mode = 1
+                        ButtonGroup.group: wirelessModeGroup
+                    }
+                }
+
+                // ── Hotspot credentials ───────────────────────────────────────
+                Column {
+                    visible: wifiViewModel.mode === 0
+                    width: parent.width
+                    spacing: 6
 
                 Text { text: qsTr("Hotspot SSID"); color: Constants.textSecondary; font.pointSize: Constants.fontCaption }
                 TextField {
@@ -179,24 +206,18 @@ Item {
                     onTextEdited: wifiViewModel.hotspotPassword = text
                 }
 
-                Row {
-                    spacing: 8
-                    Button {
-                        text: "Start Hotspot"
-                        onClicked: wifiViewModel.applyHotspot()
-                    }
-                    Button {
-                        text: "Stop"
-                        onClicked: wifiViewModel.disconnectCurrent()
+                    Row {
+                        spacing: 8
+                        Button { text: "Start Hotspot"; onClicked: wifiViewModel.applyHotspot() }
+                        Button { text: "Stop"; onClicked: wifiViewModel.disconnectCurrent() }
                     }
                 }
-            }
 
-            // ── Client credentials + scan ─────────────────────────────────────
-            Column {
-                visible: wifiViewModel.mode === 1
-                width: parent.width
-                spacing: 6
+                // ── Client credentials + scan ─────────────────────────────────
+                Column {
+                    visible: wifiViewModel.mode === 1
+                    width: parent.width
+                    spacing: 6
 
                 Text { text: qsTr("Network SSID"); color: Constants.textSecondary; font.pointSize: Constants.fontCaption }
                 TextField {
@@ -212,6 +233,7 @@ Item {
                 Row {
                     width: parent.width
                     spacing: 8
+
                     TextField {
                         id: clientPasswordField
                         width: parent.width - connectBtn.width - disconnectBtn.width - 16
@@ -234,45 +256,45 @@ Item {
                     }
                 }
 
-                // Scan controls
-                Row {
-                    width: parent.width
-                    spacing: 8
                     Button {
                         text: "Scan"
                         onClicked: wifiViewModel.doWirelessNetworkScan()
                     }
+
                     Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: wifiViewModel.accessPoints.length > 0
-                              ? (wifiViewModel.accessPoints.length + " network(s) found")
-                              : "No scan results"
-                        color: Constants.textSecondary
+                        visible: wifiViewModel.scanStatus.length > 0
+                        width: parent.width
+                        text: wifiViewModel.scanStatus
+                        color: wifiViewModel.scanStatus.startsWith("Scan failed")
+                               ? Constants.statusBad
+                               : (wifiViewModel.scanStatus === "Scanning\u2026"
+                                  ? Constants.statusWait
+                                  : Constants.textSecondary)
                         font.pointSize: Constants.fontSmall
                         font.italic: true
+                        wrapMode: Text.WordWrap
                     }
-                }
 
-                // Scan results list
-                Rectangle {
-                    visible: wifiViewModel.accessPoints.length > 0
-                    width: parent.width
-                    height: Math.min(apList.contentHeight + 2, 160)
-                    color: Constants.overlaySubtle
-                    radius: Constants.radiusInput
-                    clip: true
-
+                    // ── AP list — 5 rows tall, scrollable ─────────────────────
                     ListView {
                         id: apList
-                        anchors.fill: parent
+                        visible: count > 0
+                        width: parent.width
+                        height: 5 * 40
+                        clip: true
                         model: wifiViewModel.accessPoints
                         spacing: 2
 
                         delegate: Rectangle {
+                            required property var modelData
+                            required property int index
+
                             width: apList.width
-                            height: 36
-                            color: apMouseArea.containsPress ? Constants.overlayPress : "transparent"
-                            radius: Constants.radiusInput - 1
+                            height: 38
+                            color: apArea.containsPress
+                                   ? Constants.overlayPress
+                                   : (index % 2 === 0 ? Constants.overlaySubtle : "transparent")
+                            radius: Constants.radiusInput
 
                             Row {
                                 anchors.fill: parent
@@ -304,7 +326,7 @@ Item {
                             }
 
                             MouseArea {
-                                id: apMouseArea
+                                id: apArea
                                 anchors.fill: parent
                                 onClicked: {
                                     clientSsidField.text = modelData.ssid
@@ -317,7 +339,6 @@ Item {
                     }
                 }
             }
-        }
 
         // ── System-managed notice ─────────────────────────────────────────────
         Text {

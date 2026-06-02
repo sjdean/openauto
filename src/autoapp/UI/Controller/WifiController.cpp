@@ -5,6 +5,7 @@
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusObjectPath>
 #include <QtDBus/QDBusMetaType>
+#include <QtDBus/QDBusReply>
 #endif
 Q_LOGGING_CATEGORY(lcWifi, "journeyos.wifi.controller")
 
@@ -71,8 +72,13 @@ void WifiController::setInterface(const QString& ifaceOrMac)
 void WifiController::setMode(common::Enum::WirelessType::Value mode)
 {
 #ifdef Q_OS_LINUX
-    // Always tear down the current connection before switching modes.
-    disconnect();
+    // Only tear down the current connection when actually switching modes.
+    // Calling disconnect() when staying in client mode causes a visible
+    // brief drop that confuses the UI.
+    if (mode != m_currentMode) {
+        disconnect();
+        m_currentMode = mode;
+    }
 
     if (mode == common::Enum::WirelessType::WIRELESS_HOTSPOT) {
         const QString ssid = m_config->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID, "MyCarHotspot");
@@ -228,6 +234,32 @@ void WifiController::connectToWifiImpl(const QString& ssid, const QString& passw
         return;
     }
 
+    // Delete any existing NM profiles for this SSID before adding a new one.
+    // Without this, each Connect press accumulates a new profile; NM then retries
+    // all of them, each failing with "no secrets: No agents were available" because
+    // they were created without psk-flags=0.
+    {
+        QDBusInterface nmSettings("org.freedesktop.NetworkManager",
+                                  "/org/freedesktop/NetworkManager/Settings",
+                                  "org.freedesktop.NetworkManager.Settings", m_bus);
+        QDBusReply<QList<QDBusObjectPath>> listReply = nmSettings.call("ListConnections");
+        if (listReply.isValid()) {
+            const QByteArray ssidBytes = ssid.toUtf8();
+            for (const QDBusObjectPath& path : listReply.value()) {
+                QDBusInterface conn("org.freedesktop.NetworkManager", path.path(),
+                                    "org.freedesktop.NetworkManager.Settings.Connection", m_bus);
+                QDBusReply<NMConnectionSettings> sr = conn.call("GetSettings");
+                if (!sr.isValid()) continue;
+                const auto& cs = sr.value();
+                if (!cs.contains("802-11-wireless")) continue;
+                if (cs["802-11-wireless"].value("ssid").toByteArray() == ssidBytes) {
+                    conn.call("Delete");
+                    qInfo(lcWifi) << "removed old profile for ssid=" << ssid;
+                }
+            }
+        }
+    }
+
     // NM AddAndActivateConnection expects a{sa{sv}} as a single argument.
     QVariantMap connection;
     connection["uuid"] = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -249,8 +281,12 @@ void WifiController::connectToWifiImpl(const QString& ssid, const QString& passw
 
     if (!password.isEmpty()) {
         QVariantMap wifiSec;
-        wifiSec["key-mgmt"] = "wpa-psk";
-        wifiSec["psk"]      = password;
+        wifiSec["key-mgmt"]  = "wpa-psk";
+        wifiSec["psk"]       = password;
+        // psk-flags=0: store PSK directly in the profile (no secrets agent needed).
+        // Without this NM treats the password as agent-owned and fails with
+        // "no secrets: No agents were available for this request".
+        wifiSec["psk-flags"] = QVariant::fromValue<uint>(0);
         settings["802-11-wireless-security"] = wifiSec;
     }
 

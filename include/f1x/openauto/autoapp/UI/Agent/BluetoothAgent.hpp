@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDBusMessage>
+#include <QDBusContext>
 #include <QObject>
 #include <QDBusObjectPath>
 #include <QDebug>
@@ -8,8 +9,9 @@
 
 Q_DECLARE_LOGGING_CATEGORY(logAgent)
 
-class BluetoothAgent : public QObject {
+class BluetoothAgent : public QObject, protected QDBusContext {
     Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.bluez.Agent1")
 
 public:
     explicit BluetoothAgent(const QString &dbusPath, QObject *parent = nullptr);
@@ -65,9 +67,9 @@ public slots:
 
     /**
      * @brief D-Bus: BlueZ asks for "Yes/No" confirmation of a passkey.
-     * We store the D-Bus message and emit a signal to QML.
+     * We defer the D-Bus reply and show the passkey in QML for user confirmation.
      */
-    void RequestConfirmation(const QDBusMessage &message, const QDBusObjectPath &device, quint32 passkey);
+    void RequestConfirmation(const QDBusObjectPath &device, quint32 passkey);
 
     /**
      * @brief D-Bus: BlueZ tells our agent it's no longer needed.
@@ -78,7 +80,7 @@ public slots:
      * @brief D-Bus: BlueZ asks to authorize a service (e.g., phone book).
      * We'll just auto-accept this for now.
      */
-    static void AuthorizeService(const QDBusObjectPath &device, const QString &uuid);
+    void AuthorizeService(const QDBusObjectPath &device, const QString &uuid);
 
     /**
      * @brief D-Bus: BlueZ tells us the pairing was canceled.
