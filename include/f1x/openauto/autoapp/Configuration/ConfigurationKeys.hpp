@@ -84,6 +84,7 @@ namespace f1x::openauto::autoapp::configuration {
         // System -------------------------------------------------------------
         SystemHeadUnitMode,
         SystemDesktopMode,
+        SystemFirstBoot,
 
         // Wireless -----------------------------------------------------------
         WirelessEnabled,
