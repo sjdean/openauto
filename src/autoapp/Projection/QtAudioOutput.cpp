@@ -28,8 +28,7 @@ using configuration::ConfigKey;
     connect(this, &QtAudioOutput::suspendPlayback, this, &QtAudioOutput::onSuspendPlayback);
     connect(this, &QtAudioOutput::stopPlayback, this, &QtAudioOutput::onStopPlayback);
     connect(this, &QtAudioOutput::requestSetVolume, this, &QtAudioOutput::onSetVolume);
-
-    // TODO:heck this against the main branch
+    
     // Thread is NOT started here. Call setFormat() then open() after AA negotiation.
   }
 
