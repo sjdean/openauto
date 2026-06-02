@@ -133,7 +133,13 @@ using configuration::ConfigKey;
       if (audioOutput_) audioOutput_->setVolume(std::clamp(volume, 0.0f, 1.0f));
   }
 
-  uint32_t QtAudioOutput::getSampleSize() const { return 16; } // Simplified
+  uint32_t QtAudioOutput::getSampleSize() const {
+    switch (audioFormat_.sampleFormat()) {
+      case QAudioFormat::UInt8:  return 8;
+      case QAudioFormat::Int32:  return 32;
+      default:                   return 16;
+    }
+  }
   uint32_t QtAudioOutput::getChannelCount() const { return audioFormat_.channelCount(); }
   uint32_t QtAudioOutput::getSampleRate() const { return audioFormat_.sampleRate(); }
 }
