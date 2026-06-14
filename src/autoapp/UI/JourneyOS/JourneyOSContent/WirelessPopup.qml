@@ -353,4 +353,6 @@ Item {
 
         Item { width: 1; height: 4 } // bottom padding
     }
+    }
+}
 }
