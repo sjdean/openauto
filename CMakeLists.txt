@@ -380,7 +380,7 @@ add_executable(journeyos-hardware-detect ${hw_detect_sources})
 target_compile_features(journeyos-hardware-detect PRIVATE cxx_std_17)
 
 target_compile_options(journeyos-hardware-detect PRIVATE
-        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-pedantic>
+        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-pedantic;-Wno-variadic-macros>
         $<$<CXX_COMPILER_ID:MSVC>:/W4>
 )
 
