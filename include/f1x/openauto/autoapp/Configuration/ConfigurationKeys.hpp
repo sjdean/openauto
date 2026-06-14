@@ -162,6 +162,7 @@ namespace f1x::openauto::autoapp::configuration {
             case ConfigKey::BluetoothIgnoredDevices:         return QStringLiteral("IgnoredDevices");
             case ConfigKey::SystemHeadUnitMode:              return QStringLiteral("HeadUnitMode");
             case ConfigKey::SystemDesktopMode:               return QStringLiteral("DesktopMode");
+            case ConfigKey::SystemFirstBoot:                 return QStringLiteral("FirstBoot");
             case ConfigKey::WirelessEnabled:                 return QStringLiteral("Enabled");
             case ConfigKey::WirelessHotspotSSID:             return QStringLiteral("HotspotSSID");
             case ConfigKey::WirelessHotspotPassword:         return QStringLiteral("HotspotPassword");

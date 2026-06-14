@@ -66,7 +66,7 @@ namespace f1x::openauto::autoapp::UI::ViewModel {
     QString m_resolvedSinkName;
     QString m_resolvedSourceName;
 
-    std::shared_ptr<IAudioHandler> m_audioHandler;ckend::Audio::IAudioHandler> m_audioHandler;
+    std::shared_ptr<f1x::openauto::autoapp::UI::Backend::Audio::IAudioHandler> m_audioHandler;
 
   };
 
