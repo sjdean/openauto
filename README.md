@@ -10,7 +10,7 @@ This is not a minor fork. The UI has been redesigned from the ground up using Qt
 
 ## Status
 
-v4.1 beta — targeting first public release for Raspberry Pi 5. The project compiles and runs on macOS for development purposes, but full functionality is Linux/Raspberry Pi only at this stage.
+v4.2 — active development. The project compiles and runs on macOS for development purposes, but full functionality is Linux/Raspberry Pi only at this stage.
 
 ---
 
@@ -96,7 +96,7 @@ These are the `-D` flags you may need to pass to `cmake`. Only `QT6_INSTALL_DIR`
 
 The roadmap below covers near-term targets only. Scope beyond that is being finalised and will be published when confirmed.
 
-### v4.1 — Raspberry Pi 5 Foundation *(beta)*
+### v4.1 — Raspberry Pi 5 Foundation
 
 | Status | Item |
 |--------|------|
@@ -116,12 +116,35 @@ The roadmap below covers near-term targets only. Scope beyond that is being fina
 | ✅ | Video sizing — full screen and display-size aware |
 | ✅ | OTA updates via RAUC |
 
-### v4.2 — Polish *(planned)*
+### v4.2 — UI Overhaul *(active)*
 
-- Time of day synchronisation from Android Auto
-- Dark / Night mode
-- Multiple audio quality advertisement to Android Auto
-- Navigation audio prompts when Android Auto is not in the foreground
+| Status | Item |
+|--------|------|
+| ✅ | Material Design 3 colour scheme and component styling |
+| ✅ | Dark / light mode toggle persisted across reboots |
+| ✅ | Accent colour and button opacity customisation |
+| ✅ | Consistent Material Design Icons throughout |
+| ✅ | Responsive QML scaling and font DPI pass |
+| ✅ | Time of day synchronisation from Android Auto |
+| ✅ | Audio format negotiation at session setup (not startup) |
+| ✅ | Home button overlay — configurable screen position |
+| ✅ | JourneyOS platform detection (embedded vs desktop mode) |
+| ✅ | Type-safe configuration enum keys (replaces raw strings) |
+| ✅ | Per-key settings persistence (no full file rewrite on save) |
+
+### v5.0 — Vehicle Integration *(planned)*
+
+| Status | Item |
+|--------|------|
+| 🔲 | PipeWire audio backend (replaces PulseAudio) |
+| 🔲 | CAN bus device management and settings UI |
+| 🔲 | Live CAN telemetry dashboard (speed, RPM, odometer, temperature) |
+| 🔲 | CAN telemetry fed into Android Auto sensor channel (driving status, night mode) |
+| 🔲 | VIN decode — auto-populate vehicle profile |
+| 🔲 | Community CAN mapping file library with SHA-256 verification |
+| 🔲 | Event-driven GPS via GpsReceiver (replaces gpsd polling) |
+| 🔲 | Android Auto audio focus state exposed to UI |
+| 🔲 | Boost.Asio removal — Qt-native threading throughout |
 
 ---
 
