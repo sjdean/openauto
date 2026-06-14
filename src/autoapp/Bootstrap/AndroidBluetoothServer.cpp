@@ -120,7 +120,6 @@ using configuration::ConfigKey;
       });
 #endif
 
-      aap_protobuf::service::control::message::AudioFocusRequestType afrt;
       aap_protobuf::aaw::WifiVersionRequest versionRequest;
       aap_protobuf::aaw::WifiStartRequest startRequest;
 
@@ -228,8 +227,8 @@ using configuration::ConfigKey;
 
     aap_protobuf::aaw::WifiInfoResponse response;
 
-    const QString ssid = configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID).toStdString();
-    const QString password = configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword).toStdString();
+    const QString ssid = configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotSSID);
+    const QString password = configuration_->getSettingByName<QString>(ConfigGroup::Wireless, ConfigKey::WirelessHotspotPassword);
 
     if (ssid.isEmpty()) {
       qCWarning(lcBsBtServer) << "[AndroidBluetoothServer::handleWifiInfoRequest] HotspotSSID is empty — phone will fail to connect";

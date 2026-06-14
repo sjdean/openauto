@@ -256,7 +256,7 @@ target_compile_features(autoapp PRIVATE cxx_std_17)
 # Semicolons required as list separators inside generator expressions —
 # spaces silently fail with Xcode and Visual Studio generators.
 target_compile_options(autoapp PRIVATE
-        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-pedantic>
+        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-Wno-pedantic>
         $<$<CXX_COMPILER_ID:MSVC>:/W4>
 )
 
