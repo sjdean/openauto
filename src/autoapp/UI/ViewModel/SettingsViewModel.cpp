@@ -834,6 +834,10 @@ using configuration::ConfigKey;
         }
     }
 
+    void SettingsViewModel::save() const {
+        configuration_->save();
+    }
+
     bool SettingsViewModel::getFirstBoot() const {
         return m_firstBoot;
     }
