@@ -27,7 +27,7 @@ public:
     QString getLatestVersion() const { return m_latestVersion; }
     QString getCurrentVersion() const;
 
-    Q_INVOKABLE void checkForUpdate();
+    Q_INVOKABLE void checkForUpdate(bool showErrors = false);
     Q_INVOKABLE void downloadUpdate();
     Q_INVOKABLE void applyUpdate();
 
@@ -55,6 +55,7 @@ private:
     QString m_updateUrl;
 
     bool               m_checking{false};
+    bool               m_showErrors{false};
     QThread           *m_checkThread{nullptr};
     UpdateCheckWorker *m_checkWorker{nullptr};
 };

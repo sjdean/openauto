@@ -541,15 +541,7 @@ Item {
                     ModernButton {
                         text: "Check for Updates"
                         Layout.alignment: Qt.AlignVCenter
-                        onClicked: updateManager.checkForUpdate()
-                        // originally (but doesn't match between main and v4.2 branch - where did it come from?)
-                        //                         onClicked: {
-                        //                             if (!wifiViewModel.connected) {
-                        //                                 wifiWarningDialog.open()
-                        //                             } else {
-                        //                                 updateManager.checkForUpdate()
-                        //                             }
-                        //                         }
+                        onClicked: updateManager.checkForUpdate(true)
                     }
                 }
 
@@ -628,11 +620,10 @@ Item {
                 }
             }
         }
-// TODO: Do some major work to ensure this works and check between main/v4.2 branches
         // ── OTA dialogs — declared outside StackLayout so they overlay everything ──
         Dialog {
-            id: otaErrorDialog
-            title: "Update Failed"
+            id: updateFoundDialog
+            title: "Update Available"
             modal: true
             anchors.centerIn: parent
             standardButtons: Dialog.Ok | Dialog.Cancel

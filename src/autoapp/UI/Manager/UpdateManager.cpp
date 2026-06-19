@@ -11,6 +11,7 @@
 #include <QProcess>
 #include <QSysInfo>
 #include <QFile>
+#include <QDir>
 
 Q_LOGGING_CATEGORY(lcUpdate, "journeyos.ota")
 
@@ -239,7 +240,7 @@ QString UpdateManager::getCurrentVersion() const
     return QSysInfo::productVersion();
 }
 
-void UpdateManager::checkForUpdate()
+void UpdateManager::checkForUpdate(bool showErrors)
 {
     if (m_checking) {
         qInfo(lcUpdate) << "check already in progress — skipping";
@@ -252,7 +253,8 @@ void UpdateManager::checkForUpdate()
         return;
     }
 
-    m_checking = true;
+    m_showErrors = showErrors;
+    m_checking   = true;
     emit startCheckRequested();
 }
 
@@ -273,6 +275,9 @@ void UpdateManager::onCheckFailed(const QString &reason)
 {
     m_checking = false;
     qWarning(lcUpdate) << "update check failed:" << reason;
+    if (m_showErrors) {
+        emit errorOccurred(QStringLiteral("Failed to check for updates: %1").arg(reason));
+    }
     emit checkComplete(false, getCurrentVersion());
 }
 
@@ -286,10 +291,19 @@ void UpdateManager::downloadUpdate()
 
     const QString destPath = QStringLiteral("/storage/update.raucb");
 
+    if (!QDir(QStringLiteral("/storage")).exists()) {
+        if (!QDir().mkpath(QStringLiteral("/storage"))) {
+            const QString msg = QStringLiteral("Cannot create /storage directory — check partition is mounted");
+            qWarning(lcUpdate) << msg;
+            emit errorOccurred(msg);
+            return;
+        }
+    }
+
     auto *file = new QFile(destPath, this);
     if (!file->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         const QString msg =
-            QStringLiteral("Failed to open %1 for writing").arg(destPath);
+            QStringLiteral("Failed to open %1 for writing — check /storage is mounted and writable by the journeyos user").arg(destPath);
         qWarning(lcUpdate) << msg;
         file->deleteLater();
         emit errorOccurred(msg);
