@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 # ─── Version (single source of truth) ────────────────────────────────────────
 # Numeric triplet only — used for VERSION/SOVERSION.
 # Display string (with date/git) is separate and never used for file naming.
-set(LIBRARY_BUILD_DATE          "20260614")
+set(LIBRARY_BUILD_DATE          "20260621")
 set(LIBRARY_BUILD_MAJOR_RELEASE 4)
 set(LIBRARY_BUILD_MINOR_RELEASE 2)
 set(LIBRARY_BUILD_INCREMENTAL   1)
