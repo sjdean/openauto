@@ -217,7 +217,7 @@ UpdateManager::UpdateManager(configuration::IConfiguration::Pointer config,
     m_checkThread->start();
 
     // Deferred so all QML signal connections are established first.
-    QTimer::singleShot(0, this, &UpdateManager::checkForUpdate);
+    QTimer::singleShot(0, this, [this]() { checkForUpdate(); });
 }
 
 UpdateManager::~UpdateManager()
